@@ -1,3 +1,3 @@
-from . import ndlyaml
-from . import ndltalk
-from . import ndltex
+from . import yaml
+from . import talk
+from . import tex
