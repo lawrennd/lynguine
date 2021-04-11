@@ -75,9 +75,9 @@ def extract_inputs(filename):
     """Extract input files from a talk"""
     if filename=='\\filename.svg':
         return []
-    elif not os.path.exists(filename):
-        print("Warning the file {} does not exist.".format(filename))
-        return []
+    # elif not os.path.exists(filename):
+    #     print("Warning the file {} does not exist.".format(filename))
+    #     return []
     else:
 
         f = open(filename, 'r')
