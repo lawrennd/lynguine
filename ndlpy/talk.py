@@ -1,8 +1,8 @@
 import os
 from datetime import date
 
-import _python.ndltex as latex
-import _python.ndlyaml as ny
+import ndlpy.tex as latex
+import ndlpy.yaml as ny
 
 
 today = date.today()
