@@ -77,7 +77,7 @@ def extract_inputs(filename):
         return []
     elif not os.path.exists(filename):
         # print("Warning the file {} does not exist.".format(filename))
-        not_present.append(filename)
+        return [filename]
     else:
 
         f = open(filename, 'r')
