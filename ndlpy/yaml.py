@@ -49,7 +49,7 @@ def header_field(field, fields):
 def header_fields(filename):
     """Extract headers from a talk file."""
     head, _ = extract_header_body(filename)
-    return yaml.load(head, Loader=yaml.FullLoader)
+    return head
 
     raise FileFormatError(1, "This does not appear to be a valid yaml headed markdown file.", filename)
 
