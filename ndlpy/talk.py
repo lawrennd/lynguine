@@ -79,10 +79,8 @@ def extract_inputs(filename):
         print("Warning the file {} does not exist.".format(filename))
         return []
     else:
-
-        f = open(filename, 'r')
-        lines = f.readlines()
-        f.close()
+        with open(filename, 'r') as f:
+            lines = f.readlines()
 
         filenames = latex.extract_inputs(lines)
         list_files=[]

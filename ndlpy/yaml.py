@@ -1,5 +1,6 @@
 import re
 import yaml
+import frontmatter
 
 class FileFormatError(Exception):
     def __init__(self, ind, msg=None, field=None):
@@ -50,24 +51,11 @@ def header_fields(filename):
     head, _ = extract_header_body(filename)
     return yaml.load(head, Loader=yaml.FullLoader)
 
-    raise FileFormatError(1, "This does not appear to be a valid talk file.", filename)
+    raise FileFormatError(1, "This does not appear to be a valid yaml headed markdown file.", filename)
 
 def extract_header_body(filename):
     """Extract the text of the headers and body from a yaml headed file."""
     import codecs
-    with codecs.open(filename, 'rb', 'utf-8') as f:
-        text = f.read()
-    z = re.fullmatch("(^---[\s\S]+---)\n([\s\S]*)", text)
-    if z:
-        return z.groups()[0].replace('---', ''), z.groups()[1]
-    else:
-        z = re.fullmatch("(^---[\s\S]+---)", text)
-        if z:
-            return z.groups()[0].replace('---', ''), ''
-        else:
-            z = re.fullmatch("(^---[\s\S]+)", text)
-            if z:
-                return z.groups()[0].replace('---', ''), ''
-            else:
-                raise FileFormatError(1, "This does not appear to be a valid yaml headed file.", filename)
-
+    with codecs.open(filename, 'rb', 'utf-8') as file:
+        post = frontmatter.load(f)
+    return post.metadata, post.body

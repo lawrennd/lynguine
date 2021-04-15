@@ -281,3 +281,15 @@ def create_bib_file_given_tex(lines):
 
     return make_bib_file(citations_list, bib_files)
 
+def writebib(bibdict):
+    """Write a bibliography file from a given dictionary"""
+    lines = ''
+    for key, value in bibdict.items():
+        lines += '@' + value['layout'] + '{' + value['key'] + ',\n'
+        lines += '  title = \t{' + value['title'] + '},\n'
+        lines += '  author = \t{' + value['author'] + '},\n'
+        for name, entry in value.items():
+            if name not in ['title', 'author']:
+                lines += '  ' + name + ' = \t{' entry '},\n'
+        lines += '}\n\n'
+    return lines
