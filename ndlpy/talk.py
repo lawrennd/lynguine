@@ -97,7 +97,7 @@ def extract_inputs(filename):
 
         filenames = list_files
 
-        for i, filename in enumerate(filenames):
+        for i, filename in enumerate(filenames[1:]):
             list_files[i+1:i+1] = extract_inputs(filename) 
 
         return list_files + not_present
