@@ -56,6 +56,6 @@ def header_fields(filename):
 def extract_header_body(filename):
     """Extract the text of the headers and body from a yaml headed file."""
     import codecs
-    with codecs.open(filename, 'rb', 'utf-8') as file:
-        post = frontmatter.load(f)
-    return post.metadata, post.body
+    with codecs.open(filename, 'rb', 'utf-8') as f:
+        metadata, content = frontmatter.parse(f.read())
+    return metadata, content
