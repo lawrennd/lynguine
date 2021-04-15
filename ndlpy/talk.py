@@ -77,8 +77,7 @@ def extract_inputs(filename):
     if filename=='\\filename.svg':
         return []
     elif not os.path.exists(filename):
-        print("Warning the file {} does not exist.".format(filename))
-        return []
+        return [filename]
     else:
         with open(filename, 'r') as f:
             lines = f.readlines()
