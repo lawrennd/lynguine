@@ -73,6 +73,7 @@ def extract_all(filename):
 
 def extract_inputs(filename):
     """Extract input files from a talk"""
+    list_files=[]
     if filename=='\\filename.svg':
         return []
     elif not os.path.exists(filename):
@@ -83,7 +84,6 @@ def extract_inputs(filename):
             lines = f.readlines()
 
         filenames = latex.extract_inputs(lines)
-        list_files=[]
         not_present=[]
         for i, filename in enumerate(filenames):
             includepos = os.path.join('../', filename)
