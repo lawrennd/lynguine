@@ -7,7 +7,7 @@ def loaddata(files):
     """Load data from yaml, json, bib and csv files into a python dictionary"""
 
     entries = []
-    for file in args.file:
+    for file in files:
         with open(file, 'r') as file:
             new_data = _loaddatastream(file)
         if isinstance(new_data, list):
