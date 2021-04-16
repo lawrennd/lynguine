@@ -29,7 +29,7 @@ def _loaddatastream(file):
     elif ext == 'json':
         new_data = json.load(f)
     elif ext == 'csv':
-        new_data = csv.DictReader(file, quotechar='"')
+        new_data = list(csv.DictReader(file, quotechar='"'))
     elif ext == 'bib':
         bd = bp(file)
         new_data = bd.entries
