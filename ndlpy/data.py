@@ -13,8 +13,8 @@ def loaddata(files):
         if isinstance(new_data, list):
             entries += new_data
         else:
-            entries.append(new_entries)
-
+            entries.append(new_data)
+    return entries
 
 def _loaddatastream(file):
     """Loads in the data from the stream to a dictionary or list of dictionaries and adds the name of the source file to the dictionary entries."""
