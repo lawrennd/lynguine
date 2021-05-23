@@ -9,9 +9,11 @@ today = date.today()
 
 # Update default values.
 ny.defaults = {'slidedir': '../slides/',
-               'diagramdir': '../slides/diagrams',
-               'scriptdir': '../scripts',
-               'writediagramdir': '../slides/diagrams',
+               'diagramdir': '../slides/diagrams/',
+               'scriptdir': '../scripts/',
+               'writediagramdir': '../slides/diagrams/',
+               'url': 'https://inverseprobability.com/',
+               'basurl': 'talks/',
                'notedir': '../_notes/',
                'notebookdir': '../_notebooks/',
                'postdir': '../_posts/',
