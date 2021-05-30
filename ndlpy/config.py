@@ -9,21 +9,21 @@ local_file = os.path.abspath(os.path.join(os.path.dirname(__file__), "machine.ym
 # Look for this file in the working directory
 user_file = '_config.yml'
 
-defaults = {}
+config = {}
 
 if os.path.exists(default_file):
     with open(default_file) as file:
-        defaults.update(yaml.load(file, Loader=yaml.FullLoader))
+        config.update(yaml.load(file, Loader=yaml.FullLoader))
 
 if os.path.exists(local_file):
     with open(local_file) as file:
-        defaults.update(yaml.load(file, Loader=yaml.FullLoader))
+        config.update(yaml.load(file, Loader=yaml.FullLoader))
 
 if os.path.exists(user_file):
     with open(user_file) as file:
-        defaults.update(yaml.load(file, Loader=yaml.FullLoader))
+        config.update(yaml.load(file, Loader=yaml.FullLoader))
 
-if defaults=={}:
+if config=={}:
     raise ValueError(
         "No configuration file found at either "
         + user_file
@@ -34,3 +34,6 @@ if defaults=={}:
         + "."
     )
 
+for key, item in config.items():
+    config[key] = os.path.expandvars(item)
+    

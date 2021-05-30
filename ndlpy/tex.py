@@ -3,7 +3,10 @@
 import re
 import os
 
-tex_directories = os.environ['BIBINPUTS'].split(':') + os.environ['TEXINPUTS'].split(':')
+from .config import *
+
+TEX_DIRECTORIES = ['.']
+TEX_DIRECTORIES += config['bibinputs'].split(':') + config['texinputs'].split(:)
 
 def replace_notation(lines, old_notation, new_notation):
     #    open_bracket_list ='\(|\[|\{'
@@ -48,7 +51,7 @@ def substitute_inputs(filename, directories=None):
         if file_dir not in directories:
             directories.append(file_dir)
 
-    for directory in tex_directories:
+    for directory in TEX_DIRECTORIES:
         if directory not in directories:
             directories.append(directory)
     if filename[0] == '#': # it's a macro

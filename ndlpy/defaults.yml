@@ -13,6 +13,8 @@ revealjs_url: https://unpkg.com/reveal.js@3.9.2
 slidesheader: slides-header.html
 postsheader: posts-header.html
 notation: talk-notation.tex
+bibinputs: $BIBINPUTS
+texinputs: $TEXINPUTS
 week: 0
 categories:
   - notes

@@ -36,8 +36,8 @@ def update_from_file(dictionary, file):
 def header_field(field, fields):
     """Return one field from yaml header fields."""
     if field not in fields:
-        if field in defaults:
-            answer=defaults[field]
+        if field in config:
+            answer=config[field]
         else:
             raise FileFormatError(1, "Field not found in file or defaults.", field)
     else:
