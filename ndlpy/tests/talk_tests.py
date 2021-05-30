@@ -7,7 +7,7 @@ import sys
 import filecmp
 import unittest
 
-filename = os.path.join("_config.yml")
+filename = os.path.join(os.getcwd(), "_config.yml")
 testdict = {'cat': 'dog',
             'butcher': 'baker',
             'candlestick': 'maker'}
