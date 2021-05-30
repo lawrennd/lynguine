@@ -12,7 +12,7 @@ import unittest
 class UtilTests(unittest.TestCase):
     def test_talk_field(self):
         """talk_tests: Test the talk_field"""
-        filename = "_config.yml"
+        filename = os.path.join(os.getcwd(), "_config.yml")
         testdict = {'cat': 'dog',
                      'butcher': 'baker',
                      'candlestick': 'maker'}
