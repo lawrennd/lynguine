@@ -5,43 +5,7 @@ import ndlpy.tex as latex
 import ndlpy.yaml as ny
 
 
-today = date.today()
-
-# Update default values.
-ny.defaults = {'slidedir': '../slides/',
-               'diagramdir': '../slides/diagrams/',
-               'scriptdir': '../scripts/',
-               'writediagramdir': '../slides/diagrams/',
-               'url': 'https://inverseprobability.com/',
-               'basurl': 'talks/',
-               'notedir': '../_notes/',
-               'notebookdir': '../_notebooks/',
-               'postdir': '../_posts/',
-               'talkcss': '../assets/css/talks.css',
-               'talktheme': 'black',
-               'revealjs_url': 'https://unpkg.com/reveal.js@3.9.2',
-               'slidesheader': 'slides-header.html',
-               'postsheader': 'posts-header.html',
-               'notation': 'talk-notation.tex',
-               'week': 0,
-               'categories': ['notes'],
-               'ipynb': False,
-               'pptx': False,
-               'docx': False,
-               'pdf': False,
-               'posts': True,
-               'reveal': True,
-               'assignment': False,
-               'slidesipynb': False,
-               'notespdf': False,
-               'potx': '../_includes/custom-reference.potx',
-               'dotx': '../_includes/custom-reference.dotx'}
-
-# Load defaults from config file if it exists.
-default_file = '_config.yml'
-if os.path.isfile(default_file):
-    ny.defaults = ny.update_from_file(ny.defaults, default_file)
-    
+today = date.today()    
 
 def talk_field(field, filename):
     """Return one field from a talk."""
@@ -49,7 +13,7 @@ def talk_field(field, filename):
     return ny.header_field(field, fields)    
         
 def extract_bibinputs(filename):
-    """Extract bibinput files form a talk"""
+    """Extract bibinput files from a talk"""
     # Hard coded for the moment
     return ['../lawrence.bib', '../other.bib', '../zbooks.bib']
 

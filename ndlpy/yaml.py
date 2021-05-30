@@ -2,6 +2,8 @@ import re
 import yaml
 import frontmatter
 
+from .config import *
+
 class FileFormatError(Exception):
     def __init__(self, ind, msg=None, field=None):
         if msg is None:
@@ -10,9 +12,6 @@ class FileFormatError(Exception):
             msg += " field: {field}".format(field=field)
         super(FileFormatError, self).__init__(msg)
         
-
-defaults = {}
-
 
     # def read_yaml(self):
     #     read_file = os.path.join(self.institution.storage_directory(), 
