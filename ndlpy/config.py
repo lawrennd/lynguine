@@ -7,7 +7,7 @@ default_file = os.path.join(os.path.dirname(__file__), "defaults.yml")
 local_file = os.path.abspath(os.path.join(os.path.dirname(__file__), "machine.yml"))
 
 # Look for this file in the working directory
-user_file = '_config.yml'
+user_file = os.path.join(os.getcwd(), "_config.yml")
 
 config = {}
 
