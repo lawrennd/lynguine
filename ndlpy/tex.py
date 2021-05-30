@@ -6,7 +6,7 @@ import os
 from .config import *
 
 TEX_DIRECTORIES = ['.']
-TEX_DIRECTORIES += config['bibinputs'].split(':') + config['texinputs'].split(:)
+TEX_DIRECTORIES += config['bibinputs'].split(':') + config['texinputs'].split(':')
 
 def replace_notation(lines, old_notation, new_notation):
     #    open_bracket_list ='\(|\[|\{'
