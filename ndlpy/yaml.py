@@ -1,8 +1,9 @@
+from .config import *
+
 import re
 import yaml
 import frontmatter
 
-from .config import *
 
 class FileFormatError(Exception):
     def __init__(self, ind, msg=None, field=None):
@@ -29,7 +30,7 @@ def update_from_file(dictionary, file):
     md= open(file, 'r')
     text = md.read()
     md.close()
-    dictionary.update(yaml.load(text, Loader=yaml.FullLoader))
+    dictionary.update(yaml.safe_load(text))
     return dictionary
     
 

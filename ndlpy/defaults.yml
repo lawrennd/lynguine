@@ -27,5 +27,5 @@ reveal: True
 assignment: False
 slidesipynb: False
 notespdf: False
-potx: _includes/custom-reference.potx 
-dotx: _includes/custom-reference.dotx
+potx: ../_includes/custom-reference.potx 
+dotx: ../_includes/custom-reference.dotx
