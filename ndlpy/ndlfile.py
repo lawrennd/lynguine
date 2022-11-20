@@ -68,10 +68,10 @@ def get_git_version(filename, full_path, git_path):
     counter = 11
     if os.path.exists(git_filename):
         out_repo = subprocess.call(["git", "--git-dir", os.path.join(git_path,'.git'), '--work-tree', base_dir, "ls-files", filename, "--error-unmatch"])
-        print out_repo
+        print(out_repo)
         if out_repo != 1:
             output = subprocess.check_output(["git", "--git-dir", os.path.join(git_path,'.git'), '--work-tree', base_dir, "ls-files", filename, "--error-unmatch"])
-            print output
+            print(output)
             git_ver = 0.1
         else:
             git_ver = []

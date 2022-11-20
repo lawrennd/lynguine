@@ -194,15 +194,15 @@ def extract_file_details(file, seperator=","):
 
 def write_to_screen(string, style = '', title='', header='', footer='', time=''):
     if len(string)>0:
-	if len(title)>0:
+        if len(title)>0:
        	    string = "<head><title>" + title + "</title></head>\n" + string
-	if len(header)>0:
+            if len(header)>0:
             string = header + string
-	if len(style)>0:
+        if len(style)>0:
             string = style + string
-	if len(time)>0:
+        if len(time)>0:
             string += "<p align=\"center\">Page generated on " + time + ", maintained by Neil D. Lawrence" + "</p>"
-	if len(footer)>0:
+        if len(footer)>0:
             string += footer
 	       print "Content-type: text/html\n"
 	       sys.stdout.write(string)

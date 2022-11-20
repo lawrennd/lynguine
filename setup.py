@@ -24,7 +24,9 @@ VERSION = '0.1.0'
 
 # What packages are required for this module to be executed?
 REQUIRED = [
-    'python-frontmatter', 'bibtexparser',
+    'python-frontmatter',
+    'bibtexparser',
+    "pyyaml",
 ]
 
 # What packages are optional?
@@ -33,6 +35,12 @@ EXTRAS = {
 }
 
 PACKAGE_DATA = {"ndlpy": ["defaults.yml"]}
+CONSOLE_SCRIPTS = [
+    "ndlconvert=ndlpy.ndlconvert:main",
+]
+ENTRY_POINTS = {
+    'console_scripts': CONSOLE_SCRIPTS,
+}    
 
 # The rest you shouldn't have to touch too much :)
 # ------------------------------------------------
@@ -111,10 +119,7 @@ setup(
     package_data=PACKAGE_DATA,
     # If your package is a single module, use this instead of 'packages':
     # py_modules=['mypackage'],
-
-    # entry_points={
-    #     'console_scripts': ['mycli=mymodule:cli'],
-    # },
+    entry_points=ENTRY_POINTS,
     install_requires=REQUIRED,
     extras_require=EXTRAS,
     include_package_data=True,
