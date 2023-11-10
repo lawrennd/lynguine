@@ -1,4 +1,4 @@
-from .config import *
+from .config import load_user_config
 
 import re
 import yaml
@@ -34,9 +34,10 @@ def update_from_file(dictionary, file):
     return dictionary
     
 
-def header_field(field, fields):
+def header_field(field, fields, user_file=["_config.yml"]):
     """Return one field from yaml header fields."""
     if field not in fields:
+        config = load_user_config(user_file, directory=".")
         if field in config:
             answer=config[field]
         else:

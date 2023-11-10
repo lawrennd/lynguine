@@ -16,27 +16,27 @@ def talk_field(field, filename):
 def extract_bibinputs(filename):
     """Extract bibinput files from a talk"""
     # Hard coded for the moment
-    return ['../lawrence.bib', '../other.bib', '../zbooks.bib']
+    raise NotImplementedError
 
-def extract_all(filename):
+def extract_all(filename, user_file=["_config.yml"]):
     """List the different files the talk file creates."""
     basename = os.path.basename(filename)
     base = os.path.splitext(basename)[0]
     fields = ny.header_fields(filename)
     list_files = []
-    if ny.header_field('posts', fields):
+    if ny.header_field('posts', fields, user_file):
         list_files += [base + '.posts.html']
-    if ny.header_field('ipynb', fields):
+    if ny.header_field('ipynb', fields, user_file):
         list_files += [base + '.ipynb']
-    if ny.header_field('docx', fields):
+    if ny.header_field('docx', fields, user_file):
         list_files += [base + '.docx']
-    if ny.header_field('notespdf', fields):
+    if ny.header_field('notespdf', fields, user_file):
         list_files += [base + '.notes.pdf']
-    if ny.header_field('reveal', fields):
+    if ny.header_field('reveal', fields, user_file):
         list_files += [base + '.slides.html']
-    if ny.header_field('slidesipynb', fields):
+    if ny.header_field('slidesipynb', fields, user_file):
         list_files += [base + '.slides.ipynb']
-    if ny.header_field('pptx', fields):
+    if ny.header_field('pptx', fields, user_file):
         list_files += [base + '.pptx']
         
     return list_files
@@ -44,6 +44,7 @@ def extract_all(filename):
 def extract_inputs(filename, snippets_path=".."):
     """Extract input and include files from a talk"""
     list_files=[]
+    snippets_path = os.path.expandvars(snippets_path)
     if filename=='\\filename.svg':
         return []
     if not os.path.exists(filename):
@@ -82,6 +83,9 @@ def extract_diagrams(filename,
                      diagrams_dir=None,
                      snippets_path=None):
     """Extract diagrams from a talk"""
+    if snippets_path is not None:
+        snippets_path = os.path.expandvars(snippets_path)
+        
     if os.path.exists(filename):
         filenames = [filename] + extract_inputs(filename, snippets_path)
     else:
@@ -90,7 +94,6 @@ def extract_diagrams(filename,
 
     listdiagrams = []
     for filen in filenames:
-        print(filen)
         # exclude talk-macros file.
         if filen[:14] =='../talk-macros':
             continue
