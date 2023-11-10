@@ -1,5 +1,6 @@
 import os
 from datetime import date
+import warnings
 
 import ndlpy.tex as latex
 import ndlpy.yaml as ny
@@ -40,48 +41,56 @@ def extract_all(filename):
         
     return list_files
 
-def extract_inputs(filename):
-    """Extract input files from a talk"""
+def extract_inputs(filename, snippets_path=".."):
+    """Extract input and include files from a talk"""
     list_files=[]
     if filename=='\\filename.svg':
         return []
-    elif not os.path.exists(filename):
-        return [filename]
-    else:
-        with open(filename, 'r') as f:
-            lines = f.readlines()
+    if not os.path.exists(filename):
+        snipname = os.path.join(snippets_path, filename)
+        if os.path.exists(snipname):
+            filename = snipname
+        else:
+            return [filename]
+    with open(filename, 'r') as f:
+        lines = f.readlines()
 
-        filenames = latex.extract_inputs(lines)
-        not_present=[]
-        for i, filename in enumerate(filenames):
-            includepos = os.path.join('../', filename)
-            if os.path.isfile(filename):
-                list_files.append(filename)
-            elif os.path.isfile(includepos):
-                list_files.append(includepos)
-            elif filename == '\\filename.svg':
-                pass
-            else:
-                not_present.append(filename)
+    filenames = latex.extract_inputs(lines)
+    not_present=[]
+    for i, filename in enumerate(filenames):
+        includepos = os.path.join(snippets_path, filename)
+        if os.path.isfile(filename):
+            list_files.append(filename)
+        elif os.path.isfile(includepos):
+            list_files.append(includepos)
+        elif filename == '\\filename.svg':
+            pass
+        else:
+            not_present.append(filename)
 
-        filenames = list_files
+    filenames = list_files
 
-        for i, filename in enumerate(filenames):
-            if os.path.exists(filename):
-                list_files[i+1:i+1] = extract_inputs(filename) 
+    for i, filename in enumerate(filenames):
+        if os.path.exists(filename):
+            list_files[i+1:i+1] = extract_inputs(filename, snippets_path=snippets_path) 
 
-        return list_files + not_present
+    return list_files + not_present
 
-def extract_diagrams(filename, absolute_path=True, diagram_exts=['svg', 'png', 'emf', 'pdf'], diagrams_dir=None):
+def extract_diagrams(filename, 
+                     absolute_path=True,
+                     diagram_exts=['svg', 'png', 'emf', 'pdf'],
+                     diagrams_dir=None,
+                     snippets_path=None):
     """Extract diagrams from a talk"""
     if os.path.exists(filename):
-        filenames = [filename] + extract_inputs(filename)
+        filenames = [filename] + extract_inputs(filename, snippets_path)
     else:
-        print("Warning, input file {} doesn't exist.".format(filename))
+        warnings.warn(f"Warning, input file {filename} does not exist.")
         return
 
     listdiagrams = []
     for filen in filenames:
+        print(filen)
         # exclude talk-macros file.
         if filen[:14] =='../talk-macros':
             continue
@@ -89,6 +98,13 @@ def extract_diagrams(filename, absolute_path=True, diagram_exts=['svg', 'png', '
         if filen == '\\filename.svg':
             continue
         else:
+            if not os.path.exists(filen):
+                exname = os.path.join(snippets_path, filen)
+                if os.path.exists(exname):
+                    filen = exname
+                else:
+                    warnings.warn(f"Input file {filen} does not exist with snippets path {snippets_path}..")
+                    continue
             f = open(filen, 'r')
             lines = f.readlines()
             f.close()
