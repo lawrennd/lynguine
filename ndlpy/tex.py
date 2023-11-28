@@ -5,8 +5,8 @@ import os
 
 from .config import *
 
-TEX_DIRECTORIES = ['.']
-TEX_DIRECTORIES += config['bibinputs'].split(':') + config['texinputs'].split(':')
+TEX_DIRECTORIES = ["."]
+TEX_DIRECTORIES += config["bibinputs"].split(":") + config["texinputs"].split(":")
 
 def replace_notation(lines, old_notation, new_notation):
     #    open_bracket_list ='\(|\[|\{'
@@ -14,7 +14,7 @@ def replace_notation(lines, old_notation, new_notation):
     #math_symbol = '=|+|-\)|\]|\}'
     #sub_super_list = '\^|_'
     #notation_reg = '[' + open_bracketList +'|'+ close_bracket_list +'|' + sub_super_list+'|'+ '\s' + old_notation \^|_|\s|\]|\}|old_notation
-    filename = ''
+    filename = ""
     for line in lines:
         filename = filename + line
 
