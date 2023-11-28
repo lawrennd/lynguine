@@ -17,7 +17,7 @@ import pandas as pd
 
 from .util import extract_full_filename, get_path_env, remove_nan
 from .log import Logger
-from .config import Config
+from .config import config
 
 GSPREAD_AVAILABLE=True
 try:
@@ -28,7 +28,7 @@ except ImportError:
 
 """Place commands in this file to access the data electronically. Don't remove any missing values, or deal with outliers. Make sure you have legalities correct, both intellectual property and personal data privacy rights. Beyond the legal side also think about the ethical issues around this data. """
 
-config = Config()
+#config = Config()
 log = Logger(
     name=__name__,
     level=config["logging"]["level"],

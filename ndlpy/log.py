@@ -2,7 +2,9 @@ import os
 import logging
 
 class Logger():
-    def __init__(self, name=None, level=20, filename="referia.log", directory="."):
+    def __init__(self, name=None, level=20, filename=None, directory="."):
+        if filename is None:
+            filename = __name__
         if level == "debug":
             self.level = logging.DEBUG
         elif level == "info":
