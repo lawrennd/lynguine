@@ -1,10 +1,8 @@
 import os
-import yaml
 import numpy as np
 
-
 from .util import to_valid_var
-
+from .access import read_yaml_file
 
 GSPREAD_AVAILABLE=True
 try:
@@ -17,9 +15,8 @@ def nodes(user_file="_referia.yml", directory="."):
     filename = os.path.join(os.path.expandvars(directory), user_file)
     if not os.path.exists(filename):
         return []
-    
-    with open(filename) as file:
-        conf = yaml.load(file, Loader=yaml.FullLoader)
+
+    conf = read_yaml_file(filename)
 
     if "title" in conf:
         key = to_valid_var(conf["title"])
@@ -38,9 +35,8 @@ def load_user_config(user_file="_referia.yml", directory=".", append=[], ignore=
     conf = {}
     if not os.path.exists(filename):
         return conf
-    
-    with open(filename) as file:
-        conf = yaml.load(file, Loader=yaml.FullLoader)
+
+    conf = read_yaml_file(filename)
 
     parent = None
     inherit = {}
@@ -156,12 +152,10 @@ def load_config(user_file="_referia.yml", directory=".", append=[], ignore=[]):
     conf = {}
 
     if os.path.exists(default_file):
-        with open(default_file) as file:
-            conf.update(yaml.load(file, Loader=yaml.FullLoader))
+        conf.update(read_yaml_file(default_file))
 
     if os.path.exists(local_file):
-        with open(local_file) as file:
-            conf.update(yaml.load(file, Loader=yaml.FullLoader))
+        conf.update(read_yaml_file(local_file))
 
     conf.update(load_user_config(user_file=user_file,
                                  directory=directory,

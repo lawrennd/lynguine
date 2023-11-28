@@ -3,5 +3,6 @@ from . import talk
 from . import tex
 from . import util
 from . import log
-from . import config
+from . import context
+from . import settings
 from . import access
