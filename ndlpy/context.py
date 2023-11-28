@@ -35,7 +35,7 @@ class Context():
             if item is str:
                 self._data[key] = os.path.expandvars(item)
 
-    def _add_logging_default(self):
+    def _add_logging_defaults(self):
         """If there's no logging information in files, add some default info."""
         default_log = __name__ + ".log"
         if "logging" in self._data:

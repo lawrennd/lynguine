@@ -1,208 +1,72 @@
 import os
 import numpy as np
 
-from .util import to_valid_var
+from .context import Context
+from .log import Logger
+
 from .access import read_yaml_file
 
-GSPREAD_AVAILABLE=True
-try:
-    import gspread_pandas.conf as gspdconf
-except ImportError:
-    GSPREAD_AVAILABILE=False
+ctxt = Context()
+log = Logger(
+    name=__name__,
+    level=ctxt._data["logging"]["level"],
+    filename=ctxt._data["logging"]["filename"],
+)
 
-
-def nodes(user_file="_referia.yml", directory="."):
-    filename = os.path.join(os.path.expandvars(directory), user_file)
-    if not os.path.exists(filename):
-        return []
-
-    conf = read_yaml_file(filename)
-
-    if "title" in conf:
-        key = to_valid_var(conf["title"])
-    else:
-        key = to_valid_var(directory)
-
-    chain = [(key, directory)]
-    if "inherit" in conf:
-        chain += nodes(user_file=user_file, directory=conf["inherit"]["directory"]) 
-    return chain
-
-    
-
-def load_user_config(user_file="_referia.yml", directory=".", append=[], ignore=[]):
-    filename = os.path.join(os.path.expandvars(directory), user_file)
-    conf = {}
-    if not os.path.exists(filename):
-        return conf
-
-    conf = read_yaml_file(filename)
-
-    parent = None
-    inherit = {}
-    if "inherit" in conf:
-        # Load in parent configuration
-        inherit = conf["inherit"]
-        writable = "writable" in inherit and inherit["writable"]
-        if "ignore" not in inherit:
-            inherit["ignore"] = []
-        if "append" not in inherit:
-            inherit["append"] = [] 
-
-        del conf["inherit"]
+class Settings(object):
+    """A settings object that loads in local settings files."""
+    def __init__(self, user_file=None, directory="."):
+        if user_file is None:
+            user_file = "_" + __name__ + ".yml"
         
-        if "directory" not in inherit:
-            raise ValueError(f"Inherit specified in config file {user_file} in directory {directory} but no directory to inherit from is specified.")
+        self._filename = os.path.join(os.path.expandvars(directory), user_file)
+        self._data = {}
+        if os.path.exists(user_file):
+            self._data = read_yaml_file(user_file)
 
-        inherit_directory=inherit["directory"]
-        if "filename" in inherit:
-            inherit_user_file = inherit["filename"]
-        else:
-            inherit_user_file = "_referia.yml"
-        parent = load_user_config(user_file=inherit_user_file,
-                                  directory=inherit_directory)
-        viewelem = {"display": 'Parent assesser available <a href="' + os.path.join(os.path.relpath(os.path.expandvars(inherit["directory"]), "assessment.ipynb")) + '" target="_blank">here</a>.'}
-
-        # Add links to parent assessment by placing in viewer.
-        if "viewer" in conf:
-            if type(conf["viewer"]) is list:
-                conf["viewer"] = [viewelem] + conf["viewer"]
+        self._inputs = []
+        self._outputs = []
+        self._parameters = []
+        
+        self._parent = {}
+        if "inherit" in self._data:
+            if "directory" not in self._data["inherit"]:
+                raise ValueError(f"Inherit specified in settings file {user_file} in directory {directory} but no directory to inherit from is specified.")
             else:
-                conf["viewer"] = [viewelem, conf["viewer"]]
-        else:
-            conf["viewer"] = [viewelem]
-            inherit["append"].append("viewer")
-
-        # Augment and overwrite appends from config with those provided as arugments
-        inherit["append"] = set(inherit["append"] + append).difference(ignore)
-        inherit["ignore"] = set(inherit["ignore"] + ignore).difference(append)
-
-    if parent is not None:
-        # Place loaded conf under the parent conf.
-        additional = []
-        global_consts = []
-        for key, item in parent.items():
-            if key in inherit["ignore"]:
-                # Ignore this key when inheriting
-                continue
-            if key in inherit["append"] and key in conf:
-                # Append to this key when inheriting
-                if key == "additional":
-                    if type(item) is list:
-                        additional = additional + item
-                    else:
-                        additional = additional + [item]
-                    continue
-                if type(conf[key]) is list:
-                    if type(item) is list:
-                        conf[key] = item + conf[key]
-                    else:
-                        conf[key] = [item] + conf[key]
-                    continue
-                if type(conf[key]) is dict:
-                    item.update(conf[key])
-                    conf[key] = item
-                    continue
-                if type(conf[key]) is None:
-                    conf[key] = item
+                directory = self._data["inherit"]["directory"]
+                if "filename" not in self._data["inherit"]:
+                    filename = user_file
                 else:
-                    raise ValueError("Cannot append to non dictionary or list type.")
-                continue
+                    filename=self._data["inherit"]["filename"]
+                self._parent = Settings(user_file=filename, directory=directory)
+
+        if self._data=={}:
+            log.warning(f"No configuration file found at {user_file}.")
+
+        self._expand_vars()
+        
+    def _expand_vars(self):
+        for key, item in self._data.items():
+            if item is str:
+                self._data[key] = os.path.expandvars(item)
+
+
+    def _restructure(self):
+        """For backwards compatability, move inputs, outputs and paremeters to correct place. """
+        for key, item in self._data.items():
+            if key in self._inputs:
+                if "inputs" not in self._data:
+                    self._data["inputs"] = {}
+                self._data["inputs"][key] = item
+            if key in self._output:
+                if "output" not in self._data:
+                    self._data["output"] = {}
+                self._data["output"][key] = item
+            if key in self._parameters:
+                if "parameters" not in self._data:
+                    self._data["parameters"] = {}
+                self._data["parameters"][key] = item
             
-            if key == "scores" and not writable:
-                additional = [item] + additional
-                continue
-            
-            if key == "series" and not writable:
-                item["series"] = True # Convert series to be readable only
-                additional = [item] + additional
-                continue
-
-            if key == "globals" and not writable:
-                global_consts = [item] + global_consts
-                continue
-            
-            if key not in conf:
-                # Augment the configuration with the parent key.
-                conf[key] = parent[key]
-                continue
-
-        if "additional" in conf:
-            if type(conf["additional"]) is list:
-                conf["additional"] = conf["additional"] + additional
-            else:
-                conf["additional"] = [conf["additional"]] + additional
-        elif len(additional)>0:
-            conf["additional"] = additional
-
-        if "global_consts" in conf:
-            if type(conf["global_consts"]) is list:
-                conf["global_consts"] = conf["global_consts"] + global_consts
-            else:
-                conf["global_consts"] = [conf["global_consts"]] + global_consts
-        elif len(global_consts)>0:
-            conf["global_consts"] = global_consts
-            
-    return conf
-
-def load_config(user_file="_referia.yml", directory=".", append=[], ignore=[]):
-    default_file = os.path.join(os.path.dirname(__file__), "defaults.yml")
-    local_file = os.path.abspath(os.path.join(os.path.dirname(__file__), "machine.yml"))
-
-    conf = {}
-
-    if os.path.exists(default_file):
-        conf.update(read_yaml_file(default_file))
-
-    if os.path.exists(local_file):
-        conf.update(read_yaml_file(local_file))
-
-    conf.update(load_user_config(user_file=user_file,
-                                 directory=directory,
-                                 append=append,
-                                 ignore=ignore))
-
-    if conf=={}:
-        raise ValueError(
-            "No configuration file found at either "
-            + user_file
-            + " or "
-            + local_file
-            + " or "
-            + default_file
-            + "."
-        )
-
-    for key, item in conf.items():
-        if item is str:
-            conf[key] = os.path.expandvars(item)
-
-    if "logging" in conf:
-        if not "level" in conf["logging"]:
-            conf["logging"]["level"] = 20
-
-        if not "filename" in conf["logging"]:
-            conf["logging"]["filename"] = "referia.log"
-    else:
-        conf["logging"] = {"level": 20, "filename": "referia.log"}
-    return conf
-
-config = load_config(user_file="_referia.yml", directory=".")
-
-conf_dir = None
-file_name = "google_secret.json"
-
-if "google_oauth" in config:
-    if "directory" in config["google_oauth"]:
-        conf_dir = os.path.expandvars(config["google_oauth"]["directory"])
-    if "keyfile" in config["google_oauth"]:
-        file_name = config["google_oauth"]["keyfile"]
-
-
-try:
-    config["gspread_pandas"] = gspdconf.get_config(
-        conf_dir=conf_dir,
-        file_name=file_name,
-    )
-except:
-    GSPREAD_AVAILABLE=False
+        
+    def _process_parent(self):
+        pass

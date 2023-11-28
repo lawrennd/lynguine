@@ -3,10 +3,12 @@
 import re
 import os
 
-from .config import *
+from .settings import Settings
+
+settings = Settings()
 
 TEX_DIRECTORIES = ["."]
-TEX_DIRECTORIES += config["bibinputs"].split(":") + config["texinputs"].split(":")
+TEX_DIRECTORIES += settings._data["bibinputs"].split(":") + settings._data["texinputs"].split(":")
 
 def replace_notation(lines, old_notation, new_notation):
     #    open_bracket_list ='\(|\[|\{'

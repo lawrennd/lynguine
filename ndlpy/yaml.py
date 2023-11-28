@@ -1,8 +1,7 @@
-from .config import load_user_config
+from .settings import Settings
 
 import re
-import yaml
-import frontmatter
+from . import access
 
 
 class FileFormatError(Exception):
@@ -14,49 +13,35 @@ class FileFormatError(Exception):
         super(FileFormatError, self).__init__(msg)
         
 
-    # def read_yaml(self):
-    #     read_file = os.path.join(self.institution.storage_directory(), 
-    #                               self.statement_name('yaml'))
-    #     if os.path.xfisfile(read_file):
-    #         with open(read_file) as f:
-    #             self.details = yaml.load(f)
-    #     else:
-    #         raise FileNotFoundError("No such yaml file " + read_file)
-    #         with open(write_file, 'w') as f:
-    #             f.write(yaml.dump(statement))
-
-def update_from_file(dictionary, file):
+def update_from_file(dictionary, filename):
     """Update a given dictionary with the fields from a specified file."""
-    md= open(file, 'r')
-    text = md.read()
-    md.close()
-    dictionary.update(yaml.safe_load(text))
+    dictionary.update(read_yaml_file(filename))
     return dictionary
     
 
 def header_field(field, fields, user_file=["_config.yml"]):
     """Return one field from yaml header fields."""
     if field not in fields:
-        config = load_user_config(user_file, directory=".")
+        settings = Settings(user_file, directory=".")
         if field in config:
-            answer=config[field]
+            answer = settings[field]
         else:
             raise FileFormatError(1, "Field not found in file or defaults.", field)
     else:
         answer = fields[field]
     return answer
 
-
 def header_fields(filename):
     """Extract headers from a talk file."""
     head, _ = extract_header_body(filename)
     return head
 
-    raise FileFormatError(1, "This does not appear to be a valid yaml headed markdown file.", filename)
-
 def extract_header_body(filename):
     """Extract the text of the headers and body from a yaml headed file."""
-    import codecs
-    with codecs.open(filename, 'rb', 'utf-8') as f:
-        metadata, content = frontmatter.parse(f.read())
-    return metadata, content
+    data = access.read_markdown_file(filename)
+    if "content" in data:
+        content = data["content"]
+        del data["content"]
+    else:
+        content = None
+    return data, content
