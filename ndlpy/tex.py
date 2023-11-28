@@ -8,7 +8,10 @@ from .settings import Settings
 settings = Settings()
 
 TEX_DIRECTORIES = ["."]
-TEX_DIRECTORIES += settings._data["bibinputs"].split(":") + settings._data["texinputs"].split(":")
+if "bibinputs" in settings:
+    TEX_DIRECTORIES += settings["bibinputs"].split(":")
+if "texinputs" in settings:
+    TEX_DIRECTORIES += settings["texinputs"].split(":")
 
 def replace_notation(lines, old_notation, new_notation):
     #    open_bracket_list ='\(|\[|\{'

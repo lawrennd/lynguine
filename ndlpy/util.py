@@ -5,15 +5,6 @@ import os
 import wget
 
 """Utility functions for helping, e.g. to create the relevant yaml files quickly."""
-def filename_to_binary(filename):
-    """Convert a filename to a binary by loading it"""
-    return open(filename, 'rb').read()
-
-
-def datetimeToYyyymmdd(date):
-    """Convert from YYYY-MM-DD string to a datetime.datetime object."""
-    return datetime.strftime(date, "%Y-%m-%d")
-
 def extract_full_filename(details):
     """Return the filename from the details of directory and filename"""
     if "directory" not in details or details["directory"] is None:
@@ -82,8 +73,7 @@ def sub_path_environment(path):
 def get_path_env():
     """Return the current parth with environment variables."""
     return sub_path_environment(os.path.abspath(os.getcwd()))
-                                
-        
+                                        
 def get_url_file(url, directory=None, filename=None, ext=None):
     """Download a file from a url and save it to disk."""
     try:
@@ -101,8 +91,3 @@ def get_url_file(url, directory=None, filename=None, ext=None):
         os.rename(dfilename, filename)
         return filename                  
     
-def return_longest(lst):
-    return max(lst, key=len)
-
-def return_shortest(lst):
-    return min(lst, key=len)

@@ -1,19 +1,19 @@
 import os
 import numpy as np
 
-from .context import Context
+from . import context 
 from .log import Logger
 
 from .access import read_yaml_file
 
-ctxt = Context()
+ctxt = context.Context()
 log = Logger(
     name=__name__,
     level=ctxt._data["logging"]["level"],
     filename=ctxt._data["logging"]["filename"],
 )
 
-class Settings(object):
+class Settings(context._Config):
     """A settings object that loads in local settings files."""
     def __init__(self, user_file=None, directory="."):
         if user_file is None:

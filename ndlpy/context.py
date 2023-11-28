@@ -2,7 +2,56 @@
 import os
 import yaml
 
-class Context():
+class _Config(object):
+    """Base class for context and settings objects."""
+    def __init__(self):
+        raise NotImplementedError("The base object _Config is designed to be inherited")
+    
+    def __getitem__(self, key):
+        return self._data[key]
+
+    def __setitem__(self, key, value):
+        self._data[key] = value
+
+    def __delitem__(self, key):
+        del self._data[key]
+
+    def __iter__(self):
+        return iter(self._data)
+
+    def __len__(self):
+        return len(self._data)
+
+    def __contains__(self, key):
+        return key in self._data
+
+    def keys(self):
+        return self._data.keys()
+
+    def items(self):
+        return self._data.items()
+
+    def values(self):
+        return self._data.values()
+
+    def get(self, key, default=None):
+        return self._data.get(key, default)
+
+    def update(self, *args, **kwargs):
+        self._data.update(*args, **kwargs)
+        
+    def __str__(self):
+        return str(self._data)
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}({self._data})"
+
+
+    def __iter__(self):
+        return iter(self._data)
+    
+
+class Context(_Config):
     """Load in some default configuration from the context."""
     def __init__(self):        
         self._default_file = os.path.join(os.path.dirname(__file__), "defaults.yml")
