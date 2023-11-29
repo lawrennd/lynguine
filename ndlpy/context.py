@@ -1,6 +1,7 @@
 # This file loads configurations that are specific to the context
 import os
 import yaml
+from itertools import chain
 
 class _Config(object):
     """Base class for context and settings objects."""
@@ -8,7 +9,7 @@ class _Config(object):
         raise NotImplementedError("The base object _Config is designed to be inherited")
     
     def __getitem__(self, key):
-        return self._data[key]
+        return self._data[key]            
 
     def __setitem__(self, key, value):
         self._data[key] = value
@@ -23,7 +24,7 @@ class _Config(object):
         return len(self._data)
 
     def __contains__(self, key):
-        return key in self._data
+        return key in self._data 
 
     def keys(self):
         return self._data.keys()
@@ -46,17 +47,19 @@ class _Config(object):
     def __repr__(self):
         return f"{self.__class__.__name__}({self._data})"
 
-
     def __iter__(self):
         return iter(self._data)
     
 
 class Context(_Config):
     """Load in some default configuration from the context."""
-    def __init__(self):        
+    def __init__(self, name=None):        
         self._default_file = os.path.join(os.path.dirname(__file__), "defaults.yml")
         self._local_file = os.path.abspath(os.path.join(os.path.dirname(__file__), "machine.yml"))
 
+        if name is None:
+            name = __name__
+        self._name = name
         self._data = {}
 
         if os.path.exists(self._default_file):
@@ -86,7 +89,7 @@ class Context(_Config):
 
     def _add_logging_defaults(self):
         """If there's no logging information in files, add some default info."""
-        default_log = __name__ + ".log"
+        default_log = self._name + ".log"
         if "logging" in self._data:
             if not "level" in self._data["logging"]:
                 self._data["logging"]["level"] = 20

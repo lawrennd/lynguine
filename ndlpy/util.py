@@ -32,7 +32,7 @@ def remove_nan(dictionary):
         if type(entry) is dict:
             dictionary2[key] = remove_nan(entry)
         else:
-            isna = entry is None or math.isna(entry) # Switched from pd.isna
+            isna = entry is None or (type(entry) is float and math.isnan(entry)) # Switched from pd.isna
             if type(isna) is bool and isna:
                 del(dictionary2[key])
     return dictionary2
