@@ -23,7 +23,7 @@ def header_field(field, fields, user_file=["_config.yml"]):
     """Return one field from yaml header fields."""
     if field not in fields:
         settings = Settings(user_file, directory=".")
-        if field in config:
+        if field in settings:
             answer = settings[field]
         else:
             raise FileFormatError(1, "Field not found in file or defaults.", field)
