@@ -756,7 +756,16 @@ populate_directory_writers(directory_writers)
 def finalize_data(df, details):
     """Finalize the data frame by augmenting with any columns. """
     """Eventually this should do any augmentation that isn't required by the series. The problem is at the moment the liquid rendering (and other renderings) are too integrated with assess. They need to be pulled out and not so dependent on the data structure."""
-
+    if df.index.name is None:
+        if "index" in details:
+            index = details["index"]
+            if type(index) is dict:
+                df.index.name = index["name"]
+            elif type(index) is str:
+                df.index.name = index
+            else:
+                self._log.warning(f"Index \"{index}\" present in details but no valid name found.")
+            
     if "rename_columns" in details:
         for col in details["rename_columns"]:
             cols = df.columns
@@ -850,6 +859,7 @@ def load_or_create_df(details, index):
             df[index.name] = index
         else:
             df = pd.DataFrame(index=index, data=index)
+            df.index.name = index.name
         return finalize_data(df, details)
     else:
         raise FileNotFoundError(

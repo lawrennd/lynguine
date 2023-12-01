@@ -101,10 +101,16 @@ class Settings(_HConfig):
     """A settings object that loads in local settings files."""
     def __init__(self, user_file=None, directory="."):
         if user_file is None:
-            user_file = "_" + __name__ + ".yml"
-        self._user_file = user_file
+            ufile = "_" + __name__ + ".yml"
+        else:
+            ufile = user_file
+        if type(user_file) is list:
+            for ufile in user_file:
+                if os.path.exists(os.path.join(os.path.expandvars(directory), ufile)):
+                    break
+        self._user_file = ufile
         self._directory = directory
-        self._filename = os.path.join(os.path.expandvars(directory), user_file)
+        self._filename = os.path.join(os.path.expandvars(directory), ufile)
         self._data = {}
         if os.path.exists(self._filename):
             self._data = read_yaml_file(self._filename)
