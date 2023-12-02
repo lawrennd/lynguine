@@ -888,7 +888,7 @@ def load_or_create_df(details, index):
             )
 
 
-def globals(details, index=None):
+def globals_data(details, index=None):
     """Load in the globals data to a data frame."""
     # don't do it in the standard way as we don't want the index to be a column
     # if "index" in details:
