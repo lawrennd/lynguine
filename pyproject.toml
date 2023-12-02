@@ -21,6 +21,8 @@ python = ">=3.9"
 python-frontmatter = "*"
 bibtexparser = "*"
 pyyaml = "*"
+XlsxWriter = "*"
+pandas = "*"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

@@ -29,11 +29,12 @@ def _loaddatastream(file):
     if (ext == 'md'
         or ext == 'markdown'
         or ext == 'html'):
-        new_data, content = fm.parse(file.read())
+        print(name, ext)
+        new_data, content = fm.loads(file)
         new_data["content"] = content
     elif (ext == "yaml"
           or ext == "yml"):
-        new_data = yaml.load(file, Loader=yaml.SafeLoader)
+        new_data = yaml.safe_load(file)
     elif ext == 'json':
         new_data = json.load(file)
     elif ext == 'csv':

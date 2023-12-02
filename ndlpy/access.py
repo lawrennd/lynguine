@@ -14,6 +14,7 @@ import pandas as pd
 import frontmatter
 import pypandoc
 
+import bibtexparser as bp
 
 from .util import extract_full_filename, get_path_env, remove_nan
 from .log import Logger
@@ -114,6 +115,12 @@ def read_yaml(details):
     """Read data from a yaml file."""
     filename = extract_full_filename(details)
     data =  read_yaml_file(filename)
+    return pd.DataFrame(data)
+
+def read_bibtex(details):
+    """Read data from a bibtex file."""
+    filename = extract_full_filename(details)
+    data =  read_bibtex_file(filename)
     return pd.DataFrame(data)
 
 
@@ -274,6 +281,12 @@ def read_yaml_file(filename):
             data = {}
     return data
 
+def read_bibtex_file(filename):
+    """Red a bibtex file and return a python dictionary."""
+    with open(filename, "r") as stream:
+        log.debug(f"Reading bibtex file \"{filename}\"")
+        data = bp.load(stream)
+    return data.entries
 
 def yaml_prep(data):
     """Prepare any fields for writing in yaml"""
@@ -288,6 +301,13 @@ def yaml_prep(data):
             writedata[key] = item.strftime("%Y-%m-%d %H:%M:%S.%f")
     return writedata
 
+def write_bibtex_file(data, filename):
+    """Write a yaml file from a python dictionary."""
+    bibdata = bp.bibdatabase.BibDatabase()
+    bibdata.entries = data
+    with open(filename, "w") as stream:
+        log.debug(f"Writing bibtex file \"{filename}\".")
+        bp.dump(bibdata, stream)
 
 def write_yaml_file(data, filename):
     """Write a yaml file from a python dictionary."""
