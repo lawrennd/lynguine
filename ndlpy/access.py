@@ -131,8 +131,8 @@ def write_yaml(df, details):
 
 
 def read_directory(details,
-                   read_file=None,
-                   read_file_args={},
+                   filereader=None,
+                   filereader_args={},
                    default_glob="*",
                    source=None):
     """Read scoring data from a directory of files."""
@@ -185,10 +185,10 @@ def read_directory(details,
     filenames.sort()
     data = []
     for filename, dirname in zip(filenames, dirnames):
-        if read_file is None:
+        if filereader is None:
             data.append({})
         else:
-            data.append(read_file(filename, **read_file_args))
+            data.append(filereader(filename, **filereader_args))
         split_path = os.path.split(filename)
         if not os.path.exists(filename):
             log.warning(f"File \"{filename}\" is not a file or a directory.")
@@ -207,7 +207,7 @@ def read_directory(details,
     return pd.json_normalize(data)
 
 
-def write_directory(df, details, write_file=None, write_file_args={}):
+def write_directory(df, details, filewriter=None, filewriter_args={}):
     """Write scoring data to a directory of files."""
     filename_field = details["store_fields"]["filename"]
     directory_field = details["store_fields"]["directory"]
@@ -233,7 +233,7 @@ def write_directory(df, details, write_file=None, write_file_args={}):
             del row_dict[filename_field]
             del row_dict[root_field]
             del row_dict[directory_field]
-            write_file(row_dict, fullfilename, **write_file_args)
+            filewriter(row_dict, fullfilename, **filewriter_args)
 
 
 def remove_empty(row_dict):
@@ -270,6 +270,19 @@ def write_json_file(data, filename):
             log.warning(exc)
 
 
+def read_file(filename):
+    """"Attempt to read the file given the extention."""
+    ext = os.path.splitext(filename)[1][1:]
+    if ext in ["md", "mmd", "markdown", "html"]:
+        return read_markdown_file(filename)
+    if ext in ["yml", "yaml"]:
+        return read_yaml_file(filename)
+    if ext in ["bib", "bibtex"]:
+        return read_bibtex_file(filename)
+    if ext in ["docx"]:
+        return read_docx_file(filename)
+    raise ValueError(f"Unrecognised type of file in \"\{filename}\"")
+    
 def read_yaml_file(filename):
     """Read a yaml file and return a python dictionary."""
     with open(filename, "r") as stream:
@@ -629,37 +642,37 @@ if GSPREAD_AVAILABLE:
 directory_readers = [
     {
         "default_glob": "*.yml",
-        "read_file": read_yaml_file,
+        "filereader": read_yaml_file,
         "name": "read_yaml_directory",
         "docstr": "Read a directory of yaml files.",
     },
     {
         "default_glob": "*.json",
-        "read_file": read_json_file,
+        "filereader": read_json_file,
         "name": "read_json_directory",
         "docstr": "Read a directory of json files.",
     },
     {
         "default_glob": "*.md",
-        "read_file": read_markdown_file,
+        "filereader": read_markdown_file,
         "name": "read_markdown_directory",
         "docstr": "Read a directory of markdown files.",
     },
     {
         "default_glob": "*",
-        "read_file": None,
+        "filereader": None,
         "name": "read_plain_directory",
         "docstr": "Read a directory of files.",
     },
     {
         "default_glob": "*",
-        "read_file": read_yaml_meta_file,
+        "filereader": read_yaml_meta_file,
         "name": "read_meta_directory",
         "docstr": "Read a directory of yaml meta files.",
     },
     {
         "default_glob": "*.docx",
-        "read_file": read_docx_file,
+        "filereader": read_docx_file,
         "name": "read_docx_directory",
         "docstr": "Read a directory of word files.",
     },
@@ -668,29 +681,29 @@ directory_readers = [
 
 directory_writers =[
     {
-        "write_file": write_json_file,
+        "filewriter": write_json_file,
         "name": "write_json_directory",
         "docstr": "Write a directory of json files.",
     },
     {
-        "write_file": write_yaml_file,
+        "filewriter": write_yaml_file,
         "name": "write_yaml_directory",
         "docstr": "Write a directory of yaml files.",
     },
     {
-        "write_file": write_markdown_file,
+        "filewriter": write_markdown_file,
         "name": "write_markdown_directory",
         "docstr": "Write a directory of markdown files.",
     },
     {
-        "write_file": write_yaml_meta_file,
+        "filewriter": write_yaml_meta_file,
         "name": "write_meta_directory",
         "docstr": "Write a directory of yaml meta files.",
     },
 ]
 
 
-def gdrf_(default_glob, read_file, name="", docstr=""):
+def gdrf_(default_glob, filereader, name="", docstr=""):
     """Function generator for different directory readers."""
     def directory_reader(details):
         details = update_store_fields(details)
@@ -705,7 +718,7 @@ def gdrf_(default_glob, read_file, name="", docstr=""):
             source = None
         return read_directory(
             details=details,
-            read_file=read_file,
+            filereader=filereader,
             default_glob=globname,
             source=source,
         )
@@ -735,14 +748,14 @@ def update_store_fields(details):
     return details
     
 
-def gdwf_(write_file, name="", docstr=""):
+def gdwf_(filewriter, name="", docstr=""):
     """Function generator for different directory writers."""
     def directory_writer(df, details):
         details = update_store_fields(details)
         return write_directory(
             df=df,
             details=details,
-            write_file=write_file,
+            filewriter=filewriter,
         )
     directory_writer.__name__ = name
     directory_writer.__docstr__ = docstr
