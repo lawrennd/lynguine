@@ -99,7 +99,7 @@ class _HConfig(context._Config):
 
 class Settings(_HConfig):
     """A settings object that loads in local settings files."""
-    def __init__(self, user_file=None, directory="."):
+    def __init__(self, user_file=None, directory=".", field=None):
         if user_file is None:
             ufile = "_" + __name__ + ".yml"
         else:
@@ -110,10 +110,17 @@ class Settings(_HConfig):
                     break
         self._user_file = ufile
         self._directory = directory
-        self._filename = os.path.join(os.path.expandvars(directory), ufile)
+        fname = os.path.join(os.path.expandvars(directory), ufile)
+        self._filename = fname
         self._data = {}
         if os.path.exists(self._filename):
-            self._data = read_yaml_file(self._filename)
+            data = read_yaml_file(self._filename)
+            if field is None:
+                self._data = data
+            elif field in data:
+                self._data = data[field]
+            else:
+                raise ValueError(f"Field \"{field}\" specified but not found in file \"{fname}\"")
 
         self._inputs = []
         self._output = []

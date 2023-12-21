@@ -16,7 +16,7 @@ import pypandoc
 
 import bibtexparser as bp
 
-from .util import extract_full_filename, get_path_env, remove_nan
+from .util import extract_full_filename, extract_file_type, get_path_env, remove_nan
 from .log import Logger
 from .context import Context
 
@@ -36,29 +36,43 @@ log = Logger(
     filename=ctxt._data["logging"]["filename"],
 )
 
+def multiline_str_representer(dumper, data):
+    if '\n' in data:
+        return dumper.represent_scalar('tag:yaml.org,2002:str', data, style='|')
+    return dumper.represent_scalar('tag:yaml.org,2002:str', data)
 
-class EnvTag(yaml.YAMLObject):
-    yaml_tag = u'!ENV'
+yaml.add_representer(str, multiline_str_representer, Dumper=yaml.SafeDumper)
 
-    def __init__(self, env_var):
-        self.env_var = env_var
+# class EnvTag(yaml.YAMLObject):
+#     yaml_tag = u'!ENV'
 
-    def __repr__(self):
-        v = os.environ.get(self.env_var) or ''
-        return 'EnvTag({}, contains={})'.format(self.env_var, v)
+#     def __init__(self, env_var):
+#         self.env_var = env_var
 
-    @classmethod
-    def from_yaml(cls, loader, node):
-        return EnvTag(node.value)
+#     def __repr__(self):
+#         v = os.environ.get(self.env_var) or ''
+#         return 'EnvTag({}, contains={})'.format(self.env_var, v)
 
-    @classmethod
-    def to_yaml(cls, dumper, data):
-        return dumper.represent_scalar(cls.yaml_tag, data.env_var)
+#     @classmethod
+#     def from_yaml(cls, loader, node):
+#         return EnvTag(node.value)
+
+#     @classmethod
+#     def to_yaml(cls, dumper, data):
+#         value = dumper.represent_scalar(cls.yaml_tag, data.env_var)
+#         if '\n' in value:
+#             # Use the '|' style for multi-line strings
+#             return dumper.represent_scalar(cls.yaml_tag, value, style="|")
+#         else:
+#             return dumper.represent_scalar(cls.yaml_tag, value)        
+#         return value
+
 
 # Required for safe_load
-yaml.SafeLoader.add_constructor('!ENV', EnvTag.from_yaml)
+#yaml.SafeLoader.add_constructor('!ENV', EnvTag.from_yaml)
 # Required for safe_dump
-yaml.SafeDumper.add_multi_representer(EnvTag, EnvTag.to_yaml)
+#yaml.SafeDumper.add_multi_representer(EnvTag, EnvTag.to_yaml)
+
 
 
 def str_type():
@@ -135,7 +149,7 @@ def read_directory(details,
                    filereader_args={},
                    default_glob="*",
                    source=None):
-    """Read scoring data from a directory of files."""
+    """Read data from a directory of files."""
     filenames = []
     dirnames = []
     if "source" in details:
@@ -181,24 +195,44 @@ def read_directory(details,
             log.warning(f"No files in \"{sources}\".")
     else:
         log.warning(f"No source in \"{details}\".")
-      
-    filenames.sort()
+
+    filelist = [os.path.join(dirname, filename) for filename, dirname in zip(filenames, dirnames)]
+        
+    return read_files(filelist, details["store_fields"], filereader, filereader_args)
+
+def read_list(filelist):
+    """Read from a list of files."""
+    return read_files(filelist)
+    
+def read_files(filelist, store_fields=None, filereader=None, filereader_args=None):
+    """Read files from a given list."""
+    if store_fields is not None:
+        root_field = store_fields["root"]
+        directory_field = store_fields["directory"]
+        filename_field = store_fields["filename"]
+    else:
+        root_field = "sourceRoot"
+        directory_field = "sourceDirectory"
+        filename_field = "sourceFile"
+    
+
+    filelist.sort()
     data = []
-    for filename, dirname in zip(filenames, dirnames):
-        if filereader is None:
-            data.append({})
-        else:
-            data.append(filereader(filename, **filereader_args))
-        split_path = os.path.split(filename)
+    for filename in filelist:
         if not os.path.exists(filename):
             log.warning(f"File \"{filename}\" is not a file or a directory.")
-        root_field = details["store_fields"]["root"]
-        directory_field = details["store_fields"]["directory"]
-        filename_field = details["store_fields"]["filename"]
+        if filereader is None:
+            filereader = default_file_reader(filename)
+        if filereader_args is None:
+            data.append(filereader(filename, **filereader_args))
+        else:
+            data.append(filereader(filename))
+            
+        split_path = os.path.split(filename)
         if root_field not in data[-1]:
             data[-1][root_field] = get_path_env()
         if directory_field not in data[-1]:
-            direc = split_path[0].replace(dirname, '')
+            direc = split_path[0].replace(data[-1][root_field], '')
             if direc == "": # ensure at least a "." for directory
                 direc = "."
             data[-1][directory_field] = direc
@@ -265,23 +299,27 @@ def write_json_file(data, filename):
     with open(filename, "w") as stream:
         try:
             log.debug(f"Writing json file \"{filename}\".")
-            json.dump(data, stream, sort_keys=False)
+            json.dump(data, stream, sort_keys=False, Dumper=yaml.SafeDumper)
         except json.JSONDecodeError as exc:
             log.warning(exc)
 
-
+def default_file_reader(typ):
+    """Return the default file reader for a given type."""
+    if typ == "markdown":
+        return read_markdown_file
+    if typ == "yaml":
+        return read_yaml_file
+    if typ == "bibtex":
+        return read_bibtex_file
+    if typ == "docx":
+        return read_docx_file
+    raise ValueError(f"Unrecognised type of file \"{typ}\" in \"\{filename}\"")
+    
+        
 def read_file(filename):
     """"Attempt to read the file given the extention."""
-    ext = os.path.splitext(filename)[1][1:]
-    if ext in ["md", "mmd", "markdown", "html"]:
-        return read_markdown_file(filename)
-    if ext in ["yml", "yaml"]:
-        return read_yaml_file(filename)
-    if ext in ["bib", "bibtex"]:
-        return read_bibtex_file(filename)
-    if ext in ["docx"]:
-        return read_docx_file(filename)
-    raise ValueError(f"Unrecognised type of file in \"\{filename}\"")
+    typ = extract_file_type(filename)
+    return default_file_reader(typ)(filename)
     
 def read_yaml_file(filename):
     """Read a yaml file and return a python dictionary."""
@@ -328,7 +366,11 @@ def write_yaml_file(data, filename):
     with open(filename, "w") as stream:
         try:
             log.debug(f"Writing yaml file \"{filename}\".")
-            yaml.dump(writedata, stream, sort_keys=False)
+            yaml.dump(writedata,
+                      stream,
+                      sort_keys=False,
+                      allow_unicode=True,
+                      width=70)
         except yaml.YAMLError as exc:
             log.warning(exc)
 
@@ -832,6 +874,10 @@ def read_data(details):
         df = read_csv(details)
     elif ftype == "json":
         df = read_json(details)
+    elif ftype == "bibtex":
+        df = read_bibtex(details)
+    elif ftype == "list":
+        df = read_list(details)                        
     elif ftype == "yaml_directory":
         df = read_yaml_directory(details)
     elif ftype == "markdown_directory":
