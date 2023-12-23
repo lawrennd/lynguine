@@ -187,7 +187,7 @@ class DataObject():
                 return self.__class__(
                     data=pd.DataFrame(other,
                                       index=self.index,
-                                      columns=self.columns
+                                      columns=self.columns,
                                       ),
                     colspecs=self._colspecs,
                     index=self._index,
@@ -206,9 +206,9 @@ class DataObject():
                 return self.__class__(data=pd.DataFrame(other, index=self.columns, columns=[self._index]), index=self._index, column=self._column)
                 
         elif isinstance(other, list):
-            return convert(self, np.array(other))
+            return self.convert(np.array(other))
         elif isinstance(other, dict):
-            return convert(self, pd.DataFrame(other))
+            return self.convert(pd.DataFrame(other))
         else:
             return other
         
@@ -511,25 +511,26 @@ class DataObject():
         return np.array(self.to_pandas(), dtype=dtype)
     
     def __getitem__(self, key):
-        vals = self.to_pandas()[key]
-        if isinstance(vals, pd.Series):
-            vals = vals.to_frame()
-        if self._index in vals.index:
+        df = self.to_pandas()[key]
+        if isinstance(df, pd.Series):
+            df = df.to_frame()
+        if self._index in df.index:
             index=self._index
         else:
             index=None
-        if self._column in vals.columns:
+        if self._column in df.columns:
             column=self._column
         else:
             column=None
-        if self._selector in vals.columns:
+        if self._selector in df.columns:
             selector=self._selector
         else:
             selector=None
-            
+
+        colspecs = {"cache" : df.columns}
         return self.__class__(
-            data=vals,
-            colspecs=self._colspecs,
+            data=df,
+            colspecs=colspecs,
             index=index,
             column=column,
             selector=selector,
@@ -537,7 +538,11 @@ class DataObject():
 
     def __setitem__(self, key, value):
         raise NotImplementedError("This is a base class")
-
+    
+    def __iter__(self):
+        for column in self.columns:
+            yield column
+            
     def __str__(self):
         return str(self.to_pandas())
 

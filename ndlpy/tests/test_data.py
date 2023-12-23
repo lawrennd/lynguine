@@ -17,7 +17,7 @@ def test_dataframe_creation():
 
 def test_column_access():
     df = create_test_dataframe()
-    assert all(df['A'] == [1, 2, 3])
+    assert all(df['A'] =={'A': [1, 2, 3]})
 
 def test_row_access():
     df = create_test_dataframe()
