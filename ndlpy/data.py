@@ -14,7 +14,7 @@ class Accessor():
         
     
 class DataObject():
-    def __init__(self, data=None, selector=None, index=None, column=None):
+    def __init__(self, data=None, colspecs=None, index=None, column=None, selector=None):
         self.at = self._AtAccessor(self)
         self.iloc = self._IlocAccessor(self)
         self.loc = self._locAccessor(self)
@@ -32,10 +32,10 @@ class DataObject():
             super().__init__(data=data)
         
     def get_value(self):
-        return self._data.at[self._index, self._column]
+        return self.at[self._index, self._column]
 
     def set_value(self, val):
-        self._data.at[self._index, self._column] = val
+        self.at[self._index, self._column] = val
 
     def get_column(self):
         return self._column
@@ -92,7 +92,7 @@ class DataObject():
         return self.to_pandas().describe()
 
     def to_pandas(self):
-        return self._data
+        raise NotImplementedError("This is a base class")
 
     def to_clipboard(self, *args, **kwargs):
         return self.to_pandas().to_clipboard(*args, **kwargs)
@@ -160,17 +160,13 @@ class DataObject():
     def to_string(self, *args, **kwargs):
         return self.to_pandas().to_string(*args, **kwargs)
 
-    def from_pandas(self, df):
-        self._data = df
-        self._column = df.columns[0]
-        self._index = df.index[0]
-
     @classmethod
     def from_csv(cls, *args, **kwargs):        
-        return cls(pd.read_csv(*args, **kwargs))
-        
-    def from_dict(self, data, *args, **kwargs):
-        self.from_df(data=self._data.from_dict(data, *args, **kwargs))
+        return cls.from_pandas(df=pd.read_csv(*args, **kwargs))
+
+    @classmethod
+    def from_dict(cls, data, *args, **kwargs):
+        return cls.from_pandas(df=pd.DataFrame.from_dict(data, *args, **kwargs))
 
     def sort_values(self, by, axis=0, ascending=True, inplace=False, **kwargs):
         raise NotImplementedError("This is a base class")
@@ -185,21 +181,29 @@ class DataObject():
         elif isinstance(other, pd.DataFrame):
             return self.__class__(other)
         elif isinstance(other, pd.Series):
-            return self.__class__(other.to_frame())
+            return self.__class__(other)
         elif isinstance(other, np.ndarray):
             if other.shape == self.shape:
-                return self.__class__(pd.DataFrame(other, index=self.index, columns=self.columns), index=self._index, column=self._column)
+                return self.__class__(
+                    data=pd.DataFrame(other,
+                                      index=self.index,
+                                      columns=self.columns
+                                      ),
+                    colspecs=self._colspecs,
+                    index=self._index,
+                    column=self._column
+                )
             elif len(other.shape) == 1 and other.shape[0] == self.shape[0]:
-                return self.__class__(pd.DataFrame(other, index=self.index, columns=[self._column]), index=self._index, column=self._column)
+                return self.__class__(data=pd.DataFrame(other, index=self.index, columns=[self._column]), index=self._index, column=self._column)
             elif other.shape[1] == 1 and other.shape[0] == self.shape[0]:
-                return self.__class__(pd.DataFrame(other, index=self.index, columns=[self._column]), index=self._index, column=self._column)
+                return self.__class__(data=pd.DataFrame(other, index=self.index, columns=[self._column]), index=self._index, column=self._column)
             elif other.shape[0] == 1 and other.shape[1] == self.shape[1]:
-                return self.__class__(pd.DataFrame(other, columns=self.columns, index=[self._index]), index=self._index, column=self._column)
+                return self.__class__(data=pd.DataFrame(other, columns=self.columns, index=[self._index]), index=self._index, column=self._column)
             # Broadcast cases
             elif other.shape[0] == 1 and other.shape[1] == self.shape[0]:
-                return self.__class__(pd.DataFrame(other, columns=self.index, index=[self._column]), index=self._index, column=self._column)
+                return self.__class__(data=pd.DataFrame(other, columns=self.index, index=[self._column]), index=self._index, column=self._column)
             elif other.shape[1] == 1 and other.shape[0] == self.shape[1]:
-                return self.__class__(pd.DataFrame(other, index=self.columns, columns=[self._index]), index=self._index, column=self._column)
+                return self.__class__(data=pd.DataFrame(other, index=self.columns, columns=[self._index]), index=self._index, column=self._column)
                 
         elif isinstance(other, list):
             return convert(self, np.array(other))
@@ -211,31 +215,40 @@ class DataObject():
         
         
     # Mathematical operations
-
     def sum(self, axis=0):
         if axis == 0:
-            index = self._column
+            column = self._column
+            colspecs = {"parameter_cache": list(self.columns)}
         else:
-            index = self._index
+            column = self._index
+            colspecs = {"parameter_cache": list(self.index)}
+
         return self.__class__(
-            self.to_pandas().sum(axis),
-            index=index,
+            data=self.to_pandas().sum(axis),
+            colspecs=colspecs,
+            types=self.types,
+            column=column,
         )
 
     def mean(self, axis=0):
         if axis == 0:
-            index = self._column
+            column = self._column
+            colspecs = {"parameter_cache": list(self.columns)}
         else:
-            index = self._index
+            column = self._index
+            colspecs = {"parameter_cache": list(self.index)}
         return self.__class__(
-            self.to_pandas().mean(axis),
-            index=index,
+            data=self.to_pandas().mean(axis),
+            colspecs=colspecs,
+            types=self.types,
+            column=column,
         )
 
     def add(self, other):
         other = self.convert(other)
         return self.__class__(
-            self.to_pandas().add(other.to_pandas()),
+            data=self.to_pandas().add(other.to_pandas()),
+            colspecs=self._colspecs,
             index=self._index,
             column=self._column,
             selector=self._selector,
@@ -244,7 +257,8 @@ class DataObject():
     def subtract(self, other):
         other = self.convert(other)
         return self.__class__(
-            self.to_pandas().subtract(other.to_pandas()),
+            data=self.to_pandas().subtract(other.to_pandas()),
+            colspecs=self._colspecs,
             index=self._index,
             column=self._column,
             selector=self._selector,
@@ -253,7 +267,8 @@ class DataObject():
     def multiply(self, other):
         other = self.convert(other)
         return self.__class__(
-            self.to_pandas().multiply(pd.DataFrame(other.to_pandas())),
+            data=self.to_pandas().multiply(pd.DataFrame(other.to_pandas())),
+            colspecs=self._colspecs,
             index=self._index,
             column=self._column,
             selector=self._selector,
@@ -264,20 +279,20 @@ class DataObject():
         return self.to_pandas().equals(other.to_pandas())
 
     def transpose(self):
-        return self.__class__(self._data.transpose(), index=self._column, column=self._index)
+        return self.from_pandas(
+            self.to_pandas().transpose()
+            )
 
     def dot(self, other):
         other = self.convert(other)
-        return self.__class__(
+        return self.from_pandas(
             self.dot(self.to_pandas(), other.to_pandas()),
-            index=self._index,
-            column = other._column,
-            selector= other._selector,
         )
 
     def isna(self):
         return self.__class__(
-            self.to_pandas().isna(),
+            data=self.to_pandas().isna(),
+            colspecs=self._colspecs,
             index=self._index,
             column = self._column,
             selector = self._selector,
@@ -291,7 +306,8 @@ class DataObject():
 
     def fillna(self, *args, **kwargs):
         return self.__class__(
-            self.to_pandas().fillna(*args, **kwargs),
+            data=self.to_pandas().fillna(*args, **kwargs),
+            colspecs=self._colspecs,
             index=self._index,
             column=self._column,
             selector=self._selector,
@@ -315,7 +331,8 @@ class DataObject():
             sel = self._selector
             
         return self.__class__(
-            vals,
+            data=vals,
+            colspecs=self._colspecs,
             index = ind,
             column = col,
             selector = sel,
@@ -328,7 +345,8 @@ class DataObject():
         else:
             index = self._index
         return self.__class__(
-            vals,
+            data=vals,
+            colspecs=self._colspecs,
             index=index,
             column=self._column,
             selector=self._selector,
@@ -342,7 +360,8 @@ class DataObject():
             index = self._index
             
         return self.__class__(
-            vals,
+            data=vals,
+            colspecs=self._colspecs,
             index=index,
             column=self._column,
             selector=self._selector,
@@ -350,15 +369,19 @@ class DataObject():
     
     def pivot_table(self, *args, **kwargs):
         return self.__class__(
-            self.to_pandas().pivot_table(*args, **kwargs),
+            data=self.to_pandas().pivot_table(*args, **kwargs),
             )
+
+    def _colspecs(self):
+        return None
     
     def _apply_operator(self, other, operator):
         """Helper functions for pandas comparison operators."""
         other = self.convert(other)
         method = getattr(self.to_pandas(), operator)
         return self.__class__(
-            method(other.to_pandas()),
+            data=method(other.to_pandas()),
+            colspecs=self._colspecs,
             index=self._index,
             column=self._column,
             selector=self._selector
@@ -384,6 +407,14 @@ class DataObject():
     def values(self):
         return self.to_pandas().values
 
+    @property
+    def colspecs(self):
+        return self._colspecs
+
+    @property
+    def types(self):
+        return self._types
+    
     # Operators
     def __add__(self, other):
         # Overloading the '+' operator
@@ -399,23 +430,30 @@ class DataObject():
 
     def __invert__(self):
         # Overloading the '~' operator
-        return self.__class__(~self.to_pandas(),
-                              index=self._index,
-                              column=self._column,
-                              selector=self._selector)
+        return self.__class__(
+            data=~self.to_pandas(),
+            colspecs=self._colspecs,
+            index=self._index,
+            column=self._column,
+            selector=self._selector
+        )
 
     def __neg__(self):
         # Overloading the unary '-' operator
-        return self.__class__(-self.to_pandas(),
-                              index=self._index,
-                              column=self._column,
-                              selector=self._selector)
+        return self.__class__(
+            data=-self.to_pandas(),
+            colspecs=self._colspecs,
+            index=self._index,
+            column=self._column,
+            selector=self._selector
+        )
     
     def __truediv__(self, other):
         # Overloading the '/' operator
         other = self.convert(other)
         return self.__class__(
-            self.to_pandas()/other.to_pandas(),
+            data=self.to_pandas()/other.to_pandas(),
+            colspecs=self._colspecs,
             index=self._index,
             column = self._column,
             selector= self._selector,
@@ -425,7 +463,8 @@ class DataObject():
         # Overloading the '//' operator
         other = self.convert(other)
         return self.__class__(
-            self.to_pandas()//other.to_pandas(),
+            data=self.to_pandas()//other.to_pandas(),
+            colspecs=self._colspecs,
             index=self._index,
             column = self._column,
             selector= self._selector,
@@ -439,7 +478,8 @@ class DataObject():
     def __pow__(self, exponent):
         # Overloading the '**' operator
         return self.__class__(
-            self.to_pandas()**exponent,
+            data=self.to_pandas()**exponent,
+            colspecs=self._colspecs,
             index = self._index,
             column = self._column,
             selector = self._selector,
@@ -488,7 +528,8 @@ class DataObject():
             selector=None
             
         return self.__class__(
-            vals,
+            data=vals,
+            colspecs=self._colspecs,
             index=index,
             column=column,
             selector=selector,
@@ -498,26 +539,95 @@ class DataObject():
         raise NotImplementedError("This is a base class")
 
     def __str__(self):
-        raise NotImplementedError("This is a base class")
+        return str(self.to_pandas())
 
     def __repr__(self):
-        raise NotImplementedError("This is a base class")
+        return repr(self.to_pandas())
 
     
-class DataFrame(DataObject):
-    def __init__(self, data, selector=None, index=None, column=None):
+class CustomDataFrame(DataObject):
+    def __init__(self, data,
+                 colspecs=None,
+                 index=None,
+                 column=None,
+                 selector=None,
+                 types=None):
+        
         if isinstance(data, dict):
+            entries = data.values()
+            if all([isinstance(entry, (int, float, str, bool, complex)) for entry in entries]):
+                data = pd.Series(data).to_frame().T
             data = pd.DataFrame(data)
         if isinstance(data, pd.Series):
-            data = data.to_frame()
-        self._data = data
-        if index is None:
-            index = data.index[0]
+            data = data.to_frame(name=data.name).T
+        if data is None:
+            data = {}
+        if isinstance(data, dict):
+            data = pd.DataFame(data)
+        if isinstance(data, list):
+            data = pd.DataFame(data)
+
+        if types is None:
+            types = {
+                "parameters" : [
+                    "constants",
+                    "global_consts",
+                    "parameters",
+                    "globals",
+                    "parameter_cache",
+                    "global_cache",
+                ],
+                "input" : [
+                    "input",
+                    "data",
+                    "constants",
+                    "global_consts",
+                ],
+                "output" : [
+                    "output",
+                    "writedata",
+                    "writeseries",
+                    "parameters",
+                    "globals",
+                ],
+                "cache" : [
+                    "cache",
+                    "parameter_cache",
+                    "global_cache",
+                ],
+                "series" : [
+                    "writeseries",
+                ],
+            }
+
+            
+            
+        if colspecs is None:
+            colspecs = {
+                "cache" : list(data.columns)
+            }
+        columns = [col for cols in colspecs.values() for col in cols]
+        cache = [col for col in data.columns if col not in columns]
+        if len(cache)>0:
+            if "cache" not in colspecs:
+                colspecs["cache"] = []
+            colspecs["cache"] += cache
+
         self._index = index
-        if column is None:
-            column = data.columns[0]
         self._column = column
         self._selector = selector
+        self._types = types
+        self._colspecs = colspecs
+        self._d = {}
+            
+        self._distribute_data(data)
+                                
+        if index is None:
+            index = data.index[0]
+
+        if column is None:
+            column = data.columns[0]
+
         self.at = self._AtAccessor(self)
         self.loc = self._LocAccessor(self)
         self.iloc = self._IlocAccessor(self)
@@ -527,69 +637,115 @@ class DataFrame(DataObject):
             super().__init__(data=data)
 
         def __getitem__(self, key):
-            return self._data_object._data.at[key]
+            return self._data_object._d["cache"].at[key]
 
         def __setitem__(self, key, value):
-            self._data_object._data.at[key] = value
+            self._data_object._d["cache"].at[key] = value
         
     class _LocAccessor(Accessor):
         def __init__(self, data):
             super().__init__(data=data)
 
         def __getitem__(self, key):
-            return self._data_object._data.loc[key]
+            return self._data_object._d["cache"].loc[key]
 
         def __setitem__(self, key, value):
-            self._data_object._data.loc[key] = value
+            self._data_object._d["cache"].loc[key] = value
             
     class _IlocAccessor(Accessor):
         def __init__(self, data):
             super().__init__(data=data)
 
         def __getitem__(self, key):
-            return self._data_object._data.iloc[key]
+            return self._data_object._d["cache"].iloc[key]
 
         def __setitem__(self, key, value):
-            self._data_object._data.iloc[key] = value
+            self._data_object._d["cache"].iloc[key] = value
 
-    def add_column(self, column_name, data):
-        self._data[column_name] = data
+    def _distribute_data(self, data):
+        """Distribute input data according to the colspec."""
+        # Distribute data across names columns
+        for typ, cols in self._colspecs.items():
+            if typ in self._types["parameters"]:
+                self._d[typ] = pd.Series(index=cols, data=None)
+                for col in cols:
+                    if all(data[col]==data[col].iloc[0]):
+                        self._d[typ][col] = data[col].iloc[0]
+                    else:
+                        raise ValueError(f"Column \"{col}\" is specified as a parameter column and yet the values of the column are not all the same..")
+            else:
+                d = data[cols]
+                if typ in self._types["series"]:
+                    self._d[typ] = d
+                else:
+                    # If it's not a series type make sure it's deduplicated.
+                    self._d[typ] = d[~d.index.duplicated(keep='first')]
+                    if len(d.index) > len(self._d[typ]):
+                        self._log.debug("Removing duplicated elements from \"{typ}\" loaded data.")
 
-    def drop_column(self, column_name):
-        self._data.drop(column_name, axis=1, inplace=True)
-
-    def filter_rows(self, condition):
-        return self._data[condition]
-
-    def sort_values(self, by, axis=0, ascending=True, inplace=False, **kwargs):
-        value = self._data.sort_values(by=by,
-                                       axis=axis,
-                                       ascending=ascending,
-                                       inplace=inplace,
-                                       **kwargs)
+    def to_pandas(self):
+        """Concatenate the dataframes from _d."""
+        df1 = pd.DataFrame()
+        for typ, data in self._d.items():
+            if typ in self._types["parameters"]:
+                if len(df1.index)==0:
+                    ind = data.name if data.name is not None else 0
+                    for col in data.index:
+                        df1.at[ind, col] = data[col]
+                else:
+                    df.assign(**data)
+            else:
+                df1 = df1.join(data, how="outer")
+        return df1
+                        
+    def from_pandas(self, df, inplace=False):
+        """Convert from a pandas data frame to a CustomDataFrame"""
         if inplace:
-            return value
+            self._distribute_data(df)
         else:
-            return DataFrame(value, self._selector, self._index, self._column)
+            return self.__class__(
+                df,
+                self._colspecs,
+                self._selector,
+                self._index,
+                self._column
+            )
+                        
+    def filter(self, *args, **kwargs):
+        return self.from_pandas(
+            self.to_pandas().filter(*args, **kwargs)
+        )
+    
+    def sort_values(self, *args, inplace=False, **kwargs):
+        df = self.to_pandas().sort_values(
+            *args,
+            inplace=False,
+            **kwargs,
+        )
+        return self.from_pandas(df, inplace=inplace)
+    
+    def sort_index(self, *args, inplace=False, **kwargs):
+        df = self.to_pandas().sort_index(
+            *args,
+            inplace=False,
+            **kwargs
+        )
+        return self.from_pandas(df, inplace=inplace)
 
-    def sort_index(self, axis=0, level=None, ascending=True, inplace=False, **kwargs):
-        value = self._data.sort_index(axis=axis,
-                                      level=level, 
-                                      scending=ascending,
-                                      inplace=inplace,
-                                      **kwargs)
-        if inplace:
-            return value
-        else:
-            return DataFrame(value, self._selector, self._index, self._column)
 
 
     def __setitem__(self, key, value):
-        self._data[key] = value
+        self._d["output"][key] = value
 
-    def __str__(self):
-        return str(self._data)
-
-    def __repr__(self):
-        return repr(self._data)
     
+def concat(objs, *args, **kwargs):
+    df = pd.concat(
+        [obj.to_pandas() for obj in objs],
+        *args,
+        **kwargs
+    )
+    colspecs = {}
+    for obj in objs:
+        colspecs.update(obj.colspecs)
+    
+    return obj.__class__(df, colspecs, types=obj[0].types)

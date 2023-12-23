@@ -9,14 +9,15 @@ import tempfile
 import unittest
 
 import referia as rf
+import ndlpy
 
-from referia.access import (
+from ndlpy.access import (
     read_json, write_json, read_directory, write_directory, read_json_file,
     write_json_file, yaml_prep, read_yaml_meta_file, write_yaml_meta_file,
     read_markdown_file, read_docx_file, write_markdown_file, create_letter,
     write_letter_file
 )
-from referia.util import extract_full_filename
+from ndlpy.util import extract_full_filename
 
 class TestUtils(unittest.TestCase):
     def setUp(self):
@@ -40,7 +41,7 @@ class TestUtils(unittest.TestCase):
         self.yaml_details = self.details.copy()
         self.yaml_details["filename"] = self.yaml_file_name
         
-    @patch('referia.access.read_json_file')
+    @patch('ndlpy.access.read_json_file')
     def test_read_json(self, mocked_read_json_file):
         full_filename = extract_full_filename(self.json_details)
         mocked_read_json_file.return_value = self.sample_dict
@@ -48,7 +49,7 @@ class TestUtils(unittest.TestCase):
         mocked_read_json_file.assert_called_once_with(full_filename)
         assert_frame_equal(df, self.sample_df)
 
-    @patch('referia.access.write_json_file')
+    @patch('ndlpy.access.write_json_file')
     def test_write_json(self, mocked_write_json_file):
         full_filename = extract_full_filename(self.json_details)
         write_json(self.sample_df, self.json_details)
@@ -83,16 +84,16 @@ class TestUtils(unittest.TestCase):
         """access_tests: test the write to and read from a yaml file."""
         filename = "test.yaml"
         data = rf.fake.row()
-        rf.access.write_yaml_file(data, filename)
-        read_data = rf.access.read_yaml_file(filename)
+        ndlpy.access.write_yaml_file(data, filename)
+        read_data = ndlpy.access.read_yaml_file(filename)
         self.assertDictEqual(data,read_data)
 
     def test_write_read_markdown(self):
         """access_tests: test the write to and read from a yaml headed markdown file."""
         filename = "test.markdown"
         data = rf.fake.row()
-        rf.access.write_markdown_file(data, filename)
-        read_data = rf.access.read_markdown_file(filename)
+        ndlpy.access.write_markdown_file(data, filename)
+        read_data = ndlpy.access.read_markdown_file(filename)
         self.assertDictEqual(data, read_data)
         
 
@@ -115,8 +116,8 @@ class TestUtils(unittest.TestCase):
             "quotechar": "\"",
         }
         data = pd.DataFrame(rf.fake.rows(30))
-        rf.access.write_csv(data, details)
-        read_data = rf.access.read_csv(details)
+        ndlpy.access.write_csv(data, details)
+        read_data = ndlpy.access.read_csv(details)
         self.compare_data_frames(data, read_data)
         tmpDirectory.cleanup()
 
@@ -130,8 +131,8 @@ class TestUtils(unittest.TestCase):
             "sheet": "Sheet1",
         }
         data = pd.DataFrame(rf.fake.rows(30))
-        rf.access.write_excel(data, details)
-        read_data = rf.access.read_excel(details)
+        ndlpy.access.write_excel(data, details)
+        read_data = ndlpy.access.read_excel(details)
         self.compare_data_frames(data, read_data)
         tmpDirectory.cleanup()
 
@@ -143,8 +144,8 @@ class TestUtils(unittest.TestCase):
             "directory": tmpDirectory.name,
         }
         data = pd.DataFrame(rf.fake.rows(30))
-        rf.access.write_json(data, details)
-        read_data = rf.access.read_json(details)
+        ndlpy.access.write_json(data, details)
+        read_data = ndlpy.access.read_json(details)
         self.compare_data_frames(data, read_data)
         tmpDirectory.cleanup()
 
@@ -156,8 +157,8 @@ class TestUtils(unittest.TestCase):
             "directory": tmpDirectory.name,
         }
         data = pd.DataFrame(rf.fake.rows(30))
-        rf.access.write_yaml(data, details)
-        read_data = rf.access.read_yaml(details)
+        ndlpy.access.write_yaml(data, details)
+        read_data = ndlpy.access.read_yaml(details)
         self.compare_data_frames(read_data, data)
         tmpDirectory.cleanup()
 
@@ -181,8 +182,8 @@ class TestUtils(unittest.TestCase):
             data.at[ind, "sourceDirectory"] = tmpDirectory.name
             data.at[ind, "sourceRoot"] = "."
         data = data.sort_values(by="sourceFilename").reset_index(drop=True)
-        rf.access.write_json_directory(data, details)
-        read_data = rf.access.read_json_directory(details)
+        ndlpy.access.write_json_directory(data, details)
+        read_data = ndlpy.access.read_json_directory(details)
         self.compare_data_frames(data, read_data)
         tmpDirectory.cleanup()
 
@@ -206,8 +207,8 @@ class TestUtils(unittest.TestCase):
             data.at[ind, "sourceDirectory"] = tmpDirectory.name
             data.at[ind, "sourceRoot"] = "."
         data = data.sort_values(by="sourceFilename").reset_index(drop=True)
-        rf.access.write_yaml_directory(data, details)
-        read_data = rf.access.read_yaml_directory(details)
+        ndlpy.access.write_yaml_directory(data, details)
+        read_data = ndlpy.access.read_yaml_directory(details)
         self.compare_data_frames(data, read_data)
         tmpDirectory.cleanup()
         
@@ -231,8 +232,8 @@ class TestUtils(unittest.TestCase):
             data.at[ind, "sourceDirectory"] = tmpDirectory.name
             data.at[ind, "sourceRoot"] = "."
         data = data.sort_values(by="sourceFilename").reset_index(drop=True)
-        rf.access.write_markdown_directory(data, details)
-        read_data = rf.access.read_markdown_directory(details)
+        ndlpy.access.write_markdown_directory(data, details)
+        read_data = ndlpy.access.read_markdown_directory(details)
         self.compare_data_frames(data, read_data)
         tmpDirectory.cleanup()
     
