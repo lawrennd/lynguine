@@ -473,8 +473,6 @@ class DataObject():
                         columns=self.get_column(),
                     ),
                 )
-            else:
-                
         else:
             # Incompatible array shape
             raise ValueError("NumPy array shape is not compatible with CustomDataFrame.")        
@@ -1030,9 +1028,6 @@ class CustomDataFrame(DataObject):
                 colspecs["cache"] = []
             colspecs["cache"] += cache
 
-        self.set_index(index)
-        self.set_column(column)
-        self.set_selector(selector)
         self._types = types
         self._colspecs = colspecs
         self._d = {}
@@ -1040,11 +1035,17 @@ class CustomDataFrame(DataObject):
         self._distribute_data(data)
                                 
         if index is None:
-            index = data.index[0]
+            index = self.index[0]
 
         if column is None:
-            column = data.columns[0]
+            column = self.columns[0]
 
+        self.set_index(index)
+        self.set_column(column)
+        
+        if selector is not None:
+            self.set_selector(selector)
+            
         self.at = self._AtAccessor(self)
         self.loc = self._LocAccessor(self)
         self.iloc = self._IlocAccessor(self)
