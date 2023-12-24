@@ -1,6 +1,17 @@
 import pandas as pd
 import numpy as np
+
+from .log import Logger
+from .context import Context
+
 """Wrapper classes for data objects"""
+
+ctxt = Context()
+log = Logger(
+    name=__name__,
+    level=ctxt._data["logging"]["level"],
+    filename=ctxt._data["logging"]["filename"],
+)
 
 class Accessor():
     def __init__(self, data):
@@ -18,7 +29,7 @@ class DataObject():
         self.at = self._AtAccessor(self)
         self.iloc = self._IlocAccessor(self)
         self.loc = self._locAccessor(self)
-
+        
     class _AtAccessor(Accessor):
         def __init__(self, data):
             super().__init__(data=data)
@@ -675,6 +686,15 @@ class DataObject():
             column=self.get_column(),
             selector=self.get_selector()
         )
+
+    @property
+    def _log(self):
+        """
+        Access the system log.
+
+        :return: Reference to the system log.
+        """
+        return log
     
     @property
     def T(self):
@@ -959,6 +979,84 @@ class DataObject():
     def __repr__(self):
         return repr(self.to_pandas())
 
+    def _update_colspecs_after_merge(self, right, merged_df, on, suffixes):
+        """
+        Update colspecs after a merge operation to reflect changes in column names.
+
+        :param left: The left DataFrame used in the merge.
+        :param right: The right DataFrame used in the merge.
+        :param merged_df: The resulting merged DataFrame.
+        :param on: Columns used for merging.
+        :param suffixes: Suffixes used in the merge to resolve overlapping column names.
+        :return: Updated colspecs dictionary.
+        """
+        if on is None:
+            on = []
+            
+        # Initialize updated colspecs
+        updated_colspecs = {k: list(v) for k, v in self.colspecs.items()}
+
+        # Add right DataFrame's colspecs, preferring left in case of overlap
+        for ctype, cols in right.colspecs.items():
+            if ctype in updated_colspecs:
+                updated_colspecs[ctype].extend([col for col in cols if col not in on])
+            else:
+                updated_colspecs[ctype] = [col for col in cols if col not in on]
+
+        # Adjust column names for suffixes and merge keys
+        left_suffix, right_suffix = suffixes
+        allocated = []
+        for ctype, cols in updated_colspecs.items():
+            updated = []
+            for col in cols:
+                if col in self.columns and col not in on and (col + left_suffix) in merged_df.columns and (col + left_suffix) not in allocated:
+                    updated.append(col + left_suffix)
+                    allocated.append(col + left_suffix)
+                elif col in right.columns and col not in on and (col + right_suffix) in merged_df.columns and (col + right_suffix) not in allocated:
+                    updated.append(col + right_suffix)
+                    allocated.append(col + right_suffix)
+                else:
+                    updated.append(col)
+                    allocated.append(col)
+            updated_colspecs[ctype] = updated
+            
+        # Remove any columns that are not in the merged DataFrame
+        for ctype in updated_colspecs:
+            updated_colspecs[ctype] = [col for col in updated_colspecs[ctype] if col in merged_df.columns]
+
+        return updated_colspecs
+
+    def merge(self, right, how='inner', on=None, left_on=None, right_on=None, suffixes=("_x", "_y"), *args, **kwargs):
+        """
+        Merge CustomDataFrame with another DataFrame or CustomDataFrame.
+
+        :param right: Another DataFrame or CustomDataFrame to merge with.
+        :param how, on, left_on, right_on, args, kwargs: Parameters for pandas.DataFrame.merge.
+        :param suffixes: A tuple of string suffixes to apply to overlapping column names.
+        :return: A new CustomDataFrame resulting from the merge operation.
+        """
+        # Perform the merge operation
+        merged_df = pd.merge(
+            self.to_pandas(),
+            right.to_pandas() if isinstance(right, CustomDataFrame) else right,
+            how=how,
+            on=on,
+            left_on=left_on,
+            right_on=right_on,
+            suffixes=suffixes,
+            *args,
+            **kwargs
+        )
+
+        # Update colspecs
+        colspecs = self._update_colspecs_after_merge(right, merged_df, on=on, suffixes=suffixes)
+
+        types = self.types  
+
+        return self.__class__(merged_df, colspecs=colspecs, types=types)
+
+
+
     
 class CustomDataFrame(DataObject):
     def __init__(self, data,
@@ -1021,6 +1119,15 @@ class CustomDataFrame(DataObject):
             colspecs = {
                 "cache" : list(data.columns)
             }
+        elif isinstance(colspecs, str):
+            if colspecs in types:
+                colspecs = {
+                    colspecs : list(data.columns),
+                }
+            else:
+                raise ValueError("Column specification \"{colspecs}\" not found in types.")
+
+        # Add unspecified columns to cache
         columns = [col for cols in colspecs.values() for col in cols]
         cache = [col for col in data.columns if col not in columns]
         if len(cache)>0:
@@ -1157,13 +1264,30 @@ class CustomDataFrame(DataObject):
 
     
 def concat(objs, *args, **kwargs):
-    df = pd.concat(
-        [obj.to_pandas() for obj in objs],
-        *args,
-        **kwargs
-    )
+    """
+    Concatenate a sequence of CustomDataFrame objects into a single CustomDataFrame.
+
+    :param objs: A sequence of CustomDataFrame objects to concatenate.
+    :param args: Positional arguments to be passed to pandas.concat.
+    :param kwargs: Keyword arguments to be passed to pandas.concat.
+    :return: A new CustomDataFrame representing the concatenation of the input dataframes.
+    :raises ValueError: If objs is empty or contains non-CustomDataFrame objects.
+    """
+    # TK If there are matching indices in the concatenation, need to trigger series in result.
+    # Check for empty or invalid inputs
+    if not objs or any(not isinstance(obj, CustomDataFrame) for obj in objs):
+        raise ValueError("objs must be a non-empty list of CustomDataFrame objects.")
+
+    # Concatenate the dataframes
+    df = pd.concat([obj.to_pandas() for obj in objs], *args, **kwargs)
+
+    # Aggregate colspecs
     colspecs = {}
     for obj in objs:
         colspecs.update(obj.colspecs)
-    
-    return obj.__class__(df, colspecs, types=obj[0].types)
+
+    # Handle types - assuming a consistent approach is defined
+    # This needs to be decided based on how types are to be handled
+    types = objs[0].types 
+
+    return objs[0].__class__(df, colspecs=colspecs, types=types)

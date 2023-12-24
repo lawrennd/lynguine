@@ -5,6 +5,8 @@ import ndlpy.data as ndl
 import pandas as pd
 import numpy as np
 
+from deepdiff import DeepDiff
+
 # Utility function to create test DataFrames
 def create_test_dataframe():
     return ndl.CustomDataFrame({'A': [1, 2, 3], 'B': [4, 5, 6]})
@@ -40,10 +42,14 @@ def test_concat():
     assert result.shape == (6, 2)
 
 def test_merge():
-    df1 = ndl.CustomDataFrame({'key': ['K0', 'K1', 'K2'], 'A': ['A0', 'A1', 'A2']})
-    df2 = ndl.CustomDataFrame({'key': ['K0', 'K1', 'K2'], 'B': ['B0', 'B1', 'B2']})
+    df1 = ndl.CustomDataFrame({'key': ['K0', 'K1', 'K2'], 'A': ['A0', 'A1', 'A2']}, colspecs="input")
+    df2 = ndl.CustomDataFrame({'key': ['K0', 'K1', 'K2'], 'A': ['A0', 'A1', 'A2'], 'B': ["B0", "B1", "B2"]}, colspecs="output")
+    
     result = df1.merge(df2, on='key')
-    assert result.equals(ndl.CustomDataFrame({'key': ['K0', 'K1', 'K2'], 'A': ['A0', 'A1', 'A2'], 'B': ['B0', 'B1', 'B2']}))
+    print(result)
+    assert result.equals(ndl.CustomDataFrame({'key': ['K0', 'K1', 'K2'], 'A_x': ['A0', 'A1', 'A2'], 'A_y': ['A0', 'A1', 'A2'], 'B': ['B0', 'B1', 'B2']}))
+    diff = DeepDiff(result.colspecs, {"input" : ["key", "A_x"], "output" : ["A_y", "B"]})
+    assert not diff, "The column specifications don't match in merge"
 
 # Grouping and Sorting
 def test_groupby_sum():
