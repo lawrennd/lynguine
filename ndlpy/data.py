@@ -70,9 +70,6 @@ class DataObject():
         else:
             raise KeyError("Invalid column set.")        
 
-class CustomDataFrame:
-    # ... other parts of your class ...
-
     def head(self, n=5):
         """
         Return the first `n` rows of the DataFrame.
@@ -142,16 +139,6 @@ class CustomDataFrame:
         :raise NotImplementedError: Indicates the method needs to be implemented in a subclass.
         """
         raise NotImplementedError("This is a base class")
-
-    def to_csv(self, *args, **kwargs):
-        """
-        Write the DataFrame to a comma-separated values (csv) file.
-
-        :param args: Positional arguments to be passed to pandas.DataFrame.to_csv.
-        :param kwargs: Keyword arguments to be passed to pandas.DataFrame.to_csv.
-        :return: Output of Pandas DataFrame to_csv method.
-        """
-        return self.to_pandas().to_csv(*args, **kwargs)
 
     def to_clipboard(self, *args, **kwargs):
         """
@@ -263,7 +250,7 @@ class CustomDataFrame:
         """
         return self.to_pandas().to_sql(*args, **kwargs)
 
-   def to_xarray(self, *args, **kwargs):
+    def to_xarray(self, *args, **kwargs):
         """
         Convert the DataFrame to an xarray Dataset.
 
