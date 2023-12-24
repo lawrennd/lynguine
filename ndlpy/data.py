@@ -460,57 +460,115 @@ class DataObject():
         )
 
     def __floordiv__(self, other):
-        # Overloading the '//' operator
+        """
+        Overload the floor division ('//') operator.
+
+        :param other: The right-hand operand for floor division.
+        :return: A new instance of CustomDataFrame after floor division.
+        """
         other = self.convert(other)
         return self.__class__(
-            data=self.to_pandas()//other.to_pandas(),
+            data=self.to_pandas() // other.to_pandas(),
             colspecs=self._colspecs,
             index=self._index,
-            column = self._column,
-            selector= self._selector,
+            column=self._column,
+            selector=self._selector,
         )
-        
-        
+
     def __matmul__(self, other):
-        # Overloading the '@' operator
+        """
+        Overload the matrix multiplication ('@') operator.
+
+        :param other: The right-hand operand for matrix multiplication.
+        :return: The result of the matrix multiplication.
+        """
         return self.dot(other)
 
     def __pow__(self, exponent):
-        # Overloading the '**' operator
+        """
+        Overload the power ('**') operator.
+
+        :param exponent: The exponent to raise the dataframe to.
+        :return: A new instance of CustomDataFrame after raising to the power.
+        """
         return self.__class__(
-            data=self.to_pandas()**exponent,
+            data=self.to_pandas() ** exponent,
             colspecs=self._colspecs,
-            index = self._index,
-            column = self._column,
-            selector = self._selector,
+            index=self._index,
+            column=self._column,
+            selector=self._selector,
         )
-    
+
     def __eq__(self, other):
-        # Overloading the '==' operator
+        """
+        Overload the equality ('==') operator.
+
+        :param other: The right-hand operand for comparison.
+        :return: The result of the equality comparison.
+        """
         return self._apply_operator(other, "__eq__")
 
     def __gt__(self, other):
+        """
+        Overload the greater than ('>') operator.
+
+        :param other: The right-hand operand for comparison.
+        :return: The result of the greater than comparison.
+        """
         return self._apply_operator(other, "__gt__")
 
     def __lt__(self, other):
+        """
+        Overload the less than ('<') operator.
+
+        :param other: The right-hand operand for comparison.
+        :return: The result of the less than comparison.
+        """
         return self._apply_operator(other, "__lt__")
 
     def __ge__(self, other):
+        """
+        Overload the greater than or equal to ('>=') operator.
+
+        :param other: The right-hand operand for comparison.
+        :return: The result of the greater than or equal to comparison.
+        """
         return self._apply_operator(other, "__ge__")
 
     def __le__(self, other):
+        """
+        Overload the less than or equal to ('<=') operator.
+
+        :param other: The right-hand operand for comparison.
+        :return: The result of the less than or equal to comparison.
+        """
         return self._apply_operator(other, "__le__")
 
-    def __eq__(self, other):
-        return self._apply_operator(other, "__eq__")
-
     def __ne__(self, other):
+        """
+        Overload the not equal ('!=') operator.
+
+        :param other: The right-hand operand for comparison.
+        :return: The result of the not equal comparison.
+        """
         return self._apply_operator(other, "__ne__")
-    
+
     def __array__(self, dtype=None):
+        """
+        Convert the CustomDataFrame to a NumPy array.
+
+        :param dtype: The desired data-type for the array.
+        :return: A NumPy array representation of the CustomDataFrame.
+        """
         return np.array(self.to_pandas(), dtype=dtype)
-    
+
     def __getitem__(self, key):
+        """
+        Get item or slice from the DataFrame.
+
+        :param key: The key or slice to access elements of the DataFrame.
+        :return: A subset of the DataFrame corresponding to the given key.
+        """
         df = self.to_pandas()[key]
         if isinstance(df, pd.Series):
             df = df.to_frame()
