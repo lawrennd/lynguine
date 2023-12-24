@@ -70,102 +70,330 @@ class DataObject():
         else:
             raise KeyError("Invalid column set.")        
 
+class CustomDataFrame:
+    # ... other parts of your class ...
+
     def head(self, n=5):
-        self.to_pandas().head(n)
+        """
+        Return the first `n` rows of the DataFrame.
+
+        :param n: Number of rows to select.
+        :return: The first `n` rows of the DataFrame.
+        """
+        return self.to_pandas().head(n)
 
     def tail(self, n=5):
-        self.to_pandas().tail(n)
+        """
+        Return the last `n` rows of the DataFrame.
+
+        :param n: Number of rows to select.
+        :return: The last `n` rows of the DataFrame.
+        """
+        return self.to_pandas().tail(n)
 
     def add_column(self, column_name, data):
+        """
+        Add a new column to the DataFrame.
+
+        :param column_name: The name of the new column.
+        :param data: The data for the new column.
+        :raise NotImplementedError: Indicates the method needs to be implemented in a subclass.
+        """
         raise NotImplementedError("This is a base class")
 
     def drop_column(self, column_name):
+        """
+        Drop a column from the DataFrame.
+
+        :param column_name: The name of the column to drop.
+        :raise NotImplementedError: Indicates the method needs to be implemented in a subclass.
+        """
         raise NotImplementedError("This is a base class")
 
     def filter_rows(self, condition):
+        """
+        Filter rows based on a specified condition.
+
+        :param condition: The condition to filter rows.
+        :raise NotImplementedError: Indicates the method needs to be implemented in a subclass.
+        """
         raise NotImplementedError("This is a base class")
 
     def get_shape(self):
+        """
+        Get the shape of the DataFrame.
+
+        :return: A tuple representing the shape of the DataFrame.
+        """
         return self.to_pandas().shape
 
     def describe(self):
+        """
+        Generate descriptive statistics.
+
+        :return: Descriptive statistics for the DataFrame.
+        """
         return self.to_pandas().describe()
 
     def to_pandas(self):
+        """
+        Convert the custom DataFrame to a Pandas DataFrame.
+
+        :raise NotImplementedError: Indicates the method needs to be implemented in a subclass.
+        """
         raise NotImplementedError("This is a base class")
 
+    def to_csv(self, *args, **kwargs):
+        """
+        Write the DataFrame to a comma-separated values (csv) file.
+
+        :param args: Positional arguments to be passed to pandas.DataFrame.to_csv.
+        :param kwargs: Keyword arguments to be passed to pandas.DataFrame.to_csv.
+        :return: Output of Pandas DataFrame to_csv method.
+        """
+        return self.to_pandas().to_csv(*args, **kwargs)
+
     def to_clipboard(self, *args, **kwargs):
+        """
+        Copy the DataFrame to the system clipboard.
+
+        :param args: Positional arguments to be passed to pandas.DataFrame.to_clipboard.
+        :param kwargs: Keyword arguments to be passed to pandas.DataFrame.to_clipboard.
+        :return: Output of Pandas DataFrame to_clipboard method.
+        """
         return self.to_pandas().to_clipboard(*args, **kwargs)
 
     def to_feather(self, *args, **kwargs):
+        """
+        Write the DataFrame to a Feather file.
+
+        :param args: Positional arguments to be passed to pandas.DataFrame.to_feather.
+        :param kwargs: Keyword arguments to be passed to pandas.DataFrame.to_feather.
+        :return: Output of Pandas DataFrame to_feather method.
+        """
         return self.to_pandas().to_feather(*args, **kwargs)
 
     def to_json(self, *args, **kwargs):
+        """
+        Convert the DataFrame to a JSON string.
+
+        :param args: Positional arguments to be passed to pandas.DataFrame.to_json.
+        :param kwargs: Keyword arguments to be passed to pandas.DataFrame.to_json.
+        :return: Output of Pandas DataFrame to_json method.
+        """
         return self.to_pandas().to_json(*args, **kwargs)
 
     def to_orc(self, *args, **kwargs):
+        """
+        Write the DataFrame to an ORC file.
+
+        :param args: Positional arguments to be passed to pandas.DataFrame.to_orc.
+        :param kwargs: Keyword arguments to be passed to pandas.DataFrame.to_orc.
+        :return: Output of Pandas DataFrame to_orc method.
+        """
         return self.to_pandas().to_orc(*args, **kwargs)
 
     def to_records(self, *args, **kwargs):
+        """
+        Convert the DataFrame to a NumPy record array.
+
+        :param args: Positional arguments to be passed to pandas.DataFrame.to_records.
+        :param kwargs: Keyword arguments to be passed to pandas.DataFrame.to_records.
+        :return: Output of Pandas DataFrame to_records method.
+        """
         return self.to_pandas().to_records(*args, **kwargs)
 
     def to_timestamp(self, *args, **kwargs):
+        """
+        Cast to DatetimeIndex of timestamps.
+
+        :param args: Positional arguments to be passed to pandas.DataFrame.to_timestamp.
+        :param kwargs: Keyword arguments to be passed to pandas.DataFrame.to_timestamp.
+        :return: Output of Pandas DataFrame to_timestamp method.
+        """
         return self.to_pandas().to_timestamp(*args, **kwargs)
 
     def to_csv(self, *args, **kwargs):
+        """
+        Write the DataFrame to a comma-separated values (csv) file.
+
+        :param args: Positional arguments to be passed to pandas.DataFrame.to_csv.
+        :param kwargs: Keyword arguments to be passed to pandas.DataFrame.to_csv.
+        :return: Output of Pandas DataFrame to_csv method.
+        """
         return self.to_pandas().to_csv(*args, **kwargs)
 
     def to_gbq(self, *args, **kwargs):
+        """
+        Write the DataFrame to a Google BigQuery table.
+
+        :param args: Positional arguments to be passed to pandas.DataFrame.to_gbq.
+        :param kwargs: Keyword arguments to be passed to pandas.DataFrame.to_gbq.
+        :return: Output of Pandas DataFrame to_gbq method.
+        """
         return self.to_pandas().to_gbq(*args, **kwargs)
 
     def to_latex(self, *args, **kwargs):
+        """
+        Render the DataFrame as a LaTeX tabular environment table.
+
+        :param args: Positional arguments to be passed to pandas.DataFrame.to_latex.
+        :param kwargs: Keyword arguments to be passed to pandas.DataFrame.to_latex.
+        :return: Output of Pandas DataFrame to_latex method.
+        """
         return self.to_pandas().to_latex(*args, **kwargs)
 
     def to_parquet(self, *args, **kwargs):
+        """
+        Write the DataFrame to a Parquet file.
+
+        :param args: Positional arguments to be passed to pandas.DataFrame.to_parquet.
+        :param kwargs: Keyword arguments to be passed to pandas.DataFrame.to_parquet.
+        :return: Output of Pandas DataFrame to_parquet method.
+        """
         return self.to_pandas().to_parquet(*args, **kwargs)
 
     def to_sql(self, *args, **kwargs):
+        """
+        Write records stored in the DataFrame to a SQL database.
+
+        :param args: Positional arguments to be passed to pandas.DataFrame.to_sql.
+        :param kwargs: Keyword arguments to be passed to pandas.DataFrame.to_sql.
+        :return: Output of Pandas DataFrame to_sql method.
+        """
         return self.to_pandas().to_sql(*args, **kwargs)
 
-    def to_xarray(self, *args, **kwargs):
+   def to_xarray(self, *args, **kwargs):
+        """
+        Convert the DataFrame to an xarray Dataset.
+
+        :param args: Positional arguments to be passed to pandas.DataFrame.to_xarray.
+        :param kwargs: Keyword arguments to be passed to pandas.DataFrame.to_xarray.
+        :return: Output of Pandas DataFrame to_xarray method.
+        """
         return self.to_pandas().to_xarray(*args, **kwargs)
 
     def to_dict(self, *args, **kwargs):
+        """
+        Convert the DataFrame to a dictionary.
+
+        :param args: Positional arguments to be passed to pandas.DataFrame.to_dict.
+        :param kwargs: Keyword arguments to be passed to pandas.DataFrame.to_dict.
+        :return: Output of Pandas DataFrame to_dict method.
+        """
         return self.to_pandas().to_dict(*args, **kwargs)
 
     def to_hdf(self, *args, **kwargs):
+        """
+        Write the DataFrame to a Hierarchical Data Format (HDF) file.
+
+        :param args: Positional arguments to be passed to pandas.DataFrame.to_hdf.
+        :param kwargs: Keyword arguments to be passed to pandas.DataFrame.to_hdf.
+        :return: Output of Pandas DataFrame to_hdf method.
+        """
         return self.to_pandas().to_hdf(*args, **kwargs)
 
     def to_markdown(self, *args, **kwargs):
+        """
+        Convert the DataFrame to a Markdown string.
+
+        :param args: Positional arguments to be passed to pandas.DataFrame.to_markdown.
+        :param kwargs: Keyword arguments to be passed to pandas.DataFrame.to_markdown.
+        :return: Output of Pandas DataFrame to_markdown method.
+        """
         return self.to_pandas().to_markdown(*args, **kwargs)
 
     def to_period(self, *args, **kwargs):
-        return self.to_period().to_period(*args, **kwargs)
-    
+        """
+        Convert DataFrame from DatetimeIndex to PeriodIndex.
+
+        :param args: Positional arguments to be passed to pandas.DataFrame.to_period.
+        :param kwargs: Keyword arguments to be passed to pandas.DataFrame.to_period.
+        :return: Output of Pandas DataFrame to_period method.
+        """
+        return self.to_pandas().to_period(*args, **kwargs)
+
     def to_stata(self, *args, **kwargs):
-        return self.to_pandas().tostata(*args, **kwargs)
+        """
+        Export the DataFrame to Stata dta format.
+
+        :param args: Positional arguments to be passed to pandas.DataFrame.to_stata.
+        :param kwargs: Keyword arguments to be passed to pandas.DataFrame.to_stata.
+        :return: Output of Pandas DataFrame to_stata method.
+        """
+        return self.to_pandas().to_stata(*args, **kwargs)
 
     def to_xml(self, *args, **kwargs):
-        return self.to_pandas().toxml(*args, **kwargs)
+        """
+        Convert the DataFrame to an XML string.
+
+        :param args: Positional arguments to be passed to pandas.DataFrame.to_xml.
+        :param kwargs: Keyword arguments to be passed to pandas.DataFrame.to_xml.
+        :return: Output of Pandas DataFrame to_xml method.
+        """
+        return self.to_pandas().to_xml(*args, **kwargs)
 
     def to_excel(self, *args, **kwargs):
+        """
+        Write the DataFrame to an Excel file.
+
+        :param args: Positional arguments to be passed to pandas.DataFrame.to_excel.
+        :param kwargs: Keyword arguments to be passed to pandas.DataFrame.to_excel.
+        :return: Output of Pandas DataFrame to_excel method.
+        """
         return self.to_pandas().to_excel(*args, **kwargs)
 
     def to_html(self, *args, **kwargs):
+        """
+        Render the DataFrame as an HTML table.
+
+        :param args: Positional arguments to be passed to pandas.DataFrame.to_html.
+        :param kwargs: Keyword arguments to be passed to pandas.DataFrame.to_html.
+        :return: Output of Pandas DataFrame to_html method.
+        """
         return self.to_pandas().to_html(*args, **kwargs)
 
     def to_numpy(self, *args, **kwargs):
+        """
+        Convert the DataFrame to a NumPy array.
+
+        :param args: Positional arguments to be passed to pandas.DataFrame.to_numpy.
+        :param kwargs: Keyword arguments to be passed to pandas.DataFrame.to_numpy.
+        :return: Output of Pandas DataFrame to_numpy method.
+        """
         return self.to_pandas().to_numpy(*args, **kwargs)
 
     def to_string(self, *args, **kwargs):
+        """
+        Render the DataFrame to a console-friendly tabular output.
+
+        :param args: Positional arguments to be passed to pandas.DataFrame.to_string.
+        :param kwargs: Keyword arguments to be passed to pandas.DataFrame.to_string.
+        :return: Output of Pandas DataFrame to_string method.
+        """
         return self.to_pandas().to_string(*args, **kwargs)
 
     @classmethod
-    def from_csv(cls, *args, **kwargs):        
+    def from_csv(cls, *args, **kwargs):
+        """
+        Read a comma-separated values (csv) file into a CustomDataFrame.
+
+        :param args: Positional arguments to be passed to pandas.read_csv.
+        :param kwargs: Keyword arguments to be passed to pandas.read_csv.
+        :return: A CustomDataFrame object.
+        """
         return cls.from_pandas(df=pd.read_csv(*args, **kwargs))
 
     @classmethod
     def from_dict(cls, data, *args, **kwargs):
+        """
+        Construct a CustomDataFrame from a dict of array-like or dicts.
+
+        :param data: Dictionary of data.
+        :param args: Positional arguments to be passed to pandas.DataFrame.from_dict.
+        :param kwargs: Keyword arguments to be passed to pandas.DataFrame.from_dict.
+        :return: A CustomDataFrame object.
+        """
         return cls.from_pandas(df=pd.DataFrame.from_dict(data, *args, **kwargs))
 
     def sort_values(self, by, axis=0, ascending=True, inplace=False, **kwargs):
@@ -412,7 +640,7 @@ class DataObject():
             selector=self._selector
         )
     
-   @property
+    @property
     def T(self):
         """
         Transpose the DataFrame.
