@@ -1155,7 +1155,7 @@ class CustomDataFrame(DataObject):
             
         self.at = self._AtAccessor(self)
         self.loc = self._LocAccessor(self)
-        self.iloc = self._IlocAccessor(self)
+        self.iloc = self._ILocAccessor(self)
 
     class _AtAccessor(Accessor):
         def __init__(self, data):
@@ -1169,6 +1169,11 @@ class CustomDataFrame(DataObject):
         
     class _LocAccessor(Accessor):
         def __init__(self, data):
+            """
+            Initialize the LocAccessor.
+
+            :param data: The custom DataFrame object to which this accessor is attached.
+            """
             self._data_object = data
 
         def __getitem__(self, key):
@@ -1279,15 +1284,57 @@ class CustomDataFrame(DataObject):
                 self._data_object._d[typ] = data
 
             
-    class _IlocAccessor(Accessor):
+    class _ILocAccessor(Accessor):
         def __init__(self, data):
-            super().__init__(data=data)
+            """
+            Initialize the ILocAccessor.
+
+            :param data: The custom DataFrame object to which this accessor is attached.
+            """
+            self._data_object = data
 
         def __getitem__(self, key):
-            return self._data_object._d["cache"].iloc[key]
+            """
+            Retrieve a subset of the CustomDataFrame based on integer-location based indexing.
 
-        def __setitem__(self, key, value):
-            self._data_object._d["cache"].iloc[key] = value
+            This method provides integer-location based indexing, similar to pandas' .iloc accessor.
+            It internally converts integer indices to labels and then uses the .loc accessor.
+
+            :param key: The indexing key, which can be an integer, slice, list, or tuple for
+                        both rows and columns.
+            :return: A subset of the CustomDataFrame as specified by the integer-location key.
+            """
+            # Convert integer indices to labels for rows and columns
+            if isinstance(key, tuple):
+                row_key, col_key = key
+                row_labels = self._convert_to_labels(row_key, self._data_object.index)
+                col_labels = self._convert_to_labels(col_key, self._data_object.columns)
+            else:
+                row_labels = self._convert_to_labels(key, self._data_object.index)
+                col_labels = slice(None)  # Select all columns
+
+            # Use .loc accessor with label-based keys
+            return self._data_object.loc[row_labels, col_labels]
+
+        def _convert_to_labels(self, key, labels):
+            """
+            Convert integer-location indices to label-based indices.
+
+            :param key: The integer-location based index or slice.
+            :param labels: The index or columns of the DataFrame from which to extract labels.
+            :return: Label-based indices corresponding to the integer-location key.
+            """
+            if isinstance(key, slice):
+                # Convert slice of integer indices to slice of labels
+                start = labels[key.start] if key.start is not None else None
+                stop = labels[key.stop] if key.stop is not None else None
+                step = key.step
+                return slice(start, stop, step)
+            elif isinstance(key, (list, int)):
+                # Convert list or single integer index to labels
+                return labels[key]
+            else:
+                raise KeyError("Invalid key type for iloc indexing")
 
     def _distribute_data(self, data):
         """Distribute input data according to the colspec."""
