@@ -31,18 +31,6 @@ class DataObject():
         def __init__(self, data):
             super().__init__(data=data)
         
-    def get_value(self):
-        return self.at[self._index, self._column]
-
-    def set_value(self, val):
-        self.at[self._index, self._column] = val
-
-    def get_column(self):
-        return self._column
-    
-    def set_column(self, column):
-        self._column = column
-
     def get_subindex(self):
         raise NotImplementedError("This is a base class")
 
@@ -70,6 +58,21 @@ class DataObject():
         else:
             raise KeyError("Invalid column set.")        
 
+    def get_selector(self):
+        return self._selector
+    
+    def set_selector(self, selector):
+        if selector in self.columns:
+            self._selector = selector
+        else:
+            raise KeyError("Invalid selector set.")        
+        
+    def get_value(self):
+        return self.at[self.get_index(), self.get_column()]
+
+    def set_value(self, val):
+        self.at[self.get_index(), self.get_column()] = val
+        
     def head(self, n=5):
         """
         Return the first `n` rows of the DataFrame.
@@ -391,51 +394,99 @@ class DataObject():
 
 
     def convert(self, other):
+        """
+        Convert various data types to a CustomDataFrame.
+
+        This method handles conversion from different data types like Pandas DataFrame,
+        Pandas Series, NumPy array, list, and dictionary to the CustomDataFrame format.
+
+        :param other: The data to be converted.
+        :return: A CustomDataFrame object.
+        :raises ValueError: If the data type of `other` cannot be converted.
+        """
+
         if isinstance(other, self.__class__):
+            # No conversion needed if it's already a CustomDataFrame
             return other
-        elif isinstance(other, pd.DataFrame):
+
+        elif isinstance(other, (pd.DataFrame, pd.Series)):
+            # Directly convert from Pandas DataFrame or Series
             return self.__class__(other)
-        elif isinstance(other, pd.Series):
-            return self.__class__(other)
+
         elif isinstance(other, np.ndarray):
-            if other.shape == self.shape:
-                return self.__class__(
-                    data=pd.DataFrame(other,
-                                      index=self.index,
-                                      columns=self.columns,
-                                      ),
-                    colspecs=self._colspecs,
-                    index=self._index,
-                    column=self._column
-                )
-            elif len(other.shape) == 1 and other.shape[0] == self.shape[0]:
-                return self.__class__(data=pd.DataFrame(other, index=self.index, columns=[self._column]), index=self._index, column=self._column)
-            elif other.shape[1] == 1 and other.shape[0] == self.shape[0]:
-                return self.__class__(data=pd.DataFrame(other, index=self.index, columns=[self._column]), index=self._index, column=self._column)
-            elif other.shape[0] == 1 and other.shape[1] == self.shape[1]:
-                return self.__class__(data=pd.DataFrame(other, columns=self.columns, index=[self._index]), index=self._index, column=self._column)
-            # Broadcast cases
-            elif other.shape[0] == 1 and other.shape[1] == self.shape[0]:
-                return self.__class__(data=pd.DataFrame(other, columns=self.index, index=[self._column]), index=self._index, column=self._column)
-            elif other.shape[1] == 1 and other.shape[0] == self.shape[1]:
-                return self.__class__(data=pd.DataFrame(other, index=self.columns, columns=[self._index]), index=self._index, column=self._column)
-                
+            # Handle NumPy array conversion
+            return self._convert_numpy_array(other)
+
         elif isinstance(other, list):
-            return self.convert(np.array(other))
+            # Convert list to CustomDataFrame
+            return self.__class__(pd.DataFrame(other))
+
         elif isinstance(other, dict):
-            return self.convert(pd.DataFrame(other))
+            # Convert dictionary to CustomDataFrame
+            return self.__class__(pd.DataFrame.from_dict(other))
+
         else:
-            return other
-        
+            # Raise error for unsupported types
+            raise ValueError(f"Unsupported type for conversion: {type(other)}")
+
+    def _convert_numpy_array(self, array):
+        """
+        Helper method to convert a NumPy array to a CustomDataFrame.
+
+        This method is called internally to handle specific scenarios based on the shape
+        of the NumPy array.
+
+        :param array: The NumPy array to be converted.
+        :return: A CustomDataFrame object.
+        :raises ValueError: If the array shape is not compatible.
+        """
+
+        if array.shape == self.shape:
+            # Array shape matches the CustomDataFrame shape
+            return self.__class__(
+                data=pd.DataFrame(array, index=self.index, columns=self.columns),
+            )
+        elif len(array.shape) == 1:
+            # Single dimensional array
+            return self.__class__(
+                data=pd.DataFrame(array, index=self.index, columns=[self.get_column()]),
+            )
+        elif array.ndim == 2 and (array.shape[0] == 1 or array.shape[1] == 1):
+            # Two-dimensional array but with a single row or column
+            if array.shape[0] == 1:
+                if array.shape[1] != len(self.columns):
+                    raise ValueError("NumPy array width doesn't match CustomDataFrame array width.")
+                return self.__class__(
+                    data=pd.DataFrame(
+                        array,
+                        index=[self.get_index()],
+                        columns=self.columns,
+                    ),
+                )
+            else:
+                if array.shape[0] != len(self.index):
+                    raise ValueError("NumPy array depth doesn't match CustomDataFrame array depth.")
+                return self.__class__(
+                    data=pd.DataFrame(
+                        array,
+                        index=self.index,
+                        columns=self.get_column(),
+                    ),
+                )
+            else:
+                
+        else:
+            # Incompatible array shape
+            raise ValueError("NumPy array shape is not compatible with CustomDataFrame.")        
         
         
     # Mathematical operations
     def sum(self, axis=0):
         if axis == 0:
-            column = self._column
+            column = self.get_column()
             colspecs = {"parameter_cache": list(self.columns)}
         else:
-            column = self._index
+            column = self.get_index()
             colspecs = {"parameter_cache": list(self.index)}
 
         return self.__class__(
@@ -447,10 +498,10 @@ class DataObject():
 
     def mean(self, axis=0):
         if axis == 0:
-            column = self._column
+            column = self.get_column()
             colspecs = {"parameter_cache": list(self.columns)}
         else:
-            column = self._index
+            column = self.get_index()
             colspecs = {"parameter_cache": list(self.index)}
         return self.__class__(
             data=self.to_pandas().mean(axis),
@@ -464,9 +515,9 @@ class DataObject():
         return self.__class__(
             data=self.to_pandas().add(other.to_pandas()),
             colspecs=self._colspecs,
-            index=self._index,
-            column=self._column,
-            selector=self._selector,
+            index=self.get_index(),
+            column=self.get_column(),
+            selector=self.get_selector(),
         )
 
     def subtract(self, other):
@@ -474,9 +525,9 @@ class DataObject():
         return self.__class__(
             data=self.to_pandas().subtract(other.to_pandas()),
             colspecs=self._colspecs,
-            index=self._index,
-            column=self._column,
-            selector=self._selector,
+            index=self.get_index(),
+            column=self.get_column(),
+            selector=self.get_selector(),
         )
 
     def multiply(self, other):
@@ -484,9 +535,9 @@ class DataObject():
         return self.__class__(
             data=self.to_pandas().multiply(pd.DataFrame(other.to_pandas())),
             colspecs=self._colspecs,
-            index=self._index,
-            column=self._column,
-            selector=self._selector,
+            index=self.get_index(),
+            column=self.get_column(),
+            selector=self.get_selector(),
         )
 
     def equals(self, other):
@@ -508,9 +559,9 @@ class DataObject():
         return self.__class__(
             data=self.to_pandas().isna(),
             colspecs=self._colspecs,
-            index=self._index,
-            column = self._column,
-            selector = self._selector,
+            index=self.get_index(),
+            column = self.get_column(),
+            selector = self.get_selector(),
         )
 
     def isnull(self):
@@ -523,27 +574,27 @@ class DataObject():
         return self.__class__(
             data=self.to_pandas().fillna(*args, **kwargs),
             colspecs=self._colspecs,
-            index=self._index,
-            column=self._column,
-            selector=self._selector,
+            index=self.get_index(),
+            column=self.get_column(),
+            selector=self.get_selector(),
             )
         
     def dropna(self):
         vals = self.to_pandas().isna()
-        if self._index not in vals.index:
+        if self.get_index() not in vals.index:
             ind = None
         else:
-            ind = self._index
+            ind = self.get_index()
 
-        if self._column not in vals.columns:
+        if self.get_column() not in vals.columns:
             col = None
         else:
-            col = self._column
+            col = self.get_column()
 
-        if self._selector is None or self._selector not in vals.columns:
+        if self.get_selector() is None or self.get_selector() not in vals.columns:
             sel = None
         else:
-            sel = self._selector
+            sel = self.get_selector()
             
         return self.__class__(
             data=vals,
@@ -555,16 +606,16 @@ class DataObject():
 
     def drop_duplicates(self, *args, **kwargs):
         vals = self.to_pandas().drop_duplicates(*args, **kwargs)
-        if self._index not in vals.index:
+        if self.get_index() not in vals.index:
             index = None
         else:
-            index = self._index
+            index = self.get_index()
         return self.__class__(
             data=vals,
             colspecs=self._colspecs,
             index=index,
-            column=self._column,
-            selector=self._selector,
+            column=self.get_column(),
+            selector=self.get_selector(),
         )
 
     def groupby(self, *args, **kwargs):
@@ -576,17 +627,17 @@ class DataObject():
         :return: A grouped CustomDataFrame object.
         """
         vals = self.to_pandas().groupby(*args, **kwargs)
-        if self._index not in vals.index:
+        if self.get_index() not in vals.index:
             index = None
         else:
-            index = self._index
+            index = self.get_index()
             
         return self.__class__(
             data=vals,
             colspecs=self._colspecs,
             index=index,
-            column=self._column,
-            selector=self._selector,
+            column=self.get_column(),
+            selector=self.get_selector(),
         )
     
     def pivot_table(self, *args, **kwargs):
@@ -622,9 +673,9 @@ class DataObject():
         return self.__class__(
             data=method(other.to_pandas()),
             colspecs=self._colspecs,
-            index=self._index,
-            column=self._column,
-            selector=self._selector
+            index=self.get_index(),
+            column=self.get_column(),
+            selector=self.get_selector()
         )
     
     @property
@@ -727,9 +778,9 @@ class DataObject():
         return self.__class__(
             data=~self.to_pandas(),
             colspecs=self._colspecs,
-            index=self._index,
-            column=self._column,
-            selector=self._selector
+            index=self.get_index(),
+            column=self.get_column(),
+            selector=self.get_selector()
         )
 
     def __neg__(self):
@@ -741,9 +792,9 @@ class DataObject():
         return self.__class__(
             data=-self.to_pandas(),
             colspecs=self._colspecs,
-            index=self._index,
-            column=self._column,
-            selector=self._selector
+            index=self.get_index(),
+            column=self.get_column(),
+            selector=self.get_selector()
         )
 
     def __truediv__(self, other):
@@ -757,9 +808,9 @@ class DataObject():
         return self.__class__(
             data=self.to_pandas()/other.to_pandas(),
             colspecs=self._colspecs,
-            index=self._index,
-            column = self._column,
-            selector= self._selector,
+            index=self.get_index(),
+            column = self.get_column(),
+            selector= self.get_selector(),
         )
 
     def __floordiv__(self, other):
@@ -773,9 +824,9 @@ class DataObject():
         return self.__class__(
             data=self.to_pandas() // other.to_pandas(),
             colspecs=self._colspecs,
-            index=self._index,
-            column=self._column,
-            selector=self._selector,
+            index=self.get_index(),
+            column=self.get_column(),
+            selector=self.get_selector(),
         )
 
     def __matmul__(self, other):
@@ -797,9 +848,9 @@ class DataObject():
         return self.__class__(
             data=self.to_pandas() ** exponent,
             colspecs=self._colspecs,
-            index=self._index,
-            column=self._column,
-            selector=self._selector,
+            index=self.get_index(),
+            column=self.get_column(),
+            selector=self.get_selector(),
         )
 
     def __eq__(self, other):
@@ -875,16 +926,16 @@ class DataObject():
         df = self.to_pandas()[key]
         if isinstance(df, pd.Series):
             df = df.to_frame()
-        if self._index in df.index:
-            index=self._index
+        if self.get_index() in df.index:
+            index=self.get_index()
         else:
             index=None
-        if self._column in df.columns:
-            column=self._column
+        if self.get_column() in df.columns:
+            column=self.get_column()
         else:
             column=None
-        if self._selector in df.columns:
-            selector=self._selector
+        if self.get_selector() in df.columns:
+            selector=self.get_selector()
         else:
             selector=None
 
@@ -979,9 +1030,9 @@ class CustomDataFrame(DataObject):
                 colspecs["cache"] = []
             colspecs["cache"] += cache
 
-        self._index = index
-        self._column = column
-        self._selector = selector
+        self.set_index(index)
+        self.set_column(column)
+        self.set_selector(selector)
         self._types = types
         self._colspecs = colspecs
         self._d = {}
@@ -1072,9 +1123,9 @@ class CustomDataFrame(DataObject):
             return self.__class__(
                 df,
                 self._colspecs,
-                self._selector,
-                self._index,
-                self._column
+                self.get_selector(),
+                self.get_index(),
+                self.get_column()
             )
                         
     def filter(self, *args, **kwargs):
