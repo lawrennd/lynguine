@@ -353,6 +353,13 @@ class DataObject():
         )
 
     def groupby(self, *args, **kwargs):
+        """
+        Group DataFrame using a mapper or by a Series of columns.
+
+        :param args: Positional arguments to be passed to pandas.DataFrame.groupby.
+        :param kwargs: Keyword arguments to be passed to pandas.DataFrame.groupby.
+        :return: A grouped CustomDataFrame object.
+        """
         vals = self.to_pandas().groupby(*args, **kwargs)
         if self._index not in vals.index:
             index = None
@@ -368,15 +375,33 @@ class DataObject():
         )
     
     def pivot_table(self, *args, **kwargs):
+        """
+        Create a pivot table as a CustomDataFrame.
+
+        :param args: Positional arguments to be passed to pandas.DataFrame.pivot_table.
+        :param kwargs: Keyword arguments to be passed to pandas.DataFrame.pivot_table.
+        :return: A pivoted CustomDataFrame object.
+        """
         return self.__class__(
             data=self.to_pandas().pivot_table(*args, **kwargs),
             )
 
     def _colspecs(self):
+        """
+        Define the column specifications.
+
+        :return: Column specifications.
+        """
         return None
     
     def _apply_operator(self, other, operator):
-        """Helper functions for pandas comparison operators."""
+        """
+        Apply a specified operator to the DataFrame.
+
+        :param other: The right-hand operand.
+        :param operator: The operator function to apply.
+        :return: A new instance of CustomDataFrame after applying the operator.
+        """
         other = self.convert(other)
         method = getattr(self.to_pandas(), operator)
         return self.__class__(
@@ -387,49 +412,103 @@ class DataObject():
             selector=self._selector
         )
     
-    @property
+   @property
     def T(self):
+        """
+        Transpose the DataFrame.
+
+        :return: Transposed CustomDataFrame.
+        """
         return self.transpose()
-    
+
     @property
     def shape(self):
+        """
+        Return the shape of the DataFrame.
+
+        :return: A tuple representing the DataFrame's dimensions.
+        """
         return self.to_pandas().shape
-    
+
     @property
     def columns(self):
+        """
+        Return the column labels of the DataFrame.
+
+        :return: Index object containing the column labels.
+        """
         return self.to_pandas().columns
 
     @property
     def index(self):
+        """
+        Return the index (row labels) of the DataFrame.
+
+        :return: Index object containing the row labels.
+        """
         return self.to_pandas().index
 
     @property
     def values(self):
+        """
+        Return the values of the DataFrame as a NumPy array.
+
+        :return: A NumPy array of the DataFrame's values.
+        """
         return self.to_pandas().values
 
     @property
     def colspecs(self):
+        """
+        Return the column specifications.
+
+        :return: Column specifications.
+        """
         return self._colspecs
 
     @property
     def types(self):
+        """
+        Return the data types of the DataFrame.
+
+        :return: A Series with the data type of each column.
+        """
         return self._types
-    
+
     # Operators
     def __add__(self, other):
-        # Overloading the '+' operator
+        """
+        Overload the addition ('+') operator.
+
+        :param other: The right-hand operand for addition.
+        :return: The result of adding the CustomDataFrame and other.
+        """
         return self.add(other)
 
     def __sub__(self, other):
-        # Overloading the '-' operator
+        """
+        Overload the subtraction ('-') operator.
+
+        :param other: The right-hand operand for subtraction.
+        :return: The result of subtracting other from the CustomDataFrame.
+        """
         return self.subtract(other)
 
     def __mul__(self, other):
-        # Overloading the '*' operator
+        """
+        Overload the multiplication ('*') operator.
+
+        :param other: The right-hand operand for multiplication.
+        :return: The result of multiplying the CustomDataFrame and other.
+        """
         return self.multiply(other)
 
     def __invert__(self):
-        # Overloading the '~' operator
+        """
+        Overload the bitwise NOT ('~') operator.
+
+        :return: The result of bitwise NOT of the CustomDataFrame.
+        """
         return self.__class__(
             data=~self.to_pandas(),
             colspecs=self._colspecs,
@@ -439,7 +518,11 @@ class DataObject():
         )
 
     def __neg__(self):
-        # Overloading the unary '-' operator
+        """
+        Overload the unary negation ('-') operator.
+
+        :return: The result of negating the CustomDataFrame.
+        """
         return self.__class__(
             data=-self.to_pandas(),
             colspecs=self._colspecs,
@@ -447,9 +530,14 @@ class DataObject():
             column=self._column,
             selector=self._selector
         )
-    
+
     def __truediv__(self, other):
-        # Overloading the '/' operator
+        """
+        Overload the true division ('/') operator.
+
+        :param other: The right-hand operand for division.
+        :return: The result of true division of the CustomDataFrame by other.
+        """
         other = self.convert(other)
         return self.__class__(
             data=self.to_pandas()/other.to_pandas(),
