@@ -1167,7 +1167,7 @@ class CustomDataFrame(DataObject):
         def __setitem__(self, key, value):
             self._data_object._d["cache"].at[key] = value
         
-    class _LocAccessor:
+    class _LocAccessor(Accessor):
         def __init__(self, data):
             self._data_object = data
 
@@ -1221,6 +1221,62 @@ class CustomDataFrame(DataObject):
                     colspecs[typ] = filtered_cols
 
             return self._data_object.__class__(result_df, colspecs=colspecs)
+
+
+        def __setitem__(self, key, value):
+            """
+            Set values in the CustomDataFrame based on the provided key.
+
+            This method supports both row and column indexing. It raises an error if attempting
+            to modify immutable 'input' type columns.
+
+            :param key: The indexing key, similar to pandas .loc accessor.
+            :param value: The value to set at the specified key location.
+            :raises KeyError: If attempting to modify immutable 'input' type columns.
+            :raises ValueError: If provided values for 'parameters' type data are not identical.       
+            """
+            # Determine row_key and col_key based on whether key is a tuple
+            if isinstance(key, tuple):
+                row_key, col_key = key
+            else:
+                row_key = key
+                col_key = slice(None)  # Equivalent to selecting all columns
+
+            # Extract the list of immutable columns from colspecs based on types["input"]
+            immutable_types = self._data_object.types["input"]
+            immutable_columns = [col for typ in immutable_types for col in self._data_object.colspecs.get(typ, [])]
+
+            # Check if any of the columns being modified are immutable
+            if isinstance(col_key, (list, tuple, pd.Index)):
+                if any(col in immutable_columns for col in col_key):
+                    raise KeyError(f"Attempted to modify one or more immutable 'input' type columns when you tried to modify columns \"{col_key}\".")
+            elif col_key in immutable_columns:
+                raise KeyError(f"Attempted to modify an immutable 'input' type column when you tried to modify column \"{col_key}\".")
+
+            # Setting values
+            for typ, data in self._data_object._d.items():
+                if data.empty:
+                    continue
+
+                # Check if col_key is a scalar and convert to list if necessary
+                if not isinstance(col_key, (list, tuple, slice, pd.Index)):
+                    col_key = [col_key]
+
+                if typ in self._data_object.types["parameters"]:
+                    # Ensure that provided values for 'parameters' are identical across all rows
+                    for col in col_key:
+                        if isinstance(value, pd.DataFrame) and not all(value[col].iloc[0] == v for v in value[col]):
+                            raise ValueError("Non-identical values provided for 'parameters' type data")
+
+                        # Setting values for 'parameters' type data
+                        data[col] = value[col].iloc[0] if isinstance(value, pd.DataFrame) else value
+                else:
+                    # Handle setting values for regular data
+                    selected_cols = [col for col in col_key if col in data.columns]
+                    data.loc[row_key, selected_cols] = value
+
+                # Update the data object with the modified data
+                self._data_object._d[typ] = data
 
             
     class _IlocAccessor(Accessor):
