@@ -8,8 +8,8 @@ import numpy as np
 from deepdiff import DeepDiff
 
 # Utility function to create test DataFrames
-def create_test_dataframe():
-    return ndl.CustomDataFrame({'A': [1, 2, 3], 'B': [4, 5, 6]})
+def create_test_dataframe(colspecs="cache"):
+    return ndl.CustomDataFrame({'A': [1, 2, 3], 'B': [4, 5, 6]}, colspecs=colspecs)
 
 # Basic Functionality
 def test_dataframe_creation():

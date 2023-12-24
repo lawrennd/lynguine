@@ -1167,15 +1167,61 @@ class CustomDataFrame(DataObject):
         def __setitem__(self, key, value):
             self._data_object._d["cache"].at[key] = value
         
-    class _LocAccessor(Accessor):
+    class _LocAccessor:
         def __init__(self, data):
-            super().__init__(data=data)
+            self._data_object = data
 
         def __getitem__(self, key):
-            return self._data_object._d["cache"].loc[key]
+            """
+            Retrieve a subset of the CustomDataFrame based on the provided key.
 
-        def __setitem__(self, key, value):
-            self._data_object._d["cache"].loc[key] = value
+            This method supports both row and column indexing, similar to pandas' .loc accessor.
+            It handles 'parameters' data differently from regular data.
+
+            :param key: The indexing key, which can be a scalar, slice, list, tuple, or pd.Index.
+                        It can be a tuple (row_key, col_key) for row and column indexing.
+            :return: A subset of the CustomDataFrame as specified by the key.
+            """
+            # Determine row_key and col_key based on whether key is a tuple
+            if isinstance(key, tuple):
+                row_key, col_key = key
+            else:
+                row_key = key
+                col_key = slice(None)  # Equivalent to selecting all columns
+
+            result_df = pd.DataFrame()
+            colspecs = {}
+
+            for typ, data in self._data_object._d.items():
+                if data.empty:
+                    continue
+
+                # Check if col_key is a scalar and convert to list if necessary
+                if not isinstance(col_key, (list, tuple, slice, pd.Index)):
+                    col_key = [col_key]
+
+                # Handle "parameters" data
+                if typ in self._data_object.types["parameters"]:
+                    selected_cols = [col for col in col_key if col in data.index] if isinstance(col_key, (list, tuple, pd.Index)) else data.index
+                    if len(result_df.index) == 0: # There are no rows in this df 
+                        ind = data.name if data.name is not None else 0
+                        for col in selected_cols:
+                            result_df.at[ind, col] = data[col]
+                    else:
+                        for col in selected_cols:
+                            result_df = result_df.assign(**{col: data[col]})
+                    colspecs[typ] = selected_cols
+                else:
+                    # Handle regular data
+                    filtered_cols = [col for col in col_key if col in data.columns] if isinstance(col_key, (list, tuple, pd.Index)) else data.columns
+                    selected_data = data.loc[row_key, filtered_cols]
+                    if isinstance(selected_data, pd.Series):
+                        selected_data = selected_data.to_frame().T
+                    result_df = result_df.join(selected_data, how="outer")
+                    colspecs[typ] = filtered_cols
+
+            return self._data_object.__class__(result_df, colspecs=colspecs)
+
             
     class _IlocAccessor(Accessor):
         def __init__(self, data):
