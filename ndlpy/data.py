@@ -1036,15 +1036,15 @@ class CustomDataFrame(DataObject):
                                 
         if index is None:
             index = self.index[0]
+        self.set_index(index)
 
         if column is None:
             column = self.columns[0]
-
-        self.set_index(index)
         self.set_column(column)
         
-        if selector is not None:
-            self.set_selector(selector)
+        if selector is None:
+            selector = self.columns[0]
+        self.set_selector(selector)
             
         self.at = self._AtAccessor(self)
         self.loc = self._LocAccessor(self)
