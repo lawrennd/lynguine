@@ -1157,12 +1157,41 @@ class CustomDataFrame(DataObject):
         self.loc = self._LocAccessor(self)
         self.iloc = self._ILocAccessor(self)
 
-    class _AtAccessor(Accessor):
+    class _AtAccessor:
         def __init__(self, data):
-            super().__init__(data=data)
+            """
+            Initialize the AtAccessor.
+
+            :param data: The custom DataFrame object to which this accessor is attached.
+            """
+            self._data_object = data
 
         def __getitem__(self, key):
-            return self._data_object._d["cache"].at[key]
+            """
+            Retrieve a single element from the CustomDataFrame using label-based indexing.
+
+            This method provides access to a single element, similar to pandas' .at accessor. 
+            It expects a single label for both row and column.
+
+            :param key: A tuple containing the row and column label.
+            :return: The element at the specified row and column location.
+            :raises KeyError: If the specified key is not a tuple or if it does not correspond 
+                              to a valid row and column label.
+            """
+            if not isinstance(key, tuple) or len(key) != 2:
+                raise KeyError("Key must be a tuple of (row_label, col_label)")
+
+            row_label, col_label = key
+
+            # Logic to handle different data types within the custom DataFrame
+            for typ, data in self._data_object._d.items():
+                if row_label in data.index and col_label in data.columns:
+                    return data.at[row_label, col_label]
+                elif typ in self._data_object.types["parameters"]:
+                    if col_label in data.index:
+                        return data.at[col_label]
+
+            raise KeyError(f"Key {key} not found in the CustomDataFrame")
 
         def __setitem__(self, key, value):
             self._data_object._d["cache"].at[key] = value
