@@ -8,8 +8,8 @@ from pandas.testing import assert_frame_equal
 import tempfile
 import unittest
 
-import referia as rf
 import ndlpy
+import ndlpy.fake as fake
 
 from ndlpy.access import (
     read_json, write_json, read_directory, write_directory, read_json_file,
@@ -83,7 +83,7 @@ class TestUtils(unittest.TestCase):
     def test_write_read_yaml(self):
         """access_tests: test the write to and read from a yaml file."""
         filename = "test.yaml"
-        data = rf.fake.row()
+        data = fake.row()
         ndlpy.access.write_yaml_file(data, filename)
         read_data = ndlpy.access.read_yaml_file(filename)
         self.assertDictEqual(data,read_data)
@@ -91,7 +91,7 @@ class TestUtils(unittest.TestCase):
     def test_write_read_markdown(self):
         """access_tests: test the write to and read from a yaml headed markdown file."""
         filename = "test.markdown"
-        data = rf.fake.row()
+        data = fake.row()
         ndlpy.access.write_markdown_file(data, filename)
         read_data = ndlpy.access.read_markdown_file(filename)
         self.assertDictEqual(data, read_data)
@@ -115,7 +115,7 @@ class TestUtils(unittest.TestCase):
             "delimiter": ",",
             "quotechar": "\"",
         }
-        data = pd.DataFrame(rf.fake.rows(30))
+        data = pd.DataFrame(fake.rows(30))
         ndlpy.access.write_csv(data, details)
         read_data = ndlpy.access.read_csv(details)
         self.compare_data_frames(data, read_data)
@@ -130,7 +130,7 @@ class TestUtils(unittest.TestCase):
             "header": 0,
             "sheet": "Sheet1",
         }
-        data = pd.DataFrame(rf.fake.rows(30))
+        data = pd.DataFrame(fake.rows(30))
         ndlpy.access.write_excel(data, details)
         read_data = ndlpy.access.read_excel(details)
         self.compare_data_frames(data, read_data)
@@ -143,7 +143,7 @@ class TestUtils(unittest.TestCase):
             "filename": "test.json",
             "directory": tmpDirectory.name,
         }
-        data = pd.DataFrame(rf.fake.rows(30))
+        data = pd.DataFrame(fake.rows(30))
         ndlpy.access.write_json(data, details)
         read_data = ndlpy.access.read_json(details)
         self.compare_data_frames(data, read_data)
@@ -156,7 +156,7 @@ class TestUtils(unittest.TestCase):
             "filename": "test.yaml",
             "directory": tmpDirectory.name,
         }
-        data = pd.DataFrame(rf.fake.rows(30))
+        data = pd.DataFrame(fake.rows(30))
         ndlpy.access.write_yaml(data, details)
         read_data = ndlpy.access.read_yaml(details)
         self.compare_data_frames(read_data, data)
@@ -176,7 +176,7 @@ class TestUtils(unittest.TestCase):
                 },
             ],
         }
-        data = pd.DataFrame(rf.fake.rows(30))
+        data = pd.DataFrame(fake.rows(30))
         for ind in data.index:
             data.at[ind, "sourceFilename"] = data.at[ind, "name"] + extension
             data.at[ind, "sourceDirectory"] = tmpDirectory.name
@@ -201,7 +201,7 @@ class TestUtils(unittest.TestCase):
                 },
             ],
         }
-        data = pd.DataFrame(rf.fake.rows(30))
+        data = pd.DataFrame(fake.rows(30))
         for ind in data.index:
             data.at[ind, "sourceFilename"] = data.at[ind, "name"] + extension
             data.at[ind, "sourceDirectory"] = tmpDirectory.name
@@ -226,7 +226,7 @@ class TestUtils(unittest.TestCase):
                 },
             ],
         }
-        data = pd.DataFrame(rf.fake.rows(30))
+        data = pd.DataFrame(fake.rows(30))
         for ind in data.index:
             data.at[ind, "sourceFilename"] = data.at[ind, "name"] + extension
             data.at[ind, "sourceDirectory"] = tmpDirectory.name
