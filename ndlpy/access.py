@@ -207,13 +207,13 @@ def read_list(filelist):
 def read_files(filelist, store_fields=None, filereader=None, filereader_args=None):
     """Read files from a given list."""
     if store_fields is not None:
-        root_field = store_fields["root"]
         directory_field = store_fields["directory"]
         filename_field = store_fields["filename"]
+        root_field = store_fields["root"]
     else:
-        root_field = "sourceRoot"
         directory_field = "sourceDirectory"
         filename_field = "sourceFile"
+        root_field = "sourceRoot"
     
 
     filelist.sort()
@@ -299,7 +299,7 @@ def write_json_file(data, filename):
     with open(filename, "w") as stream:
         try:
             log.debug(f"Writing json file \"{filename}\".")
-            json.dump(data, stream, sort_keys=False, Dumper=yaml.SafeDumper)
+            json.dump(data, stream)
         except json.JSONDecodeError as exc:
             log.warning(exc)
 
@@ -313,7 +313,7 @@ def default_file_reader(typ):
         return read_bibtex_file
     if typ == "docx":
         return read_docx_file
-    raise ValueError(f"Unrecognised type of file \"{typ}\" in \"\{filename}\"")
+    raise ValueError(f"Unrecognised type of file \"{typ}\" in \"{filename}\"")
     
         
 def read_file(filename):
@@ -776,17 +776,17 @@ def update_store_fields(details):
     # Extracts info about where the directory read file data is to be written.
     if "store_fields" not in details:
         details["store_fields"] = {
-            "root": "sourceRoot",
             "directory": "sourceDirectory",
             "filename": "sourceFilename",
+            "root": "sourceRoot",
         }
     else:
-        if "root" not in details["store_fields"]:
-            details["store_fields"]["root"] =  "sourceRoot"
         if "directory" not in details["store_fields"]:
             details["store_fields"]["directory"] =  "sourceDirectory"
         if "filename" not in details["store_fields"]:
             details["store_fields"]["filename"] =  "sourceFilename"
+        if "root" not in details["store_fields"]:
+            details["store_fields"]["root"] =  "sourceRoot"
     return details
     
 
