@@ -11,6 +11,15 @@ from deepdiff import DeepDiff
 def create_test_dataframe(colspecs="cache"):
     return ndl.CustomDataFrame({'A': [1, 2, 3], 'B': [4, 5, 6]}, colspecs=colspecs)
 
+def create_merged_dataframe():
+
+    # Sample data for creating a CustomDataFrame instance
+    data = {"A": [1, 2], "B": [3, 4], "C": [5, 5], "D": [6, 6], "E": [7, 7], "F": [8, 8]}
+    colspecs = {"input": ["A", "B"], "output": ["C", "D"], "parameters": ["E", "F"]}
+    
+    return ndl.CustomDataFrame(data, colspecs=colspecs)
+    
+
 # Basic Functionality
 def test_dataframe_creation():
     df = create_test_dataframe()
@@ -91,7 +100,54 @@ def test_invalid_data_creation():
         df = ndl.CustomDataFrame({'A': [1, 2], 'B': [3, 4, 5]})
 
 
-# Indexing and Selecting Data
+
+# Test loc accessor
+def test_loc_accessor():
+    # Test accessing and setting multiple elements
+    custom_df = create_merged_dataframe()
+    custom_df.loc[0, ["C", "D"]] = [10, 20]
+    assert all(custom_df.loc[0, ["C", "D"]] == [[10, 20]])
+
+    # Test accessing 'parameters' type data
+    assert custom_df.loc[0, "E"] == 7
+
+    # Test error when modifying 'parameters' with different values
+    with pytest.raises(ValueError):
+        custom_df.loc[:, "E"] = [[2, 3]]
+
+    # Test setting value in 'output' type
+    custom_df.loc[1, "C"] = 30
+    assert custom_df.loc[1, "C"] == 30
+
+    # Test error when modifying 'input' type
+    with pytest.raises(KeyError):
+        custom_df.loc[0, "A"] = 50
+
+# Test iloc accessor
+def test_iloc_accessor():
+    # Test accessing multiple elements by integer location
+    custom_df = create_merged_dataframe()
+    assert all(custom_df.iloc[0, [2, 3]] == [10, 20])
+
+    # Test error on invalid index
+    with pytest.raises(KeyError):
+        _ = custom_df.iloc[2, 0]
+
+# Test at accessor
+def test_at_accessor():
+    # Test accessing single element
+    custom_df = create_merged_dataframe()
+    assert custom_df.at[0, "A"] == 1
+
+    # Test setting single element in 'output' type
+    custom_df.at[1, "C"] = 40
+    assert custom_df.at[1, "C"] == 40
+
+    # Test error when modifying 'input' type
+    with pytest.raises(KeyError):
+        custom_df.at[0, "B"] = 60
+
+
 def test_iloc():
     df = create_test_dataframe()
     assert df.iloc[1].equals(ndl.CustomDataFrame(pd.DataFrame({'A': 2, 'B': 5}, index=df.index[1:2])))
@@ -132,4 +188,37 @@ def test_out_of_bounds_access():
     df = create_test_dataframe()
     with pytest.raises(IndexError):
         _ = df.iloc[10]
+
+
+# Test __len__ with different sizes of data
+def test_len_empty_df():
+    data = {}  # Assuming empty DataFrame
+    custom_df = ndl.CustomDataFrame(data)
+    assert len(custom_df) == 0
+
+def test_len_non_empty_df():
+    data = {"col1": [1, 2, 3], "col2": [4, 5, 6]}
+    custom_df = ndl.CustomDataFrame(data)
+    assert len(custom_df) == 3
+
+def test_len_single_row_df():
+    data = {"col1": [1], "col2": [2]}
+    custom_df = ndl.CustomDataFrame(data)
+    assert len(custom_df) == 1
+
+def test_len_with_series_data():
+    data = {"col1": pd.Series([1, 2, 3]), "col2": pd.Series([4, 5, 6])}
+    custom_df = ndl.CustomDataFrame(data)
+    assert len(custom_df) == 3
+
+def test_len_with_mixed_data_types():
+    data = {
+        "col1": [1, 2, 3],
+        "col2": pd.Series([4, 5, 6]),
+        "col3": pd.DataFrame({"subcol1": [7, 8, 9]})
+    }
+    custom_df = ndl.CustomDataFrame(data)
+    assert len(custom_df) == 3
+
+# Add more tests as needed to cover other scenarios and edge cases
 
