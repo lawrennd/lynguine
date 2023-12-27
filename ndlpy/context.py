@@ -153,7 +153,7 @@ class Context(_Config):
         """
         
         # Load in the default configuration
-        self._default_file = os.path.join(os.path.dirname(__file__), "defaults.yml")
+        self._default_file = os.path.abspath(os.path.join(os.path.dirname(__file__), "defaults.yml"))
         # Load in the local configuration
         self._local_file = os.path.abspath(os.path.join(os.path.dirname(__file__), "machine.yml"))
 
@@ -164,11 +164,11 @@ class Context(_Config):
 
         if os.path.exists(self._default_file):
             with open(self._default_file) as file:
-                self._data.update(yaml.load(file, Loader=yaml.FullLoader))
+                self._data.update(yaml.safe_load(file))
 
         if os.path.exists(self._local_file):
-            with open(local_file) as file:
-                self._data.update(yaml.load(file, Loader=yaml.FullLoader))
+            with open(self._local_file) as file:
+                self._data.update(yaml.safe_load(file))
 
         # If there's no configuration, raise an error
         if self._data=={}:
