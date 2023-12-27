@@ -24,6 +24,7 @@ pyyaml = "*"
 XlsxWriter = "*"
 pandas = "*"
 deepdiff = "^5.5.0"
+pypandoc = "*"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
