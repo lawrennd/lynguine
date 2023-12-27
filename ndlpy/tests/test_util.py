@@ -26,6 +26,7 @@ def test_extract_full_filename():
 @pytest.fixture
 def setup_environment(monkeypatch):
     # Setting up mock environment variables for testing
+    monkeypatch.setenv("TEST", "/mock/home")
     monkeypatch.setenv("HOME", "/mock/home")
     monkeypatch.setenv("USERPROFILE", "/mock/userprofile")
     monkeypatch.setenv("TEMP", "/mock/temp")
@@ -34,23 +35,17 @@ def setup_environment(monkeypatch):
 
 def test_extract_root_directory(setup_environment):
     # Testing with a directory containing an environment variable
-    directory = "$HOME/Documents"
+    directory = "$TEST/Documents"
     root, sub = extract_root_directory(directory)
-    assert root == "/mock/home"
-    assert sub == "/Documents"
+    assert root == "$HOME"
+    assert sub == "Documents"
 
     # Testing with a directory containing the current working directory
     cwd = os.getcwd()
     directory = os.path.join(cwd, "subdir")
     root, sub = extract_root_directory(directory)
-    assert root == cwd
-    assert sub == "/subdir"
-
-    # Testing with a directory that does not exist
-    directory = "/non/existent/directory"
-    root, sub = extract_root_directory(directory)
-    assert root is None
-    assert sub is None
+    assert root == sub_path_environment(cwd)
+    assert sub == "subdir"
 
     # Testing with None as input
     root, sub = extract_root_directory(None)
@@ -65,11 +60,11 @@ def test_extract_root_directory(setup_environment):
     ("config.yaml", "yaml"),
     ("reference.bib", "bibtex"),
     ("document.docx", "docx"),
-    ("unknown.file", pytest.raises(ValueError))
+    ("unknown.file", ValueError)
 ])
 def test_extract_file_type(filename, expected):
-    if isinstance(expected, type) and issubclass(expected, BaseException):
-        with expected:
+    if expected is ValueError:
+        with pytest.raises(expected):
             extract_file_type(filename)
     else:
         assert extract_file_type(filename) == expected
@@ -106,16 +101,20 @@ def test_to_valid_var(variable, expected):
 # Testing to_camel_case
 @pytest.mark.parametrize("text, expected", [
     ("hello world", "helloWorld"),
-    ("HELLO WORLD", "HELLO WORLD"),
-    ("CamelCase", "camelCase"),
+    ("HELLO WORLD", "HELLOWORLD"),
+    ("Camel case", "CamelCase"),
     ("with/slash", "withOrSlash"),
     ("with@symbol", "withAtSymbol"),
     ("with-hyphen", "withHyphen"),
     ("123number", "123number"),
-    ("", "A")
+    ("", ValueError)
 ])
 def test_to_camel_case(text, expected):
-    assert to_camel_case(text) == expected
+    if expected is ValueError:
+        with pytest.raises(expected):
+            to_camel_case(text)
+    else:     
+        assert to_camel_case(text) == expected
 
 # Testing sub_path_environment
 def test_sub_path_environment():
@@ -197,15 +196,15 @@ def test_sorting():
 def test_recent():
     df = pd.DataFrame({"year": [2000, 2020]})
     current_year = datetime.now().year
-    df_recent = recent(df)
-    assert df_recent.tolist() == [False, current_year == 2020]
+    df_recent = recent(df, since_year=2019)
+    assert df_recent.tolist() == [False, True]
 
 # Testing current
 def test_current():
     now = datetime.now()
-    df = pd.DataFrame({"start": [now, now], "end": [now, now + pd.DateOffset(years=1)]})
-    df_current = current(df)
-    assert df_current.tolist() == [True, True]
+    df = pd.DataFrame({"start": [now, now, None], "end": [now, now + pd.DateOffset(years=1), None], "current" : [None, None, True]})
+    df_current = current(df, current="current", today=now)
+    assert df_current.tolist() == [True, True, True]
 
 # Testing former
 def test_former():

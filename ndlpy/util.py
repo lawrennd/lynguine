@@ -1,4 +1,4 @@
-from datetime import datetime
+import datetime
 import math
 import re
 import os
@@ -68,14 +68,13 @@ def extract_root_directory(directory, environs=["HOME", "USERPROFILE", "TEMP", "
     cwd = os.path.abspath(os.getcwd())
     
     # Extract the root directory and subdirectory
-    if os.path.isdir(directory):
-        # If path contains cwd, return that as root and the rest as subdirectory
-        if cwd in directory:
-            return sub_path_environment(cwd, environs), directory.replace(cwd, ".")
-        else:
-            return sub_path_environment(directory), "."
+    # If path contains cwd, return that as root and the rest as subdirectory
+    if cwd in directory:
+        return sub_path_environment(cwd, environs), directory.replace(cwd, ".").replace("./", "")
     else:
-        return None, None
+        # IF directory is not current, assume it is a root and a subdirectory, extracting each one.
+        root, directory = os.path.split(directory)
+        return sub_path_environment(root), directory
         
 def extract_file_type(filename):
     """
@@ -115,6 +114,13 @@ def extract_abs_filename(details):
     return os.path.abspath(extract_full_filename(details))
 
 def camel_capitalize(text):
+    """
+    Capitalize the text in camel case.
+
+    :param text: The text to be capitalized.
+    :type text: str
+    :return: The capitalized text.
+    """
     if text == text.upper():
         return text
     else:
@@ -160,6 +166,9 @@ def to_camel_case(text):
     :rtype: str
     """
 
+    if len(text) == 0:
+        raise ValueError(f"Provided a zero length string to convert to camel case.")
+    
     # Remove non alpha-numeric characters
     text = text.replace("/", " or ")
     text = text.replace("@", " at ")
@@ -167,17 +176,17 @@ def to_camel_case(text):
     if len(non_alpha_chars) > 0:
         for ch in non_alpha_chars:
             text = text.replace(ch, " ")
-        s = text.split()
-        if len(text) == 0:
-            return A
-        if s[0] == s[0].upper():
-            start = s[0]
-        else:
-            start = s[0].lower()
 
+    s = text.split()
+    if s[0] == s[0].capitalize() or s[0] == s[0].upper():
+        start = s[0]
+    else:
+        start = s[0].lower()
+
+    if len(s)>1:
         return start + ''.join(camel_capitalize(i) for i in s[1:])
     else:
-        return text
+        return start
 
 def sub_path_environment(path, environs=["HOME", "USERPROFILE", "TEMP", "TMPDIR", "TMP"]):
     """
@@ -308,10 +317,10 @@ def convert_year_iso(df, column="year", month=1, day=1):
         :raises ValueError: If the field is not a valid date
         """
         type_field = type(field)
-        if type_field is int: # Assume it is integer year
+        if isinstance(field, int): # Assume it is integer year
             log.debug(f"Returning \"{type_field}\" from form \"{field}\"")
             dt = datetime.datetime(year=field, month=month, day=day)
-        elif type_field is str: 
+        elif isinstance(field, str):
             try:
                 year = int(field) # Try it as string year
                 log.debug(f"Returning \"{type_field}\" from form \"{field}\"")
@@ -319,7 +328,7 @@ def convert_year_iso(df, column="year", month=1, day=1):
             except TypeError as e:
                 log.debug(f"Returning \"{type_field}\" from form \"{field}\"")
                 dt = datetime.datetime.strptime(field, "%Y-%m-%d") # Try it as string YYYY-MM-DD
-        elif type_field is datetime.date:
+        elif isinstance(field, datetime.date):
             log.debug(f"Returning \"{type_field}\" from form \"{field}\"")
             return field
         else:
@@ -363,7 +372,7 @@ def addyear(df, source="date"):
 
 def augmentmonth(df, destination='month', source="date"):
     """
-    Augment the  month column based on source date field.
+    Augment the month column based on source date field.
 
     :param df: The dataframe to be augmented.
     :type df: pandas.DataFrame or ndlpy.data.CustomDataFrame
@@ -374,7 +383,7 @@ def augmentmonth(df, destination='month', source="date"):
     :return: The augmented dataframe.
     :rtype: pandas.DataFrame or ndlpy.data.CustomDataFrame
     """
-    val = pd.Series(index=df.index)
+    val = pd.Series(index=df.index, dtype=object)
     for index, entry in df.iterrows():
         if pd.isna(df.at[index, destination]) and not pd.isna(df.at[index, source]):
             val[index] = df.at[index, source].month_name()
@@ -461,7 +470,7 @@ def descending(df, by):
     return df.sort_values(by=by, ascending=False)
 
 ## Filters
-def recent(df, column="year"):
+def recent(df, column="year", since_year=2000):
     """
     Filter on whether item is recent
 
@@ -473,7 +482,7 @@ def recent(df, column="year"):
     :rtype: pandas.DataFrame or ndlpy.data.CustomDataFrame
     
     """
-    return df[column]>=get_since_year()
+    return df[column]>=since_year
 
 def current(df, start="start", end="end", current=None, today=None):
     """
@@ -562,4 +571,4 @@ def columncontains(df, column, value):
     :rtype: pandas.DataFrame or ndlpy.data.CustomDataFrame
     """
     colis = columnis(df, column, value)
-    return (colis | df[column].apply(lambda x: (x==value).any() if type(x==value) is not bool else (x==value)))
+    return (colis | df[column].apply(lambda x: x == value or (hasattr(x, '__contains__') and value in x)))
