@@ -30,6 +30,8 @@ requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.dev-dependencies]
+pytest = "^6.2.5"
+pytest-cov = "^3.0.0"
 
 [tool.poetry.scripts]
 ndlconvert = "ndlpy.ndlconvert:main"
