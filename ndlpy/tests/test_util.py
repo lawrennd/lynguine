@@ -3,11 +3,12 @@ import pandas as pd
 import os
 from datetime import datetime
 from ndlpy.util import (
-    extract_full_filename, extract_file_type, extract_abs_filename, camel_capitalize,
+    extract_full_filename,  extract_root_directory, extract_file_type, extract_abs_filename, camel_capitalize,
     remove_nan, to_valid_var, to_camel_case, sub_path_environment, get_path_env,
     get_url_file, convert_datetime, convert_int, convert_string, convert_year_iso,
     addmonth, addyear, augmentmonth, augmentyear, augmentcurrency, fillna, ascending,
     descending, recent, current, former, onbool, columnis, columncontains
+
 )
 
 # Sample data for testing
@@ -21,6 +22,41 @@ def test_extract_full_filename():
     expected = "/path/to/dir/file.txt"
     assert extract_full_filename(sample_details) == expected
 
+# Testing extract_root_directory
+@pytest.fixture
+def setup_environment(monkeypatch):
+    # Setting up mock environment variables for testing
+    monkeypatch.setenv("HOME", "/mock/home")
+    monkeypatch.setenv("USERPROFILE", "/mock/userprofile")
+    monkeypatch.setenv("TEMP", "/mock/temp")
+    monkeypatch.setenv("TMPDIR", "/mock/tmpdir")
+    monkeypatch.setenv("TMP", "/mock/tmp")
+
+def test_extract_root_directory(setup_environment):
+    # Testing with a directory containing an environment variable
+    directory = "$HOME/Documents"
+    root, sub = extract_root_directory(directory)
+    assert root == "/mock/home"
+    assert sub == "/Documents"
+
+    # Testing with a directory containing the current working directory
+    cwd = os.getcwd()
+    directory = os.path.join(cwd, "subdir")
+    root, sub = extract_root_directory(directory)
+    assert root == cwd
+    assert sub == "/subdir"
+
+    # Testing with a directory that does not exist
+    directory = "/non/existent/directory"
+    root, sub = extract_root_directory(directory)
+    assert root is None
+    assert sub is None
+
+    # Testing with None as input
+    root, sub = extract_root_directory(None)
+    assert root is None
+    assert sub is None
+    
 # Testing extract_file_type
 @pytest.mark.parametrize("filename, expected", [
     ("file.md", "markdown"),

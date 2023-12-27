@@ -14,7 +14,8 @@ from ndlpy.access import (
     write_yaml_directory, read_yaml_directory, write_markdown_directory,
     read_markdown_directory
 )
-from ndlpy.util import extract_full_filename
+from ndlpy.util import extract_full_filename, extract_root_directory
+
 
 # Sample data setup
 sample_dict = {
@@ -139,8 +140,7 @@ def test_write_read_json_directory(tmpdir):
     }
     data = pd.DataFrame(fake.rows(30))
     for ind in data.index:
-        data.at[ind, "sourceRoot"] = "."
-        data.at[ind, "sourceDirectory"] = str(tmpdir)
+        data.at[ind, "sourceRoot"], data.at[ind, "sourceDirectory"] = extract_root_directory(str(tmpdir))
         data.at[ind, "sourceFilename"] = data.at[ind, "name"] + extension
     data = data.sort_values(by="sourceFilename").reset_index(drop=True)
     write_json_directory(data, details)
@@ -163,8 +163,7 @@ def test_write_read_yaml_directory(tmpdir):
     }
     data = pd.DataFrame(fake.rows(30))
     for ind in data.index:
-        data.at[ind, "sourceRoot"] = "."
-        data.at[ind, "sourceDirectory"] = str(tmpdir)
+        data.at[ind, "sourceRoot"], data.at[ind, "sourceDirectory"] = extract_root_directory(str(tmpdir))
         data.at[ind, "sourceFilename"] = data.at[ind, "name"] + extension
     data = data.sort_values(by="sourceFilename").reset_index(drop=True)
     write_yaml_directory(data, details)
@@ -184,8 +183,7 @@ def test_write_read_markdown_directory(tmpdir):
     }
     data = pd.DataFrame(fake.rows(30))
     for ind in data.index:
-        data.at[ind, "sourceRoot"] = "."
-        data.at[ind, "sourceDirectory"] = str(tmpdir)
+        data.at[ind, "sourceRoot"], data.at[ind, "sourceDirectory"] = extract_root_directory(str(tmpdir))
         data.at[ind, "sourceFilename"] = data.at[ind, "name"] + extension
     data = data.sort_values(by="sourceFilename").reset_index(drop=True)
     write_markdown_directory(data, details)

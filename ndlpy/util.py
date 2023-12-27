@@ -45,6 +45,38 @@ def extract_full_filename(details):
         details["filename"],
     )
 
+def extract_root_directory(directory, environs=["HOME", "USERPROFILE", "TEMP", "TMPDIR", "TMP"]):
+    """
+    Extract a root directory and a subdirectory from a given directory string.
+
+    :param directory: The directory to extract from.
+    :type directory: str
+    :return: The root directory and subdirectory.
+    :rtype: tuple
+    """
+
+    if directory is None:
+        return None, None
+
+    # Extract a list of environment variables from the directory string
+    environs = re.findall(r"\$([A-Za-z0-9_]+)", directory) + environs
+
+    # Replace the environment variables with their values
+    directory = os.path.expandvars(directory)
+
+    # Find absolute path of the current working directory.
+    cwd = os.path.abspath(os.getcwd())
+    
+    # Extract the root directory and subdirectory
+    if os.path.isdir(directory):
+        # If path contains cwd, return that as root and the rest as subdirectory
+        if cwd in directory:
+            return sub_path_environment(cwd, environs), directory.replace(cwd, ".")
+        else:
+            return sub_path_environment(directory), "."
+    else:
+        return None, None
+        
 def extract_file_type(filename):
     """
     Return a standardised file type.
@@ -147,7 +179,7 @@ def to_camel_case(text):
     else:
         return text
 
-def sub_path_environment(path, environs=["HOME", "USERPROFILE"]):
+def sub_path_environment(path, environs=["HOME", "USERPROFILE", "TEMP", "TMPDIR", "TMP"]):
     """
     Replace a path with values from environment variables.
 
@@ -163,12 +195,12 @@ def sub_path_environment(path, environs=["HOME", "USERPROFILE"]):
             path = path.replace(os.environ[var], "$" + var)
     return path
 
-def get_path_env(environs=["HOME", "USERPROFILE"]):
+def get_path_env(environs=["HOME", "USERPROFILE", "TEMP", "TMPDIR", "TMP"]):
     """
     Return the current path with environment variables.
 
     :return: The current path with environment variables replacing.
-    :rtype: str    
+    :rtype: str
     """
     return sub_path_environment(os.path.abspath(os.getcwd()), environs)
                                         

@@ -235,17 +235,19 @@ def read_files(filelist, store_fields=None, filereader=None, filereader_args=Non
             data.append(filereader(filename, **filereader_args))
         else:
             data.append(filereader(filename))
-            
+
+        # Add the root location, directory and filename to the data.
         split_path = os.path.split(filename)
-        if root_field not in data[-1]:
-            data[-1][root_field] = get_path_env()
-        if directory_field not in data[-1]:
-            direc = split_path[0].replace(data[-1][root_field], '')
-            if direc == "": # ensure at least a "." for directory
-                direc = "."
-            data[-1][directory_field] = direc
+        root, direc = util.extract_root_directory(split_path[0])
+        if root_field in data[-1]:
+            raise ValueError(f"The field \"{root_field}\" is already in the data and is registered for setting as the root field.")
+        data[-1][root_field] = root
+        if directory_field in data[-1]:
+            raise ValueError(f"The field \"{directory_field}\" is already in the data and is registered for setting as the directory field.")
+        data[-1][directory_field] = direc
         if filename_field not in data[-1]:
-            data[-1][filename_field] = split_path[1]
+            raise ValueError(f"The field \"{filename_field}\" is not in the data and is registered for setting as the filename field.")
+        data[-1][filename_field] = split_path[1]
     return pd.json_normalize(data)
 
 
