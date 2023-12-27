@@ -16,7 +16,7 @@ import pypandoc
 
 import bibtexparser as bp
 
-from .util import extract_full_filename, extract_file_type, get_path_env, remove_nan
+from .util import extract_full_filename, extract_root_directory, extract_file_type, get_path_env, remove_nan
 from .log import Logger
 from .context import Context
 
@@ -238,7 +238,7 @@ def read_files(filelist, store_fields=None, filereader=None, filereader_args=Non
 
         # Add the root location, directory and filename to the data.
         split_path = os.path.split(filename)
-        root, direc = util.extract_root_directory(split_path[0])
+        root, direc = extract_root_directory(split_path[0])
         if root_field in data[-1]:
             raise ValueError(f"The field \"{root_field}\" is already in the data and is registered for setting as the root field.")
         data[-1][root_field] = root
