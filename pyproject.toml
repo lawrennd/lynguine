@@ -25,6 +25,7 @@ XlsxWriter = "*"
 pandas = "*"
 deepdiff = "^5.5.0"
 pypandoc = "*"
+wget = "*"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
