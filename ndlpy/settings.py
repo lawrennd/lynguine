@@ -258,7 +258,7 @@ class Settings(_HConfig):
                 if "writable" in self._data and self._data["inherit"]["writable"]:
                     self._parent._writable = True
         if self._data=={}:
-            log.warning(f"No configuration file found at {user_file}.")
+            log.warning(f"No configuration file found at \"{user_file}\".")
 
         self._expand_vars()
         self._restructure()
@@ -272,8 +272,9 @@ class Settings(_HConfig):
         :return: None
         """
         for key, item in self._data.items():
-            if item is str:
+            if isinstance(item, str):
                 self._data[key] = os.path.expandvars(item)
+                print(self._data[key])
 
     def _restructure(self):
         """
