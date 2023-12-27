@@ -1,0 +1,46 @@
+name: Build and Deploy Documentation
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'docs/**'
+      - '*.md'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'docs/**'
+      - '*.md'
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        persist-credentials: false  # Required by peaceiris/actions-gh-pages
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        pip install poetry
+        poetry install
+
+    - name: Build documentation
+      run: |
+        cd docs
+        make html
+
+    - name: Deploy to GitHub Pages
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./docs/_build/html  # Adjust this path to your Sphinx build output
