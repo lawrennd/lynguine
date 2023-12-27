@@ -245,8 +245,8 @@ def read_files(filelist, store_fields=None, filereader=None, filereader_args=Non
         if directory_field in data[-1]:
             raise ValueError(f"The field \"{directory_field}\" is already in the data and is registered for setting as the directory field.")
         data[-1][directory_field] = direc
-        if filename_field not in data[-1]:
-            raise ValueError(f"The field \"{filename_field}\" is not in the data and is registered for setting as the filename field.")
+        if filename_field in data[-1]:
+            raise ValueError(f"The field \"{filename_field}\" is already in the data and is registered for setting as the filename field.")
         data[-1][filename_field] = split_path[1]
     return pd.json_normalize(data)
 
