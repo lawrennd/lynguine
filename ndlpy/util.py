@@ -67,7 +67,14 @@ def camel_capitalize(text):
         return text.capitalize()
 
 def remove_nan(dictionary):
-    """Delete missing entries from dictionary"""
+    """
+    Delete missing entries from dictionary
+
+    :param dictionary: The dictionary to be cleaned.
+    :type dictionary: dict
+    :return: The dictionary with missing entries removed.
+    :rtype: dict
+    """
     dictionary2 = dictionary.copy()
     for key, entry in dictionary.items():
         if type(entry) is dict:
@@ -79,12 +86,27 @@ def remove_nan(dictionary):
     return dictionary2
 
 
-def to_valid_var(varStr):
-    """Replace invalid characters with underscore"""
-    return re.sub('\W|^(?=\d)','_', varStr.lower())
+def to_valid_var(variable):
+    """
+    Replace invalid variable name characters with underscore
+
+    :param variable: The variable name to be converted.
+    :type variable: str
+    :return: The variable name converted to a valid variable name.
+    """
+    return re.sub('\W|^(?=\d)','_', variable.lower())
 
 def to_camel_case(text):
-    """Remove non alpha-numeric characters and camelize capitalisation"""
+    """
+    Remove non alpha-numeric characters and convert to camel case.
+
+    :param text: The text to be converted.
+    :type text: str
+    :return: The text converted to camel case.
+    :rtype: str
+    """
+
+    # Remove non alpha-numeric characters
     text = text.replace("/", " or ")
     text = text.replace("@", " at ")
     non_alpha_chars = set([ch for ch in set(list(text)) if not ch.isalnum()])
@@ -103,20 +125,46 @@ def to_camel_case(text):
     else:
         return text
 
-def sub_path_environment(path):
-    """Replace a path with values from environment variables."""
-    vars = ["HOME", "USERPROFILE"]
-    for var in vars:
+def sub_path_environment(path, environs=["HOME", "USERPROFILE"]):
+    """
+    Replace a path with values from environment variables.
+
+    :param path: The path to be replaced.
+    :type path: str
+    :param environs: The environment variables to be replaced.
+    :type environs: list
+    :return: The path with environment variables replaced.
+    :rtype: str
+    """
+    for var in environs:
         if var in os.environ:
             path = path.replace(os.environ[var], "$" + var)
     return path
 
-def get_path_env():
-    """Return the current parth with environment variables."""
-    return sub_path_environment(os.path.abspath(os.getcwd()))
+def get_path_env(environs=["HOME", "USERPROFILE"]):
+    """
+    Return the current path with environment variables.
+
+    :return: The current path with environment variables replacing.
+    :rtype: str    
+    """
+    return sub_path_environment(os.path.abspath(os.getcwd()), environs)
                                         
 def get_url_file(url, directory=None, filename=None, ext=None):
-    """Download a file from a url and save it to disk."""
+    """
+    Download a file from a url and save it to disk.
+
+    :param url: The url of the file to be downloaded.
+    :type url: str
+    :param directory: The directory to save the file to
+    :type directory: str
+    :param filename: The filename to save the file to
+    :type filename: str
+    :param ext: The extension to save the file to
+    :type ext: str
+    :return: The filename of the downloaded file
+    :rtype: str
+    """
     try:
         dfilename = wget.download(url)
     except:

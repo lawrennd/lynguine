@@ -149,7 +149,11 @@ def read_directory(details,
                    filereader_args={},
                    default_glob="*",
                    source=None):
-    """Read data from a directory of files."""
+    """
+    Read data from a directory of files.
+
+    :raises ValueError: if the same filename is specified multiple times.
+    """
     filenames = []
     dirnames = []
     if "source" in details:
@@ -205,7 +209,9 @@ def read_list(filelist):
     return read_files(filelist)
     
 def read_files(filelist, store_fields=None, filereader=None, filereader_args=None):
-    """Read files from a given list."""
+    """
+    Read files from a given list.
+    """
     if store_fields is not None:
         directory_field = store_fields["directory"]
         filename_field = store_fields["filename"]
@@ -216,6 +222,8 @@ def read_files(filelist, store_fields=None, filereader=None, filereader_args=Non
         root_field = "sourceRoot"
     
 
+    if len(filelist) != len(set(filelist)):
+        raise ValueError(f"There are repeated files listed in the file list.")
     filelist.sort()
     data = []
     for filename in filelist:
@@ -242,11 +250,17 @@ def read_files(filelist, store_fields=None, filereader=None, filereader_args=Non
 
 
 def write_directory(df, details, filewriter=None, filewriter_args={}):
-    """Write scoring data to a directory of files."""
+    """
+    Write scoring data to a directory of files.
+
+    :raises ValueError: if the same filename is specified multiple times.
+    """
     filename_field = details["store_fields"]["filename"]
     directory_field = details["store_fields"]["directory"]
     root_field = details["store_fields"]["root"]
 
+    filenames = []
+    # Check that none of the filenames are the same.
     for index, row in df.iterrows():
         # Don't write a file that contains only nulls
         if not row.isnull().values.all():
@@ -261,6 +275,9 @@ def write_directory(df, details, filewriter=None, filewriter_args={}):
                 os.makedirs(directoryname)
 
             fullfilename = os.path.join(directoryname, row[filename_field])
+            if fullfilename in filenames:
+                raise ValueError("The specified filed name \"{fullfilename}\" has already been used for a different row of the data.")
+            filenames.append(fullfilename)
             row_dict = row.to_dict()
             row_dict = remove_empty(row_dict)
             # Don't save the file information because that's situational.

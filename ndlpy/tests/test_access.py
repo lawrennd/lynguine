@@ -132,21 +132,20 @@ def test_write_read_json_directory(tmpdir):
         "directory": str(tmpdir),
         "source": [
             {
-                "filename": "sourceFilename",
-                "directory": "sourceDirectory",
-                "root": "sourceRoot",
+                "directory": str(tmpdir),
                 "glob": "*" + extension,
             },
         ],
     }
     data = pd.DataFrame(fake.rows(30))
     for ind in data.index:
-        data.at[ind, "sourceFilename"] = data.at[ind, "name"] + extension
-        data.at[ind, "sourceDirectory"] = str(tmpdir)
         data.at[ind, "sourceRoot"] = "."
+        data.at[ind, "sourceDirectory"] = str(tmpdir)
+        data.at[ind, "sourceFilename"] = data.at[ind, "name"] + extension
     data = data.sort_values(by="sourceFilename").reset_index(drop=True)
     write_json_directory(data, details)
     read_data = read_json_directory(details)
+    read_data = read_data.sort_values(by="sourceFilename").reset_index(drop=True)
     print(data)
     print(read_data)
     assert_frame_equal(data, read_data)
@@ -157,18 +156,16 @@ def test_write_read_yaml_directory(tmpdir):
         "directory": str(tmpdir),
         "source": [
             {
-                "filename": "sourceFilename",
-                "directory": "sourceDirectory",
-                "root": "sourceRoot",
+                "directory": str(tmpdir),
                 "glob": "*" + extension,
             },
         ],
     }
     data = pd.DataFrame(fake.rows(30))
     for ind in data.index:
-        data.at[ind, "sourceFilename"] = data.at[ind, "name"] + extension
-        data.at[ind, "sourceDirectory"] = str(tmpdir)
         data.at[ind, "sourceRoot"] = "."
+        data.at[ind, "sourceDirectory"] = str(tmpdir)
+        data.at[ind, "sourceFilename"] = data.at[ind, "name"] + extension
     data = data.sort_values(by="sourceFilename").reset_index(drop=True)
     write_yaml_directory(data, details)
     read_data = read_yaml_directory(details)
@@ -180,18 +177,16 @@ def test_write_read_markdown_directory(tmpdir):
         "directory": str(tmpdir),
         "source": [
             {
-                "filename": "sourceFilename",
-                "directory": "sourceDirectory",
-                "root": "sourceRoot",
+                "directory": str(tmpdir),
                 "glob": "*" + extension,
             },
         ],
     }
     data = pd.DataFrame(fake.rows(30))
     for ind in data.index:
-        data.at[ind, "sourceFilename"] = data.at[ind, "name"] + extension
-        data.at[ind, "sourceDirectory"] = str(tmpdir)
         data.at[ind, "sourceRoot"] = "."
+        data.at[ind, "sourceDirectory"] = str(tmpdir)
+        data.at[ind, "sourceFilename"] = data.at[ind, "name"] + extension
     data = data.sort_values(by="sourceFilename").reset_index(drop=True)
     write_markdown_directory(data, details)
     read_data = read_markdown_directory(details)

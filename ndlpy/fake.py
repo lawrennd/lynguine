@@ -9,13 +9,17 @@ datetime = mi.Datetime()
 text = mi.Text('en')
 
 def row():
-    full_name = person.full_name(gender=mi.enums.Gender.FEMALE)
-    name = person.name()
+    familyName = person.surname()
+    givenName = person.name(gender=mi.enums.Gender.FEMALE)
     date_time = datetime.datetime()
+    name = familyName + "_" + givenName
+    for repl in ["'", " "]:
+        name = name.replace(repl, "-")
     output = {
-        "full_name": full_name,
-        "address": addess.address(),
         "name": name,
+        "givenName": givenName,
+        "familyName": familyName,
+        "address": addess.address(),
         "email": person.email(),
         "city": addess.city(),
         "state": addess.state(),
