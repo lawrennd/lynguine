@@ -23,7 +23,7 @@ def replace_notation(lines, old_notation, new_notation):
     for line in lines:
         filename = filename + line
 
-    terminate = '[^\w|_]'
+    terminate = r'[^\w|_]'
     start_math = re.escape('$')
     not_reg = re.compile(r'([' + start_math + ']' + '[^' + start_math + ']*' + terminate + ')' + old_notation + '(' + terminate + ')')
     matches = not_reg.findall(filename)
