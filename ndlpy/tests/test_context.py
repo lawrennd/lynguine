@@ -42,7 +42,6 @@ filepaths = [
 def test_machine_yaml(monkeypatch):
     mock_yaml_open(monkeypatch, machine_yaml_content, filepaths)
     config = Context()
-    print(config)
     assert config["logging"]["level"] == "INFO"
     assert config["logging"]["filename"] == "machine_log.log"
 
