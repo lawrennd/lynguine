@@ -13,6 +13,20 @@ log = Logger(
     filename=cntxt["logging"]["filename"]
 )
 
+
+def reorder_dataframe(df, order):
+    """
+    This function reorders the given data frame columns with the order given by the columns listed in order and any remaining columns placed alphabetically after order.
+
+    :param df: The DataFrame to reorder.
+    :type df: pd.DataFrame or ndlpy.data.CustomDataFrame
+    :
+    """
+    # Remove any columns from order that are not in the dataframe
+    order = [column for column in order if column in df.columns]
+    remaining = [column for column in df.columns if column not in order]
+    return df[order + sorted(remaining)]
+
 ## Preprocessors
 def convert_datetime(df, columns):
     """Preprocessor to set datetime type on columns."""

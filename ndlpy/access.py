@@ -16,7 +16,8 @@ import pypandoc
 
 import bibtexparser as bp
 
-from .util import extract_full_filename, extract_root_directory, extract_file_type, get_path_env, remove_nan
+from .util import extract_full_filename, extract_root_directory, extract_file_type, get_path_env, remove_nan, reorder_dictionary
+from .dfutil import reorder_dataframe
 from .log import Logger
 from .context import Context
 
@@ -73,6 +74,8 @@ yaml.add_representer(str, multiline_str_representer, Dumper=yaml.SafeDumper)
 # Required for safe_dump
 #yaml.SafeDumper.add_multi_representer(EnvTag, EnvTag.to_yaml)
 
+bibtex_sort_by = ["author", "year", "title"]
+bibtex_column_order = ["ENTRYTYPE", "ID", "title", "author", "editor", "abstract", "year", "journal", "booktitle", "volume", "issue", "pages", "publisher", "address", "doi", "url", "note"]
 
 
 def str_type():
@@ -131,18 +134,50 @@ def read_yaml(details):
     data =  read_yaml_file(filename)
     return pd.DataFrame(data)
 
-def read_bibtex(details):
-    """Read data from a bibtex file."""
-    filename = extract_full_filename(details)
-    data =  read_bibtex_file(filename)
-    return pd.DataFrame(data)
-
 
 def write_yaml(df, details):
-    """Write data to a yaml file."""
+    """
+    Write data to a yaml file.
+
+    :param df: The data to be written.
+    :type df: pandas.DataFrame or ndlpy.data.CustomDataFrame
+    :param details: The details of the file to be written.
+    :type details: dict
+    """
     filename = extract_full_filename(details)
     write_yaml_file(df.to_dict("records"), filename)
 
+def read_bibtex(details):
+    """
+    Read data from a bibtex file.
+
+    :param details: The details of the file to be read.
+    :type details: dict
+    :return: The data read from the file.
+    :rtype: pandas.DataFrame
+    """
+    filename = extract_full_filename(details)
+    data = read_bibtex_file(filename)
+    
+    return reorder_dataframe(pd.DataFrame(data), bibtex_column_order).sort_values(by=bibtex_sort_by).reset_index(drop=True)
+
+def write_bibtex(df, details):
+    """
+    Write data to a bibtex file.
+
+    :param df: The data to be written.
+    :type df: pandas.DataFrame or ndlpy.data.CustomDataFrame
+    :param details: The details of the file to be written.
+    :type details: dict
+    """
+    filename = extract_full_filename(details)
+    data_dict = df.to_dict("records")
+
+    # Remove all the nan and missing values from the dictionary.
+    for num, entry in enumerate(data_dict):
+        data_dict[num] = remove_nan(entry)
+        
+    write_bibtex_file(data_dict, filename)
 
 def read_directory(details,
                    filereader=None,
@@ -281,24 +316,13 @@ def write_directory(df, details, filewriter=None, filewriter_args={}):
                 raise ValueError("The specified filed name \"{fullfilename}\" has already been used for a different row of the data.")
             filenames.append(fullfilename)
             row_dict = row.to_dict()
-            row_dict = remove_empty(row_dict)
+            row_dict = remove_nan(row_dict)
             # Don't save the file information because that's situational.
             del row_dict[filename_field]
             del row_dict[root_field]
             del row_dict[directory_field]
             filewriter(row_dict, fullfilename, **filewriter_args)
 
-
-def remove_empty(row_dict):
-    """Remove any empty fields in the dictionary to tidy up saved files."""
-    delete_keys = []
-    for key, item in row_dict.items():
-        if type(item) is not list and pd.isna(item):
-            delete_keys.append(key)
-
-    for key in delete_keys:
-        del row_dict[key]
-    return row_dict
 
 
 def read_json_file(filename):
@@ -353,10 +377,14 @@ def read_yaml_file(filename):
 
 def read_bibtex_file(filename):
     """Red a bibtex file and return a python dictionary."""
+    parser = bp.bparser.BibTexParser()
+    parser.ignore_nonstandard_types = False
+    parser.homogenize_fields = False
+    parser.common_strings = False   
     with open(filename, "r") as stream:
         log.debug(f"Reading bibtex file \"{filename}\"")
-        data = bp.load(stream)
-    return data.entries
+        data = bp.load(stream, parser)
+    return reorder_dictionary(data.entries, bibtex_column_order)
 
 def yaml_prep(data):
     """Prepare any fields for writing in yaml"""
@@ -373,11 +401,33 @@ def yaml_prep(data):
 
 def write_bibtex_file(data, filename):
     """Write a yaml file from a python dictionary."""
+
+    # Ensure that the data ID entries are unique
+    ids = []
+    for entry in data:
+        if "ID" in entry:
+            ids.append(entry["ID"])
+        else:
+            raise ValueError(f"Entry {entry} does not have an ID field.")
+    if len(ids) != len(set(ids)):
+        raise ValueError(f"There are repeated IDs in the data.")
+
+    # Ensure that the ids are valid keys for bibtex.
+    for entry in data:
+        # invalid bibtex identifier characters are: @',#}{~% and whitespace characters such as space, tab, newline, and carriage return.
+        # Check they aren't in the ID.
+        if re.search(r"[@',#}{~% \t\n\r]", entry["ID"]):
+            raise ValueError(f"The ID {entry['ID']} contains invalid characters.")
+   
     bibdata = bp.bibdatabase.BibDatabase()
     bibdata.entries = data
+    writer = bp.bwriter.BibTexWriter()
+    writer.indent = "  "
+    writer.order_entries_by = bibtex_sort_by
+    writer.display_order = bibtex_column_order
     with open(filename, "w") as stream:
         log.debug(f"Writing bibtex file \"{filename}\".")
-        bp.dump(bibdata, stream)
+        bp.dump(bibdata, stream, writer)
 
 def write_yaml_file(data, filename):
     """Write a yaml file from a python dictionary."""

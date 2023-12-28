@@ -1,7 +1,9 @@
 import pytest
 import os
+
 from datetime import datetime
 from ndlpy.util import (
+    reorder_dictionary,
     extract_full_filename,  extract_root_directory, extract_file_type, extract_abs_filename, camel_capitalize,
     remove_nan, to_valid_var, to_camel_case, sub_path_environment, get_path_env,
     get_url_file
@@ -12,6 +14,44 @@ sample_details = {
     "directory": "/path/to/dir",
     "filename": "file.txt"
 }
+
+
+
+def test_reorder_dictionary_basic():
+    dictionary = {'B': 2, 'A': 1, 'C': 3}
+    order = ['A', 'B']
+    reordered_dict = reorder_dictionary(dictionary, order)
+    expected_keys = ['A', 'B', 'C']
+    assert list(reordered_dict.keys()) == expected_keys
+
+def test_reorder_dictionary_with_extra_keys_in_order():
+    dictionary = {'B': 2, 'A': 1}
+    order = ['A', 'C', 'B']  # 'C' is not in the dictionary
+    reordered_dict = reorder_dictionary(dictionary, order)
+    expected_keys = ['A', 'B']
+    assert list(reordered_dict.keys()) == expected_keys
+
+def test_reorder_dictionary_with_no_order():
+    dictionary = {'B': 2, 'A': 1}
+    order = []
+    reordered_dict = reorder_dictionary(dictionary, order)
+    expected_keys = ['A', 'B']  # Sorted remaining keys
+    assert list(reordered_dict.keys()) == expected_keys
+
+def test_reorder_dictionary_without_sorting_remaining():
+    dictionary = {'C': 3, 'B': 2, 'A': 1}
+    order = ['B']
+    reordered_dict = reorder_dictionary(dictionary, order, sort_remaining=False)
+    expected_keys = ['B', 'C', 'A']  # 'C' and 'A' retain their original order
+    assert list(reordered_dict.keys()) == expected_keys
+
+def test_reorder_dictionary_all_keys_ordered():
+    dictionary = {'C': 3, 'B': 2, 'A': 1}
+    order = ['B', 'A', 'C']
+    reordered_dict = reorder_dictionary(dictionary, order)
+    expected_keys = ['B', 'A', 'C']
+    assert list(reordered_dict.keys()) == expected_keys
+
 
 # Testing extract_full_filename
 def test_extract_full_filename():

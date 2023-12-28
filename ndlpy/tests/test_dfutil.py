@@ -3,11 +3,59 @@ import pandas as pd
 from datetime import datetime
 
 from ndlpy.dfutil import (
+    reorder_dataframe,
     convert_datetime, convert_int, convert_string, convert_year_iso,
     addmonth, addyear, augmentmonth, augmentyear, augmentcurrency, fillna, ascending,
     descending, recent, current, former, onbool, columnis, columncontains
 
 )
+
+
+import pytest
+import pandas as pd
+
+def test_reorder_dataframe_basic():
+    df = pd.DataFrame({
+        'B': [1, 2, 3],
+        'A': [4, 5, 6],
+        'C': [7, 8, 9]
+    })
+    order = ['A', 'B']
+    reordered_df = reorder_dataframe(df, order)
+    expected_columns = ['A', 'B', 'C']
+    assert list(reordered_df.columns) == expected_columns
+
+def test_reorder_dataframe_with_extra_columns_in_order():
+    df = pd.DataFrame({
+        'B': [1, 2, 3],
+        'A': [4, 5, 6]
+    })
+    order = ['A', 'C', 'B']  # 'C' is not in the DataFrame
+    reordered_df = reorder_dataframe(df, order)
+    expected_columns = ['A', 'B']
+    assert list(reordered_df.columns) == expected_columns
+
+def test_reorder_dataframe_with_no_order():
+    df = pd.DataFrame({
+        'B': [1, 2, 3],
+        'A': [4, 5, 6]
+    })
+    order = []
+    reordered_df = reorder_dataframe(df, order)
+    expected_columns = ['A', 'B']
+    assert list(reordered_df.columns) == expected_columns
+
+def test_reorder_dataframe_with_all_columns_ordered():
+    df = pd.DataFrame({
+        'C': [1, 2, 3],
+        'B': [4, 5, 6],
+        'A': [7, 8, 9]
+    })
+    order = ['B', 'A', 'C']
+    reordered_df = reorder_dataframe(df, order)
+    expected_columns = ['B', 'A', 'C']
+    assert list(reordered_df.columns) == expected_columns
+
 
 # Testing convert_datetime
 def test_convert_datetime():

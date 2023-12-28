@@ -1,3 +1,5 @@
+import os
+
 import pandas as pd
 import tempfile
 import pytest
@@ -9,12 +11,14 @@ import ndlpy
 import ndlpy.fake as fake
 from ndlpy.access import (
     read_json, write_json, read_json_file, write_json_file,
-    write_csv, read_csv, write_excel, read_excel, write_yaml,
+    write_csv, read_csv, write_excel, read_excel, read_bibtex, write_yaml,
     read_yaml, write_json_directory, read_json_directory,
-    write_yaml_directory, read_yaml_directory, write_markdown_directory,
-    read_markdown_directory
+    write_yaml_directory, read_yaml_directory, write_markdown_directory, write_bibtex, write_bibtex_file,
+    read_markdown_directory,
+    bibtex_column_order, bibtex_sort_by
 )
 from ndlpy.util import extract_full_filename, extract_root_directory
+from ndlpy.dfutil import reorder_dataframe
 
 
 # Sample data setup
@@ -127,6 +131,48 @@ def test_write_read_yaml(tmpdir):
     read_data = read_yaml(details)
     assert_frame_equal(read_data, data)
 
+   
+def test_write_bibtex_with_unique_ids(tmpdir):
+    data = [
+        {"ENTRYTYPE": "misc", "ID": "entry1", "title": "Title One"},
+        {"ENTRYTYPE": "misc", "ID": "entry2", "title": "Title Two"}
+    ]
+    filename = os.path.join(tmpdir,"test_unique_ids.bib")
+    write_bibtex_file(data, filename)
+    assert os.path.exists(filename)
+    os.remove(filename)
+
+def test_write_bibtex_with_duplicate_ids(tmpdir):
+    data = [
+        {"ENTRYTYPE": "misc", "ID": "entry1", "title": "Title One"},
+        {"ENTRYTYPE": "misc", "ID": "entry1", "title": "Title Two"}
+    ]
+    with pytest.raises(ValueError):
+        write_bibtex_file(data, os.path.join(tmpdir, "test_duplicate_ids.bib"))
+
+def test_write_bibtex_with_missing_id(tmpdir):
+    data = [{"ENTRYTYPE": "misc", "title": "Title One"}]
+    with pytest.raises(ValueError):
+        write_bibtex_file(data, os.path.join(tmpdir, "test_missing_id.bib"))
+
+def test_write_bibtex_with_invalid_id(tmpdir):
+    data = [{"ENTRYTYPE": "misc", "ID": "123 Invalid_ID", "title": "Title One"}]
+    with pytest.raises(ValueError):
+        write_bibtex_file(data, os.path.join(tmpdir, "test_invalid_id.bib"))
+
+    
+def test_write_read_bibtex(tmpdir):
+    details = {
+        "filename": "test.bib",
+        "directory": str(tmpdir),
+    }
+    row = lambda: fake.to_bibtex(fake.bibliography_entry())
+    data = reorder_dataframe(pd.DataFrame(fake.rows(200, row)), order=bibtex_column_order).sort_values(by=bibtex_sort_by).reset_index(drop=True)
+    
+    write_bibtex(data, details)
+    read_data = read_bibtex(details)
+    assert_frame_equal(read_data, data)
+    
 def test_write_read_json_directory(tmpdir):
     extension = ".json"
     details = {
@@ -146,8 +192,6 @@ def test_write_read_json_directory(tmpdir):
     write_json_directory(data, details)
     read_data = read_json_directory(details)
     read_data = read_data.sort_values(by="sourceFilename").reset_index(drop=True)
-    print(data)
-    print(read_data)
     assert_frame_equal(data, read_data)
 
 def test_write_read_yaml_directory(tmpdir):

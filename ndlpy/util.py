@@ -15,6 +15,36 @@ log = Logger(
 )
 
 """Utility functions for helping, e.g. to create the relevant yaml files quickly."""
+
+def reorder_dictionary(dictionary, order, sort_remaining=True):
+    """
+    Reorder a dictionary according to a given order.
+
+    :param dictionary: The dictionary to be reordered.
+    :type dictionary: dict
+    :param order: The order to be used for reordering.
+    :type order: list
+    :return: The reordered dictionary.
+    :rtype: dict
+    """
+
+    # Check if the dictionary is a list of dictionaries.
+    if isinstance(dictionary, list):
+        for i, entry in enumerate(dictionary):
+            dictionary[i] = reorder_dictionary(entry, order, sort_remaining)
+        return dictionary
+    
+    # Check any keys that are in the dictionary but not in the order.
+    remaining = [key for key in dictionary if key not in order]
+
+    # Sort the remaining keys if required.
+    if sort_remaining:
+        remaining.sort()
+        
+    # Add remaining keys to the end of the dictionary.
+    order = order + remaining
+    return {key: dictionary[key] for key in order if key in dictionary}
+
 def extract_full_filename(details):
     """
     Return the filename from the details of directory and filename
@@ -187,7 +217,7 @@ def sub_path_environment(path, environs=["HOME", "USERPROFILE", "TEMP", "TMPDIR"
     """
     for var in environs:
         if var in os.environ:
-            path = path.replace(os.environ[var], "$" + var)
+            path = path.replace(os.environ[var], "${" + var + "}")
     return path
 
 def get_path_env(environs=["HOME", "USERPROFILE", "TEMP", "TMPDIR", "TMP"]):
