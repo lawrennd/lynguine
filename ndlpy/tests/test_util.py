@@ -73,7 +73,7 @@ def test_extract_root_directory(setup_environment):
     # Testing with a directory containing an environment variable
     directory = "$TEST/Documents"
     root, sub = extract_root_directory(directory)
-    assert root == "$HOME"
+    assert root == "${HOME}"
     assert sub == "Documents"
 
     # Testing with a directory containing the current working directory
