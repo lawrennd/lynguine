@@ -299,8 +299,9 @@ def bibliography_entry():
         key = editors[0]["family"].split()[0].title() + "-" + title.split()[0].lower() + str(year)[2:]
     else:
         key = title[0].lower() + str(year)[2:]
-        
-        
+
+    # Remove invalid characters from bibtex identifier 
+    key = key.replace("'", "")
     entry = {
         "ENTRYTYPE": entry_type,
         "ID": key,
