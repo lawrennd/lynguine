@@ -204,7 +204,7 @@ def to_camel_case(text):
     else:
         return start
 
-def sub_path_environment(path, environs=["HOME", "USERPROFILE", "TEMP", "TMPDIR", "TMP"]):
+def sub_path_environment(path, environs=["HOME", "USERPROFILE", "TEMP", "TMPDIR", "TMP", "BASE"]):
     """
     Replace a path with values from environment variables.
 
@@ -220,7 +220,7 @@ def sub_path_environment(path, environs=["HOME", "USERPROFILE", "TEMP", "TMPDIR"
             path = path.replace(os.environ[var], "${" + var + "}")
     return path
 
-def get_path_env(environs=["HOME", "USERPROFILE", "TEMP", "TMPDIR", "TMP"]):
+def get_path_env(environs=["HOME", "USERPROFILE", "TEMP", "TMPDIR", "TMP", "BASE"]):
     """
     Return the current path with environment variables.
 
