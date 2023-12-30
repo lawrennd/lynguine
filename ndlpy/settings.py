@@ -203,7 +203,7 @@ class Settings(_HConfig):
     """
     A settings object that loads in local settings files.
     """
-    def __init__(self, user_file=None, directory=".", field=None):
+    def __init__(self, data=None, user_file=None, directory=".", field=None):
         """
         Initialise the settings object.
 
@@ -215,7 +215,10 @@ class Settings(_HConfig):
         :type field: str
         :return: None
         """
-        
+
+        if data is not None:
+            self._data = data
+            return
         if user_file is None:
             ufile = "_" + __name__ + ".yml"
         else:
