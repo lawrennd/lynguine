@@ -140,44 +140,6 @@ prefices = [
     'zur'
 ]
 
-from jamo import h2j, j2hcj
-
-def romanize_korean_name(korean_name):
-    """
-    Romanize a Korean name using the Revised Romanization system.
-    
-    :param korean_name: The Korean name in Hangul.
-    :type korean_name: str
-    :return: The Romanized version of the Korean name.
-    :rtype: str
-    """
-    # Convert Hangul to Jamo
-    jamo = h2j(korean_name)
-    
-    # Convert Jamo to Hangul Compatibility Jamo
-    hcj = j2hcj(jamo)
-
-    # Custom logic to convert HCJ to Romanized form
-    # This requires a mapping from HCJ to the Revised Romanization
-    # Example (simplified and not exhaustive):
-    hcj_to_roman = {
-    'ㄱ': 'g', 'ㄲ': 'kk', 'ㄴ': 'n', 'ㄷ': 'd', 'ㄸ': 'tt', 
-    'ㄹ': 'r', 'ㅁ': 'm', 'ㅂ': 'b', 'ㅃ': 'pp', 'ㅅ': 's', 
-    'ㅆ': 'ss', 'ㅇ': '', 'ㅈ': 'j', 'ㅉ': 'jj', 'ㅊ': 'ch', 
-    'ㅋ': 'k', 'ㅌ': 't', 'ㅍ': 'p', 'ㅎ': 'h', 
-    'ㅏ': 'a', 'ㅐ': 'ae', 'ㅑ': 'ya', 'ㅒ': 'yae', 'ㅓ': 'eo', 
-    'ㅔ': 'e', 'ㅕ': 'yeo', 'ㅖ': 'ye', 'ㅗ': 'o', 
-    'ㅘ': 'wa', 'ㅙ': 'wae', 'ㅚ': 'oe', 'ㅛ': 'yo', 'ㅜ': 'u', 
-    'ㅝ': 'wo', 'ㅞ': 'we', 'ㅟ': 'wi', 'ㅠ': 'yu', 'ㅡ': 'eu', 
-    'ㅢ': 'ui', 'ㅣ': 'i',
-    # Double consonants
-    'ㄳ': 'gs', 'ㄵ': 'nj', 'ㄶ': 'nh', 'ㄺ': 'lg', 'ㄻ': 'lm', 
-    'ㄼ': 'lb', 'ㄽ': 'ls', 'ㄾ': 'lt', 'ㄿ': 'lp', 'ㅀ': 'lh', 
-    'ㅄ': 'bs'}
-    
-    return ''.join(hcj_to_roman.get(char, char) for char in hcj)
-
-
 def prefix(name):
     """
     Checks if name contains a prefix. If so, returns the prefix and the name without the prefix. Otherwise returns None and the name.
