@@ -8,11 +8,6 @@ from mimesis import Person
 from mimesis.locales import Locale
 from mimesis.keys import romanize
 
-
-from unidecode import unidecode
-import pinyin
-import romkan
-
 from anyascii import anyascii
 
 person = mi.Person('en')
@@ -230,26 +225,6 @@ def author_editor():
 
         familyName = anyascii(familyName).title()
         givenName = anyascii(givenName).title()
-        # if locale == Locale.ZH:
-        #     familyName = pinyin.get(familyName, format="strip", delimiter=" ").title()
-        #     givenName = pinyin.get(givenName, format="strip", delimiter=" ").title()
-        # # Romanise Russian, Ukranian and Kazakh locales
-        # elif locale in (Locale.RU, Locale.UK, Locale.KK):
-        #     roman = romanize(locale)
-        #     familyName = roman(familyName).title()
-        #     givenName = roman(givenName).title()
-        # # Romanise Greek, Farsi locales
-        # elif locale in (Locale.EL, Locale.FA):
-        #     familyName = unidecode(familyName).title()
-        #     givenName = unidecode(givenName).title()
-        # # Romanise Japanese locale
-        # elif locale == Locale.JA:
-        #     familyName = romkan.to_hepburn(familyName).title()
-        #     givenName = romkan.to_hepburn(givenName).title()
-        # # Romanise Korean locale
-        # elif locale == Locale.KO:
-        #     familyName = romanize_korean_name(familyName).title()
-        #     givenName = romanize_korean_name(givenName).title()
             
         initials = random.randint(0, 100) > 30
         if initials:
