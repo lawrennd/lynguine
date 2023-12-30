@@ -247,3 +247,62 @@ class FileDownloader:
         self._download_url(url=full_url, store_directory=self.settings["default_cache_path"], save_name=save_name)
 
 
+class GitDownloader(FileDownloader):
+    """
+    A class for downloading data files from a git repository.
+    """
+    def __init__(self, settings, data_resources, data_name):
+        """
+        Initialize the GitDownloader class.
+        :param settings: The settings object.
+        :param data_resources: The data resources dictionary.
+        :param data_name: The name of the data to download.
+        """
+        super().__init__(settings, data_resources, data_name)
+        self._repo = git.Repo(self.settings["default_cache_path"])
+
+    def _download_git_url(self, url, dir_name=".", save_name=None, store_directory=None, messages=True, suffix=""):
+        """
+        Download a file from a git url and save it to disk.
+
+        :param url: The url to download from.
+        :param dir_name: The directory to save the file to.
+        :param save_name: The name to save the file as.
+        :param store_directory: The directory to store the file in.
+        :param messages: Whether to print messages to the console.
+        :param suffix: The suffix to add to the url.
+        :return: None
+        """
+        
+        file_name = os.path.basename(url)
+        if store_directory is not None:
+            dir_name = os.path.join(dir_name, store_directory)
+        if save_name is None:
+            save_name = file_name
+        save_path = os.path.join(dir_name, save_name)
+        
+        if not os.path.exists(dir_name):
+            os.makedirs(dir_name)
+
+        try:
+            response = urlopen(url + suffix)
+        except HTTPError as e:
+            raise ValueError(f"HTTP error {e.code} when accessing {url}")
+        except URLError as e:
+            raise ValueError(f"URL error {e.reason} when accessing {url}")
+
+        self._save_file(response, save_path)
+
+    def _clone_repo(self):
+        """
+        Clone the repository.
+
+        :return: None
+        """
+
+        if not os.path.exists(self.settings["default_cache_path"]):
+            os.makedirs(self.settings["default_cache_path"])
+
+        git.Repo.clone_from(self._git_url, self.settings["default_cache_path"])
+
+        
