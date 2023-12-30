@@ -160,6 +160,19 @@ def test_write_bibtex_with_invalid_id(tmpdir):
     with pytest.raises(ValueError):
         write_bibtex_file(data, os.path.join(tmpdir, "test_invalid_id.bib"))
 
+def letter_suffix(n : int) -> str:
+    """
+    Return the nth letter of the alphabet, where a=0, b=1, c=2, ..., aa=26, ab=27, ..., zz=701, aaa=702, ...
+
+    :param n: The number to be converted to a letter.
+    :type n: int
+    :return: The letter.
+    :rtype: str
+    """
+    if n < 26:
+        return chr(n + 97)
+    else:
+        return letter_suffix(n // 26 - 1) + letter_suffix(n % 26)
     
 def test_write_read_bibtex(tmpdir):
     details = {
@@ -167,7 +180,24 @@ def test_write_read_bibtex(tmpdir):
         "directory": str(tmpdir),
     }
     row = lambda: fake.to_bibtex(fake.bibliography_entry())
-    data = reorder_dataframe(pd.DataFrame(fake.rows(200, row)), order=bibtex_column_order).sort_values(by=bibtex_sort_by).reset_index(drop=True)
+    bib_rows = fake.rows(200, row)
+
+    # List any duplicated ids.
+    ids = [entry["ID"] for entry in bib_rows]
+    newids = ids.copy()
+    duplicates = [id for id in ids if ids.count(id) > 1]
+    if len(duplicates) > 0:
+        # Deduplicate ids by adding the seqence a, b, c ..., aa, ab, ac ... to the end of the id.
+        for ind in range(len(ids)):
+            if ids.count(ids[ind]) > 1:
+                dup_num = ids[:ind].count(ids[ind])
+                newids[ind] = newids[ind] + letter_suffix(dup_num)
+        for ind in range(len(ids)):
+            bib_rows[ind]["ID"] = newids[ind]
+
+    # Write the bibtex file.
+    # Make sure it's reordered and sorted so that assert equals can match frames.
+    data = reorder_dataframe(pd.DataFrame(bib_rows), order=bibtex_column_order).sort_values(by=bibtex_sort_by).reset_index(drop=True)
     
     write_bibtex(data, details)
     read_data = read_bibtex(details)

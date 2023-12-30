@@ -42,10 +42,16 @@ prefices = [
     'aan den',
     'aan der',
     'aan het',
+    "aen 't",
+    "aen de",
     'af',
     'al',
     'am',
     'an',
+    'an de',
+    'an den',
+    'an die',
+    'an t',
     'auf',
     'bij',
     'bij de',
@@ -59,6 +65,7 @@ prefices = [
     'dallo',
     'das',
     'de',
+    'De',
     'de la',
     'de las',
     'de los',
@@ -75,6 +82,7 @@ prefices = [
     'do',
     'dos',
     'du',
+    'Du',
     'el',
     'fitz',
     'ibn',
@@ -85,13 +93,15 @@ prefices = [
     'in den',
     'in der',
     'in het',
+    'int',
     'la',
     'le',
     'lo',
     'los',
     'mac',
     'mc',
-    "O'",            
+    "O'",
+    'of',    
     'onder',
     "onder 't",
     'onder de',
@@ -104,15 +114,24 @@ prefices = [
     'op den',
     'op der',
     'op het',
+    'op ten',
     'over',
     'saint',
     'san',
     'sous',
-    'st.',
+    'St',
     'sur',
+    'sur le',
+    't',
+    "T'",
     'te',
     'ten',
     'ter',
+    'then',
+    'tho',
+    'thoe',
+    'to',
+    'toe',
     'uit',
     'uit de',
     'uit den',
@@ -120,6 +139,7 @@ prefices = [
     'uit te',
     'un',
     'une',
+    'up',
     'van',
     "van 't",
     'van de',
@@ -127,6 +147,7 @@ prefices = [
     'van der',
     'van het',
     'vanden',
+    'Ver',
     'vom',
     'von',
     'von dem',
@@ -140,6 +161,7 @@ prefices = [
     'zur'
 ]
 
+
 def prefix(name):
     """
     Checks if name contains a prefix. If so, returns the prefix and the name without the prefix. Otherwise returns None and the name.
@@ -148,7 +170,8 @@ def prefix(name):
     :rtype: tuple
     """
     # Check through list of prefixes
-    for pre in prefices:
+    
+    for pre in prefices[::-1]:
         if name.startswith(pre + " "):
             return pre, name[len(pre)+1:]
     return None, name
@@ -179,24 +202,63 @@ def author_editor():
     locale = random.choice_enum_item(Locale)
     # Then create a person object for that locale
     with person.override_locale(locale):
-        givenName = person.first_name()
-        familyName = person.surname()
-        num_middle_names = random.randint(0,2)
-        for i in range(num_middle_names):
-            givenName += " " + person.first_name()
+        count = 0
+        while(True):
+            count += 1
+            givenName = person.first_name()
+            # To fix bad data in mimesis
+            if givenName[:6] == 'Eugen\t':
+                givenName = "Eugen"
+            elif givenName == "Axel / Axl":
+                givenName = "Axel"
+            familyName = person.surname()
+            num_middle_names = random.randint(0,2)
+            for i in range(num_middle_names):
+                middleName = person.first_name()
+                # To fix bad data in mimesis
+                if middleName[:6] == 'Eugen\t':
+                    middleName = "Eugen"
+                elif middleName == "Axel / Axl":
+                    middleName = "Axel"
+                givenName += " " + middleName
 
-        familyName = anyascii(familyName).title()
-        givenName = anyascii(givenName).title()
+            if locale == Locale.ZH:
+                familyName = anyascii(familyName).title()
+                givenName = anyascii(givenName).title()
+            # Romanise Russian, Ukranian and Kazakh locales
+            elif locale in (Locale.RU, Locale.UK, Locale.KK):
+                roman = romanize(locale)
+                familyName = roman(familyName).title()
+                givenName = roman(givenName).title()
+            # Romanise Greek, Farsi locales
+            elif locale in (Locale.EL, Locale.FA):
+                familyName = anyascii(familyName).title()
+                givenName = anyascii(givenName).title()
+            # Romanise Japanese locale
+            elif locale == Locale.JA:
+                familyName = anyascii(familyName).title()
+                givenName = anyascii(givenName).title()
+            # Romanise Korean locale
+            elif locale == Locale.KO:
+                familyName = anyascii(familyName).title()
+                givenName = anyascii(givenName).title()
+            if familyName is not None and givenName is not None:
+                break
+            if count > 100:
+                raise Exception(f"Unable to generate name from locale {locale}.")
             
         initials = random.randint(0, 100) > 30
         if initials:
             givenNames = givenName.split()
             assert(isinstance(givenNames, list))
+            # Remove any empty strings
+            givenNames = [name for name in givenNames if name != ""]
             # Randomly choose a from the list of given names to not initial.
             select = random.randint(0, len(givenNames)-1)
             for i, name in enumerate(givenNames):
                 if i != select:
                     givenNames[i] = name[0] + "."
+            
             givenName = " ".join(givenNames)
 
         # Check for prefices and suffices
@@ -423,7 +485,22 @@ def to_bibtex_author(entry, translate_unicode=True, author_type="author"):
         else:
             authors += author["given"] + " " + lastname
         first = False
+    # Remove loose unicode from authors
+    for key, value in {
+            '\u200E': '',
+            '\u00B8' : '',
+            }.items():
+        authors = authors.replace(key, value)
+
     if translate_unicode:
+        # Translate unicode characters to latex
+        for key, value in {
+                '\u0218': r'\c{S}',
+                '\u0219': r'\c{s}',
+                '\u021A': r'\c{T}',
+                '\u021B': r'\c{t}',
+                }.items():
+            authors = authors.replace(key, value)                
         authors = unicode_to_latex(authors)
     return authors
 
