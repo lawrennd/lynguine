@@ -9,7 +9,7 @@ from pandas.testing import assert_frame_equal
 
 import ndlpy
 import ndlpy.fake as fake
-from ndlpy.access import (
+from ndlpy.access.io import (
     read_json, write_json, read_json_file, write_json_file,
     write_csv, read_csv, write_excel, read_excel, read_bibtex, write_yaml,
     read_yaml, write_json_directory, read_json_directory,
@@ -45,12 +45,12 @@ yaml_details["filename"] = yaml_file_name
 
 @pytest.fixture
 def mock_read_json_file():
-    with patch('ndlpy.access.read_json_file') as mock:
+    with patch('ndlpy.access.io.read_json_file') as mock:
         yield mock
 
 @pytest.fixture
 def mock_write_json_file():
-    with patch('ndlpy.access.write_json_file') as mock:
+    with patch('ndlpy.access.io.write_json_file') as mock:
         yield mock
 
 @pytest.fixture
@@ -256,7 +256,7 @@ def test_write_read_markdown_directory(tmpdir):
 #         self.yaml_details = self.details.copy()
 #         self.yaml_details["filename"] = self.yaml_file_name
         
-#     @patch('ndlpy.access.read_json_file')
+#     @patch('ndlpy.access.io.read_json_file')
 #     def test_read_json(self, mock_read_json_file):
 #         full_filename = extract_full_filename(self.json_details)
 #         mock_read_json_file.return_value = self.sample_dict
@@ -264,7 +264,7 @@ def test_write_read_markdown_directory(tmpdir):
 #         mock_read_json_file.assert_called_once_with(full_filename)
 #         assert_frame_equal(df, self.sample_df)
 
-#     @patch('ndlpy.access.write_json_file')
+#     @patch('ndlpy.access.io.write_json_file')
 #     def test_write_json(self, mock_write_json_file):
 #         full_filename = extract_full_filename(self.json_details)
 #         write_json(self.sample_df, self.json_details)
@@ -299,16 +299,16 @@ def test_write_read_markdown_directory(tmpdir):
 #         """access_tests: test the write to and read from a yaml file."""
 #         filename = "test.yaml"
 #         data = fake.row()
-#         ndlpy.access.write_yaml_file(data, filename)
-#         read_data = ndlpy.access.read_yaml_file(filename)
+#         ndlpy.access.io.write_yaml_file(data, filename)
+#         read_data = ndlpy.access.io.read_yaml_file(filename)
 #         self.assertDictEqual(data,read_data)
 
 #     def test_write_read_markdown(self):
 #         """access_tests: test the write to and read from a yaml headed markdown file."""
 #         filename = "test.markdown"
 #         data = fake.row()
-#         ndlpy.access.write_markdown_file(data, filename)
-#         read_data = ndlpy.access.read_markdown_file(filename)
+#         ndlpy.access.io.write_markdown_file(data, filename)
+#         read_data = ndlpy.access.io.read_markdown_file(filename)
 #         self.assertDictEqual(data, read_data)
         
 
@@ -331,8 +331,8 @@ def test_write_read_markdown_directory(tmpdir):
 #             "quotechar": "\"",
 #         }
 #         data = pd.DataFrame(fake.rows(30))
-#         ndlpy.access.write_csv(data, details)
-#         read_data = ndlpy.access.read_csv(details)
+#         ndlpy.access.io.write_csv(data, details)
+#         read_data = ndlpy.access.io.read_csv(details)
 #         self.assert_frame_equal(data, read_data)
 #         tmpDirectory.cleanup()
 

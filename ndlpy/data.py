@@ -437,7 +437,7 @@ class DataObject():
         :param kwargs: Keyword arguments to be passed to pandas.read_csv.
         :return: A CustomDataFrame object.
         """
-        return cls.from_pandas(df=pd.read_csv(*args, **kwargs))
+        return cls(data=pd.read_csv(*args, **kwargs))
 
     @classmethod
     def from_dict(cls, data, *args, **kwargs):
@@ -700,21 +700,10 @@ class DataObject():
 
         :param args: Positional arguments to be passed to pandas.DataFrame.groupby.
         :param kwargs: Keyword arguments to be passed to pandas.DataFrame.groupby.
-        :return: A grouped CustomDataFrame object.
+        :return: A pd.DataFrameGroupBy object.
         """
-        vals = self.to_pandas().groupby(*args, **kwargs)
-        if self.get_index() not in vals.index:
-            index = None
-        else:
-            index = self.get_index()
+        return self.to_pandas().groupby(*args, **kwargs)
             
-        return self.__class__(
-            data=vals,
-            colspecs=self._colspecs,
-            index=index,
-            column=self.get_column(),
-            selector=self.get_selector(),
-        )
     
     def pivot_table(self, *args, **kwargs):
         """
@@ -785,7 +774,7 @@ class DataObject():
 
         :return: A tuple representing the DataFrame's dimensions.
         """
-        return self.to_pandas().shape
+        return len(self.index), len(self.columns)
 
     @property
     def columns(self):
@@ -809,12 +798,19 @@ class DataObject():
 
         :return: Index object containing the row labels.
         """
-        index = pd.Index([0])
         # Take index from first entry in _d that is not a "parameters" entry
+        # Note that if first entry is a "series" entry, then index will likely be duplicated
+        parameters = False
         for typ, data in self._d.items():
             if typ not in self.types["parameters"]:
                 return data.index
-        return index
+            else:
+                parameters = True
+        # If all entries are "parameters" entries, then return single index
+        if parameters:
+            return pd.Index([0])
+        else:
+            return pd.Index([])
 
     @property
     def values(self):
@@ -1038,32 +1034,20 @@ class DataObject():
         Get item or slice from the DataFrame.
 
         :param key: The key or slice to access elements of the DataFrame.
-        :return: A subset of the DataFrame corresponding to the given key.
+        :retugrn: A subset of the DataFrame corresponding to the given key.
         """
+        if isinstance(key, CustomDataFrame):
+            key = key.to_pandas()    
         df = self.to_pandas()[key]
-        if isinstance(df, pd.Series):
-            df = df.to_frame()
-        if self.get_index() in df.index:
-            index=self.get_index()
-        else:
-            index=None
-        if self.get_column() in df.columns:
-            column=self.get_column()
-        else:
-            column=None
-        if self.get_selector() in df.columns:
-            selector=self.get_selector()
-        else:
-            selector=None
 
-        colspecs = {"cache" : df.columns}
-        return self.__class__(
-            data=df,
-            colspecs=colspecs,
-            index=index,
-            column=column,
-            selector=selector,
-        )            
+        if isinstance(df, pd.Series):
+            return df
+        else:
+            colspecs = {"cache" : df.columns}
+            return self.__class__(
+                data=df,
+                colspecs=colspecs,
+            )            
 
     def __setitem__(self, key, value):
         raise NotImplementedError("This is a base class")
@@ -1165,24 +1149,43 @@ class CustomDataFrame(DataObject):
                  selector=None,
                  types=None):
         
+        if data is None:
+            data = {}
         if isinstance(data, dict):
-            entries = data.values()
-            if all([isinstance(entry, (int, float, str, bool, complex)) for entry in entries]):
-                data = pd.Series(data).to_frame().T
+            if len(data)>0: # Check that dictionary has contents.
+                # Check if all entries are scalar.
+                entries = data.values()
+                if all([isinstance(entry, (int, float, str, bool, complex)) for entry in entries]):
+                    data = pd.Series(data).to_frame().T
             data = pd.DataFrame(data)
         if isinstance(data, pd.Series):
             data = data.to_frame(name=data.name).T
         if isinstance(data, np.ndarray):
             data = pd.DataFrame(data)
-        if data is None:
-            data = {}
-        if isinstance(data, dict):
-            data = pd.DataFame(data)
         if isinstance(data, list):
             data = pd.DataFame(data)
 
+        # Define the types.
         if types is None:
             types = {
+                # Input types are standard DataFrames but are not mutable.
+                "input" : [
+                    "input",
+                    "data",
+                    "constants",
+                    "global_consts",
+                ],
+                # Output types are standard DataFrames that are mutable and
+                # intended to be recorded once operations on the
+                # CustomDataFrame are complete.
+                "output" : [
+                    "output",
+                    "writedata",
+                    "writeseries",
+                    "parameters",
+                    "globals",
+                ],
+                # Parameter types do not have an index, they are globally valid.
                 "parameters" : [
                     "constants",
                     "global_consts",
@@ -1191,37 +1194,32 @@ class CustomDataFrame(DataObject):
                     "parameter_cache",
                     "global_cache",
                 ],
-                "input" : [
-                    "input",
-                    "data",
-                    "constants",
-                    "global_consts",
-                ],
-                "output" : [
-                    "output",
-                    "writedata",
-                    "writeseries",
-                    "parameters",
-                    "globals",
-                ],
+                # Cache types are standard DataFrames that are mutable and
+                # intended to be used for intermediate calculations.
                 "cache" : [
                     "cache",
+                    "series_cache",
                     "parameter_cache",
                     "global_cache",
                 ],
+                # Series types are standard DataFrames that are mutable and
+                # may have multiple rows with the same index.
                 "series" : [
                     "writeseries",
+                    "series_cache",
                 ],
             }
 
             
-            
+        # If the colspecs isn't specified assume it's of "cache" type.
         if colspecs is None:
             colspecs = {
                 "cache" : list(data.columns)
             }
         elif isinstance(colspecs, str):
-            if colspecs in types:
+            # Check if colspecs is in any of the types dictionary's entries.
+            all_types = [typ for typs in types.values() for typ in typs]
+            if colspecs in all_types:
                 colspecs = {
                     colspecs : list(data.columns),
                 }
@@ -1462,6 +1460,8 @@ class CustomDataFrame(DataObject):
                     for col in rel_col:
                         if isinstance(value, pd.DataFrame) and not all(value[col].iloc[0] == v for v in value[col]):
                             raise ValueError("Non-identical values provided for 'parameters' type data")
+                        elif not all(value[0] == v for v in value):
+                            raise ValueError("Non-identical values provided for 'parameters' type data")
 
                         # Setting values for 'parameters' type data
                         data[col] = value[col].iloc[0] if isinstance(value, pd.DataFrame) else value
@@ -1494,8 +1494,37 @@ class CustomDataFrame(DataObject):
             :param key: The indexing key, which can be an integer, slice, list, or tuple for
                         both rows and columns.
             :return: A subset of the CustomDataFrame as specified by the integer-location key.
+            :raises IndexError: If the specified key is not a tuple or if it does not correspond
             """
             # Convert integer indices to labels for rows and columns
+            row_labels, col_labels = self._ikey_to_labels(key)
+            
+            # Use .loc accessor with label-based keys
+            return self._data_object.loc[row_labels, col_labels]
+
+        def __setitem__(self, key, value):
+            """
+            Set values in the CustomDataFrame based on integer-location based indexing.
+
+            This method provides integer-location based indexing, similar to pandas' .iloc accessor.
+
+            :param key: The indexing key, which can be an integer, slice, list, or tuple for
+                        both rows and columns.
+            :param value: The value to set at the specified key location.
+            """
+
+            # Convert integer indices to labels for rows and columns
+            row_labels, col_labels = self._ikey_to_labels(key)
+            
+            self._data_object.loc[row_labels, col_labels] = value
+
+        def _ikey_to_labels(self, key):
+            """
+            Convert integer-location indices to label-based indices.
+
+            :param key: The integer-location based index or slice.
+            :return: Label-based indices corresponding to the integer-location key.
+            """
             if isinstance(key, tuple):
                 row_key, col_key = key
                 row_labels = self._convert_to_labels(row_key, self._data_object.index)
@@ -1504,8 +1533,7 @@ class CustomDataFrame(DataObject):
                 row_labels = self._convert_to_labels(key, self._data_object.index)
                 col_labels = slice(None)  # Select all columns
 
-            # Use .loc accessor with label-based keys
-            return self._data_object.loc[row_labels, col_labels]
+            return row_labels, col_labels
 
         def _convert_to_labels(self, key, labels):
             """
@@ -1516,16 +1544,13 @@ class CustomDataFrame(DataObject):
             :return: Label-based indices corresponding to the integer-location key.
             """
             if isinstance(key, slice):
-                # Convert slice of integer indices to slice of labels
-                start = labels[key.start] if key.start is not None else None
-                stop = labels[key.stop] if key.stop is not None else None
-                step = key.step
-                return slice(start, stop, step)
+                # Convert slice of integer indices to labels
+                return labels[key]
             elif isinstance(key, (list, int)):
                 # Convert list or single integer index to labels
                 return labels[key]
             else:
-                raise KeyError("Invalid key type for iloc indexing")
+                raise KeyError("Invalid index type for iloc indexing")
 
     def _distribute_data(self, data):
         """
@@ -1541,21 +1566,23 @@ class CustomDataFrame(DataObject):
         
         for typ, cols in self._colspecs.items():
             if typ in self.types["parameters"]:
-                self._d[typ] = pd.Series(index=cols, data=None)
+                self._d[typ] = pd.Series(index=cols, data=None).astype(object)
                 for col in cols:
                     if all(data[col]==data[col].iloc[0]):
                         self._d[typ][col] = data[col].iloc[0]
                     else:
-                        raise ValueError(f"Column \"{col}\" is specified as a parameter column and yet the values of the column are not all the same..")
+                        raise ValueError(f"Column \"{col}\" is specified as a parameter column and yet the values of the column are not all the same.")
             else:
                 d = data[cols]
                 if typ in self._types["series"]:
                     self._d[typ] = d
                 else:
                     # If it's not a series type make sure it's deduplicated.
-                    self._d[typ] = d[~d.index.duplicated(keep='first')]
-                    if len(d.index) > self._d[typ].shape[0]:
-                        self._log.debug("Removing duplicated elements from \"{typ}\" loaded data.")
+                    if d.index.has_duplicates:
+                        self._log.debug("Removing duplicated elements from \"{typ}\" loaded data.")                        
+                        self._d[typ] = d[~d.index.duplicated(keep='first')]
+                    else:
+                        self._d[typ] = d
 
     def to_pandas(self):
         """
@@ -1684,13 +1711,17 @@ def concat(objs, *args, **kwargs):
     # Concatenate the dataframes
     df = pd.concat([obj.to_pandas() for obj in objs], *args, **kwargs)
 
-    # Aggregate colspecs
-    colspecs = {}
-    for obj in objs:
-        colspecs.update(obj.colspecs)
+
+    # Check if df has duplicated index.
+    if(df.index.has_duplicates):
+        colspecs = "series_cache"
+    else:
+        colspecs = "cache"
+    
+    
 
     # Handle types - assuming a consistent approach is defined
     # This needs to be decided based on how types are to be handled
-    types = objs[0].types 
+    types = objs[0].types
 
     return objs[0].__class__(df, colspecs=colspecs, types=types)

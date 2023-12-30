@@ -1,6 +1,7 @@
 import os
 import glob
 
+
 import sys
 import re
 import tempfile
@@ -16,10 +17,11 @@ import pypandoc
 
 import bibtexparser as bp
 
-from .util import extract_full_filename, extract_root_directory, extract_file_type, get_path_env, remove_nan, reorder_dictionary
-from .dfutil import reorder_dataframe
-from .log import Logger
-from .context import Context
+from ..util import extract_full_filename, extract_root_directory, extract_file_type, get_path_env, remove_nan, reorder_dictionary, prompt_stdin
+
+from ..dfutil import reorder_dataframe
+from ..log import Logger
+from ..context import Context
 
 GSPREAD_AVAILABLE=True
 try:

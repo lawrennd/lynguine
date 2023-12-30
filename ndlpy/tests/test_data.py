@@ -12,7 +12,6 @@ def create_test_dataframe(colspecs="cache"):
     return ndl.CustomDataFrame({'A': [1, 2, 3], 'B': [4, 5, 6]}, colspecs=colspecs)
 
 def create_merged_dataframe():
-
     # Sample data for creating a CustomDataFrame instance
     data = {"A": [1, 2], "B": [3, 4], "C": [5, 5], "D": [6, 6], "E": [7, 7], "F": [8, 8]}
     colspecs = {"input": ["A", "B"], "output": ["C", "D"], "parameters": ["E", "F"]}
@@ -28,7 +27,7 @@ def test_dataframe_creation():
 
 def test_column_access():
     df = create_test_dataframe()
-    assert all(df['A'] =={'A': [1, 2, 3]})
+    assert all(df['A'] == pd.Series(data=[1, 2, 3], index=df.index, name="A"))
 
 def test_row_access():
     df = create_test_dataframe()
@@ -37,7 +36,7 @@ def test_row_access():
 # Mathematical Operations
 def test_sum():
     df = create_test_dataframe()
-    assert df.sum().equals(ndl.CustomDataFrame({'A': 6.0, 'B': 15.0}))
+    assert df.sum().equals(ndl.CustomDataFrame({'A': 6, 'B': 15}))
 
 def test_mean():
     df = create_test_dataframe()
@@ -55,7 +54,6 @@ def test_merge():
     df2 = ndl.CustomDataFrame({'key': ['K0', 'K1', 'K2'], 'A': ['A0', 'A1', 'A2'], 'B': ["B0", "B1", "B2"]}, colspecs="output")
     
     result = df1.merge(df2, on='key')
-    print(result)
     assert result.equals(ndl.CustomDataFrame({'key': ['K0', 'K1', 'K2'], 'A_x': ['A0', 'A1', 'A2'], 'A_y': ['A0', 'A1', 'A2'], 'B': ['B0', 'B1', 'B2']}))
     diff = DeepDiff(result.colspecs, {"input" : ["key", "A_x"], "output" : ["A_y", "B"]})
     assert not diff, "The column specifications don't match in merge"
@@ -64,7 +62,7 @@ def test_merge():
 def test_groupby_sum():
     df = ndl.CustomDataFrame({'A': ['foo', 'bar', 'foo', 'bar'], 'B': [1, 2, 3, 4]})
     grouped = df.groupby('A').sum()
-    assert grouped.equals(ndl.CustomDataFrame({'B': [4, 6]}, index=['bar', 'foo']))
+    assert grouped.equals(pd.DataFrame({'B': [6, 4]}, index=pd.Index(['bar', 'foo'], name="A")))
 
 def test_sort_values():
     df = create_test_dataframe()
@@ -106,14 +104,14 @@ def test_loc_accessor():
     # Test accessing and setting multiple elements
     custom_df = create_merged_dataframe()
     custom_df.loc[0, ["C", "D"]] = [10, 20]
-    assert all(custom_df.loc[0, ["C", "D"]] == [[10, 20]])
+    assert all(custom_df.loc[0, ["C", "D"]] == [10, 20])
 
     # Test accessing 'parameters' type data
     assert custom_df.loc[0, "E"] == 7
 
     # Test error when modifying 'parameters' with different values
     with pytest.raises(ValueError):
-        custom_df.loc[:, "E"] = [[2, 3]]
+        custom_df.loc[:, "E"] = [2, 3]
 
     # Test setting value in 'output' type
     custom_df.loc[1, "C"] = 30
@@ -130,8 +128,24 @@ def test_iloc_accessor():
     assert all(custom_df.iloc[0, [2, 3]] == [10, 20])
 
     # Test error on invalid index
-    with pytest.raises(KeyError):
+    with pytest.raises(IndexError):
         _ = custom_df.iloc[2, 0]
+
+    # Test accessing 'parameters' type data
+    assert custom_df.iloc[1, 4] == 7
+
+    # Test error when modifying 'parameters' with different values
+    with pytest.raises(ValueError):
+        custom_df.iloc[:, 4] = [2, 3]
+
+    # Test setting value in 'output' type
+    custom_df.iloc[1, 2] = 30
+    assert custom_df.loc[1, "C"] == 30
+
+    # Test error when modifying 'input' type
+    with pytest.raises(KeyError):
+        custom_df.iloc[0, 0] = 50
+        
 
 # Test at accessor
 def test_at_accessor():
@@ -215,7 +229,7 @@ def test_len_with_mixed_data_types():
     data = {
         "col1": [1, 2, 3],
         "col2": pd.Series([4, 5, 6]),
-        "col3": pd.DataFrame({"subcol1": [7, 8, 9]})
+        "col3": ["two", "four", "six"],
     }
     custom_df = ndl.CustomDataFrame(data)
     assert len(custom_df) == 3

@@ -2,6 +2,7 @@ import datetime
 import math
 import re
 import os
+import sys
 import wget
 
 import ndlpy.context as context
@@ -261,3 +262,33 @@ def get_url_file(url, directory=None, filename=None, ext=None):
     
 
 
+
+def prompt_stdin(prompt):
+    """
+    Ask user for agreeing to data set licenses.
+
+    :param prompt: The prompt message to display to the user.
+    :type prompt: str
+    :return: True if the user agrees, False otherwise.
+    :rtype: bool
+    """
+    yes = {"yes", "y"}
+    no = {"no", "n"}
+
+    while True:
+        try:
+            print(prompt)
+            choice = input().lower()
+
+            if choice in yes:
+                return True
+            elif choice in no:
+                return False
+            else:
+                print(f"Your response ('{choice}') was not recognized. Please respond with 'yes', 'y' or 'no', 'n'.")
+        except KeyboardInterrupt:
+            print("\nOperation cancelled by user.")
+            return False
+        except EOFError:
+            print("\nUnexpected end of input. Please try again.")
+  
