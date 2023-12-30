@@ -17,7 +17,7 @@ classifiers = [
 ]
 
 [tool.poetry.dependencies]
-python = ">=3.9"
+python = ">=3.8,<4.0"
 python-frontmatter = "*"
 bibtexparser = "*"
 pyyaml = "*"
@@ -34,7 +34,7 @@ markdownify = "*"
 google-api-python-client = "*"
 google-auth-httplib2 = "*"
 gspread = "*"
-mimesis = ">=11"
+mimesis = ">11"
 pyminizip = "*"
 wget = "*"
 
