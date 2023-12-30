@@ -211,7 +211,8 @@ def author_editor():
                 givenName = "Eugen"
             elif givenName == "Axel / Axl":
                 givenName = "Axel"
-            familyName = person.surname()
+            familyName = person.surname().replace('’', "'")
+            familyName = familyName.replace('`', "")
             num_middle_names = random.randint(0,2)
             for i in range(num_middle_names):
                 middleName = person.first_name()
@@ -356,8 +357,25 @@ def bibliography_entry():
 
     # Create the title
     title = text.title().title()
+    if title[-1] == ".":
+        title = title[:-1]
     year = random.randint(1972,2020)
+    booktitle = text.title().title()
 
+    # Create a journal title
+    journal_prefix = random.choice(["Journal of", "Proceedings of", "Transactions of", "Annals of", "Journal for"])
+    journal_suffix = random.choice(["Monthly", "Quarterly", "Letters", "Transactions", "Annals", "Proceedings", "Review", "Journal"])
+    journal_words = " ".join(text.words(quantity=random.randint(1,3))).title()
+    # Create the journal
+    # With 20% probability no prefix or suffix
+    random_num = random.randint(1,100)
+    if random_num < 21:
+        journal = journal_words
+    elif random_num < 61:
+        journal = journal_prefix + " " + journal_words
+    else:
+        journal = journal_words + " " + journal_suffix
+    
     if len(authors) > 0:
         key = authors[0]["family"].split()[0].title() + "-" + title.split()[0].lower() + str(year)[2:]
     elif len(editors) > 0:
@@ -396,7 +414,7 @@ def bibliography_entry():
     if entry_type in ["article"]:
         entry_update(
             entry,
-            journal = text.title().title(),
+            journal = journal,
             volume = random.randint(1,100),
             issue = random.randint(1,100),
             pages = str(page1) + "--" + str(page2),
@@ -415,10 +433,12 @@ def bibliography_entry():
             doi = "10." + str(random.randint(1000,9999)) + "/" + str(random.randint(100000,999999))
         )
 
+    if booktitle[-1] == ".":
+        booktitle = booktitle[:-1]
     if entry_type in ["book", "collection", "proceedings", "incollection", "inproceedings"]:
         entry_update(
             entry,
-            booktitle = text.title().title(),
+            booktitle = booktitle,
             publisher = " ".join(text.words(quantity=3)).title(),
             address = addess.city() + ", " + addess.country(),
             isbn = code.isbn(),
