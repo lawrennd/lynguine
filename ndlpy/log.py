@@ -1,7 +1,8 @@
 import os
 import logging
 
-class Logger():
+
+class Logger:
     def __init__(self, name=None, level=20, filename=None, directory="."):
         if filename is None:
             filename = __name__
@@ -18,17 +19,18 @@ class Logger():
         else:
             # For backwards compatability allowing direct specificaiton of a numeric level
             self.level = level
-            
-            
+
         self.filename = filename
         self.name = name
-        format='%(levelname)s:%(name)s:%(asctime)s:%(message)s'
-        logging.basicConfig(level=self.level, filename=os.path.join(directory,filename), format=format)
+        format = "%(levelname)s:%(name)s:%(asctime)s:%(message)s"
+        logging.basicConfig(
+            level=self.level, filename=os.path.join(directory, filename), format=format
+        )
         self.logger = logging.getLogger(name)
 
     def debug(self, message):
         self.logger.debug(message)
-        
+
     def info(self, message):
         self.logger.info(message)
 
@@ -40,4 +42,3 @@ class Logger():
 
     def critical(self, message):
         self.logger.critical(message)
-
