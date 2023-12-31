@@ -13,7 +13,8 @@ log = Logger(
     filename=ctxt._data["logging"]["filename"],
 )
 
-class Accessor():
+
+class Accessor:
     def __init__(self, data):
         self._data_object = data
 
@@ -22,14 +23,16 @@ class Accessor():
 
     def __setitem__(self, key, value):
         raise NotImplementedError("This is a base accessor class")
-        
-    
-class DataObject():
-    def __init__(self, data=None, colspecs=None, index=None, column=None, selector=None):
+
+
+class DataObject:
+    def __init__(
+        self, data=None, colspecs=None, index=None, column=None, selector=None
+    ):
         self.at = self._AtAccessor(self)
         self.iloc = self._IlocAccessor(self)
         self.loc = self._locAccessor(self)
-        
+
     class _AtAccessor(Accessor):
         def __init__(self, data):
             super().__init__(data=data)
@@ -41,7 +44,7 @@ class DataObject():
     class _IlocAccessor(Accessor):
         def __init__(self, data):
             super().__init__(data=data)
-        
+
     def get_subindex(self):
         raise NotImplementedError("This is a base class")
 
@@ -62,7 +65,7 @@ class DataObject():
     def set_index(self, index):
         """
         Set the index to be the focus for the DataFrame.
-        
+
         :param index: The index to set.
         :raise KeyError: If the index is not in the DataFrame.
         """
@@ -76,15 +79,15 @@ class DataObject():
     def get_column(self):
         """
         Get the column that is the focus for the DataFrame.
-        
+
         :return: The column that is the focus for the DataFrame.
         """
         return self._column
-    
+
     def set_column(self, column):
         """
         Set the column to be the focus for the DataFrame.
-        
+
         :param column: The column to set.
         :raise KeyError: If the column is not in the DataFrame.
         """
@@ -93,7 +96,7 @@ class DataObject():
         elif column in self.columns:
             self._column = column
         else:
-            raise KeyError("Invalid column set.")        
+            raise KeyError("Invalid column set.")
 
     def get_selector(self):
         """
@@ -105,7 +108,7 @@ class DataObject():
         :return: The selector that is the focus for the DataFrame.
         """
         return self._selector
-    
+
     def set_selector(self, column):
         """
         Set the selector that is the focus for the DataFrame.
@@ -120,8 +123,8 @@ class DataObject():
         elif column in self.columns:
             self._selector = column
         else:
-            raise KeyError("Invalid selector set.")        
-        
+            raise KeyError("Invalid selector set.")
+
     def get_value(self):
         """
         Get the value that is in the cell defined as focus for the DataFrame.
@@ -137,7 +140,7 @@ class DataObject():
         :param value: The value to set.
         """
         self.at[self.get_index(), self.get_column()] = value
-        
+
     def head(self, n=5):
         """
         Return the first `n` rows of the DataFrame.
@@ -457,7 +460,6 @@ class DataObject():
     def sort_index(self, axis=0, level=None, ascending=True, inplace=False, **kwargs):
         raise NotImplementedError("This is a base class")
 
-
     def convert(self, other):
         """
         Convert various data types to a CustomDataFrame.
@@ -509,25 +511,19 @@ class DataObject():
         if array.shape == self.shape:
             # Array shape matches the CustomDataFrame shape
             return self.__class__(
-                data=pd.DataFrame(
-                    array,
-                    index=self.index,
-                    columns=self.columns
-                ),
+                data=pd.DataFrame(array, index=self.index, columns=self.columns),
             )
         elif len(array.shape) == 1:
             # Single dimensional array (e.g. [1, 2, 3])
             return self.__class__(
-                data=pd.DataFrame(
-                    array,
-                    index=self.index,
-                    columns=[self.get_column()]
-                ),
+                data=pd.DataFrame(array, index=self.index, columns=[self.get_column()]),
             )
         elif array.ndim == 2 and array.shape[0] == 1:
             # Two-dimensional array but with a single row (e.g. [[1, 2, 3]])
             if array.shape[1] != len(self.columns):
-                raise ValueError("NumPy array width doesn't match CustomDataFrame array width.")
+                raise ValueError(
+                    "NumPy array width doesn't match CustomDataFrame array width."
+                )
             return self.__class__(
                 data=pd.DataFrame(
                     array,
@@ -538,7 +534,9 @@ class DataObject():
         elif array.ndim == 2 and array.shape[1] == 1:
             # Two-dimensional array but with a single column (e.g. [[1], [2], [3]])
             if array.shape[0] != len(self.index):
-                raise ValueError("NumPy array depth doesn't match CustomDataFrame array depth.")
+                raise ValueError(
+                    "NumPy array depth doesn't match CustomDataFrame array depth."
+                )
             return self.__class__(
                 data=pd.DataFrame(
                     array,
@@ -548,9 +546,10 @@ class DataObject():
             )
         else:
             # Incompatible array shape
-            raise ValueError("NumPy array shape is not compatible with CustomDataFrame.")        
-        
-        
+            raise ValueError(
+                "NumPy array shape is not compatible with CustomDataFrame."
+            )
+
     # Mathematical operations
     def sum(self, axis=0):
         if axis == 0:
@@ -622,7 +621,7 @@ class DataObject():
             column=self.get_index(),
             selector=None,
             colspecs="cache",
-            )
+        )
 
     def dot(self, other):
         other = self.convert(other)
@@ -636,8 +635,8 @@ class DataObject():
             data=self.to_pandas().isna(),
             colspecs=self._colspecs,
             index=self.get_index(),
-            column = self.get_column(),
-            selector = self.get_selector(),
+            column=self.get_column(),
+            selector=self.get_selector(),
         )
 
     def isnull(self):
@@ -653,8 +652,8 @@ class DataObject():
             index=self.get_index(),
             column=self.get_column(),
             selector=self.get_selector(),
-            )
-        
+        )
+
     def dropna(self):
         vals = self.to_pandas().isna()
         if self.get_index() not in vals.index:
@@ -671,13 +670,13 @@ class DataObject():
             sel = None
         else:
             sel = self.get_selector()
-            
+
         return self.__class__(
             data=vals,
             colspecs=self._colspecs,
-            index = ind,
-            column = col,
-            selector = sel,
+            index=ind,
+            column=col,
+            selector=sel,
         )
 
     def drop_duplicates(self, *args, **kwargs):
@@ -703,8 +702,7 @@ class DataObject():
         :return: A pd.DataFrameGroupBy object.
         """
         return self.to_pandas().groupby(*args, **kwargs)
-            
-    
+
     def pivot_table(self, *args, **kwargs):
         """
         Create a pivot table as a CustomDataFrame.
@@ -715,7 +713,7 @@ class DataObject():
         """
         return self.__class__(
             data=self.to_pandas().pivot_table(*args, **kwargs),
-            )
+        )
 
     def _colspecs(self):
         """
@@ -724,7 +722,7 @@ class DataObject():
         :return: Column specifications.
         """
         return None
-    
+
     def _apply_operator(self, other, operator):
         """
         Apply a specified operator to the DataFrame.
@@ -734,19 +732,19 @@ class DataObject():
         :return: A new instance of CustomDataFrame after applying the operator.
         """
         method = getattr(self.to_pandas(), operator)
-        
+
         # deal with pandas translation of single row on right to a series.
         if isinstance(other, CustomDataFrame):
             right = other.to_pandas()
         else:
             right = other
-            
+
         return self.__class__(
             data=method(right),
             colspecs=self._colspecs,
             index=self.get_index(),
             column=self.get_column(),
-            selector=self.get_selector()
+            selector=self.get_selector(),
         )
 
     @property
@@ -757,7 +755,7 @@ class DataObject():
         :return: Reference to the system log.
         """
         return log
-    
+
     @property
     def T(self):
         """
@@ -853,8 +851,8 @@ class DataObject():
         """
 
         # Because we don't return series, length should be the non-singleton dimension.
-        return self.shape[0]  
-    
+        return self.shape[0]
+
     def __add__(self, other):
         """
         Overload the addition ('+') operator.
@@ -893,7 +891,7 @@ class DataObject():
             colspecs=self._colspecs,
             index=self.get_index(),
             column=self.get_column(),
-            selector=self.get_selector()
+            selector=self.get_selector(),
         )
 
     def __neg__(self):
@@ -907,7 +905,7 @@ class DataObject():
             colspecs=self._colspecs,
             index=self.get_index(),
             column=self.get_column(),
-            selector=self.get_selector()
+            selector=self.get_selector(),
         )
 
     def __truediv__(self, other):
@@ -919,11 +917,11 @@ class DataObject():
         """
         other = self.convert(other)
         return self.__class__(
-            data=self.to_pandas()/other.to_pandas(),
+            data=self.to_pandas() / other.to_pandas(),
             colspecs=self._colspecs,
             index=self.get_index(),
-            column = self.get_column(),
-            selector= self.get_selector(),
+            column=self.get_column(),
+            selector=self.get_selector(),
         )
 
     def __floordiv__(self, other):
@@ -1037,25 +1035,25 @@ class DataObject():
         :retugrn: A subset of the DataFrame corresponding to the given key.
         """
         if isinstance(key, CustomDataFrame):
-            key = key.to_pandas()    
+            key = key.to_pandas()
         df = self.to_pandas()[key]
 
         if isinstance(df, pd.Series):
             return df
         else:
-            colspecs = {"cache" : df.columns}
+            colspecs = {"cache": df.columns}
             return self.__class__(
                 data=df,
                 colspecs=colspecs,
-            )            
+            )
 
     def __setitem__(self, key, value):
         raise NotImplementedError("This is a base class")
-    
+
     def __iter__(self):
         for column in self.columns:
             yield column
-            
+
     def __str__(self):
         return str(self.to_pandas())
 
@@ -1075,7 +1073,7 @@ class DataObject():
         """
         if on is None:
             on = []
-            
+
         # Initialize updated colspecs
         updated_colspecs = {k: list(v) for k, v in self.colspecs.items()}
 
@@ -1092,24 +1090,46 @@ class DataObject():
         for ctype, cols in updated_colspecs.items():
             updated = []
             for col in cols:
-                if col in self.columns and col not in on and (col + left_suffix) in merged_df.columns and (col + left_suffix) not in allocated:
+                if (
+                    col in self.columns
+                    and col not in on
+                    and (col + left_suffix) in merged_df.columns
+                    and (col + left_suffix) not in allocated
+                ):
                     updated.append(col + left_suffix)
                     allocated.append(col + left_suffix)
-                elif col in right.columns and col not in on and (col + right_suffix) in merged_df.columns and (col + right_suffix) not in allocated:
+                elif (
+                    col in right.columns
+                    and col not in on
+                    and (col + right_suffix) in merged_df.columns
+                    and (col + right_suffix) not in allocated
+                ):
                     updated.append(col + right_suffix)
                     allocated.append(col + right_suffix)
                 else:
                     updated.append(col)
                     allocated.append(col)
             updated_colspecs[ctype] = updated
-            
+
         # Remove any columns that are not in the merged DataFrame
         for ctype in updated_colspecs:
-            updated_colspecs[ctype] = [col for col in updated_colspecs[ctype] if col in merged_df.columns]
+            updated_colspecs[ctype] = [
+                col for col in updated_colspecs[ctype] if col in merged_df.columns
+            ]
 
         return updated_colspecs
 
-    def merge(self, right, how='inner', on=None, left_on=None, right_on=None, suffixes=("_x", "_y"), *args, **kwargs):
+    def merge(
+        self,
+        right,
+        how="inner",
+        on=None,
+        left_on=None,
+        right_on=None,
+        suffixes=("_x", "_y"),
+        *args,
+        **kwargs,
+    ):
         """
         Merge CustomDataFrame with another DataFrame or CustomDataFrame.
 
@@ -1128,34 +1148,35 @@ class DataObject():
             right_on=right_on,
             suffixes=suffixes,
             *args,
-            **kwargs
+            **kwargs,
         )
 
         # Update colspecs
-        colspecs = self._update_colspecs_after_merge(right, merged_df, on=on, suffixes=suffixes)
+        colspecs = self._update_colspecs_after_merge(
+            right, merged_df, on=on, suffixes=suffixes
+        )
 
-        types = self.types  
+        types = self.types
 
         return self.__class__(merged_df, colspecs=colspecs, types=types)
 
 
-
-    
 class CustomDataFrame(DataObject):
-    def __init__(self, data,
-                 colspecs=None,
-                 index=None,
-                 column=None,
-                 selector=None,
-                 types=None):
-        
+    def __init__(
+        self, data, colspecs=None, index=None, column=None, selector=None, types=None
+    ):
         if data is None:
             data = {}
         if isinstance(data, dict):
-            if len(data)>0: # Check that dictionary has contents.
+            if len(data) > 0:  # Check that dictionary has contents.
                 # Check if all entries are scalar.
                 entries = data.values()
-                if all([isinstance(entry, (int, float, str, bool, complex)) for entry in entries]):
+                if all(
+                    [
+                        isinstance(entry, (int, float, str, bool, complex))
+                        for entry in entries
+                    ]
+                ):
                     data = pd.Series(data).to_frame().T
             data = pd.DataFrame(data)
         if isinstance(data, pd.Series):
@@ -1169,7 +1190,7 @@ class CustomDataFrame(DataObject):
         if types is None:
             types = {
                 # Input types are standard DataFrames but are not mutable.
-                "input" : [
+                "input": [
                     "input",
                     "data",
                     "constants",
@@ -1178,7 +1199,7 @@ class CustomDataFrame(DataObject):
                 # Output types are standard DataFrames that are mutable and
                 # intended to be recorded once operations on the
                 # CustomDataFrame are complete.
-                "output" : [
+                "output": [
                     "output",
                     "writedata",
                     "writeseries",
@@ -1186,7 +1207,7 @@ class CustomDataFrame(DataObject):
                     "globals",
                 ],
                 # Parameter types do not have an index, they are globally valid.
-                "parameters" : [
+                "parameters": [
                     "constants",
                     "global_consts",
                     "parameters",
@@ -1196,7 +1217,7 @@ class CustomDataFrame(DataObject):
                 ],
                 # Cache types are standard DataFrames that are mutable and
                 # intended to be used for intermediate calculations.
-                "cache" : [
+                "cache": [
                     "cache",
                     "series_cache",
                     "parameter_cache",
@@ -1204,32 +1225,31 @@ class CustomDataFrame(DataObject):
                 ],
                 # Series types are standard DataFrames that are mutable and
                 # may have multiple rows with the same index.
-                "series" : [
+                "series": [
                     "writeseries",
                     "series_cache",
                 ],
             }
 
-            
         # If the colspecs isn't specified assume it's of "cache" type.
         if colspecs is None:
-            colspecs = {
-                "cache" : list(data.columns)
-            }
+            colspecs = {"cache": list(data.columns)}
         elif isinstance(colspecs, str):
             # Check if colspecs is in any of the types dictionary's entries.
             all_types = [typ for typs in types.values() for typ in typs]
             if colspecs in all_types:
                 colspecs = {
-                    colspecs : list(data.columns),
+                    colspecs: list(data.columns),
                 }
             else:
-                raise ValueError("Column specification \"{colspecs}\" not found in types.")
+                raise ValueError(
+                    'Column specification "{colspecs}" not found in types.'
+                )
 
         # Add unspecified columns to cache
         columns = [col for cols in colspecs.values() for col in cols]
         cache = [col for col in data.columns if col not in columns]
-        if len(cache)>0:
+        if len(cache) > 0:
             if "cache" not in colspecs:
                 colspecs["cache"] = []
             colspecs["cache"] += cache
@@ -1237,9 +1257,9 @@ class CustomDataFrame(DataObject):
         self._types = types
         self._colspecs = colspecs
         self._d = {}
-            
+
         self._distribute_data(data)
-                                
+
         # Set index if not specified
         if index is None:
             indices = self.index
@@ -1260,7 +1280,7 @@ class CustomDataFrame(DataObject):
             if len(selectors) > 0:
                 selector = self.columns[0]
         self.set_selector(selector)
-            
+
         self.at = self._AtAccessor(self)
         self.loc = self._LocAccessor(self)
         self.iloc = self._ILocAccessor(self)
@@ -1278,12 +1298,12 @@ class CustomDataFrame(DataObject):
             """
             Retrieve a single element from the CustomDataFrame using label-based indexing.
 
-            This method provides access to a single element, similar to pandas' .at accessor. 
+            This method provides access to a single element, similar to pandas' .at accessor.
             It expects a single label for both row and column.
 
             :param key: A tuple containing the row and column label.
             :return: The element at the specified row and column location.
-            :raises KeyError: If the specified key is not a tuple or if it does not correspond 
+            :raises KeyError: If the specified key is not a tuple or if it does not correspond
                               to a valid row and column label.
             """
             if not isinstance(key, tuple) or len(key) != 2:
@@ -1305,12 +1325,12 @@ class CustomDataFrame(DataObject):
             """
             Set a single element in the CustomDataFrame using label-based indexing.
 
-            This method provides a way to set the value of a single element, similar to pandas' .at accessor. 
+            This method provides a way to set the value of a single element, similar to pandas' .at accessor.
             It expects a single label for both row and column and updates the value at that location.
 
             :param key: A tuple containing the row and column label.
             :param value: The new value to set at the specified location.
-            :raises KeyError: If the specified key is not a tuple or if it does not correspond 
+            :raises KeyError: If the specified key is not a tuple or if it does not correspond
                               to a valid row and column label.
             """
             if not isinstance(key, tuple) or len(key) != 2:
@@ -1319,9 +1339,15 @@ class CustomDataFrame(DataObject):
             row_label, col_label = key
 
             # Check for immutable 'input' type columns
-            immutable_columns = [col for typ in self._data_object.types["input"] for col in self._data_object.colspecs.get(typ, [])]
+            immutable_columns = [
+                col
+                for typ in self._data_object.types["input"]
+                for col in self._data_object.colspecs.get(typ, [])
+            ]
             if col_label in immutable_columns:
-                raise KeyError(f"Column '{col_label}' is immutable and cannot be modified.")
+                raise KeyError(
+                    f"Column '{col_label}' is immutable and cannot be modified."
+                )
 
             # Setting the value
             data_modified = False
@@ -1332,14 +1358,16 @@ class CustomDataFrame(DataObject):
                     break
                 elif typ in self._data_object.types["parameters"]:
                     if col_label in data.index:
-                        raise KeyError(f"Cannot modify individual elements in 'parameters' type data.")
+                        raise KeyError(
+                            f"Cannot modify individual elements in 'parameters' type data."
+                        )
 
             if not data_modified:
                 raise KeyError(f"Key {key} not found in the CustomDataFrame")
 
             # Update the data object with the modified data
             self._data_object._d[typ] = data
-        
+
     class _LocAccessor(Accessor):
         def __init__(self, data):
             """
@@ -1380,8 +1408,12 @@ class CustomDataFrame(DataObject):
 
                 # Handle "parameters" data
                 if typ in self._data_object.types["parameters"]:
-                    selected_cols = [col for col in col_key if col in data.index] if isinstance(col_key, (list, tuple, pd.Index)) else data.index
-                    if len(result_df.index) == 0: # There are no rows in this df 
+                    selected_cols = (
+                        [col for col in col_key if col in data.index]
+                        if isinstance(col_key, (list, tuple, pd.Index))
+                        else data.index
+                    )
+                    if len(result_df.index) == 0:  # There are no rows in this df
                         ind = data.name if data.name is not None else 0
                         for col in selected_cols:
                             result_df.at[ind, col] = data[col]
@@ -1391,7 +1423,11 @@ class CustomDataFrame(DataObject):
                     colspecs[typ] = selected_cols
                 else:
                     # Handle regular data
-                    filtered_cols = [col for col in col_key if col in data.columns] if isinstance(col_key, (list, tuple, pd.Index)) else data.columns
+                    filtered_cols = (
+                        [col for col in col_key if col in data.columns]
+                        if isinstance(col_key, (list, tuple, pd.Index))
+                        else data.columns
+                    )
                     selected_data = data.loc[row_key, filtered_cols]
                     if isinstance(selected_data, pd.Series):
                         selected_data = selected_data.to_frame().T
@@ -1407,9 +1443,8 @@ class CustomDataFrame(DataObject):
             # Delete empty colspecs
             for typ in del_types:
                 del colspecs[typ]
-            
-            return self._data_object.__class__(result_df, colspecs=colspecs)
 
+            return self._data_object.__class__(result_df, colspecs=colspecs)
 
         def __setitem__(self, key, value):
             """
@@ -1421,7 +1456,7 @@ class CustomDataFrame(DataObject):
             :param key: The indexing key, similar to pandas .loc accessor.
             :param value: The value to set at the specified key location.
             :raises KeyError: If attempting to modify immutable 'input' type columns.
-            :raises ValueError: If provided values for 'parameters' type data are not identical.       
+            :raises ValueError: If provided values for 'parameters' type data are not identical.
             """
             # Determine row_key and col_key based on whether key is a tuple
             if isinstance(key, tuple):
@@ -1432,17 +1467,25 @@ class CustomDataFrame(DataObject):
 
             # Extract the list of immutable columns from colspecs based on types["input"]
             immutable_types = self._data_object.types["input"]
-            immutable_columns = [col for typ in immutable_types for col in self._data_object.colspecs.get(typ, [])]
+            immutable_columns = [
+                col
+                for typ in immutable_types
+                for col in self._data_object.colspecs.get(typ, [])
+            ]
 
             # Check if any of the columns being modified are immutable
             if isinstance(col_key, (list, tuple, pd.Index)):
                 if any(col in immutable_columns for col in col_key):
-                    raise KeyError(f"Attempted to modify one or more immutable 'input' type columns when you tried to modify columns \"{col_key}\".")
+                    raise KeyError(
+                        f"Attempted to modify one or more immutable 'input' type columns when you tried to modify columns \"{col_key}\"."
+                    )
             elif col_key in immutable_columns:
-                raise KeyError(f"Attempted to modify an immutable 'input' type column when you tried to modify column \"{col_key}\".")
+                raise KeyError(
+                    f"Attempted to modify an immutable 'input' type column when you tried to modify column \"{col_key}\"."
+                )
 
             # Setting values
-            for typ, data in self._data_object._d.items():                
+            for typ, data in self._data_object._d.items():
                 if data.empty:
                     continue
 
@@ -1451,30 +1494,41 @@ class CustomDataFrame(DataObject):
                     col_key = [col_key]
 
                 # Select the relevant columns
-                rel_col = [col for col in col_key if col in self._data_object.colspecs[typ]]
-                if len(rel_col)==0:
+                rel_col = [
+                    col for col in col_key if col in self._data_object.colspecs[typ]
+                ]
+                if len(rel_col) == 0:
                     continue
 
                 if typ in self._data_object.types["parameters"]:
                     # Ensure that provided values for 'parameters' are identical across all rows
                     for col in rel_col:
-                        if isinstance(value, pd.DataFrame) and not all(value[col].iloc[0] == v for v in value[col]):
-                            raise ValueError("Non-identical values provided for 'parameters' type data")
+                        if isinstance(value, pd.DataFrame) and not all(
+                            value[col].iloc[0] == v for v in value[col]
+                        ):
+                            raise ValueError(
+                                "Non-identical values provided for 'parameters' type data"
+                            )
                         elif not all(value[0] == v for v in value):
-                            raise ValueError("Non-identical values provided for 'parameters' type data")
+                            raise ValueError(
+                                "Non-identical values provided for 'parameters' type data"
+                            )
 
                         # Setting values for 'parameters' type data
-                        data[col] = value[col].iloc[0] if isinstance(value, pd.DataFrame) else value
+                        data[col] = (
+                            value[col].iloc[0]
+                            if isinstance(value, pd.DataFrame)
+                            else value
+                        )
                 else:
                     # Handle setting values for regular data
                     selected_cols = [col for col in col_key if col in data.columns]
-                    if len(selected_cols)>0:
+                    if len(selected_cols) > 0:
                         data.loc[row_key, selected_cols] = value
 
                 # Update the data object with the modified data
                 self._data_object._d[typ] = data
 
-            
     class _ILocAccessor(Accessor):
         def __init__(self, data):
             """
@@ -1498,7 +1552,7 @@ class CustomDataFrame(DataObject):
             """
             # Convert integer indices to labels for rows and columns
             row_labels, col_labels = self._ikey_to_labels(key)
-            
+
             # Use .loc accessor with label-based keys
             return self._data_object.loc[row_labels, col_labels]
 
@@ -1515,7 +1569,7 @@ class CustomDataFrame(DataObject):
 
             # Convert integer indices to labels for rows and columns
             row_labels, col_labels = self._ikey_to_labels(key)
-            
+
             self._data_object.loc[row_labels, col_labels] = value
 
         def _ikey_to_labels(self, key):
@@ -1563,15 +1617,17 @@ class CustomDataFrame(DataObject):
         # Distribute data across names columns
         if not isinstance(data, (pd.DataFrame, self.__class__)):
             raise ValueError("Data must be a pandas DataFrame or a custom data frame.")
-        
+
         for typ, cols in self._colspecs.items():
             if typ in self.types["parameters"]:
                 self._d[typ] = pd.Series(index=cols, data=None).astype(object)
                 for col in cols:
-                    if all(data[col]==data[col].iloc[0]):
+                    if all(data[col] == data[col].iloc[0]):
                         self._d[typ][col] = data[col].iloc[0]
                     else:
-                        raise ValueError(f"Column \"{col}\" is specified as a parameter column and yet the values of the column are not all the same.")
+                        raise ValueError(
+                            f'Column "{col}" is specified as a parameter column and yet the values of the column are not all the same.'
+                        )
             else:
                 d = data[cols]
                 if typ in self._types["series"]:
@@ -1579,8 +1635,10 @@ class CustomDataFrame(DataObject):
                 else:
                     # If it's not a series type make sure it's deduplicated.
                     if d.index.has_duplicates:
-                        self._log.debug("Removing duplicated elements from \"{typ}\" loaded data.")                        
-                        self._d[typ] = d[~d.index.duplicated(keep='first')]
+                        self._log.debug(
+                            'Removing duplicated elements from "{typ}" loaded data.'
+                        )
+                        self._d[typ] = d[~d.index.duplicated(keep="first")]
                     else:
                         self._d[typ] = d
 
@@ -1604,7 +1662,7 @@ class CustomDataFrame(DataObject):
                 else:
                     df1 = df1.join(data, how="outer")
         return df1
-                        
+
     def from_pandas(self, df, inplace=False):
         """
         Convert from a pandas data frame to a CustomDataFrame.
@@ -1621,18 +1679,16 @@ class CustomDataFrame(DataObject):
                 self._colspecs,
                 self.get_selector(),
                 self.get_index(),
-                self.get_column()
+                self.get_column(),
             )
-                        
+
     def filter(self, *args, **kwargs):
-        return self.from_pandas(
-            self.to_pandas().filter(*args, **kwargs)
-        )
-    
+        return self.from_pandas(self.to_pandas().filter(*args, **kwargs))
+
     def sort_values(self, *args, inplace=False, **kwargs):
         """
         Sort by the values along either axis.
-        
+
         :param by: str or list of str
         :param axis: {0 or 'index', 1 or 'columns'}, default 0
         :param ascending: bool or list of bool, default True
@@ -1652,13 +1708,14 @@ class CustomDataFrame(DataObject):
         if inplace:
             self._distribute_data(df)
         else:
-            return self.__class__(df,
-                                  colspecs=self.colspecs,
-                                  index=self.get_index(),
-                                  column=self.get_column(),
-                                  selector=self.get_selector(),
-                                  )
-    
+            return self.__class__(
+                df,
+                colspecs=self.colspecs,
+                index=self.get_index(),
+                column=self.get_column(),
+                selector=self.get_selector(),
+            )
+
     def sort_index(self, *args, inplace=False, **kwargs):
         """
         Sort object by labels (along an axis).
@@ -1671,28 +1728,22 @@ class CustomDataFrame(DataObject):
         :param na_position: {'first', 'last'}, default 'last'
         :param sort_remaining: bool, default True
         :param ignore_index: bool, default False
-        :param key: callable, optional. 
+        :param key: callable, optional.
         :return: sorted_obj : CustomDataFrame
         """
-        df = self.to_pandas().sort_index(
-            *args,
-            inplace=False,
-            **kwargs
-        )
+        df = self.to_pandas().sort_index(*args, inplace=False, **kwargs)
         if inplace:
             self._distribute_data(df)
         else:
-            return self.__class__(df,
-                                  colspecs=self.colspecs,
-                                  index=self.get_index(),
-                                  column=self.get_column(),
-                                  selector=self.get_selector(),
-                                  )
+            return self.__class__(
+                df,
+                colspecs=self.colspecs,
+                index=self.get_index(),
+                column=self.get_column(),
+                selector=self.get_selector(),
+            )
 
 
-
-
-    
 def concat(objs, *args, **kwargs):
     """
     Concatenate a sequence of CustomDataFrame objects into a single CustomDataFrame.
@@ -1711,14 +1762,11 @@ def concat(objs, *args, **kwargs):
     # Concatenate the dataframes
     df = pd.concat([obj.to_pandas() for obj in objs], *args, **kwargs)
 
-
     # Check if df has duplicated index.
-    if(df.index.has_duplicates):
+    if df.index.has_duplicates:
         colspecs = "series_cache"
     else:
         colspecs = "cache"
-    
-    
 
     # Handle types - assuming a consistent approach is defined
     # This needs to be decided based on how types are to be handled
