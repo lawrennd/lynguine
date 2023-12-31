@@ -13,6 +13,17 @@ import datetime
 import subprocess
 
 def get_cvs_version(filename, full_path):
+    """
+    Get the CVS version of a file.
+
+    :param filename: The name of the file to get the version of.
+    :type filename: str
+    :param full_path: The full path to the file.
+    :type full_path: str
+    :return: The CVS version of the file.
+    :rtype: str
+    """
+    
     # extract CVS version.
     base_dir = os.path.dirname(full_path)
     cvs_filename = os.path.join(base_dir, 'CVS', 'Entries')    
@@ -27,6 +38,17 @@ def get_cvs_version(filename, full_path):
     return cvs_ver
 
 def get_svn_version(filename, full_path):
+    """
+    Get the SVN version of a file.
+
+    :param filename: The name of the file to get the version of.
+    :type filename: str
+    :param full_path: The full path to the file.
+    :type full_path: str
+    :return: The SVN version of the file.
+    :rtype: str
+    """
+    
     # extract SVN version.
     base_dir = os.path.dirname(full_path)
     svn_filename = os.path.join(base_dir, '.svn', 'entries')
@@ -58,6 +80,18 @@ def get_svn_version(filename, full_path):
     return svn_ver
 
 def get_git_version(filename, full_path, git_path):
+    """
+    Get the GIT version of a file.
+
+    :param filename: The name of the file to get the version of.
+    :type filename: str
+    :param full_path: The full path to the file.
+    :type full_path: str
+    :param git_path: The path to the git repository.
+    :type git_path: str
+    :return: The GIT version of the file.
+    :rtype: str
+    """
     # extract GIT version.
     base_dir = os.path.dirname(full_path)
     git_filename = os.path.join(base_dir, filename)
@@ -77,37 +111,60 @@ def get_git_version(filename, full_path, git_path):
             git_ver = []
     return git_ver
 
-def read_txt_file(filename, dir_name="."):
+def read_txt_file(filename, dir_name=".", comment_char="#"):
+    """
+    Read in a text file ignoring lines that start with a comment character.
+
+    :param filename: The name of the file to read in.
+    :type filename: str
+    :param dir_name: The directory to read the file from.
+    :type dir_name: str
+    :param comment_char: The character to use for comments.
+    :type comment_char: str
+    :return: The contents of the file.
+    :rtype: str
+    """
+
+    # Read in the file
     fullname = os.path.join(dir_name, filename)
-    str_ret = ''
     if os.path.exists(fullname):
-        f = open(fullname, 'r');
-        lines = f.readlines()
-        f.close()
-        for line in lines:
-            if line[0]=='#':
-                continue
-            else:
-                str_ret += line
-    return str_ret
+        with open(fullname) as file:
+            lines = [line for line in file if not line.startswith(comment_char)]
+        return "\n".join(lines)
+    else:
+        raise FileNotFoundError(f"File {fullname} not found.")
+    
+def extract_file_details(filename, dir_name=".", comment_char="#", seperator=","):
+    """
+    Read csv file ignoring empty lines and those that start with a comment character.
 
-def extract_file_details(filename, seperator=",", dir_name="."):
+    :param filename: The name of the file to read in.
+    :type filename: str
+    :param dir_name: The directory to read the file from.
+    :type dir_name: str
+    :param comment_char: The character to use for comments.
+    :type comment_char: str
+    :param seperator: The character to use for seperating fields.
+    :type seperator: str
+    :return: The details of the file.
+    :rtype: list of lists
+    """
 
-    details = []
+    # Read in the file    
     fullname = os.path.join(dir_name, filename);
+    details = []
     if os.path.exists(fullname):
-        f = open(fullname, 'r');
-        lines = f.readlines()
-        f.close()
+        with open(fullname, 'r') as f:
+            lines = f.readlines()
         for line in lines:
             if line[0]=='#':
                 continue
             elif line[0]=='\n':
                 continue
             else:
-                details.append(string.splitfields(line, seperator))
+                details.append(line.split(seperator))
     else:
-        sys.exit(0)
+        raise FileNotFoundError(f"File {fullname} not found.")
 
     for i in range(len(details)):
         for j in range(len(details[i])):
