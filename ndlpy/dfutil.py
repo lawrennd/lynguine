@@ -10,7 +10,7 @@ cntxt = context.Context(name="ndlpy")
 log = Logger(
     name=__name__,
     level=cntxt["logging"]["level"],
-    filename=cntxt["logging"]["filename"]
+    filename=cntxt["logging"]["filename"],
 )
 
 
@@ -26,6 +26,7 @@ def reorder_dataframe(df, order):
     order = [column for column in order if column in df.columns]
     remaining = [column for column in df.columns if column not in order]
     return df[order + sorted(remaining)]
+
 
 ## Preprocessors
 def convert_datetime(df, columns):
@@ -53,7 +54,11 @@ def convert_int(df, columns):
         columns = [columns]
     for column in columns:
         if column in df.columns:
-            df[column] = pd.to_numeric(df[column]).apply(lambda x: int(x) if not pd.isna(x) else pd.NA).astype('Int64')
+            df[column] = (
+                pd.to_numeric(df[column])
+                .apply(lambda x: int(x) if not pd.isna(x) else pd.NA)
+                .astype("Int64")
+            )
     return df
 
 
@@ -74,6 +79,7 @@ def convert_string(df, columns):
         if column in df.columns:
             df[column] = df[column].apply(lambda x: str(x) if not pd.isna(x) else pd.NA)
     return df
+
 
 def convert_year_iso(df, column="year", month=1, day=1):
     """
@@ -99,28 +105,31 @@ def convert_year_iso(df, column="year", month=1, day=1):
         :raises ValueError: If the field is not a valid date
         """
         type_field = type(field)
-        if isinstance(field, int): # Assume it is integer year
-            log.debug(f"Returning \"{type_field}\" from form \"{field}\"")
+        if isinstance(field, int):  # Assume it is integer year
+            log.debug(f'Returning "{type_field}" from form "{field}"')
             dt = datetime.datetime(year=field, month=month, day=day)
         elif isinstance(field, str):
             try:
-                year = int(field) # Try it as string year
-                log.debug(f"Returning \"{type_field}\" from form \"{field}\"")
+                year = int(field)  # Try it as string year
+                log.debug(f'Returning "{type_field}" from form "{field}"')
                 dt = datetime.datetime(year=year, month=month, day=day)
             except TypeError as e:
-                log.debug(f"Returning \"{type_field}\" from form \"{field}\"")
-                dt = datetime.datetime.strptime(field, "%Y-%m-%d") # Try it as string YYYY-MM-DD
+                log.debug(f'Returning "{type_field}" from form "{field}"')
+                dt = datetime.datetime.strptime(
+                    field, "%Y-%m-%d"
+                )  # Try it as string YYYY-MM-DD
         elif isinstance(field, datetime.date):
-            log.debug(f"Returning \"{type_field}\" from form \"{field}\"")
+            log.debug(f'Returning "{type_field}" from form "{field}"')
             return field
         else:
-            raise TypeError(f"Expecting type of int or str or datetime but found \"{type_field}\"")
+            raise TypeError(
+                f'Expecting type of int or str or datetime but found "{type_field}"'
+            )
         return dt
-        
+
     df[column] = df[column].apply(year_to_iso)
     return df
-        
-        
+
 
 ## Augmentors
 def addmonth(df, source="date"):
@@ -139,6 +148,7 @@ def addmonth(df, source="date"):
     """
     return df[source].apply(lambda x: x.month_name() if x is not None else pd.NA)
 
+
 def addyear(df, source="date"):
     """
     Add year column and based on source date field.
@@ -152,7 +162,8 @@ def addyear(df, source="date"):
     """
     return df[source].apply(lambda x: x.year if x is not None else pd.NA)
 
-def augmentmonth(df, destination='month', source="date"):
+
+def augmentmonth(df, destination="month", source="date"):
     """
     Augment the month column based on source date field.
 
@@ -172,6 +183,7 @@ def augmentmonth(df, destination='month', source="date"):
         else:
             val[index] = df.at[index, destination]
     return val
+
 
 def augmentyear(df, destination="year", source="date"):
     """
@@ -194,6 +206,7 @@ def augmentyear(df, destination="year", source="date"):
             val[index] = df.at[index, destination]
     return val
 
+
 def augmentcurrency(df, source="amount", sf=0):
     """
     Preprocessor to set integer type on columns.
@@ -205,7 +218,7 @@ def augmentcurrency(df, source="amount", sf=0):
     :return: The converted dataframe.
     :rtype: pandas.DataFrame or ndlpy.data.CustomDataFrame
     """
-    fstr=f"{{0:,.{sf}f}}"
+    fstr = f"{{0:,.{sf}f}}"
     return df[source].apply(lambda x: fstr.format(x))
 
 
@@ -224,6 +237,7 @@ def fillna(df, column, value):
     """
     return df[column].fillna(value)
 
+
 ## Sorters
 def ascending(df, by):
     """
@@ -238,6 +252,7 @@ def ascending(df, by):
     """
     return df.sort_values(by=by, ascending=True)
 
+
 def descending(df, by):
     """
     Sort in descending order
@@ -251,6 +266,7 @@ def descending(df, by):
     """
     return df.sort_values(by=by, ascending=False)
 
+
 ## Filters
 def recent(df, column="year", since_year=2000):
     """
@@ -262,14 +278,15 @@ def recent(df, column="year", since_year=2000):
     :type column: str
     :return: The filtered dataframe.
     :rtype: pandas.DataFrame or ndlpy.data.CustomDataFrame
-    
+
     """
-    return df[column]>=since_year
+    return df[column] >= since_year
+
 
 def current(df, start="start", end="end", current=None, today=None):
     """
     Filter on whether the row is current as given by start and end dates. If current is given then it is used instead of the range check. If today is given then it is used instead of the current date.
-    
+
     :param df: The dataframe to be filtered.
     :type df: pandas.DataFrame or ndlpy.data.CustomDataFrame
     :param start: The start date of the entry.
@@ -287,11 +304,12 @@ def current(df, start="start", end="end", current=None, today=None):
         now = pd.to_datetime(datetime.datetime.now().date())
     else:
         now = today
-    within = ((df[start] <= now) & (pd.isna(df[end]) | (df[end] >= now)))
+    within = (df[start] <= now) & (pd.isna(df[end]) | (df[end] >= now))
     if current is not None:
-        return (within | (~df[current].isna() & df[current]))
+        return within | (~df[current].isna() & df[current])
     else:
         return within
+
 
 def former(df, end="end"):
     """
@@ -305,7 +323,8 @@ def former(df, end="end"):
     :rtype: pandas.DataFrame or ndlpy.data.CustomDataFrame
     """
     now = pd.to_datetime(datetime.datetime.now().date())
-    return (df[end] < now)
+    return df[end] < now
+
 
 def onbool(df, column="current", invert=False):
     """
@@ -325,6 +344,7 @@ def onbool(df, column="current", invert=False):
     else:
         return df[column]
 
+
 def columnis(df, column, value):
     """
     Filter on whether a given column is equal to a given value
@@ -337,8 +357,9 @@ def columnis(df, column, value):
     :return: The filtered dataframe.
     :rtype: pandas.DataFrame or ndlpy.data.CustomDataFrame
     """
-    
-    return (df[column]==value)
+
+    return df[column] == value
+
 
 def columncontains(df, column, value):
     """
@@ -353,4 +374,6 @@ def columncontains(df, column, value):
     :rtype: pandas.DataFrame or ndlpy.data.CustomDataFrame
     """
     colis = columnis(df, column, value)
-    return (colis | df[column].apply(lambda x: x == value or (hasattr(x, '__contains__') and value in x)))
+    return colis | df[column].apply(
+        lambda x: x == value or (hasattr(x, "__contains__") and value in x)
+    )
