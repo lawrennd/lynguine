@@ -17,10 +17,12 @@ log = Logger(
     filename=ctxt._data["logging"]["filename"],
 )
 
+
 class FileDownloader:
     """
     A class for downloading data files from a url.
     """
+
     def __init__(self, settings, data_resources, data_name):
         """
         Initialize the FileDownloader class.
@@ -52,7 +54,7 @@ class FileDownloader:
         if not isinstance(value, Settings):
             raise TypeError("settings must be of type Settings.")
         self._settings = value
-    
+
     @property
     def data_name(self):
         """
@@ -86,7 +88,7 @@ class FileDownloader:
         :return: None
         """
         self._data_resources = value
-        
+
     def _authorize_download(self, prompt=None):
         """
         Check with the user that they agree to terms and conditions for the data.
@@ -98,31 +100,44 @@ class FileDownloader:
 
         if prompt is None:
             prompt = prompt_stdin
-            
 
         print(f"Acquiring resource: {self.data_name}\n")
         print("Details of data: ")
         print(self._dr.get("details", "No details available."))
-        
+
         if self._dr.get("citation"):
             print("\nPlease cite:\n" + self._dr["citation"])
         if self._dr.get("size"):
-            print(f"\nAfter downloading, the data will take up {self._dr['size']} bytes of space.")
+            print(
+                f"\nAfter downloading, the data will take up {self._dr['size']} bytes of space."
+            )
 
         storage_path = os.path.join(self.settings["default_cache_path"], self.data_name)
         print(f"\nData will be stored in {storage_path}.\n")
 
         if self.settings["overide_manual_authorize"]:
             if self._dr.get("license"):
-                print("You have agreed to the following license:\n" + self._dr["license"])
+                print(
+                    "You have agreed to the following license:\n" + self._dr["license"]
+                )
             return True
         else:
             if self._dr.get("license"):
-                print("You must also agree to the following license:\n" + self._dr["license"])
+                print(
+                    "You must also agree to the following license:\n"
+                    + self._dr["license"]
+                )
             return prompt("Do you wish to proceed with the download? [yes/no] ")
 
-
-    def _download_url(self, url, dir_name=".", save_name=None, store_directory=None, messages=True, suffix=""):
+    def _download_url(
+        self,
+        url,
+        dir_name=".",
+        save_name=None,
+        store_directory=None,
+        messages=True,
+        suffix="",
+    ):
         """
         Download a file from a url and save it to disk.
 
@@ -140,7 +155,7 @@ class FileDownloader:
         if save_name is None:
             save_name = file_name
         save_path = os.path.join(dir_name, save_name)
-        
+
         if not os.path.exists(dir_name):
             os.makedirs(dir_name)
 
@@ -159,7 +174,7 @@ class FileDownloader:
 
         :param response: The response object from urlopen.
         :param save_path: The path to save the file to.
-        :return: None        
+        :return: None
         """
         try:
             file_size = int(response.info().get("Content-Length"))
@@ -169,8 +184,9 @@ class FileDownloader:
         with open(save_path, "wb") as f:
             if file_size:
                 from tqdm import tqdm
-                with tqdm(total=file_size, unit='B', unit_scale=True) as bar:
-                    for buff in iter(lambda: response.read(1024), b''):
+
+                with tqdm(total=file_size, unit="B", unit_scale=True) as bar:
+                    for buff in iter(lambda: response.read(1024), b""):
                         f.write(buff)
                         bar.update(len(buff))
             else:
@@ -207,7 +223,9 @@ class FileDownloader:
 
         :return: None
         """
-        for url, filenames, suffices in zip(self._dr["urls"], self._dr["files"], self._dr["suffices"]):
+        for url, filenames, suffices in zip(
+            self._dr["urls"], self._dr["files"], self._dr["suffices"]
+        ):
             for filename, suffix in zip(filenames, suffices):
                 self._download_file(url, filename, suffix=suffix)
 
@@ -217,7 +235,9 @@ class FileDownloader:
 
         :return: None
         """
-        for url, dirnames, filenames in zip(self._dr["urls"], self._dr["dirs"], self._dr["files"]):
+        for url, dirnames, filenames in zip(
+            self._dr["urls"], self._dr["dirs"], self._dr["files"]
+        ):
             for filename, dirname in zip(filenames, dirnames):
                 self._download_file(url, filename, dirname=dirname)
 
@@ -241,16 +261,23 @@ class FileDownloader:
         :param suffix: The suffix to add to the url.
         :return: None
         """
-        
-        full_url = os.path.join(url, dirname if dirname else "", filename).replace(" ", "%20")
+
+        full_url = os.path.join(url, dirname if dirname else "", filename).replace(
+            " ", "%20"
+        )
         save_name = filename if not suffix else filename + suffix
-        self._download_url(url=full_url, store_directory=self.settings["default_cache_path"], save_name=save_name)
+        self._download_url(
+            url=full_url,
+            store_directory=self.settings["default_cache_path"],
+            save_name=save_name,
+        )
 
 
 class GitDownloader(FileDownloader):
     """
     A class for downloading data files from a git repository.
     """
+
     def __init__(self, settings, data_resources, data_name):
         """
         Initialize the GitDownloader class.
@@ -261,7 +288,15 @@ class GitDownloader(FileDownloader):
         super().__init__(settings, data_resources, data_name)
         self._repo = git.Repo(self.settings["default_cache_path"])
 
-    def _download_git_url(self, url, dir_name=".", save_name=None, store_directory=None, messages=True, suffix=""):
+    def _download_git_url(
+        self,
+        url,
+        dir_name=".",
+        save_name=None,
+        store_directory=None,
+        messages=True,
+        suffix="",
+    ):
         """
         Download a file from a git url and save it to disk.
 
@@ -273,14 +308,14 @@ class GitDownloader(FileDownloader):
         :param suffix: The suffix to add to the url.
         :return: None
         """
-        
+
         file_name = os.path.basename(url)
         if store_directory is not None:
             dir_name = os.path.join(dir_name, store_directory)
         if save_name is None:
             save_name = file_name
         save_path = os.path.join(dir_name, save_name)
-        
+
         if not os.path.exists(dir_name):
             os.makedirs(dir_name)
 
@@ -304,5 +339,3 @@ class GitDownloader(FileDownloader):
             os.makedirs(self.settings["default_cache_path"])
 
         git.Repo.clone_from(self._git_url, self.settings["default_cache_path"])
-
-        
