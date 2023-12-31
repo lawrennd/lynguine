@@ -3,7 +3,7 @@ from io import StringIO
 from unittest.mock import MagicMock
 import os
 import re
-from ndlpy.util import tex  # Replace with the actual import path of your latex module
+from ndlpy.util import tex  
 
 # Sample YAML content for the settings file
 settings_content = """
@@ -44,19 +44,23 @@ def test_extract_bib_files():
     result = tex.extract_bib_files(lines)
     assert result == ["references"]
 
+
 # Test for substitute_inputs using mocked settings file
-@pytest.mark.parametrize("filename, expected", [
-    ("main.tex", "substituted content"),
-    ("nonexistent.tex", "")
+@pytest.mark.parametrize("filename, file_exists, expected", [
+    ("main.tex", True, "substituted content"),
+    ("nonexistent.tex", False, None)
 ])
-def test_substitute_inputs(filename, expected, mocker, mock_settings_file):
-    mocker.patch('os.path.exists', return_value=True)
-    mocker.patch('os.path.join', return_value="/path/to/tex/" + filename)
-    mocker.patch('builtins.open', mocker.mock_open(read_data=expected), create=True)
+def test_substitute_inputs(filename, file_exists, expected, mocker):
+    # Mock file existence check
+    mocker.patch('os.path.exists', return_value=file_exists)
+
+    # Mock 'open' only if the file exists
+    if file_exists:
+        mocker.patch('builtins.open', mocker.mock_open(read_data=expected), create=True)
 
     result = tex.substitute_inputs(filename)
     assert result == expected
-
+    
 # Test for extract_inputs
 def test_extract_inputs():
     lines = ["\\input{chapter1}", "\\newsection{Section}{section1}\\input{chapter2}", "\\include{chapter3}", "\\newsubsection{Subsection}{subsection1}"]
@@ -106,3 +110,4 @@ def test_make_bib_file(mock_settings_file, mocker):
 
     # Assertions based on expected result
     assert subbibfile_content in result
+    
