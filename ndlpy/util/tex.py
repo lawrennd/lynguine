@@ -7,7 +7,11 @@ settings = Settings()
 
 # Using list comprehensions and set for avoiding duplicate directories.
 TEX_DIRECTORIES = list(set(["."] + settings.get("bibinputs", "").split(":") + settings.get("texinputs", "").split(":")))
-
+if "TEXINPUTS" in os.environ:
+    TEX_DIRECTORIES += os.environ["TEXINPUTS"].split(":")
+if "BIBINPUTS" in os.environ:
+    TEX_DIRECTORIES += os.environ["BIBINPUTS"].split(":")
+TEX_DIRECTORIES = [os.path.expandvars(directory) for directory in TEX_DIRECTORIES]
 
 def extract_bib_files(text):
     """
@@ -290,7 +294,7 @@ def make_bib_file(citations_list, bib_files):
         string_list = []
         out = ""
         # Get the location of the bibfiles
-        bib_dir = os.environ["BIBINPUTS"].split(":")
+        bib_dir = TEX_DIRECTORIES
 
         # Regular expressions
         match_bib_field = re.compile(r"""(\@\w+{)""")
