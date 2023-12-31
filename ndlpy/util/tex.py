@@ -1,15 +1,12 @@
-import re
 import os
+import re
 
 from ..config.settings import Settings
 
 settings = Settings()
 
-TEX_DIRECTORIES = ["."]
-if "bibinputs" in settings:
-    TEX_DIRECTORIES += settings["bibinputs"].split(":")
-if "texinputs" in settings:
-    TEX_DIRECTORIES += settings["texinputs"].split(":")
+# Using list comprehensions and set for avoiding duplicate directories.
+TEX_DIRECTORIES = list(set(["."] + settings.get("bibinputs", "").split(":") + settings.get("texinputs", "").split(":")))
 
 
 def extract_bib_files(text):
@@ -26,22 +23,15 @@ def extract_bib_files(text):
         text = "\n".join(text)
 
     # Regular expressions for matching bibliography definitions
-    match_bib = re.compile(r"""\\bibliography{([^}]*)}""")
-    match_bib2 = re.compile(r"""\\begin{btSect}.*{([^}]*)}""")
+    patterns = [r'\\bibliography{([^}]*)}', r'\\begin{btSect}.*{([^}]*)}']
 
     # Extract the bib files
-    bib_files = []
-    for line in text.split("\n"):
-        line_bib = match_bib.findall(line)
-        if line_bib:
-            for bib in line_bib:
-                bib_files = bib_files + bib.split(",")
-        line_bib2 = match_bib2.findall(line)
-        if line_bib2:
-            for bib in line_bib2:
-                bib_files = bib_files + bib.split(",")
+    bib_files = set()
+    for pattern in patterns:
+        for match in re.findall(pattern, text):
+            bib_files.update(match.split(','))
 
-    return bib_files
+    return list(bib_files)
 
 
 def substitute_inputs(filename, directories=None):
@@ -176,16 +166,21 @@ def process_file(filename, extension=".tex"):
     return lines
 
 
-def extract_inputs(lines):
+def extract_inputs(text):
     """
     Extract latex file dependencies.
 
-    :param lines: The lines of the file to be processed.
-    :type lines: list
+    :param text: The text of the file to be processed.
+    :type text: str or list of str (for backwards compatability)
     :return: The list of files.
     :rtype: list
     """
 
+    if isinstance(text, str):
+        lines = text.split("\n")
+    else:
+        lines = text
+        
     def extract_input(line, matchstr):
         line_inp = re.compile(matchstr).findall(line)
         inp_list = []

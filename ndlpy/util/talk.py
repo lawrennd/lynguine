@@ -5,21 +5,43 @@ import warnings
 import ndlpy.util.tex as latex
 import ndlpy.util.yaml as ny
 
-
 today = date.today()    
 
 def talk_field(field, filename):
-    """Return one field from a talk."""
+    """
+    Return one field from a talk.
+
+    :param field: The field to return.
+    :type field: str
+    :param filename: The filename of the talk.
+    :type filename: str
+    """
     fields = ny.header_fields(filename)
     return ny.header_field(field, fields)    
         
 def extract_bibinputs(filename):
-    """Extract bibinput files from a talk"""
+    """
+    Extract bibinput files from a talk
+
+    :param filename: The filename of the talk.
+    :type filename: str
+    :return: The bibinput files.
+    :rtype: list
+    """
     # Hard coded for the moment
     raise NotImplementedError
 
 def extract_all(filename, user_file=["_config.yml"]):
-    """List the different files the talk file creates."""
+    """
+    List the different files the talk file creates.
+
+    :param filename: The filename of the talk.
+    :type filename: str
+    :param user_file: The user file to use.
+    :type user_file: list
+    :return: The list of files.
+    :rtype: list
+    """
     basename = os.path.basename(filename)
     base = os.path.splitext(basename)[0]
     fields = ny.header_fields(filename)
@@ -42,7 +64,16 @@ def extract_all(filename, user_file=["_config.yml"]):
     return list_files
 
 def extract_inputs(filename, snippets_path=".."):
-    """Extract input and include files from a talk"""
+    """
+    Extract input and include files from a talk
+
+    :param filename: The filename of the talk.
+    :type filename: str
+    :param snippets_path: The snippets path.
+    :type snippets_path: str
+    :return: The list of files.
+    :rtype: list
+    """
     list_files=[]
     snippets_path = os.path.expandvars(snippets_path)
     if filename=='\\filename.svg':
@@ -54,7 +85,7 @@ def extract_inputs(filename, snippets_path=".."):
         else:
             return [filename]
     with open(filename, 'r') as f:
-        lines = f.readlines()
+        lines = f.read()
 
     filenames = latex.extract_inputs(lines)
     not_present=[]
@@ -82,14 +113,29 @@ def extract_diagrams(filename,
                      diagram_exts=['svg', 'png', 'emf', 'pdf'],
                      diagrams_dir=None,
                      snippets_path=None):
-    """Extract diagrams from a talk"""
+    """
+    Extract diagrams from a talk
+
+    :param filename: The filename of the talk.
+    :type filename: str
+    :param absolute_path: Whether to use absolute paths.
+    :type absolute_path: bool
+    :param diagram_exts: The diagram extensions.
+    :type diagram_exts: list
+    :param diagrams_dir: The diagrams directory.
+    :type diagrams_dir: str
+    :param snippets_path: The snippets path.
+    :type snippets_path: str
+    :return: The list of diagrams.
+    :rtype: list
+    """
     if snippets_path is not None:
         snippets_path = os.path.expandvars(snippets_path)
         
     if os.path.exists(filename):
         filenames = [filename] + extract_inputs(filename, snippets_path)
     else:
-        warnings.warn(f"Warning, input file {filename} does not exist.")
+        warnings.warn(f'Warning, input file "{filename}" does not exist.')
         return
 
     listdiagrams = []
@@ -98,6 +144,7 @@ def extract_diagrams(filename,
         if filen[:14] =='../talk-macros':
             continue
 
+        # exclude \filename.svg
         if filen == '\\filename.svg':
             continue
         else:
@@ -106,7 +153,7 @@ def extract_diagrams(filename,
                 if os.path.exists(exname):
                     filen = exname
                 else:
-                    warnings.warn(f"Input file {filen} does not exist with snippets path {snippets_path}..")
+                    warnings.warn(f'Input file "{filen}" does not exist with snippets path "{snippets_path}".')
                     continue
             f = open(filen, 'r')
             lines = f.readlines()
