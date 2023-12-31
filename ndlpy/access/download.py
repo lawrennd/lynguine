@@ -33,7 +33,7 @@ class FileDownloader:
         self.data_resources = data_resources
         self.data_name = data_name
         if self.data_name not in self.data_resources:
-            raise ValueError(f"Data '{self.data_name}' not found.")
+            raise ValueError(f'Data "{self.data_name}" not found.')
         self._dr = self.data_resources[self.data_name]
 
     @property

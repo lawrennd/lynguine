@@ -10,10 +10,10 @@ from mimesis.keys import romanize
 
 from anyascii import anyascii
 
-person = mi.Person('en')
+person = mi.Person("en")
 addess = mi.Address()
 datetime = mi.Datetime()
-text = mi.Text('en')
+text = mi.Text("en")
 code = mi.Code()
 random = mi.random.Random()
 
@@ -36,129 +36,129 @@ suffices = [
     "X",
 ]
 prefices = [
-    'aan',
+    "aan",
     "aan 't",
-    'aan de',
-    'aan den',
-    'aan der',
-    'aan het',
+    "aan de",
+    "aan den",
+    "aan der",
+    "aan het",
     "aen 't",
     "aen de",
-    'af',
-    'al',
-    'am',
-    'an',
-    'an de',
-    'an den',
-    'an die',
-    'an t',
-    'auf',
-    'bij',
-    'bij de',
-    'bij den',
-    'bin',
-    'chez',
+    "af",
+    "al",
+    "am",
+    "an",
+    "an de",
+    "an den",
+    "an die",
+    "an t",
+    "auf",
+    "bij",
+    "bij de",
+    "bij den",
+    "bin",
+    "chez",
     "d'",
-    'da',
-    'dal',
-    'dalla',
-    'dallo',
-    'das',
-    'de',
-    'De',
-    'de la',
-    'de las',
-    'de los',
-    'degli',
-    'dei',
-    'del',
-    'della',
-    'delle',
-    'dello',
-    'den',
-    'der',
-    'des',
-    'di',
-    'do',
-    'dos',
-    'du',
-    'Du',
-    'el',
-    'fitz',
-    'ibn',
-    'im',
-    'in',
+    "da",
+    "dal",
+    "dalla",
+    "dallo",
+    "das",
+    "de",
+    "De",
+    "de la",
+    "de las",
+    "de los",
+    "degli",
+    "dei",
+    "del",
+    "della",
+    "delle",
+    "dello",
+    "den",
+    "der",
+    "des",
+    "di",
+    "do",
+    "dos",
+    "du",
+    "Du",
+    "el",
+    "fitz",
+    "ibn",
+    "im",
+    "in",
     "in 't",
-    'in de',
-    'in den',
-    'in der',
-    'in het',
-    'int',
-    'la',
-    'le',
-    'lo',
-    'los',
-    'mac',
-    'mc',
+    "in de",
+    "in den",
+    "in der",
+    "in het",
+    "int",
+    "la",
+    "le",
+    "lo",
+    "los",
+    "mac",
+    "mc",
     "O'",
-    'of',    
-    'onder',
+    "of",
+    "onder",
     "onder 't",
-    'onder de',
-    'onder den',
-    'onder der',
-    'onder het',
-    'op',
+    "onder de",
+    "onder den",
+    "onder der",
+    "onder het",
+    "op",
     "op 't",
-    'op de',
-    'op den',
-    'op der',
-    'op het',
-    'op ten',
-    'over',
-    'saint',
-    'san',
-    'sous',
-    'St',
-    'sur',
-    'sur le',
-    't',
+    "op de",
+    "op den",
+    "op der",
+    "op het",
+    "op ten",
+    "over",
+    "saint",
+    "san",
+    "sous",
+    "St",
+    "sur",
+    "sur le",
+    "t",
     "T'",
-    'te',
-    'ten',
-    'ter',
-    'then',
-    'tho',
-    'thoe',
-    'to',
-    'toe',
-    'uit',
-    'uit de',
-    'uit den',
-    'uit het',
-    'uit te',
-    'un',
-    'une',
-    'up',
-    'van',
+    "te",
+    "ten",
+    "ter",
+    "then",
+    "tho",
+    "thoe",
+    "to",
+    "toe",
+    "uit",
+    "uit de",
+    "uit den",
+    "uit het",
+    "uit te",
+    "un",
+    "une",
+    "up",
+    "van",
     "van 't",
-    'van de',
-    'van den',
-    'van der',
-    'van het',
-    'vanden',
-    'Ver',
-    'vom',
-    'von',
-    'von dem',
-    'von den',
-    'von der',
-    'voor',
-    'y',
-    'z',
-    'zu',
-    'zum',
-    'zur'
+    "van de",
+    "van den",
+    "van der",
+    "van het",
+    "vanden",
+    "Ver",
+    "vom",
+    "von",
+    "von dem",
+    "von den",
+    "von der",
+    "voor",
+    "y",
+    "z",
+    "zu",
+    "zum",
+    "zur",
 ]
 
 
@@ -170,11 +170,12 @@ def prefix(name):
     :rtype: tuple
     """
     # Check through list of prefixes
-    
+
     for pre in prefices[::-1]:
         if name.startswith(pre + " "):
-            return pre, name[len(pre)+1:]
+            return pre, name[len(pre) + 1 :]
     return None, name
+
 
 def suffix(name):
     """
@@ -186,9 +187,9 @@ def suffix(name):
     # Check through list of suffices
     for suf in suffices:
         if name.endswith(" " + suf):
-            return suf, name[:-len(suf)-1]
+            return suf, name[: -len(suf) - 1]
     return None, name
-    
+
 
 def author_editor():
     """
@@ -203,21 +204,21 @@ def author_editor():
     # Then create a person object for that locale
     with person.override_locale(locale):
         count = 0
-        while(True):
+        while True:
             count += 1
             givenName = person.first_name()
             # To fix bad data in mimesis
-            if givenName[:6] == 'Eugen\t':
+            if givenName[:6] == "Eugen\t":
                 givenName = "Eugen"
             elif givenName == "Axel / Axl":
                 givenName = "Axel"
-            familyName = person.surname().replace('’', "'")
-            familyName = familyName.replace('`', "")
-            num_middle_names = random.randint(0,2)
+            familyName = person.surname().replace("’", "'")
+            familyName = familyName.replace("`", "")
+            num_middle_names = random.randint(0, 2)
             for i in range(num_middle_names):
                 middleName = person.first_name()
                 # To fix bad data in mimesis
-                if middleName[:6] == 'Eugen\t':
+                if middleName[:6] == "Eugen\t":
                     middleName = "Eugen"
                 elif middleName == "Axel / Axl":
                     middleName = "Axel"
@@ -247,19 +248,19 @@ def author_editor():
                 break
             if count > 100:
                 raise Exception(f"Unable to generate name from locale {locale}.")
-            
+
         initials = random.randint(0, 100) > 30
         if initials:
             givenNames = givenName.split()
-            assert(isinstance(givenNames, list))
+            assert isinstance(givenNames, list)
             # Remove any empty strings
             givenNames = [name for name in givenNames if name != ""]
             # Randomly choose a from the list of given names to not initial.
-            select = random.randint(0, len(givenNames)-1)
+            select = random.randint(0, len(givenNames) - 1)
             for i, name in enumerate(givenNames):
                 if i != select:
                     givenNames[i] = name[0] + "."
-            
+
             givenName = " ".join(givenNames)
 
         # Check for prefices and suffices
@@ -276,6 +277,7 @@ def author_editor():
 
     return author
 
+
 def row():
     familyName = person.surname()
     givenName = person.name(gender=mi.enums.Gender.FEMALE)
@@ -291,12 +293,13 @@ def row():
         "email": person.email(),
         "city": addess.city(),
         "state": addess.state(),
-        #"date_time": date_time,
+        # "date_time": date_time,
         "tagline": text.text(quantity=3),
-        "randomdata": random.randint(1000,2000),
+        "randomdata": random.randint(1000, 2000),
         "content": text.text(quantity=30),
     }
     return output
+
 
 def entry_update(entry, **kwargs):
     """
@@ -313,6 +316,7 @@ def entry_update(entry, **kwargs):
         entry[key] = value
     return entry
 
+
 def random_entry_type():
     """
     Returns a random entry type.
@@ -320,7 +324,24 @@ def random_entry_type():
     :return: A random entry type.
     :rtype: str
     """
-    return random.choice(["article", "book", "booklet", "conference", "inbook", "incollection", "inproceedings", "manual", "mastersthesis", "misc", "phdthesis", "proceedings", "techreport", "unpublished"])
+    return random.choice(
+        [
+            "article",
+            "book",
+            "booklet",
+            "conference",
+            "inbook",
+            "incollection",
+            "inproceedings",
+            "manual",
+            "mastersthesis",
+            "misc",
+            "phdthesis",
+            "proceedings",
+            "techreport",
+            "unpublished",
+        ]
+    )
 
 
 def bibliography_entry():
@@ -330,22 +351,22 @@ def bibliography_entry():
     :return: A random bibliograhy entry.
     :rtype: dict
     """
-    
+
     # Create a random number of authors.
     # 95% of the time there will be only a few authors
-    if random.randint(1,100) > 5:
-        num_authors = random.randint(1,9)
+    if random.randint(1, 100) > 5:
+        num_authors = random.randint(1, 9)
     else:
-        num_authors = random.randint(10,100)
+        num_authors = random.randint(10, 100)
 
     entry_type = random_entry_type()
     # Create a random number of editors.
     if entry_type in ["book", "incollection", "inproceedings", "proceedings"]:
         # 95% of the time there will be only a few editors
-        if random.randint(1,100) > 95:
-            num_editors = random.randint(1,9)
+        if random.randint(1, 100) > 95:
+            num_editors = random.randint(1, 9)
         else:
-            num_editors = random.randint(10,100)
+            num_editors = random.randint(10, 100)
     else:
         num_editors = 0
 
@@ -359,31 +380,54 @@ def bibliography_entry():
     title = text.title().title()
     if title[-1] == ".":
         title = title[:-1]
-    year = random.randint(1972,2020)
+    year = random.randint(1972, 2020)
     booktitle = text.title().title()
 
     # Create a journal title
-    journal_prefix = random.choice(["Journal of", "Proceedings of", "Transactions of", "Annals of", "Journal for"])
-    journal_suffix = random.choice(["Monthly", "Quarterly", "Letters", "Transactions", "Annals", "Proceedings", "Review", "Journal"])
-    journal_words = " ".join(text.words(quantity=random.randint(1,3))).title()
+    journal_prefix = random.choice(
+        ["Journal of", "Proceedings of", "Transactions of", "Annals of", "Journal for"]
+    )
+    journal_suffix = random.choice(
+        [
+            "Monthly",
+            "Quarterly",
+            "Letters",
+            "Transactions",
+            "Annals",
+            "Proceedings",
+            "Review",
+            "Journal",
+        ]
+    )
+    journal_words = " ".join(text.words(quantity=random.randint(1, 3))).title()
     # Create the journal
     # With 20% probability no prefix or suffix
-    random_num = random.randint(1,100)
+    random_num = random.randint(1, 100)
     if random_num < 21:
         journal = journal_words
     elif random_num < 61:
         journal = journal_prefix + " " + journal_words
     else:
         journal = journal_words + " " + journal_suffix
-    
+
     if len(authors) > 0:
-        key = authors[0]["family"].split()[0].title() + "-" + title.split()[0].lower() + str(year)[2:]
+        key = (
+            authors[0]["family"].split()[0].title()
+            + "-"
+            + title.split()[0].lower()
+            + str(year)[2:]
+        )
     elif len(editors) > 0:
-        key = editors[0]["family"].split()[0].title() + "-" + title.split()[0].lower() + str(year)[2:]
+        key = (
+            editors[0]["family"].split()[0].title()
+            + "-"
+            + title.split()[0].lower()
+            + str(year)[2:]
+        )
     else:
         key = title[0].lower() + str(year)[2:]
 
-    # Remove invalid characters from bibtex identifier 
+    # Remove invalid characters from bibtex identifier
     key = key.replace("'", "")
     entry = {
         "ENTRYTYPE": entry_type,
@@ -404,63 +448,90 @@ def bibliography_entry():
     if entry_type in ["article", "inproceedings", "phdthesis"]:
         entry_update(
             entry,
-            abstract = text.text(quantity=20),
+            abstract=text.text(quantity=20),
         )
-    page1 = random.randint(1,100)
-    page2 = random.randint(1,100)
+    page1 = random.randint(1, 100)
+    page2 = random.randint(1, 100)
     if page1 > page2:
         page1, page2 = page2, page1
-       
+
     if entry_type in ["article"]:
         entry_update(
             entry,
-            journal = journal,
-            volume = random.randint(1,100),
-            issue = random.randint(1,100),
-            pages = str(page1) + "--" + str(page2),
-            issn = code.issn(),
-            # Return a string in digital object identifier format            
-            doi = "10." + str(random.randint(1000,9999)) + "/" + str(random.randint(100000,999999))
-            
+            journal=journal,
+            volume=random.randint(1, 100),
+            issue=random.randint(1, 100),
+            pages=str(page1) + "--" + str(page2),
+            issn=code.issn(),
+            # Return a string in digital object identifier format
+            doi="10."
+            + str(random.randint(1000, 9999))
+            + "/"
+            + str(random.randint(100000, 999999)),
         )
 
     if entry_type in ["incollection", "inproceedings"]:
         entry_update(
             entry,
-            volume = random.randint(1,100),
-            pages = str(page1) + "--" + str(page2),
-            # Return a string in digital object identifier format            
-            doi = "10." + str(random.randint(1000,9999)) + "/" + str(random.randint(100000,999999))
+            volume=random.randint(1, 100),
+            pages=str(page1) + "--" + str(page2),
+            # Return a string in digital object identifier format
+            doi="10."
+            + str(random.randint(1000, 9999))
+            + "/"
+            + str(random.randint(100000, 999999)),
         )
 
     if booktitle[-1] == ".":
         booktitle = booktitle[:-1]
-    if entry_type in ["book", "collection", "proceedings", "incollection", "inproceedings"]:
+    if entry_type in [
+        "book",
+        "collection",
+        "proceedings",
+        "incollection",
+        "inproceedings",
+    ]:
         entry_update(
             entry,
-            booktitle = booktitle,
-            publisher = " ".join(text.words(quantity=3)).title(),
-            address = addess.city() + ", " + addess.country(),
-            isbn = code.isbn(),
+            booktitle=booktitle,
+            publisher=" ".join(text.words(quantity=3)).title(),
+            address=addess.city() + ", " + addess.country(),
+            isbn=code.isbn(),
         )
-
 
     if entry_type in ["misc"]:
         entry_update(
             entry,
-            howpublished = " ".join(text.words(quantity=3)).capitalize(),
+            howpublished=" ".join(text.words(quantity=3)).capitalize(),
         )
 
-    if entry_type in ["article", "book", "booklet", "collection", "conference", "inbook", "incollection", "inproceedings", "manual", "mastersthesis", "misc", "phdthesis", "proceedings", "techreport", "unpublished"]:
+    if entry_type in [
+        "article",
+        "book",
+        "booklet",
+        "collection",
+        "conference",
+        "inbook",
+        "incollection",
+        "inproceedings",
+        "manual",
+        "mastersthesis",
+        "misc",
+        "phdthesis",
+        "proceedings",
+        "techreport",
+        "unpublished",
+    ]:
         entry_update(
             entry,
-            volume = random.randint(1,100),
-            issue = random.randint(1,100),
-            month = random.randint(1,12),
-            note = text.text(quantity=1),
+            volume=random.randint(1, 100),
+            issue=random.randint(1, 100),
+            month=random.randint(1, 12),
+            note=text.text(quantity=1),
         )
     return entry
-    
+
+
 def rows(num_rows, row_type=row):
     """
     Returns a list of random rows.
@@ -471,8 +542,9 @@ def rows(num_rows, row_type=row):
     :type row_type: function
     :return: A list of random rows.
     :rtype: list
-    """        
+    """
     return [row_type() for x in range(num_rows)]
+
 
 def to_bibtex_author(entry, translate_unicode=True, author_type="author"):
     """
@@ -500,29 +572,30 @@ def to_bibtex_author(entry, translate_unicode=True, author_type="author"):
             lastname += " " + author["suffix"]
 
         # Randomly choose whether to use the comma format or not.
-        if random.randint(1,100) > 50:
+        if random.randint(1, 100) > 50:
             authors += lastname + ", " + author["given"]
         else:
             authors += author["given"] + " " + lastname
         first = False
     # Remove loose unicode from authors
     for key, value in {
-            '\u200E': '',
-            '\u00B8' : '',
-            }.items():
+        "\u200E": "",
+        "\u00B8": "",
+    }.items():
         authors = authors.replace(key, value)
 
     if translate_unicode:
         # Translate unicode characters to latex
         for key, value in {
-                '\u0218': r'\c{S}',
-                '\u0219': r'\c{s}',
-                '\u021A': r'\c{T}',
-                '\u021B': r'\c{t}',
-                }.items():
-            authors = authors.replace(key, value)                
+            "\u0218": r"\c{S}",
+            "\u0219": r"\c{s}",
+            "\u021A": r"\c{T}",
+            "\u021B": r"\c{t}",
+        }.items():
+            authors = authors.replace(key, value)
         authors = unicode_to_latex(authors)
     return authors
+
 
 def to_bibtex(entry, translate_unicode=True):
     """
@@ -536,25 +609,37 @@ def to_bibtex(entry, translate_unicode=True):
 
     converted = entry.copy()
     if "author" in converted:
-        converted["author"] = to_bibtex_author(converted, translate_unicode=translate_unicode)
+        converted["author"] = to_bibtex_author(
+            converted, translate_unicode=translate_unicode
+        )
     if "editor" in converted:
-        converted["editor"] = to_bibtex_author(converted, translate_unicode=translate_unicode, author_type="editor")
+        converted["editor"] = to_bibtex_author(
+            converted, translate_unicode=translate_unicode, author_type="editor"
+        )
     if translate_unicode:
-        for key in ["title", "abstract", "journal", "publisher", "address", "howpublished", "note"]:
+        for key in [
+            "title",
+            "abstract",
+            "journal",
+            "publisher",
+            "address",
+            "howpublished",
+            "note",
+        ]:
             if key in converted:
                 converted[key] = unicode_to_latex(converted[key])
 
     # Convert each entry to a string for bibtexparser
     for key in converted:
         converted[key] = str(converted[key])
-                
+
     return converted
-    
-    
+
+
 def row_allocation_additional_scores_series(num_ruows):
     given_name = person.first_name()
     family_name = person.surname()
-    date1  = datetime.datetime()
+    date1 = datetime.datetime()
     date2 = datetime.datetime()
     if date1 > date2:
         updated = date1
@@ -567,7 +652,7 @@ def row_allocation_additional_scores_series(num_ruows):
         "given": given_name,
         "timestamp": timestamp,
         "updated": updated,
-        }
+    }
     allocation["index"] = allocation["family"] + "_" + allocation["given"]
     additional = {
         "index": allocation["index"],
@@ -577,19 +662,19 @@ def row_allocation_additional_scores_series(num_ruows):
         "state": addess.state(),
     }
     scores = {
-        "index" : allocation["index"],
+        "index": allocation["index"],
         "tagline": text.text(quantity=3),
-        "randomdata": random.randint(1000,2000),
+        "randomdata": random.randint(1000, 2000),
         "content": text.text(quantity=30),
     }
 
     series = {
-        "index" : allocation["index"],
+        "index": allocation["index"],
         "tagline": text.text(quantity=3),
-        "randomdata": random.randint(1000,2000),
+        "randomdata": random.randint(1000, 2000),
         "content": text.text(quantity=30),
     }
-    
+
+
 def DataFrame(num_rows):
     return pd.DataFrame(rows(num_rows))
-
