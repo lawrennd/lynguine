@@ -3,7 +3,7 @@
 import re
 import os
 
-from .config.settings import Settings
+from ..config.settings import Settings
 
 settings = Settings()
 
@@ -13,21 +13,6 @@ if "bibinputs" in settings:
 if "texinputs" in settings:
     TEX_DIRECTORIES += settings["texinputs"].split(":")
 
-def replace_notation(lines, old_notation, new_notation):
-    #    open_bracket_list ='\(|\[|\{'
-    #close_bracket_list = '\)|\]|\}'
-    #math_symbol = '=|+|-\)|\]|\}'
-    #sub_super_list = '\^|_'
-    #notation_reg = '[' + open_bracketList +'|'+ close_bracket_list +'|' + sub_super_list+'|'+ '\s' + old_notation \^|_|\s|\]|\}|old_notation
-    filename = ""
-    for line in lines:
-        filename = filename + line
-
-    terminate = r'[^\w|_]'
-    start_math = re.escape('$')
-    not_reg = re.compile(r'([' + start_math + ']' + '[^' + start_math + ']*' + terminate + ')' + old_notation + '(' + terminate + ')')
-    matches = not_reg.findall(filename)
-    return matches
 
 def extract_bib_files(lines):
     bib_files = []
@@ -142,27 +127,25 @@ def process_file(filename, extension='.tex'):
 
 def extract_inputs(lines):
     """Extract latex file dependencies."""
-    def extract_input(lines, matchstr):
+    def extract_input(line, matchstr):
+        line_inp = re.compile(matchstr).findall(line)
         inp_list = []
-        for line in lines:
-            line_inp = re.compile(matchstr).findall(line)
-            if line_inp:
-                for inp in line_inp:
-                    inp_list = inp_list + inp.split(',')
+        if line_inp:
+            for inp in line_inp:
+                inp_list = inp_list + inp.split(',')
         return inp_list
     inp_list = []
-    inp_list += extract_input(lines,
-                              r"""\\newsection *{[^}]*} *{([^}]*)}""")
-    inp_list += extract_input(lines,
-                              r"""\\newsubsection *{[^}]*} *{([^}]*)}""")
-    inp_list += extract_input(lines,
-                              r"""\\includetalkfile{([^}]*)}""")
-    inp_list += extract_input(lines,
-                              r"""\\input *{([^}]*)}""")
-    inp_list += extract_input(lines,
-                              r"""\\include *{([^}]*)}""")
-    inp_list += extract_input(lines,
-                              r"""\\input{([^}]*)}""")
+    for line in lines:
+        inp_list += extract_input(line,
+                                  r"""\\newsection *{[^}]*} *{([^}]*)}""")
+        inp_list += extract_input(line,
+                                  r"""\\newsubsection *{[^}]*} *{([^}]*)}""")
+        inp_list += extract_input(line,
+                                  r"""\\includetalkfile{([^}]*)}""")
+        inp_list += extract_input(line,
+                                  r"""\\input *{([^}]*)}""")
+        inp_list += extract_input(line,
+                                  r"""\\include *{([^}]*)}""")
     return inp_list
 
 def extract_diagrams(lines, type='all'):
@@ -229,14 +212,14 @@ def make_bib_file(citations_list, bib_files):
 
         # Regular expressions 
         match_bib_field = re.compile(r"""(\@\w+{)""")
-        match_cross_ref = re.compile(r"""\bcrossref\s*=\s*[\"|{](.*)[}|\"]""", re.i_g_n_o_r_e_c_a_s_e)
+        match_cross_ref = re.compile(r"""\bcrossref\s*=\s*[\"|{](.*)[}|\"]""", re.IGNORECASE)
         match_string = re.compile(r"""\b\w*\s*=\s*(\w[^0-9]\w*),""")
 
         for dir in bib_dir:
             if not dir:
                 dir = '.'
             for filename in bib_files:
-                if os.access(os.path.join(dir, filename)+".bib", os.f__o_k):
+                if os.access(os.path.join(dir, filename)+".bib", os.R_OK):
                     bib_file_handle = open(os.path.join(dir, filename) + ".bib", 'r')
                     bib_file = bib_file_handle.read()
                     # Split the bib file at the entries.

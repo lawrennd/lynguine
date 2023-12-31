@@ -2,7 +2,7 @@ import os
 from datetime import date
 import warnings
 
-import ndlpy.tex as latex
+import ndlpy.util.tex as latex
 import ndlpy.util.yaml as ny
 
 
