@@ -275,7 +275,28 @@ def test_read_file(mocker):
     result = io_module.read_file("test.yaml")
 
     assert result == {'key': 'value'}
-        
+
+# test for read_yaml_file
+def test_read_yaml_file(mocker):
+    mock_open = mocker.patch('builtins.open', mocker.mock_open(read_data='key: value'))
+    mocker.patch('yaml.safe_load', return_value={'key': 'value'})
+
+    result = io_module.read_yaml_file("test.yaml")
+
+    assert result == {'key': 'value'}
+    mock_open.assert_called_once_with("test.yaml", "r")
+
+
+# test for write_yaml_file
+def test_write_yaml_file(mocker):
+    mock_open = mocker.patch('builtins.open', mocker.mock_open())
+    mocker.patch('yaml.dump')
+
+    io_module.write_yaml_file({'key': 'value'}, "test.yaml")
+
+    mock_open.assert_called_once_with("test.yaml", "w")
+    yaml.dump.assert_called_once()
+
 # Test functions
 def test_read_json2(mock_read_json_file):
     full_filename = extract_full_filename(json_details)
