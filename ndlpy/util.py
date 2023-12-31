@@ -12,10 +12,11 @@ cntxt = context.Context(name="ndlpy")
 log = Logger(
     name=__name__,
     level=cntxt["logging"]["level"],
-    filename=cntxt["logging"]["filename"]
+    filename=cntxt["logging"]["filename"],
 )
 
 """Utility functions for helping, e.g. to create the relevant yaml files quickly."""
+
 
 def reorder_dictionary(dictionary, order, sort_remaining=True):
     """
@@ -34,17 +35,18 @@ def reorder_dictionary(dictionary, order, sort_remaining=True):
         for i, entry in enumerate(dictionary):
             dictionary[i] = reorder_dictionary(entry, order, sort_remaining)
         return dictionary
-    
+
     # Check any keys that are in the dictionary but not in the order.
     remaining = [key for key in dictionary if key not in order]
 
     # Sort the remaining keys if required.
     if sort_remaining:
         remaining.sort()
-        
+
     # Add remaining keys to the end of the dictionary.
     order = order + remaining
     return {key: dictionary[key] for key in order if key in dictionary}
+
 
 def extract_full_filename(details):
     """
@@ -62,7 +64,10 @@ def extract_full_filename(details):
         details["filename"],
     )
 
-def extract_root_directory(directory, environs=["HOME", "USERPROFILE", "TEMP", "TMPDIR", "TMP"]):
+
+def extract_root_directory(
+    directory, environs=["HOME", "USERPROFILE", "TEMP", "TMPDIR", "TMP"]
+):
     """
     Extract a root directory and a subdirectory from a given directory string.
 
@@ -83,16 +88,19 @@ def extract_root_directory(directory, environs=["HOME", "USERPROFILE", "TEMP", "
 
     # Find absolute path of the current working directory.
     cwd = os.path.abspath(os.getcwd())
-    
+
     # Extract the root directory and subdirectory
     # If path contains cwd, return that as root and the rest as subdirectory
     if cwd in directory:
-        return sub_path_environment(cwd, environs), directory.replace(cwd, ".").replace("./", "")
+        return sub_path_environment(cwd, environs), directory.replace(cwd, ".").replace(
+            "./", ""
+        )
     else:
         # IF directory is not current, assume it is a root and a subdirectory, extracting each one.
         root, directory = os.path.split(directory)
         return sub_path_environment(root), directory
-        
+
+
 def extract_file_type(filename):
     """
     Return a standardised file type.
@@ -104,9 +112,9 @@ def extract_file_type(filename):
     """
     ext = os.path.splitext(filename)[1][1:]
     if ext in ["md", "mmd", "markdown", "html"]:
-        return "markdown" 
+        return "markdown"
     if ext in ["csv"]:
-        return "csv" 
+        return "csv"
     if ext in ["xls", "xlsx", "markdown", "html"]:
         return "excel"
     if ext in ["yml", "yaml"]:
@@ -115,7 +123,7 @@ def extract_file_type(filename):
         return "bibtex"
     if ext in ["docx"]:
         return "docx"
-    raise ValueError(f"Unrecognised type of file in \"{filename}\"")
+    raise ValueError(f'Unrecognised type of file in "{filename}"')
 
 
 def extract_abs_filename(details):
@@ -126,9 +134,10 @@ def extract_abs_filename(details):
     :type details: dict
     :return: The absolute filename.
     :rtype: str
-    
+
     """
     return os.path.abspath(extract_full_filename(details))
+
 
 def camel_capitalize(text):
     """
@@ -142,6 +151,7 @@ def camel_capitalize(text):
         return text
     else:
         return text.capitalize()
+
 
 def remove_nan(dictionary):
     """
@@ -157,9 +167,11 @@ def remove_nan(dictionary):
         if type(entry) is dict:
             dictionary2[key] = remove_nan(entry)
         else:
-            isna = entry is None or (type(entry) is float and math.isnan(entry)) # Switched from pd.isna
+            isna = entry is None or (
+                type(entry) is float and math.isnan(entry)
+            )  # Switched from pd.isna
             if type(isna) is bool and isna:
-                del(dictionary2[key])
+                del dictionary2[key]
     return dictionary2
 
 
@@ -171,7 +183,8 @@ def to_valid_var(variable):
     :type variable: str
     :return: The variable name converted to a valid variable name.
     """
-    return re.sub(r'\W|^(?=\d)','_', variable.lower())
+    return re.sub(r"\W|^(?=\d)", "_", variable.lower())
+
 
 def to_camel_case(text):
     """
@@ -185,7 +198,7 @@ def to_camel_case(text):
 
     if len(text) == 0:
         raise ValueError(f"Provided a zero length string to convert to camel case.")
-    
+
     # Remove non alpha-numeric characters
     text = text.replace("/", " or ")
     text = text.replace("@", " at ")
@@ -200,12 +213,15 @@ def to_camel_case(text):
     else:
         start = s[0].lower()
 
-    if len(s)>1:
-        return start + ''.join(camel_capitalize(i) for i in s[1:])
+    if len(s) > 1:
+        return start + "".join(camel_capitalize(i) for i in s[1:])
     else:
         return start
 
-def sub_path_environment(path, environs=["HOME", "USERPROFILE", "TEMP", "TMPDIR", "TMP", "BASE"]):
+
+def sub_path_environment(
+    path, environs=["HOME", "USERPROFILE", "TEMP", "TMPDIR", "TMP", "BASE"]
+):
     """
     Replace a path with values from environment variables.
 
@@ -221,6 +237,7 @@ def sub_path_environment(path, environs=["HOME", "USERPROFILE", "TEMP", "TMPDIR"
             path = path.replace(os.environ[var], "${" + var + "}")
     return path
 
+
 def get_path_env(environs=["HOME", "USERPROFILE", "TEMP", "TMPDIR", "TMP", "BASE"]):
     """
     Return the current path with environment variables.
@@ -229,7 +246,8 @@ def get_path_env(environs=["HOME", "USERPROFILE", "TEMP", "TMPDIR", "TMP", "BASE
     :rtype: str
     """
     return sub_path_environment(os.path.abspath(os.getcwd()), environs)
-                                        
+
+
 def get_url_file(url, directory=None, filename=None, ext=None):
     """
     Download a file from a url and save it to disk.
@@ -254,13 +272,11 @@ def get_url_file(url, directory=None, filename=None, ext=None):
     else:
         if ext is None:
             ext = os.path.splitext(dfilename)[1][1:]
-        filename+="." + ext
+        filename += "." + ext
         if directory is not None:
-            filename = os.path.join(directory,filename)
+            filename = os.path.join(directory, filename)
         os.rename(dfilename, filename)
-        return filename                  
-    
-
+        return filename
 
 
 def prompt_stdin(prompt):
@@ -285,10 +301,11 @@ def prompt_stdin(prompt):
             elif choice in no:
                 return False
             else:
-                print(f"Your response ('{choice}') was not recognized. Please respond with 'yes', 'y' or 'no', 'n'.")
+                print(
+                    f"Your response ('{choice}') was not recognized. Please respond with 'yes', 'y' or 'no', 'n'."
+                )
         except KeyboardInterrupt:
             print("\nOperation cancelled by user.")
             return False
         except EOFError:
             print("\nUnexpected end of input. Please try again.")
-  
