@@ -211,6 +211,60 @@ def test_read_files(mocker):
     assert all(f in result['sourceFile'].values for f in filelist)
 
 
+# Test for write_directory
+def test_write_directory(mocker):
+    # Mock dependencies
+    mocker.patch('os.path.expandvars', side_effect=lambda x: x)
+    mocker.patch('os.path.exists', return_value=False)
+    mocker.patch('os.makedirs')
+    mock_filewriter = mocker.patch('ndlpyutil.access.io.filewriter', side_effect=lambda data, filename, **args: None)
+
+    df = pd.DataFrame([{'filename': 'file1.txt', 'root': '/path', 'directory': '/to', 'data': 'content1'},
+                       {'filename': 'file2.txt', 'root': '/path', 'directory': '/to', 'data': 'content2'}])
+    details = {'store_fields': {'filename': 'filename', 'directory': 'directory', 'root': 'root'}}
+
+    io_module.write_directory(df, details)
+
+    # Assertions
+    assert mock_filewriter.call_count == len(df)
+
+# Test for read_json_file
+def test_read_json_file(mocker):
+    mock_open = mocker.patch('builtins.open', mocker.mock_open(read_data='{"key": "value"}'))
+    mocker.patch('json.load', return_value={'key': 'value'})
+
+    result = io_module.read_json_file("test.json")
+
+    assert result == {'key': 'value'}
+    mock_open.assert_called_once_with("test.json", "r")
+
+# Test for write_json_file
+def test_write_json_file(mocker):
+    mock_open = mocker.patch('builtins.open', mocker.mock_open())
+    mocker.patch('json.dump')
+
+    io_module.write_json_file({'key': 'value'}, "test.json")
+
+    mock_open.assert_called_once_with("test.json", "w")
+
+# Test for default_file_reader
+def test_default_file_reader():
+    assert io_module.default_file_reader("markdown") == io_module.read_markdown_file
+    assert io_module.default_file_reader("yaml") == io_module.read_yaml_file
+    assert io_module.default_file_reader("bibtex") == io_module.read_bibtex_file
+    assert io_module.default_file_reader("docx") == io_module.read_bibtex_file
+    with pytest.raises(ValueError):
+        io_module.default_file_reader("unknown")
+
+# test for read_file
+def test_read_file(mocker):
+    mocker.patch('ndlpyutil.access.io.extract_file_type', return_value='yaml')
+    mocker.patch('ndlpyutil.access.io.read_yaml_file', return_value={'key': 'value'})
+
+    result = io_module.read_file("test.yaml")
+
+    assert result == {'key': 'value'}
+        
 # Test functions
 def test_read_json2(mock_read_json_file):
     full_filename = extract_full_filename(json_details)
