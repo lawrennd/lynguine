@@ -1,7 +1,7 @@
 import os
 import numpy as np
 
-from . import context 
+from . import context
 from .log import Logger
 
 from .access.io import read_yaml_file
@@ -13,14 +13,18 @@ log = Logger(
     filename=ctxt._data["logging"]["filename"],
 )
 
+
 class _HConfig(context._Config):
     """
     Base class for a hierachical configuration which can inherit from other configurations.
 
     This is a base class for a hierachical configuration which can inherit from other configurations.
     """
+
     def __init__(self):
-        raise NotImplementedError("The base object _HConfig is designed to be inherited")
+        raise NotImplementedError(
+            "The base object _HConfig is designed to be inherited"
+        )
 
     def __getitem__(self, key):
         """
@@ -74,7 +78,7 @@ class _HConfig(context._Config):
         if self._parent is None:
             return iter(self._data)
         # Otherwise, create a set of the keys in the data
-        set1 = set(iter(self._data))        
+        set1 = set(iter(self._data))
         # Filter out elements from the second iterable that are in the set
         filtered_parent = filter(lambda x: x not in set1, iter(self._parent))
         # Chain them together
@@ -169,7 +173,7 @@ class _HConfig(context._Config):
         :return: None
         """
         self._data.update(*args, **kwargs)
-        
+
     def __str__(self):
         """
         Return a string representation of the object.
@@ -180,7 +184,7 @@ class _HConfig(context._Config):
         if self._parent is None:
             return str(self._data)
         else:
-            return str(self._data) + "{\"parent\": " + str(self._parent) + "}"
+            return str(self._data) + '{"parent": ' + str(self._parent) + "}"
 
     def __repr__(self):
         """
@@ -197,12 +201,13 @@ class _HConfig(context._Config):
         :return: An iterator over the keys.
         """
         return self.__iter__()
-    
+
 
 class Settings(_HConfig):
     """
     A settings object that loads in local settings files.
     """
+
     def __init__(self, data=None, user_file=None, directory=".", field=None):
         """
         Initialise the settings object.
@@ -239,35 +244,39 @@ class Settings(_HConfig):
             elif field in data:
                 self._data = data[field]
             else:
-                raise ValueError(f"Field \"{field}\" specified but not found in file \"{fname}\"")
+                raise ValueError(
+                    f'Field "{field}" specified but not found in file "{fname}"'
+                )
 
         self._inputs = []
         self._output = []
         self._parameters = []
         self._writable = True
-        
+
         self._parent = None
         if "inherit" in self._data:
             if "directory" not in self._data["inherit"]:
-                raise ValueError(f"Inherit specified in settings file {user_file} in directory {directory} but no directory to inherit from is specified.")
+                raise ValueError(
+                    f"Inherit specified in settings file {user_file} in directory {directory} but no directory to inherit from is specified."
+                )
             else:
                 directory = self._data["inherit"]["directory"]
                 if "filename" not in self._data["inherit"]:
                     filename = user_file
                 else:
-                    filename=self._data["inherit"]["filename"]
+                    filename = self._data["inherit"]["filename"]
                 self._parent = Settings(user_file=filename, directory=directory)
                 self._parent._writable = False
                 if "writable" in self._data and self._data["inherit"]["writable"]:
                     self._parent._writable = True
-        if self._data=={}:
-            log.warning(f"No configuration file found at \"{user_file}\".")
+        if self._data == {}:
+            log.warning(f'No configuration file found at "{user_file}".')
 
         self._expand_vars()
         self._restructure()
         if self._parent is not None:
             self._process_parent()
-        
+
     def _expand_vars(self):
         """
         Expand the environment variables in the configuration.
@@ -298,11 +307,9 @@ class Settings(_HConfig):
                 if "parameters" not in self._data:
                     self._data["parameters"] = {}
                 self._data["parameters"][key] = item
-                    
+
     def _process_parent(self):
         """
         Process the parent settings file.
         """
         del self._data["inherit"]
-
-    
