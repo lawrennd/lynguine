@@ -1,6 +1,8 @@
 import pytest
 import os
-from ndlpy.access.download import FileDownloader, Settings
+import pytest
+from unittest.mock import MagicMock
+from ndlpy.access.download import FileDownloader, GitDownloader, Settings
 
 class MockResponse:
     def __init__(self, data):
@@ -11,6 +13,7 @@ class MockResponse:
 
     # Add any other necessary methods/attributes here
 
+    
 def mock_urlopen(url):
     if url == "http://example.com/file1/file1.txt":
         return MockResponse(b"response for file1")
@@ -164,5 +167,54 @@ def test_network_errors_in_download_url(file_downloader, monkeypatch):
     with pytest.raises(ValueError):
         file_downloader._download_url("http://invalidurl.com", ".", "testfile.txt")
 
-    
 
+
+# Test case when the repo does not exist and needs to be cloned
+def test_clone_repo(tmpdir, sample_settings, sample_data_resources, mocker):
+    # Mock os.path.exists to simulate the repo does not exist
+    mocker.patch('os.path.exists', return_value=False)
+    # Mock os.makedirs to avoid actual directory creation
+    mocker.patch('os.makedirs')
+    # Mock git.Repo.clone_from
+    mock_clone_from = mocker.patch('git.Repo.clone_from')
+
+    data_name = "dataset1"
+    git_url = "https://github.com/user/repo.git"
+
+    downloader = GitDownloader(sample_settings, sample_data_resources, data_name, git_url)
+    downloader._clone_or_pull_repo()
+
+    mock_clone_from.assert_called_once_with(git_url, str(tmpdir))
+
+# Test case when the repo exists and needs to pull updates
+def test_pull_repo(tmpdir, sample_settings, sample_data_resources, mocker):
+    # Mock os.path.exists and os.path.isdir to simulate the repo exists
+    mocker.patch('os.path.exists', return_value=True)
+    mocker.patch('os.path.isdir', return_value=True)
+    # Mock git.Repo to simulate pulling from an existing repo
+    mock_repo = MagicMock()
+    mocker.patch('git.Repo', return_value=mock_repo)
+
+    data_name = "dataset1"
+    git_url = "https://github.com/user/repo.git"
+
+    downloader = GitDownloader(sample_settings, sample_data_resources, data_name, git_url)
+    downloader._clone_or_pull_repo()
+
+    mock_repo.git.pull.assert_called_once()
+
+# Test case for handling exceptions during cloning
+def test_clone_repo_exception(sample_settings, sample_data_resources, mocker):
+    mocker.patch('os.path.exists', return_value=False)
+    mocker.patch('os.makedirs')
+    mocker.patch('git.Repo.clone_from', side_effect=Exception("Clone failed"))
+
+    data_name = "dataset1"
+    git_url = "https://github.com/user/repo.git"
+
+    downloader = GitDownloader(sample_settings, sample_data_resources, data_name, git_url)
+    
+    with pytest.raises(ValueError) as excinfo:
+        downloader._clone_or_pull_repo()
+
+    assert "Error cloning repository" in str(excinfo.value)

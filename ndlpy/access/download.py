@@ -274,68 +274,38 @@ class FileDownloader:
 
 
 class GitDownloader(FileDownloader):
-    """
-    A class for downloading data files from a git repository.
-    """
-
-    def __init__(self, settings, data_resources, data_name):
-        """
-        Initialize the GitDownloader class.
-        :param settings: The settings object.
-        :param data_resources: The data resources dictionary.
-        :param data_name: The name of the data to download.
-        """
+    def __init__(self, settings, data_resources, data_name, git_url):
         super().__init__(settings, data_resources, data_name)
-        self._repo = git.Repo(self.settings["default_cache_path"])
+        self._git_url = git_url
+        self._repo_path = self.settings["default_cache_path"]
 
-    def _download_git_url(
-        self,
-        url,
-        dir_name=".",
-        save_name=None,
-        store_directory=None,
-        messages=True,
-        suffix="",
-    ):
+    def _process_data(self):
         """
-        Download a file from a git url and save it to disk.
-
-        :param url: The url to download from.
-        :param dir_name: The directory to save the file to.
-        :param save_name: The name to save the file as.
-        :param store_directory: The directory to store the file in.
-        :param messages: Whether to print messages to the console.
-        :param suffix: The suffix to add to the url.
-        :return: None
-        """
-
-        file_name = os.path.basename(url)
-        if store_directory is not None:
-            dir_name = os.path.join(dir_name, store_directory)
-        if save_name is None:
-            save_name = file_name
-        save_path = os.path.join(dir_name, save_name)
-
-        if not os.path.exists(dir_name):
-            os.makedirs(dir_name)
-
-        try:
-            response = urlopen(url + suffix)
-        except HTTPError as e:
-            raise ValueError(f"HTTP error {e.code} when accessing {url}")
-        except URLError as e:
-            raise ValueError(f"URL error {e.reason} when accessing {url}")
-
-        self._save_file(response, save_path)
-
-    def _clone_repo(self):
-        """
-        Clone the repository.
+        Process the data for downloading based on its configuration.
 
         :return: None
         """
+        self._clone_or_pull_repo()
+        
+    def _clone_or_pull_repo(self):
+        """
+        Clone the repository or pull updates if it already exists.
 
-        if not os.path.exists(self.settings["default_cache_path"]):
-            os.makedirs(self.settings["default_cache_path"])
+        :return: None
+        """
+        # Ensure the cache path exists
+        if not os.path.exists(self._repo_path):
+            os.makedirs(self._repo_path)
 
-        git.Repo.clone_from(self._git_url, self.settings["default_cache_path"])
+        # Check if the repo already exists
+        if os.path.isdir(os.path.join(self._repo_path, '.git')):
+            try:
+                repo = git.Repo(self._repo_path)
+                repo.git.pull()
+            except Exception as e:
+                raise ValueError(f"Error pulling repository: {e}")
+        else:
+            try:
+                git.Repo.clone_from(self._git_url, self._repo_path)
+            except Exception as e:
+                raise ValueError(f"Error cloning repository: {e}")
