@@ -321,6 +321,75 @@ def test_write_bibtex_file(mocker):
     mock_open.assert_called_once_with("test.bib", "w")
     mock_bibtexparser_dump.assert_called_once()
 
+# test for write_yaml_file
+def test_write_yaml_file(mocker):
+    mock_open = mocker.patch('builtins.open', mocker.mock_open())
+    mock_yaml_dump = mocker.patch('yaml.dump')
+
+    data = {'key': 'value'}
+    filename = "test.yaml"
+    io_module.write_yaml_file(data, filename)
+
+    mock_open.assert_called_once_with(filename, "w")
+    mock_yaml_dump.assert_called_once()
+
+# test for read_yaml_file
+def test_read_yaml_meta_file(mocker):
+    mocker.patch('os.path.exists', return_value=True)
+    mock_read_yaml = mocker.patch('ndlpy.access.io.read_yaml_file', return_value={'meta': 'data'})
+
+    filename = "test"
+    result = io_module.read_yaml_meta_file(filename)
+
+    assert result == {'meta': 'data'}
+    mock_read_yaml.assert_called_once_with("test.yml")
+
+# test for write_yaml_meata_file
+def test_write_yaml_meta_file(mocker):
+    mock_write_yaml = mocker.patch('ndlpy.access.io.write_yaml_file')
+
+    data = {'meta': 'data'}
+    filename = "test"
+    io_module.write_yaml_meta_file(data, filename)
+
+    mock_write_yaml.assert_called_once_with(data, "test.yml")
+
+# test for read_markdown_file
+def test_read_markdown_file(mocker):
+    mock_open = mocker.patch('builtins.open', mocker.mock_open(read_data='---\nkey: value\n---\ncontent'))
+    mock_frontmatter_load = mocker.patch('frontmatter.load', return_value=type('Post', (object,), {'metadata': {'key': 'value'}, 'content': 'content'}))
+
+    filename = "test.md"
+    result = io_module.read_markdown_file(filename)
+
+    assert result == {'key': 'value', 'content': 'content'}
+    mock_open.assert_called_once_with(filename, "r")
+    mock_frontmatter_load.assert_called_once()
+
+# test for read_docx_file
+def test_read_docx_file(tmpdir,mocker):
+    mocker.patch('tempfile.gettempdir', return_value=tmpdir)
+    mocker.patch('pypandoc.convert_file')
+    mock_read_markdown = mocker.patch('ndlpy.access.io.read_markdown_file', return_value={'key': 'value'})
+
+    filename = "test.docx"
+    result = io_module.read_docx_file(filename)
+
+    assert result == {'key': 'value'}
+    mock_read_markdown.assert_called_once_with(os.path.join(tmpdir, 'tmp.md'), True)
+
+# test for read_talk_file
+def test_read_talk_file(mocker):
+    mock_read_markdown = mocker.patch('ndlpy.access.io.read_markdown_file', return_value={'key': 'value'})
+
+    filename = "talk.md"
+    result = io_module.read_talk_file(filename)
+
+    assert result == {'key': 'value'}
+    mock_read_markdown.assert_called_once_with(filename, True)
+
+
+    
 # Test functions
 def test_read_json2(mock_read_json_file):
     full_filename = extract_full_filename(json_details)
