@@ -22,6 +22,8 @@ from ndlpy.util.misc import extract_full_filename, extract_root_directory
 from ndlpy.util.dataframe import reorder_dataframe
 import ndlpy.access.io as io_module
 
+import bibtexparser as bp
+
 # Sample data setup
 sample_dict = {
     'date': [datetime(2022, 1, 1), datetime(2022, 1, 2)],
@@ -290,12 +292,34 @@ def test_read_yaml_file(mocker):
 # test for write_yaml_file
 def test_write_yaml_file(mocker):
     mock_open = mocker.patch('builtins.open', mocker.mock_open())
-    mocker.patch('yaml.dump')
+    yaml_dump = mocker.patch('yaml.dump')
 
     io_module.write_yaml_file({'key': 'value'}, "test.yaml")
 
     mock_open.assert_called_once_with("test.yaml", "w")
-    yaml.dump.assert_called_once()
+    yaml_dump.assert_called_once()
+
+# test for read_bibtex_file
+def test_read_bibtex_file(mocker):
+    mock_open = mocker.patch('builtins.open', mocker.mock_open(read_data='@article{key, title={Title}}'))
+    bibdata = bp.bibdatabase.BibDatabase()
+    bibdata.entries = {'entries': [{'ID': 'key', 'ENTRYTYPE' : 'article', 'title': 'Title'}]}
+    moker_bibtexparser_load = mocker.patch('bibtexparser.load', return_value=bibdata)
+
+    result = io_module.read_bibtex_file("test.bib")
+
+    assert result == {'entries': [{'ID': 'key', 'ENTRYTYPE' : 'article', 'title': 'Title'}]}
+    mock_open.assert_called_once_with("test.bib", "r")
+
+# test for write_bibtex_file
+def test_write_bibtex_file(mocker):
+    mock_open = mocker.patch('builtins.open', mocker.mock_open())
+    mock_bibtexparser_dump = mocker.patch('bibtexparser.dump')
+
+    io_module.write_bibtex_file([{'ID': 'key', 'ENTRYTYPE' : 'article', 'title': 'Title'}], "test.bib")
+
+    mock_open.assert_called_once_with("test.bib", "w")
+    mock_bibtexparser_dump.assert_called_once()
 
 # Test functions
 def test_read_json2(mock_read_json_file):
