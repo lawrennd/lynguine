@@ -1,10 +1,13 @@
 from .settings import Settings
 
 import re
-from . import access
+from .access import io
 
 
 class FileFormatError(Exception):
+    """
+    Exception raised for errors in the file format.
+    """
     def __init__(self, ind, msg=None, field=None):
         if msg is None:
             msg = "File format error occured with index {ind}".format(ind=ind)
@@ -14,13 +17,30 @@ class FileFormatError(Exception):
         
 
 def update_from_file(dictionary, filename):
-    """Update a given dictionary with the fields from a specified file."""
-    dictionary.update(read_yaml_file(filename))
+    """
+    Update a given dictionary with the fields from a specified file.
+
+    :param dictionary: The dictionary to be updated.
+    :type dictionary: dict
+    :param filename: The name of the file to be read in.
+    :type filename: str
+    :return: The updated dictionary.
+    """
+    dictionary.update(io.read_yaml_file(filename))
     return dictionary
     
 
 def header_field(field, fields, user_file=["_config.yml"]):
-    """Return one field from yaml header fields."""
+    """
+    Return one field from yaml header fields.
+
+    :param field: The field to be returned.
+    :type field: str
+    :param fields: The fields to be searched.
+    :type fields: dict
+    :param user_file: The user file to be searched.
+    :type user_file: str
+    """
     if field not in fields:
         settings = Settings(user_file, directory=".")
         if field in settings:
@@ -32,13 +52,27 @@ def header_field(field, fields, user_file=["_config.yml"]):
     return answer
 
 def header_fields(filename):
-    """Extract headers from a talk file."""
+    """
+    Extract headers from a talk file.
+
+    :param filename: The name of the file to be read in.
+    :type filename: str
+    :return: The headers.
+    :rtype: dict
+    """
     head, _ = extract_header_body(filename)
     return head
 
 def extract_header_body(filename):
-    """Extract the text of the headers and body from a yaml headed file."""
-    data = access.read_markdown_file(filename)
+    """
+    Extract the text of the headers and body from a yaml headed file.
+
+    :param filename: The name of the file to be read in.
+    :type filename: str
+    :return: The headers and body.
+    :rtype: tuple
+    """
+    data = io.read_markdown_file(filename)
     if "content" in data:
         content = data["content"]
         del data["content"]

@@ -221,6 +221,7 @@ class Settings(_HConfig):
         :return: None
         """
 
+        self._parent = None
         if data is not None:
             self._data = data
             return
@@ -253,7 +254,6 @@ class Settings(_HConfig):
         self._parameters = []
         self._writable = True
 
-        self._parent = None
         if "inherit" in self._data:
             if "directory" not in self._data["inherit"]:
                 raise ValueError(
