@@ -1,0 +1,103 @@
+import pytest
+from io import StringIO
+from unittest.mock import MagicMock
+import os
+import re
+from your_module_path import latex  # Replace with the actual import path of your latex module
+
+# Sample YAML content for the settings file
+settings_content = """
+bibinputs: /path/to/bib
+texinputs: /path/to/tex
+"""
+
+# Mock open for settings file
+@pytest.fixture
+def mock_settings_file(monkeypatch):
+    mock_file = StringIO(settings_content)
+    
+    def mock_open(*args, **kwargs):
+        if args[0].endswith('.yml'):
+            return mock_file
+        return MagicMock()  # Return a mock object for other file types
+
+    monkeypatch.setattr("builtins.open", mock_open)
+
+# Replace the actual test content with appropriate logic
+# Test for replace_notation
+def test_replace_notation():
+    lines = ["Some LaTeX content with old_notation"]
+    old_notation = "old_notation"
+    new_notation = "new_notation"
+    result = ndlpy.util.tex.replace_notation(lines, old_notation, new_notation)
+    # Add appropriate assertions
+
+# Test for extract_bib_files
+def test_extract_bib_files():
+    lines = ["\\bibliography{references}"]
+    result = ndlpy.util.tex.extract_bib_files(lines)
+    assert result == ["references"]
+
+# Test for substitute_inputs using mocked settings file
+@pytest.mark.parametrize("filename, expected", [
+    ("main.tex", "substituted content"),
+    ("nonexistent.tex", None)
+])
+def test_substitute_inputs(filename, expected, mocker, mock_settings_file):
+    mocker.patch('os.path.exists', return_value=True)
+    mocker.patch('os.path.join', return_value="/path/to/tex/" + filename)
+    mocker.patch('open', mocker.mock_open(read_data="substituted content"), create=True)
+
+    result = ndlpy.util.tex.substitute_inputs(filename)
+    assert result == expected
+
+# Test for extract_inputs
+def test_extract_inputs():
+    lines = ["\\input{chapter1}"]
+    result = ndlpy.util.tex.extract_inputs(lines)
+    assert result == ["chapter1"]
+
+# Test for extract_citations
+def test_extract_citations():
+    lines = ["Some text \\cite{Author2021} more text."]
+    result = ndlpy.util.tex.extract_citations(lines)
+    assert result == ["Author2021"]
+
+
+# Test for extract_diagrams
+@pytest.mark.parametrize("lines, type, expected", [
+    (["\\includediagram{diagram1}"], "diagram", ["diagram1"]),
+    (["\\includeimg{image1}"], "img", ["image1"]),
+    (["\\includepng{image2}"], "png", ["image2"]),
+    # Add more combinations as needed
+])
+def test_extract_diagrams(lines, type, expected):
+    result = ndlpy.util.tex.extract_diagrams(lines, type=type)
+    assert result == expected
+
+# Test for create_bib_file_given_tex
+def test_create_bib_file_given_tex(mock_settings_file, mocker):
+    lines = ["Some LaTeX content with \\cite{Ref1}", "\\bibliography{bibfile}"]
+    mocker.patch('ndlpy.util.tex.extract_bib_files', return_value=["bibfile"])
+    mocker.patch('ndlpy.util.tex.extract_citations', return_value=["Ref1"])
+    mocker.patch('ndlpy.util.tex.make_bib_file', return_value="Bibliography Content")
+
+    bib_content = ndlpy.util.tex.create_bib_file_given_tex(lines)
+
+    # Assertions based on expected bibliography content
+    assert "Bibliography Content" in bib_content
+
+# Test for make_bib_file
+def test_make_bib_file(mock_settings_file, mocker):
+    citations_list = ["Ref1", "Ref2"]
+    bib_files = ["bibfile"]
+    mocker.patch('os.environ.get', return_value="/path/to/bib")
+    mocker.patch('os.path.join', side_effect=lambda *args: '/'.join(args))
+    mocker.patch('os.access', return_value=True)
+    mocker.patch('open', mocker.mock_open(read_data="Bib data for Ref1 and Ref2"), create=True)
+
+    result = ndlpy.util.tex.make_bib_file(citations_list, bib_files)
+
+    # Assertions based on expected result
+    assert "Bib data for Ref1 and Ref2" in result
+

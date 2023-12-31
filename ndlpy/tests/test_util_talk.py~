@@ -1,0 +1,95 @@
+import pytest
+from pytest_mock import mocker
+import ndlpy.util.talk as talk
+import ndlpy.util.yaml as ny
+
+# Test for talk_field function
+def test_talk_field(mocker):
+    mock_header_fields = mocker.patch('ndlpy.util.yaml.header_fields', return_value={'title': 'Sample Talk'})
+    mock_header_field = mocker.patch('ndlpy.util.yaml.header_field', return_value='Sample Talk')
+
+    result = talk.talk_field('title', 'sample_talk.tex')
+
+    mock_header_fields.assert_called_once_with('sample_talk.tex')
+    mock_header_field.assert_called_once_with('title', {'title': 'Sample Talk'})
+    assert result == 'Sample Talk'
+
+# Test for extract_all function
+def test_extract_all_no_fields(mocker):
+    mocker.patch('ndlpy.util.yaml.header_fields', return_value={})
+    mocker.patch('ndlpy.util.yaml.header_field', side_effect=lambda field, fields, _: fields.get(field))
+
+    result = talk.extract_all('sample_talk.tex')
+    assert result == []
+
+def test_extract_all_with_fields(mocker):
+    fields = {
+        'posts': True,
+        'ipynb': False,
+        'docx': True,
+        'notespdf': True,
+        'reveal': False,
+        'slidesipynb': True,
+        'pptx': True
+    }
+    mocker.patch('ndlpy.util.yaml.header_fields', return_value=fields)
+    mocker.patch('ndlpy.util.yaml.header_field', side_effect=lambda field, fields, _: fields.get(field))
+
+    result = talk.extract_all('sample_talk.tex')
+    assert result == [
+        'sample_talk.posts.html',
+        'sample_talk.docx',
+        'sample_talk.notes.pdf',
+        'sample_talk.slides.ipynb',
+        'sample_talk.pptx'
+    ]
+
+# Template for other tests
+@pytest.mark.parametrize("filename, expected_result", [
+    # Add test cases here
+])
+def test_extract_inputs(filename, expected_result, mocker):
+    # Implement test
+    pass
+
+def test_extract_bibinputs_not_implemented():
+    with pytest.raises(NotImplementedError):
+        talk.extract_bibinputs('sample_talk.tex')
+
+def test_extract_inputs_file_not_exist(mocker):
+    mocker.patch('os.path.exists', return_value=False)
+    mocker.patch('os.path.join', side_effect=lambda a, b: f"{a}/{b}")
+    mocker.patch('ndlpy.util.tex.extract_inputs', return_value=[])
+
+    result = talk.extract_inputs('nonexistent.tex')
+    assert result == ['nonexistent.tex']
+
+def test_extract_inputs_with_includes(mocker):
+    mocker.patch('os.path.exists', side_effect=[True, False, True])
+    mocker.patch('os.path.join', side_effect=lambda a, b: f"{a}/{b}")
+    mocker.patch('ndlpy.util.tex.extract_inputs', return_value=['include1.tex', 'include2.tex'])
+    mocker.patch('builtins.open', mocker.mock_open(read_data='data'))
+
+    result = talk.extract_inputs('sample_talk.tex')
+    assert 'include1.tex' in result
+    assert 'include2.tex' not in result  # Assuming include2.tex does not exist
+
+
+  def test_extract_diagrams_no_file_warning(mocker):
+    mocker.patch('os.path.exists', return_value=False)
+    warning_mock = mocker.patch('warnings.warn')
+
+    result = talk.extract_diagrams('nonexistent.tex')
+    assert result is None
+    warning_mock.assert_called_once()
+
+def test_extract_diagrams_with_files(mocker):
+    mocker.patch('os.path.exists', return_value=True)
+    mocker.patch('os.path.join', side_effect=lambda a, b: f"{a}/{b}")
+    mocker.patch('ndlpy.util.tex.extract_inputs', return_value=[])
+    mocker.patch('ndlpy.util.tex.extract_diagrams', return_value=['diagram1', 'diagram2'])
+    mocker.patch('builtins.open', mocker.mock_open(read_data='data'))
+
+    result = talk.extract_diagrams('sample_talk.tex', diagrams_dir='/diagrams', snippets_path='/snippets')
+    assert 'diagram1.svg' in result
+    assert 'diagram2.svg' in result
