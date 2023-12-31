@@ -115,10 +115,12 @@ def extract_file_type(filename):
         return "markdown"
     if ext in ["csv"]:
         return "csv"
-    if ext in ["xls", "xlsx", "markdown", "html"]:
+    if ext in ["xls", "xlsx"]:
         return "excel"
     if ext in ["yml", "yaml"]:
         return "yaml"
+    if ext in ["json"]:
+        return "json"
     if ext in ["bib", "bibtex"]:
         return "bibtex"
     if ext in ["docx"]:

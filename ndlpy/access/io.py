@@ -335,6 +335,14 @@ def write_directory(df, details, filewriter=None, filewriter_args={}):
     """
     Write scoring data to a directory of files.
 
+    :param df: The data to be written.
+    :type df: pandas.DataFrame or ndlpy.data.CustomDataFrame
+    :param details: The details of the file to be written.
+    :type details: dict
+    :param filewriter: The function to be used to write the file.
+    :type filewriter: function
+    :param filewriter_args: The arguments to be passed to the filewriter.
+    :type filewriter_args: dict
     :raises ValueError: if the same filename is specified multiple times.
     """
     filename_field = details["store_fields"]["filename"]
@@ -361,13 +369,20 @@ def write_directory(df, details, filewriter=None, filewriter_args={}):
                     'The specified filed name "{fullfilename}" has already been used for a different row of the data.'
                 )
             filenames.append(fullfilename)
+            if filewriter is None:
+                typ = extract_file_type(fullfilename)
+                filewriter = default_file_writer(typ)
+
             row_dict = row.to_dict()
             row_dict = remove_nan(row_dict)
             # Don't save the file information because that's situational.
             del row_dict[filename_field]
             del row_dict[root_field]
             del row_dict[directory_field]
-            filewriter(row_dict, fullfilename, **filewriter_args)
+            if filewriter_args is None:
+                filewriter(row_dict, fullfilename)
+            else:
+                filewriter(row_dict, fullfilename, **filewriter_args)
 
 
 def read_json_file(filename):
@@ -393,16 +408,48 @@ def write_json_file(data, filename):
 
 
 def default_file_reader(typ):
-    """Return the default file reader for a given type."""
+    """
+    Return the default file reader for a given type.
+
+    :param typ: The type of file to be read.
+    :type typ: str
+    :return: The default file reader.
+    :rtype: function
+    :raises ValueError: if the type is not recognised.
+    """
     if typ == "markdown":
         return read_markdown_file
     if typ == "yaml":
         return read_yaml_file
+    if typ == "json":
+        return read_json_file
     if typ == "bibtex":
         return read_bibtex_file
     if typ == "docx":
         return read_docx_file
-    raise ValueError(f'Unrecognised type of file "{typ}" in "{filename}"')
+    raise ValueError(f'Unrecognised type of file "{typ}".')
+
+def default_file_writer(typ):
+    """
+    Return the default file writer for a given type.
+
+    :param typ: The type of file to be written.
+    :type typ: str
+    :return: The default file writer.
+    :rtype: function
+    :raises ValueError: if the type is not recognised.
+    """
+    if typ == "markdown":
+        return write_markdown_file
+    if typ == "yaml":
+        return write_yaml_file
+    if typ == "json":
+        return write_json_file
+    if typ == "bibtex":
+        return write_bibtex_file
+    if typ == "docx":
+        return write_docx_file
+    raise ValueError(f'Unrecognised type of file "{typ}".')
 
 
 def read_file(filename):
