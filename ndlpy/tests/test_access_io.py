@@ -8,7 +8,7 @@ from datetime import datetime
 from pandas.testing import assert_frame_equal
 
 import ndlpy
-import ndlpy.fake as fake
+import ndlpy.util.fake as fake
 from ndlpy.access.io import (
     read_json, write_json, read_json_file, write_json_file,
     write_csv, read_csv, write_excel, read_excel, read_bibtex, write_yaml,
@@ -17,8 +17,8 @@ from ndlpy.access.io import (
     read_markdown_directory,
     bibtex_column_order, bibtex_sort_by
 )
-from ndlpy.util import extract_full_filename, extract_root_directory
-from ndlpy.dfutil import reorder_dataframe
+from ndlpy.util.misc import extract_full_filename, extract_root_directory
+from ndlpy.util.dataframe import reorder_dataframe
 
 
 # Sample data setup

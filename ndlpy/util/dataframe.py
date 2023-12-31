@@ -3,7 +3,7 @@ import math
 import numpy as np
 import pandas as pd
 
-import ndlpy.context as context
+import ndlpy.config.context as context
 from ndlpy.log import Logger
 
 cntxt = context.Context(name="ndlpy")

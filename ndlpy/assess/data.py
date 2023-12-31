@@ -1,8 +1,8 @@
 import pandas as pd
 import numpy as np
 
-from .log import Logger
-from .context import Context
+from ..log import Logger
+from ..config.context import Context
 
 """Wrapper classes for data objects"""
 

@@ -1,7 +1,7 @@
 # tests/test_ndlpy_dataframe.py
 
 import pytest
-import ndlpy.data as ndl
+import ndlpy.assess.data as ndl
 import pandas as pd
 import numpy as np
 

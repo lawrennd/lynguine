@@ -1,5 +1,5 @@
 import pytest
-from ndlpy.yaml import (
+from ndlpy.util.yaml import (
     update_from_file,
     header_field,
     header_fields,

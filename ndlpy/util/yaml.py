@@ -1,7 +1,7 @@
-from .settings import Settings
+from ..config.settings import Settings
 
 import re
-from .access import io
+from ..access import io
 
 
 class FileFormatError(Exception):

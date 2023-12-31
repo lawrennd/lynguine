@@ -3,7 +3,7 @@ from datetime import date
 import warnings
 
 import ndlpy.tex as latex
-import ndlpy.yaml as ny
+import ndlpy.util.yaml as ny
 
 
 today = date.today()    

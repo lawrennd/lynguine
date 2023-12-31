@@ -4,11 +4,11 @@ from urllib.request import urlopen
 from urllib.error import HTTPError, URLError
 import git
 
-from ndlpy.util import prompt_stdin
+from ndlpy.util.misc import prompt_stdin
 from ..log import Logger
-from ..context import Context
+from ..config.context import Context
 
-from ..settings import Settings
+from ..config.settings import Settings
 
 ctxt = Context()
 log = Logger(

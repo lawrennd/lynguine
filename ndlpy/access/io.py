@@ -17,7 +17,7 @@ import pypandoc
 
 import bibtexparser as bp
 
-from ..util import (
+from ..util.misc import (
     extract_full_filename,
     extract_root_directory,
     extract_file_type,
@@ -27,9 +27,9 @@ from ..util import (
     prompt_stdin,
 )
 
-from ..dfutil import reorder_dataframe
+from ..config.context import Context
+from ..util.dataframe import reorder_dataframe
 from ..log import Logger
-from ..context import Context
 
 GSPREAD_AVAILABLE = True
 try:

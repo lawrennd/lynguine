@@ -2,7 +2,7 @@ import os
 import pytest
 from io import StringIO
 from unittest.mock import patch
-from ndlpy.settings import Settings  # Adjust the import as per your project structure
+from ndlpy.config.settings import Settings  # Adjust the import as per your project structure
 
 # Mocked content of YAML files
 

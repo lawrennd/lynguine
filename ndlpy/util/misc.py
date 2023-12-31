@@ -5,7 +5,7 @@ import os
 import sys
 import wget
 
-import ndlpy.context as context
+import ndlpy.config.context as context
 from ndlpy.log import Logger
 
 cntxt = context.Context(name="ndlpy")

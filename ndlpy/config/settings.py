@@ -2,9 +2,9 @@ import os
 import numpy as np
 
 from . import context
-from .log import Logger
+from ..log import Logger
 
-from .access.io import read_yaml_file
+from ..access.io import read_yaml_file
 
 ctxt = context.Context()
 log = Logger(
