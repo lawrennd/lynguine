@@ -3,6 +3,7 @@ import os
 import pandas as pd
 import tempfile
 import pytest
+from pytest_mock import mocker
 from unittest.mock import patch, mock_open, MagicMock
 from datetime import datetime
 from pandas.testing import assert_frame_equal
@@ -19,7 +20,7 @@ from ndlpy.access.io import (
 )
 from ndlpy.util.misc import extract_full_filename, extract_root_directory
 from ndlpy.util.dataframe import reorder_dataframe
-
+import ndlpy.access.io as io_module
 
 # Sample data setup
 sample_dict = {
@@ -68,15 +69,157 @@ def mock_json_dump():
     with patch('json.dump') as mock:
         yield mock
 
+
+# Example test for read_json
+def test_read_json(mocker):
+    # Mock dependencies
+    mocker.patch('ndlpy.access.io.extract_full_filename', return_value="path/to/file.json")
+    mocker.patch('ndlpy.access.io.read_json_file', return_value=[{'a': 1, 'b': 2}])
+
+    # Test details
+    details = {'path': 'path/to/file.json'}
+
+    # Execute the function
+    result = io_module.read_json(details)
+
+    # Assertions
+    assert isinstance(result, pd.DataFrame)
+    assert result.to_dict('records') == [{'a': 1, 'b': 2}]
+
+# Example test for write_json
+def test_write_json(mocker):
+    mock_write_json_file = mocker.patch('ndlpy.access.io.write_json_file')
+    mocker.patch('ndlpy.access.io.extract_full_filename', return_value="path/to/file.json")
+
+    # Test data and details
+    df = pd.DataFrame([{'a': 1, 'b': 2}])
+    details = {'path': 'path/to/file.json'}
+
+    # Execute the function
+    io_module.write_json(df, details)
+
+    # Assertions
+    mock_write_json_file.assert_called_once_with(df.to_dict('records'), "path/to/file.json")
+
+
+# Test for read_yaml
+def test_read_yaml(mocker):
+    # Mock dependencies
+    mocker.patch('ndlpy.access.io.extract_full_filename', return_value="path/to/file.yaml")
+    mocker.patch('ndlpy.access.io.read_yaml_file', return_value=[{'c': 3, 'd': 4}])
+
+    # Test details
+    details = {'path': 'path/to/file.yaml'}
+
+    # Execute the function
+    result = io_module.read_yaml(details)
+
+    # Assertions
+    assert isinstance(result, pd.DataFrame)
+    assert result.to_dict('records') == [{'c': 3, 'd': 4}]
+
+# Test for write_yaml
+def test_write_yaml(mocker):
+    mock_write_yaml_file = mocker.patch('ndlpy.access.io.write_yaml_file')
+    mocker.patch('ndlpy.access.io.extract_full_filename', return_value="path/to/file.yaml")
+
+    # Test data and details
+    df = pd.DataFrame([{'c': 3, 'd': 4}])
+    details = {'path': 'path/to/file.yaml'}
+
+    # Execute the function
+    io_module.write_yaml(df, details)
+
+    # Assertions
+    mock_write_yaml_file.assert_called_once_with(df.to_dict('records'), "path/to/file.yaml")
+
+# Test for read_bibtex
+def test_read_bibtex(mocker):
+    # Mock dependencies
+    mocker.patch('ndlpy.access.io.extract_full_filename', return_value="path/to/file.bib")
+    mocker.patch('ndlpy.access.io.read_bibtex_file', return_value=[{'author': 'Doe', 'year': 2020, 'title': 'Sample'}])
+
+    # Test details
+    details = {'path': 'path/to/file.bib'}
+
+    # Execute the function
+    result = io_module.read_bibtex(details)
+
+    # Assertions
+    # Add assertions specific to the behavior of read_bibtex
+
+# Test for write_bibtex
+def test_write_bibtex(mocker):
+    mock_write_bibtex_file = mocker.patch('ndlpy.access.io.write_bibtex_file')
+    mocker.patch('ndlpy.access.io.extract_full_filename', return_value="path/to/file.bib")
+
+    # Test data and details
+    df = pd.DataFrame([{'author': 'Doe', 'year': 2020, 'title': 'Sample'}])
+    details = {'path': 'path/to/file.bib'}
+
+    # Execute the function
+    io_module.write_bibtex(df, details)
+
+    # Assertions
+    mock_write_bibtex_file.assert_called_once_with(df.to_dict('records'), "path/to/file.bib")
+
+# Test for read_directory
+def test_read_directory(mocker):
+    # Mock dependencies
+    mocker.patch('os.path.expandvars', side_effect=lambda x: x)
+    mocker.patch('glob.glob', return_value=['file1.txt', 'file2.txt'])
+    mocker.patch('re.match', return_value=True)
+    mocker.patch('ndlpy.access.io.read_files', return_value=pd.DataFrame([{'data': 'content'}]))
+
+    details = {'source': [{'directory': 'test_dir', 'glob': '*.txt'}],
+               'store_fields' : {'sourceRoot': 'sourceRoot', 'sourceDirectory': 'sourceDirectory', 'sourceFilename': 'sourceFilename'},
+               }
+    filereader = lambda x: {'file': x}
+
+    result = io_module.read_directory(details, filereader)
+
+    # Assertions
+    assert isinstance(result, pd.DataFrame)
+    assert not result.empty
+
+# Test for read_list
+def test_read_list(mocker):
+    # Mock read_files function
+    mocker.patch('ndlpy.access.io.read_files', return_value=pd.DataFrame([{'data': 'content'}]))
+
+    filelist = ['file1.txt', 'file2.txt']
+
+    result = io_module.read_list(filelist)
+
+    # Assertions
+    assert isinstance(result, pd.DataFrame)
+    assert not result.empty
+
+# Test for read_files
+def test_read_files(mocker):
+    # Mock dependencies
+    mocker.patch('os.path.exists', return_value=True)
+    mocker.patch('ndlpy.access.io.default_file_reader', return_value=lambda x: {'file': x})
+
+    filelist = ['file1.txt', 'file2.txt']
+
+    result = io_module.read_files(filelist)
+
+    # Assertions
+    assert isinstance(result, pd.DataFrame)
+    assert len(result) == len(filelist)
+    assert all(f in result['sourceFile'].values for f in filelist)
+
+
 # Test functions
-def test_read_json(mock_read_json_file):
+def test_read_json2(mock_read_json_file):
     full_filename = extract_full_filename(json_details)
     mock_read_json_file.return_value = sample_dict
     df = read_json(json_details)
     mock_read_json_file.assert_called_once_with(full_filename)
     assert_frame_equal(df, sample_df)
 
-def test_write_json(mock_write_json_file):
+def test_write_json2(mock_write_json_file):
     full_filename = extract_full_filename(json_details)
     write_json(sample_df, json_details)
     mock_write_json_file.assert_called_once_with(

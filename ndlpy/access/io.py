@@ -306,9 +306,9 @@ def read_files(filelist, store_fields=None, filereader=None, filereader_args=Non
         if filereader is None:
             filereader = default_file_reader(filename)
         if filereader_args is None:
-            data.append(filereader(filename, **filereader_args))
-        else:
             data.append(filereader(filename))
+        else:
+            data.append(filereader(filename, **filereader_args))
 
         # Add the root location, directory and filename to the data.
         split_path = os.path.split(filename)
