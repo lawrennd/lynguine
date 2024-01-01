@@ -942,3 +942,59 @@ def test_read_data(mocker, data_type, read_func):
     mock_func.assert_called_once_with(details)
     assert all(result == pd.DataFrame({'a': [1, 2]}))
     assert not result.empty
+
+# test convert_data
+def test_convert_data(mocker):
+    mock_read_data = mocker.patch('ndlpy.access.io.read_data', return_value=(pd.DataFrame({'a': [1, 2]}), {}))
+    mock_write_data = mocker.patch('ndlpy.access.io.write_data')
+
+    read_details = {'type': 'excel'}
+    write_details = {'type': 'csv'}
+
+    ndlpy.access.io.convert_data(read_details, write_details)
+
+    mock_read_data.assert_called_once_with(read_details)
+    mock_write_data.assert_called_once()
+
+# test data exists
+def test_data_exists_file(mocker):
+    mocker.patch('os.path.exists', return_value=True)
+    details = {'filename': 'test.csv'}
+    assert ndlpy.access.io.data_exists(details)
+
+    mocker.patch('os.path.exists', return_value=False)
+    assert not ndlpy.access.io.data_exists(details)
+
+
+# test load_or_create_df
+def test_load_or_create_df_exists(mocker):
+    existing_df = pd.DataFrame({'a': [1, 2]})
+    details = {'filename': 'test.csv'}
+    mocker.patch('ndlpy.access.io.data_exists', return_value=True)
+    mocker.patch('ndlpy.access.io.read_data', return_value=(existing_df, details))
+
+    result = ndlpy.access.io.load_or_create_df(details, None)
+
+    assert result[0].equals(existing_df)
+
+# test load_or_create_df
+def test_load_or_create_df_not_exists(mocker):
+    mocker.patch('ndlpy.access.io.data_exists', return_value=False)
+    details = {'filename': 'test.csv', 'columns': ['col1', 'col2']}
+    index = pd.Index([1, 2], name='index')
+
+    result = ndlpy.access.io.load_or_create_df(details, index)
+
+    assert result[0].index.equals(index)
+    assert list(result[0].columns) == ['index', 'col1', 'col2']
+   
+# test load_or_create_df
+def test_load_or_create_df_no_index(mocker):
+    existing_df = pd.DataFrame({'a': [1, 2]})
+    mocker.patch('ndlpy.access.io.data_exists', return_value=False)
+    mocker.patch('ndlpy.access.io.read_data', return_value=existing_df)
+
+    details = {'filename': 'test.csv'}
+    with pytest.raises(FileNotFoundError):
+        ndlpy.access.io.load_or_create_df(details, None)
+

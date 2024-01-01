@@ -1537,7 +1537,7 @@ def load_or_create_df(details, index):
             df.index.name = index.name
         return finalize_data(df, details)
     else:
-        raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), filename)
+        raise FileNotFoundError(f'Could not find file "{extract_full_filename(details)}" and no index was provided to create it.')
 
 
 def globals_data(details, index=None):
