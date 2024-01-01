@@ -143,7 +143,7 @@ class Context(_Config):
     """
     Load in some default configuration from the context.
     """
-    def __init__(self, name=None):
+    def __init__(self, name=None, data=None):
         """
         Load in the configuration from the context.
 
@@ -162,13 +162,17 @@ class Context(_Config):
         self._name = name
         self._data = {}
 
-        if os.path.exists(self._default_file):
-            with open(self._default_file) as file:
-                self._data.update(yaml.safe_load(file))
+        if data is not None:
+            self._data = data
+        else:
+            
+            if os.path.exists(self._default_file):
+                with open(self._default_file) as file:
+                    self._data.update(yaml.safe_load(file))
 
-        if os.path.exists(self._local_file):
-            with open(self._local_file) as file:
-                self._data.update(yaml.safe_load(file))
+            if os.path.exists(self._local_file):
+                with open(self._local_file) as file:
+                    self._data.update(yaml.safe_load(file))
 
         # If there's no configuration, raise an error
         if self._data=={}:

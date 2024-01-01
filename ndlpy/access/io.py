@@ -1002,7 +1002,7 @@ if GSPREAD_AVAILABLE:
         log.debug(f"Reading Google sheet named {filename}")
         sheet = extract_sheet(details)
         gconfig = {}
-        for key, val in config["google_oauth"].items():
+        for key, val in ctxt["google_oauth"].items():
             gconfig[key] = os.path.expandvars(val)
         gsheet = gspd.Spread(
             spread=filename,

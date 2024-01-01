@@ -22,8 +22,16 @@ from ndlpy.access.io import (
 from ndlpy.util.misc import extract_full_filename, extract_root_directory
 from ndlpy.util.dataframe import reorder_dataframe
 import ndlpy.access.io as io_module
+import ndlpy.config.context as context
 
 import bibtexparser as bp
+
+GSPREAD_AVAILABLE = True
+try:
+    import gspread_pandas as gspd
+except ImportError:
+    GSPREAD_AVAILABLE = False
+
 
 # Sample data setup
 sample_dict = {
@@ -72,6 +80,16 @@ def mock_json_dump():
     with patch('json.dump') as mock:
         yield mock
 
+@pytest.fixture
+def sample_context():
+    return context.Context(
+        data={
+            "google_oauth" : {"key": "DAFAFD"},
+            "logging" : {"level" : "DEBUG",
+                         "filename" : "test_access_io.log"
+                         },
+        }
+    )
 
 # Example test for read_json
 def test_read_json(mocker):
@@ -513,7 +531,65 @@ def test_write_tex_file(tmpdir, mocker):
 
     tmpfile = os.path.join(tmpdir, 'tmp.md')
     mock_write_markdown_file.assert_called_once_with(data, tmpfile, content, True)
+
+# test for read_csv
+def test_read_csv(mocker):
+    mock_read_csv = mocker.patch('pandas.read_csv', return_value=pd.DataFrame({'col1': [1, 2], 'col2': [3, 4]}))
+    mocker.patch('ndlpy.access.io.extract_dtypes', return_value={'col1': 'int'})
+    mocker.patch('ndlpy.access.io.extract_full_filename', return_value='test.csv')
+
+    details = {'header': 0, 'delimiter': ',', 'quotechar': '"'}
+    result = io_module.read_csv(details)
+
+    assert isinstance(result, pd.DataFrame)
+    mock_read_csv.assert_called_once_with('test.csv', dtype={'col1': 'int'}, header=0, delimiter=',', quotechar='"')
+
+# test for read_excel
+def test_read_excel(mocker):
+    mock_read_excel = mocker.patch('pandas.read_excel', return_value=pd.DataFrame({'col1': [1, 2], 'col2': [3, 4]}))
+    mocker.patch('ndlpy.access.io.extract_dtypes', return_value={'col1': 'int'})
+    mocker.patch('ndlpy.access.io.extract_full_filename', return_value='test.xlsx')
+
+    details = {'header': 0, 'sheet': 'Sheet1'}
+    result = io_module.read_excel(details)
+
+    assert isinstance(result, pd.DataFrame)
+    mock_read_excel.assert_called_once_with('test.xlsx', sheet_name='Sheet1', dtype={'col1': 'int'}, header=0)
+
+# test for read_gsheet
+def test_read_gsheet(sample_context, mocker):
+    if GSPREAD_AVAILABLE:
+        mocker.patch('ndlpy.access.io.extract_dtypes', return_value={'col1': 'int'})
+        mocker.patch('ndlpy.access.io.extract_full_filename', return_value='sheet_id')
+        mocker.patch('ndlpy.access.io.extract_sheet', return_value=0)
+        mocker.patch('ndlpy.access.io.ctxt', sample_context)
+        mock_spread = mocker.MagicMock()
+        mocker.patch('gspread_pandas.Spread', return_value=mock_spread)
+        mock_spread.sheet_to_df.return_value = pd.DataFrame({'col1': [1, 2], 'col2': [3, 4]})
+
+        details = {'header': 0}
+        result = io_module.read_gsheet(details)
+
+        assert isinstance(result, pd.DataFrame)
+        mock_spread.sheet_to_df.assert_called_once()
+
+# test for write_excel
+def test_write_excel(mocker):
+    excel_writer = pd.ExcelWriter("test.xlsx", engine='xlsxwriter')
+    mock_excel_writer = mocker.patch('pandas.ExcelWriter', return_value=excel_writer)
+    mock_to_excel = mocker.patch('pandas.DataFrame.to_excel', return_value=pd.DataFrame({'col1': [1, 2], 'col2': [3, 4]}))
+    mock_to_excel = mocker.patch('pandas.DataFrame.to_excel', return_value=pd.DataFrame({'col1': [1, 2], 'col2': [3, 4]}))
     
+    mocker.patch('ndlpy.access.io.extract_full_filename', return_value='test.xlsx')
+
+    df = pd.DataFrame({'col1': [1, 2], 'col2': [3, 4]})
+    details = {'header': 0, 'sheet': 'Sheet1'}
+    io_module.write_excel(df, details)
+
+    mock_excel_writer.assert_called_once_with('test.xlsx', engine='xlsxwriter', datetime_format="YYYY-MM-DD HH:MM:SS.000")
+    mock_to_excel.assert_called_once_with(excel_writer, sheet_name="Sheet1", startrow=0, index=False)
+    
+        
 # Test functions
 def test_read_json2(mock_read_json_file):
     full_filename = extract_full_filename(json_details)
