@@ -998,3 +998,29 @@ def test_load_or_create_df_no_index(mocker):
     with pytest.raises(FileNotFoundError):
         ndlpy.access.io.load_or_create_df(details, None)
 
+
+@pytest.mark.parametrize("data_type, write_func", [
+    ('excel', 'ndlpy.access.io.write_excel'),
+    ('gsheet', 'ndlpy.access.io.write_gsheet'),
+    ('csv', 'ndlpy.access.io.write_csv'),
+    ('bibtex', 'ndlpy.access.io.write_bibtex'),
+    ('json', 'ndlpy.access.io.write_json'),
+    ('yaml', 'ndlpy.access.io.write_yaml'),
+    ('markdown', 'ndlpy.access.io.write_markdown'),
+    ('yaml_directory', 'ndlpy.access.io.write_yaml_directory'),
+    ('markdown_directory', 'ndlpy.access.io.write_markdown_directory'),
+    ('meta_directory', 'ndlpy.access.io.write_meta_directory'),
+    ('uncategorised_type', None),
+])
+def test_write_data(mocker, data_type, write_func):
+    details = {'type': data_type}
+    if write_func is None:
+        with pytest.raises(ValueError):
+            ndlpy.access.io.write_data({'type': data_type}, details)
+        return
+    mock_func = mocker.patch(write_func)
+    df = pd.DataFrame({'a': [1, 2]})
+
+    ndlpy.access.io.write_data(df, details)
+
+    mock_func.assert_called_once_with(df, details)
