@@ -425,6 +425,34 @@ def test_write_markdown_file(mocker):
     handle = mock_open()
     handle.write.assert_called_with(b'---\nkey: value\n---\n\n# Markdown Content')
 
+# test for create_document_content
+def test_create_document_content():
+
+    # Test Case 1: All parameters provided
+    kwargs_1 = {
+        'filename': 'document.md',
+        'directory': '/path/to',
+        'content': 'Sample content',
+        'additional': 'extra data'
+    }
+    result_1 = io_module.create_document_content(**kwargs_1)
+    assert result_1 == ({'additional': 'extra data'}, '/path/to/document.md', 'Sample content')
+
+    # Test Case 2: Missing 'content'
+    kwargs_2 = {
+        'filename': 'document.md',
+        'directory': '/path/to',
+        'additional': 'extra data'
+    }
+    result_2 = io_module.create_document_content(**kwargs_2)
+    assert result_2 == ({'additional': 'extra data'}, '/path/to/document.md', '')
+
+    # Test Case 3: Only 'content' provided
+    kwargs_3 = {'content': 'Sample content'}
+    with pytest.raises(ValueError):
+        result_3 = io_module.create_document_content(**kwargs_3)
+
+    
 # test for create_letter 
 def test_create_letter(mocker):
     mock_create_document_content = mocker.patch('ndlpy.access.io.create_document_content', return_value=('data', 'filename.md', 'content'))

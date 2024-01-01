@@ -58,6 +58,10 @@ def extract_full_filename(details):
     :rtype: str
     """
     if "directory" not in details or details["directory"] is None:
+        if "filename" not in details or details["filename"] is None:
+            errmsg = f"No filename provided in details."
+            log.error(errmsg)
+            raise ValueError(errmsg)
         return details["filename"]
     return os.path.join(
         os.path.expandvars(details["directory"]),
