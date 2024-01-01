@@ -1100,7 +1100,7 @@ if GSPREAD_AVAILABLE:
             spread=filename,
             sheet=sheet,
             create_spread=True,
-            config=config["gspread_pandas"],
+            config=ctxt["gspread_pandas"],
         )
         gsheet.df_to_sheet(
             df=df,
@@ -1220,7 +1220,7 @@ def gdrf_(default_glob, filereader, name="", docstr=""):
         )
 
     directory_reader.__name__ = name
-    directory_reader.__docstr__ = docstr
+    directory_reader.__doc__ = docstr
     return directory_reader
 
 
@@ -1284,7 +1284,7 @@ def gdwf_(filewriter, name="", docstr=""):
         )
 
     directory_writer.__name__ = name
-    directory_writer.__docstr__ = docstr
+    directory_writer.__doc__ = docstr
     return directory_writer
 
 

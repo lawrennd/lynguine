@@ -85,9 +85,11 @@ def sample_context():
     return context.Context(
         data={
             "google_oauth" : {"key": "DAFAFD"},
-            "logging" : {"level" : "DEBUG",
-                         "filename" : "test_access_io.log"
-                         },
+            "gspread_pandas" : {"key": "DAFAFD"},
+            "logging" : {
+                "level" : "DEBUG",
+                "filename" : "test_access_io.log"
+            },
         }
     )
 
@@ -559,10 +561,10 @@ def test_read_excel(mocker):
 # test for read_gsheet
 def test_read_gsheet(sample_context, mocker):
     if GSPREAD_AVAILABLE:
+        mocker.patch('ndlpy.access.io.ctxt', sample_context)
         mocker.patch('ndlpy.access.io.extract_dtypes', return_value={'col1': 'int'})
         mocker.patch('ndlpy.access.io.extract_full_filename', return_value='sheet_id')
         mocker.patch('ndlpy.access.io.extract_sheet', return_value=0)
-        mocker.patch('ndlpy.access.io.ctxt', sample_context)
         mock_spread = mocker.MagicMock()
         mocker.patch('gspread_pandas.Spread', return_value=mock_spread)
         mock_spread.sheet_to_df.return_value = pd.DataFrame({'col1': [1, 2], 'col2': [3, 4]})
@@ -588,8 +590,79 @@ def test_write_excel(mocker):
 
     mock_excel_writer.assert_called_once_with('test.xlsx', engine='xlsxwriter', datetime_format="YYYY-MM-DD HH:MM:SS.000")
     mock_to_excel.assert_called_once_with(excel_writer, sheet_name="Sheet1", startrow=0, index=False)
-    
-        
+
+# test for write_csv
+def test_write_csv(mocker):
+    mock_open = mocker.patch('builtins.open', mocker.mock_open())
+    mocker.patch('ndlpy.access.io.extract_full_filename', return_value='test.csv')
+
+    df = pd.DataFrame({'col1': [1, 2], 'col2': [3, 4]})
+    details = {'delimiter': ',', 'quotechar': '"'}
+    io_module.write_csv(df, details)
+
+    mock_open.assert_called_once_with('test.csv', 'w')
+
+# test for write_gsheet
+def test_write_gsheet(sample_context, mocker):
+    if GSPREAD_AVAILABLE:
+        mocker.patch('ndlpy.access.io.ctxt', sample_context)
+        mocker.patch('ndlpy.access.io.extract_full_filename', return_value='sheet_id')
+        mocker.patch('ndlpy.access.io.extract_sheet', return_value=0)
+        mock_spread = mocker.MagicMock()
+        mocker.patch('gspread_pandas.Spread', return_value=mock_spread)
+
+        df = pd.DataFrame({'col1': [1, 2], 'col2': [3, 4]})
+        details = {'header': 0}
+        io_module.write_gsheet(df, details)
+
+        mock_spread.df_to_sheet.assert_called_once()
+
+# test for gdrf_
+def test_gdrf_(mocker):
+    # Example usage of gdrf_
+    test_reader = io_module.gdrf_(
+        default_glob="*.test",
+        filereader=lambda x: x,
+        name="test_reader",
+        docstr="Test directory reader."
+    )
+
+    # Check if the function has the correct properties
+    assert callable(test_reader)
+    assert test_reader.__name__ == "test_reader"
+    assert "Test directory reader." in test_reader.__doc__
+
+    # Example details to pass
+    details = {'glob': '*.test', 'source': 'source_dir'}
+
+    # Mock the read_directory function and check if it's called correctly
+    mock_read_dir = mocker.patch('ndlpy.access.io.read_directory', return_value=pd.DataFrame([{'data': 'content'}]))
+    test_reader(details)
+    mock_read_dir.assert_called_once()
+
+# test for gdwf_
+def test_gdwf_(mocker):
+    # Example usage of gdwf_
+    test_writer = io_module.gdwf_(
+        filewriter=lambda x, y: None,
+        name="test_writer",
+        docstr="Test directory writer."
+    )
+
+    # Check if the function has the correct properties
+    assert callable(test_writer)
+    assert test_writer.__name__ == "test_writer"
+    assert "Test directory writer." in test_writer.__doc__
+
+    # Example dataframe and details
+    df = pd.DataFrame({'col1': [1, 2], 'col2': [3, 4]})
+    details = {'glob': '*.test', 'source': 'source_dir'}
+
+    # Mock the write_directory function and check if it's called correctly
+    mock_write_dir = mocker.patch('ndlpy.access.io.write_directory')
+    test_writer(df, details)
+    mock_write_dir.assert_called_once()
+
 # Test functions
 def test_read_json2(mock_read_json_file):
     full_filename = extract_full_filename(json_details)
