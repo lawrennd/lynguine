@@ -663,6 +663,18 @@ def test_gdwf_(mocker):
     test_writer(df, details)
     mock_write_dir.assert_called_once()
 
+# test for populate_directory_readers
+def test_populate_directory_readers():
+    io_module.populate_directory_readers(io_module.directory_readers)
+    for reader in io_module.directory_readers:
+        assert hasattr(io_module, reader["name"])
+
+# test for populate_directory_writers
+def test_populate_directory_writers():
+    io_module.populate_directory_writers(io_module.directory_writers)
+    for writer in io_module.directory_writers:
+        assert hasattr(io_module, writer["name"])
+    
 # Test functions
 def test_read_json2(mock_read_json_file):
     full_filename = extract_full_filename(json_details)
