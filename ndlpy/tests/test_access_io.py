@@ -1,6 +1,7 @@
 import os
 
 import pandas as pd
+import numpy as np
 import tempfile
 import pytest
 from pytest_mock import mocker
@@ -381,15 +382,49 @@ def test_read_docx_file(tmpdir,mocker):
 # test for read_talk_file
 def test_read_talk_file(mocker):
     mock_read_markdown = mocker.patch('ndlpy.access.io.read_markdown_file', return_value={'key': 'value'})
+    mock_remove_nan = mocker.patch('ndlpy.access.io.remove_nan', return_value={'key': 'value'})
 
     filename = "talk.md"
     result = io_module.read_talk_file(filename)
 
     assert result == {'key': 'value'}
     mock_read_markdown.assert_called_once_with(filename, True)
+    mock_remove_nan.assert_called_once_with({'key': 'value'})
 
+# test for read_talk_include_file
+def test_read_talk_include_file(mocker):
+    mock_read_markdown = mocker.patch('ndlpy.access.io.read_markdown_file', return_value={'key': 'value', 'nan_field': np.nan})
+    mock_remove_nan = mocker.patch('ndlpy.access.io.remove_nan', return_value={'key': 'value'})
 
+    filename = "talk_include.md"
+    result = io_module.read_talk_include_file(filename)
+
+    assert result == {'key': 'value'}
+    mock_read_markdown.assert_called_once_with(filename, True)
+    mock_remove_nan.assert_called_once_with({'key': 'value', 'nan_field': np.nan})
+
+# test for test_write_url_file
+def test_write_url_file():
+    data = {}
+    filename = "url.txt"
+    content = "http://example.com"
+
+    with pytest.raises(NotImplementedError):
+        io_module.write_url_file(data, filename, content)
     
+# test for write_markdown_file
+def test_write_markdown_file(mocker):
+    mock_open = mocker.patch('builtins.open', mocker.mock_open())
+
+    data = {'key': 'value', 'content': '# Markdown Content'}
+    filename = "test.md"
+    io_module.write_markdown_file(data, filename)
+
+    # For some reason frontmatter writes to a BytesIO not a StringIO, so "wb" not "w"
+    mock_open.assert_called_once_with(filename, "wb")
+    handle = mock_open()
+    handle.write.assert_called_with(b'---\nkey: value\n---\n\n# Markdown Content')
+
 # Test functions
 def test_read_json2(mock_read_json_file):
     full_filename = extract_full_filename(json_details)

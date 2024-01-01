@@ -598,7 +598,7 @@ def read_talk_include_file(filename, include_content=True):
 def write_url_file(data, filename, content, include_content=True):
     """Write a url to a file"""
     # This is with writing links to prefilled google forms in mind.
-    raise NotImplemented("The write url file function has not been implemented.")
+    raise NotImplementedError("The write url file function has not been implemented.")
 
 
 def write_markdown_file(data, filename, content=None, include_content=True):
