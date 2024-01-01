@@ -446,6 +446,45 @@ def test_write_letter_file(mocker):
 
     mock_open.assert_called_once_with(filename, "wb")
     mock_frontmatter_dump.assert_called_once()
+
+# test for write_formlink 
+def test_write_formlink(mocker):
+    mock_write_url_file = mocker.patch('ndlpy.access.io.write_url_file')
+
+    data = {'key': 'value'}
+    filename = "formlink.txt"
+    content = "http://example.com/form"
+    io_module.write_formlink(data, filename, content)
+
+    mock_write_url_file.assert_called_once_with(data, filename, content, True)
+
+# test for write_docx_file
+def test_write_docx_file(tmpdir, mocker):
+    mocker.patch('tempfile.gettempdir', return_value=tmpdir)
+    mock_write_markdown_file = mocker.patch('ndlpy.access.io.write_markdown_file')
+    mocker.patch('pypandoc.convert_file')
+
+    data = {'key': 'value'}
+    filename = "document.docx"
+    content = "Content"
+    io_module.write_docx_file(data, filename, content)
+
+    tmpfile = os.path.join(tmpdir, 'tmp.md')
+    mock_write_markdown_file.assert_called_once_with(data, tmpfile, content, True)
+
+# test for write_tex_file
+def test_write_tex_file(tmpdir, mocker):
+    mocker.patch('tempfile.gettempdir', return_value=tmpdir)
+    mock_write_markdown_file = mocker.patch('ndlpy.access.io.write_markdown_file')
+    mocker.patch('pypandoc.convert_file')
+
+    data = {'key': 'value'}
+    filename = "document.tex"
+    content = "Content"
+    io_module.write_tex_file(data, filename, content)
+
+    tmpfile = os.path.join(tmpdir, 'tmp.md')
+    mock_write_markdown_file.assert_called_once_with(data, tmpfile, content, True)
     
 # Test functions
 def test_read_json2(mock_read_json_file):
