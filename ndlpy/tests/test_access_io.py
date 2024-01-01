@@ -909,3 +909,36 @@ def test_finalize_data_invalid_ignore_column():
 
     with pytest.raises(ValueError):
         ndlpy.access.io.finalize_data(df, details)
+
+
+# test read_data
+@pytest.mark.parametrize("data_type, read_func", [
+    ('excel', 'ndlpy.access.io.read_excel'),
+    ('gsheet', 'ndlpy.access.io.read_gsheet'),
+    ('csv', 'ndlpy.access.io.read_csv'),
+    ('bibtex', 'ndlpy.access.io.read_bibtex'),
+    ('json', 'ndlpy.access.io.read_json'),
+    ('yaml', 'ndlpy.access.io.read_yaml'),
+    ('markdown', 'ndlpy.access.io.read_markdown'),
+    ('bibtex_directory', 'ndlpy.access.io.read_bibtex_directory'),
+    ('json_directory', 'ndlpy.access.io.read_json_directory'),
+    ('yaml_directory', 'ndlpy.access.io.read_yaml_directory'),
+    ('markdown_directory', 'ndlpy.access.io.read_markdown_directory'),
+    ('directory', 'ndlpy.access.io.read_plain_directory'),
+    ('meta_directory', 'ndlpy.access.io.read_meta_directory'),
+    ('docx_directory', 'ndlpy.access.io.read_docx_directory'),
+    ('uncategorised_type', None),
+])
+def test_read_data(mocker, data_type, read_func):
+    if read_func is None:
+        with pytest.raises(ValueError):
+            ndlpy.access.io.read_data({'type': data_type})
+        return
+    details = {'type': data_type}
+    mock_func = mocker.patch(read_func, return_value=pd.DataFrame({'a': [1, 2]}))
+
+    result, details = ndlpy.access.io.read_data(details)
+
+    mock_func.assert_called_once_with(details)
+    assert all(result == pd.DataFrame({'a': [1, 2]}))
+    assert not result.empty

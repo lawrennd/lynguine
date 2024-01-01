@@ -200,6 +200,36 @@ def read_yaml(details):
     data = read_yaml_file(filename)
     return pd.DataFrame(data)
 
+def read_markdown(details):
+    """
+    Read data from a markdown file.
+
+    :param details: The details of the file to be read.
+    :type details: dict
+    :return: The data read from the file.
+    :rtype: pandas.DataFrame
+    """
+    filename = extract_full_filename(details)
+    data = read_markdown_file(filename)
+    return pd.DataFrame(data)
+
+def write_markdown(df, details):
+    """
+    Write data to a markdown file.
+
+    :param df: The data to be written.
+    :type df: pandas.DataFrame
+    :param details: The details of the file to be written.
+    :type details: dict
+    """
+    filename = extract_full_filename(details)
+    data_dict = df.to_dict("records")
+
+    # Remove all the nan and missing values from the dictionary.
+    for num, entry in enumerate(data_dict):
+        data_dict[num] = remove_nan(entry)
+
+    write_markdown_file(data_dict, filename)
 
 def write_yaml(df, details):
     """
@@ -211,7 +241,12 @@ def write_yaml(df, details):
     :type details: dict
     """
     filename = extract_full_filename(details)
-    write_yaml_file(df.to_dict("records"), filename)
+    data_dict = df.to_dict("records")
+
+    # Remove all the nan and missing values from the dictionary.
+    for num, entry in enumerate(data_dict):
+        data_dict[num] = remove_nan(entry)
+    write_yaml_file(data_dict, filename)
 
 
 def read_bibtex(details):
@@ -1126,6 +1161,12 @@ directory_readers = [
         "docstr": "Read a directory of json files.",
     },
     {
+        "default_glob": "*.bib",
+        "filereader": read_bibtex_file,
+        "name": "read_bibtex_directory",
+        "docstr": "Read a directory of bibtex files.",
+    },
+    {
         "default_glob": "*.md",
         "filereader": read_markdown_file,
         "name": "read_markdown_directory",
@@ -1133,7 +1174,7 @@ directory_readers = [
     },
     {
         "default_glob": "*",
-        "filereader": None,
+        "filereader": read_file,
         "name": "read_plain_directory",
         "docstr": "Read a directory of files.",
     },
@@ -1399,20 +1440,28 @@ def read_data(details):
         df = read_json(details)
     elif ftype == "bibtex":
         df = read_bibtex(details)
+    elif ftype == "markdown":
+        df = read_markdown(details)
     elif ftype == "list":
         df = read_list(details)
     elif ftype == "yaml_directory":
         df = read_yaml_directory(details)
+    elif ftype == "json_directory":
+        df = read_json_directory(details)
     elif ftype == "markdown_directory":
         df = read_markdown_directory(details)
     elif ftype == "directory":
         df = read_plain_directory(details)
     elif ftype == "meta_directory":
         df = read_meta_directory(details)
+    elif ftype == "bibtex_directory":
+        df = read_bibtex_directory(details)
     elif ftype == "docx_directory":
         df = read_docx_directory(details)
     else:
-        raise ValueError('Unknown type "{ftype}" in read_data.')
+        errmsg = f'Unknown type "{ftype}" in read_data.'
+        log.error(errmsg)        
+        raise ValueError(errmsg)
     return finalize_data(df, details)
 
 
@@ -1585,8 +1634,12 @@ def write_data(df, details):
         write_csv(df, details)
     elif ftype == "json":
         write_json(df, details)
+    elif ftype == "bibtex":
+        write_bibtex(df, details)
     elif ftype == "yaml":
         write_yaml(df, details)
+    elif ftype == "markdown":
+        write_markdown(df, details)
     elif ftype == "yaml_directory":
         write_yaml_directory(df, details)
     elif ftype == "markdown_directory":
@@ -1594,7 +1647,9 @@ def write_data(df, details):
     elif ftype == "meta_directory":
         write_meta_directory(df, details)
     else:
-        log.error('Unknown type "{ftype}" in read_data.')
+        errmsg = f'Unknown type "{ftype}" in write_data.'
+        log.error(errmsg)
+        raise ValueError(errmsg)
 
 
 def write_globals(df, config):
