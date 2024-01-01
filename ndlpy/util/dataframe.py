@@ -14,6 +14,27 @@ log = Logger(
 )
 
 
+def convert_datetime_to_str(df):
+    """
+    Convert datetime columns to strings in isoformat for ease of writing.
+
+    :param df: The DataFrame to convert.
+    :type df: pandas.DataFrame or ndlpy.data.CustomDataFrame
+    :return: The converted DataFrame.
+    :rtype: pandas.DataFrame or ndlpy.data.CustomDataFram
+    """
+    write_df = df.copy(deep=True)
+    for col in df.select_dtypes(include=["datetime64"]).columns.tolist():
+        date_series = pd.Series(index=df.index, name=col, dtype="object")
+        for ind, val in df[col].items():
+            if pd.isnull(val):
+                date_series.at[ind] = None
+            else:
+                date_series.at[ind] = val.strftime("%Y-%m-%d %H:%M:%S.%f")
+
+        write_df[col] = date_series
+    return write_df
+
 def reorder_dataframe(df, order):
     """
     This function reorders the given data frame columns with the order given by the columns listed in order and any remaining columns placed alphabetically after order.

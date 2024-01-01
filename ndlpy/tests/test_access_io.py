@@ -425,6 +425,17 @@ def test_write_markdown_file(mocker):
     handle = mock_open()
     handle.write.assert_called_with(b'---\nkey: value\n---\n\n# Markdown Content')
 
+# test for create_letter 
+def test_create_letter(mocker):
+    mock_create_document_content = mocker.patch('ndlpy.access.io.create_document_content', return_value=('data', 'filename.md', 'content'))
+    mock_write_letter_file = mocker.patch('ndlpy.access.io.write_letter_file')
+
+    document = {}  # Replace with an appropriate document object
+    io_module.create_letter(document)
+
+    mock_create_document_content.assert_called_once_with(document)
+    mock_write_letter_file.assert_called_once_with(data='data', filename='filename.md', content='content')
+    
 # Test functions
 def test_read_json2(mock_read_json_file):
     full_filename = extract_full_filename(json_details)
