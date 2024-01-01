@@ -434,6 +434,18 @@ def test_create_letter(mocker):
 
     mock_create_document_content.assert_called_once()
     mock_write_letter_file.assert_called_once_with(data='data', filename='filename.md', content='content')
+
+# test for write_letter_file
+def test_write_letter_file(mocker):
+    mock_open = mocker.patch('builtins.open', mocker.mock_open())
+    mock_frontmatter_dump = mocker.patch('frontmatter.dump')
+
+    data = {'key': 'value', 'content': 'Letter content'}
+    filename = "letter.md"
+    io_module.write_letter_file(data, filename, 'content')
+
+    mock_open.assert_called_once_with(filename, "wb")
+    mock_frontmatter_dump.assert_called_once()
     
 # Test functions
 def test_read_json2(mock_read_json_file):
