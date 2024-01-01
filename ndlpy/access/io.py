@@ -211,7 +211,7 @@ def read_markdown(details):
     """
     filename = extract_full_filename(details)
     data = read_markdown_file(filename)
-    return pd.DataFrame(data)
+    return pd.DataFrame([data])
 
 def write_markdown(df, details):
     """
@@ -264,7 +264,7 @@ def read_bibtex(details):
     return (
         reorder_dataframe(pd.DataFrame(data), bibtex_column_order)
         .sort_values(by=bibtex_sort_by)
-        .reset_index(drop=True)
+        .reset_index(drop=True), details
     )
 
 

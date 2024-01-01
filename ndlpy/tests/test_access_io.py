@@ -156,20 +156,38 @@ def test_write_yaml(mocker):
     # Assertions
     mock_write_yaml_file.assert_called_once_with(df.to_dict('records'), "path/to/file.yaml")
 
+# Test for read_markdown
+def test_read_markdown(mocker):
+    mock_extract_full_filename = mocker.patch('ndlpy.access.io.extract_full_filename', return_value='test.md')
+    mock_read_markdown_file = mocker.patch('ndlpy.access.io.read_markdown_file', return_value={'key': 'value'})
+
+    details = {'filename': 'test.md'}
+    result = ndlpy.access.io.read_markdown(details)
+
+    assert isinstance(result, pd.DataFrame)
+    assert result.to_dict('records')[0] == {'key': 'value'}
+    mock_extract_full_filename.assert_called_once_with(details)
+    mock_read_markdown_file.assert_called_once_with('test.md')
+
+    
 # Test for read_bibtex
 def test_read_bibtex(mocker):
     # Mock dependencies
     mocker.patch('ndlpy.access.io.extract_full_filename', return_value="path/to/file.bib")
-    mocker.patch('ndlpy.access.io.read_bibtex_file', return_value=[{'author': 'Doe', 'year': 2020, 'title': 'Sample'}])
+    mock_read_bibtex_file = mocker.patch('ndlpy.access.io.read_bibtex_file', return_value=[{'author': 'Doe', 'year': 2020, 'title': 'Sample'}])
 
     # Test details
-    details = {'path': 'path/to/file.bib'}
+    details = {
+        'directory': 'path/to/',
+        'filename' : 'file.bib',
+    }
 
     # Execute the function
-    result = io_module.read_bibtex(details)
+    result, details = io_module.read_bibtex(details)
 
-    # Assertions
-    # Add assertions specific to the behavior of read_bibtex
+    assert isinstance(result, pd.DataFrame)
+    assert result.to_dict('records') == [{'author': 'Doe', 'year': 2020, 'title': 'Sample'}]
+    mock_read_bibtex_file.assert_called_once_with('path/to/file.bib')
 
 # Test for write_bibtex
 def test_write_bibtex(mocker):
@@ -807,7 +825,7 @@ def test_write_read_bibtex(tmpdir):
     data = reorder_dataframe(pd.DataFrame(bib_rows), order=bibtex_column_order).sort_values(by=bibtex_sort_by).reset_index(drop=True)
     
     write_bibtex(data, details)
-    read_data = read_bibtex(details)
+    read_data, details = read_bibtex(details)
     assert_frame_equal(read_data, data)
     
 def test_write_read_json_directory(tmpdir):
@@ -1024,3 +1042,40 @@ def test_write_data(mocker, data_type, write_func):
     ndlpy.access.io.write_data(df, details)
 
     mock_func.assert_called_once_with(df, details)
+
+# test global data
+def test_globals_data_exists(mocker):
+    details = {'filename': 'globals.csv'}
+    existing_df = pd.DataFrame({'a': [1, 2]})
+    mocker.patch('ndlpy.access.io.data_exists', return_value=True)
+    mocker.patch('ndlpy.access.io.read_data', return_value=(existing_df, details))
+
+    result, details = ndlpy.access.io.globals_data(details)
+
+    assert result.equals(existing_df)
+
+# test globals_data
+def test_globals_data_not_exists(mocker):
+    mocker.patch('ndlpy.access.io.data_exists', return_value=False)
+    details = {'filename': 'globals.csv', 'columns': ['col1', 'col2']}
+    index = pd.Index([1, 2], name='index')
+
+    result, details = ndlpy.access.io.globals_data(details, index)
+
+    assert result.index.equals(index)
+    assert list(result.columns) == ['index', 'col1', 'col2']
+    
+@pytest.mark.parametrize("func, config_key", [
+    (ndlpy.access.io.write_globals, 'globals'),
+    (ndlpy.access.io.write_cache, 'cache'),
+    (ndlpy.access.io.write_scores, 'scores'),
+    (ndlpy.access.io.write_series, 'series'),
+])
+def test_write_functions(mocker, func, config_key):
+    mock_write_data = mocker.patch('ndlpy.access.io.write_data')
+    config = {config_key: {'type': 'csv'}}
+    df = pd.DataFrame({'index': [1, 2], 'col1': [3, 4]}, index=[1, 2])
+
+    func(df, config)
+
+    assert mock_write_data.call_count == 1
