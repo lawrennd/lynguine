@@ -806,7 +806,7 @@ def create_document_content(**kwargs):
     :return: The data, filename and content of the document.
     :rtype: tuple
     """
-    filename = extract_full_filename(**kwargs)
+    filename = extract_full_filename(kwargs)
     if "content" in kwargs:
         content = kwargs["content"]
     else:
