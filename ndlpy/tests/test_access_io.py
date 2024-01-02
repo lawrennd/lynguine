@@ -13,7 +13,7 @@ import ndlpy
 import ndlpy.util.fake as fake
 from ndlpy.access.io import (
     read_json, write_json, read_json_file, write_json_file,
-    write_csv, read_csv, write_excel, read_excel, read_bibtex, write_yaml,
+    write_csv, read_csv, write_excel, read_excel, read_local, read_bibtex, write_yaml,
     read_yaml, write_json_directory, read_json_directory,
     write_yaml_directory, read_yaml_directory, write_markdown_directory, write_bibtex, write_bibtex_file,
     read_markdown_directory,
@@ -576,6 +576,37 @@ def test_read_excel(mocker):
     assert isinstance(result, pd.DataFrame)
     mock_read_excel.assert_called_once_with('test.xlsx', sheet_name='Sheet1', dtype={'col1': 'int'}, header=0)
 
+# Tests for read_local
+def test_read_local_valid_dict():
+    details = {'data': [{'a': 1, 'b': 2}], 'index': [0]}
+    df = read_local(details)
+    assert isinstance(df, pd.DataFrame)
+    assert df.index.name == 'index'
+    assert list(df.columns) == ['a', 'b']
+
+def test_read_local_invalid_input(mocker):
+    log_mock = mocker.patch('ndlpy.access.io.log')
+    with pytest.raises(ValueError):
+        read_local(['not', 'a', 'dict'])
+    log_mock.error.assert_called_once()
+
+def test_read_local_missing_keys(mocker):
+    log_mock = mocker.patch('ndlpy.access.io.log')
+    with pytest.raises(ValueError):
+        read_local({'values': [{'a': 1, 'b': 2}]})  # 'data' key is missing
+    log_mock.error.assert_called_once()
+
+def test_read_local_default_index_name():
+    details = {'data': [{'a': 1, 'b': 2}], 'index': [0]}
+    df = read_local(details)
+    assert df.index.name == 'index'
+
+def test_read_local_error_logging(mocker):
+    log_mock = mocker.patch('ndlpy.access.io.log')
+    with pytest.raises(ValueError):
+        read_local({'wrong_key': 'value'})
+    log_mock.error.assert_called_once()
+    
 # test for read_gsheet
 def test_read_gsheet(sample_context, mocker):
     if GSPREAD_AVAILABLE:

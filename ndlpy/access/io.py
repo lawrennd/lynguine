@@ -1020,6 +1020,41 @@ def read_excel(details):
 
     return data
 
+def read_local(details):
+    """
+    Read data directly from details file.
+
+    :param details: The details of the data to be read.
+    :type details: dict
+    :return: The data read from the file.
+    :rtype: pandas.DataFrame
+    :raises ValueError: If the 'details' is not a dictionary or is missing required keys.
+    """
+
+    if not isinstance(details, dict):
+        errmsg = "\"local\" specified in config but not in form of a dictionary."
+        log.error(errmsg)
+        raise ValueError(errmsg)
+
+    # Create data frame from details
+    
+    try:
+        df = pd.DataFrame(**details)
+    except KeyError as e:
+        errmsg = f"Could not create data frame from details specified in \"local\" entry. Missing key {e}."
+        log.error(errmsg)
+        raise ValueError(errmsg)
+    except Exception as e:
+        errmsg = f"Could not create data frame from details specified in \"local\" entry. {e}"
+        log.error(errmsg)
+        raise ValueError(errmsg)
+
+    # Optionally set index name if not already set
+    if df.index.name is None:
+        log.debug('Index name not set in data frame. Setting to "index".')
+        df.index.name = "index"
+
+    return df
 
 if GSPREAD_AVAILABLE:
 
@@ -1458,6 +1493,8 @@ def read_data(details):
         df = read_bibtex_directory(details)
     elif ftype == "docx_directory":
         df = read_docx_directory(details)
+    elif ftype == "local":
+        df = read_local(details)
     else:
         errmsg = f'Unknown type "{ftype}" in read_data.'
         log.error(errmsg)        
