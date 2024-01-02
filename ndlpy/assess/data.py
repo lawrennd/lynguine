@@ -454,6 +454,35 @@ class DataObject:
         """
         return cls.from_pandas(df=pd.DataFrame.from_dict(data, *args, **kwargs))
 
+    @classmethod
+    def from_settings(cls, settings):
+        """
+        Construct a CustomDataFrame from a settings object.
+
+        :param settings: Settings object.
+        :return: A CustomDataFrame object.
+        """
+
+        default_joins = "outer"
+        data_keys = uniq([item for key in self.types for item in self.types[key]])
+        cdf = pd.DataFrame(dtype="object")
+        for key in settings:
+            # Check if the settings key is a valid data key
+            if key in data_entries:
+                items = settings[key]
+                if not isinstance(items, list):
+                    items = [items]
+                # Iterate through adding the entries.
+                for item in items:
+                    # Use join from the item if it's there.
+                    
+                    join = settings[item] if "how" in settings[item] else default_joins
+                newdf, details = access.io.read_data(item)
+                colspecs = key
+                jdf = cls.__class__(newdf, colspecs=colspecs)
+                cdf = cdf.join(jdf, how=default_joins)
+        return df
+    
     def sort_values(self, by, axis=0, ascending=True, inplace=False, **kwargs):
         raise NotImplementedError("This is a base class")
 
@@ -837,6 +866,15 @@ class DataObject:
         """
         return self._types
 
+    @property
+    def _data_dictionary(self):
+        """
+        Return the data dictionary.
+
+        :return: Data dictionary.
+        """
+        return self._d
+    
     # Operators
     def __len__(self):
         """
@@ -1160,6 +1198,58 @@ class DataObject:
 
         return self.__class__(merged_df, colspecs=colspecs, types=types)
 
+    def join(
+            self,
+            other,
+            on=None,
+            how="left",
+            lsuffix='',
+            rsuffix='',
+            sort=False,
+            validate=None,
+            *args,
+            **kwargs,
+            ):
+        """
+        Join CustomDataFrame with another DataFrame or CustomDataFrame.
+
+        :param other: Another DataFrame or CustomDataFrame to merge with.
+        :param on: Columns to join on.
+        :type on: str, list, or array-like
+        :param how: How to join the DataFrames.
+        :type how: str
+        :param lsuffix: Suffix to apply to overlapping column names from the left DataFrame.
+        :type lsuffix: str
+        :param rsuffix: Suffix to apply to overlapping column names from the right DataFrame.
+        :type rsuffix: str
+        :param sort: Sort the join keys lexicographically in the result DataFrame.
+        :type sort: bool
+        :param args: Positional arguments to be passed to pandas.DataFrame.join.
+        :param kwargs: Keyword arguments to be passed to pandas.DataFrame.join.
+        :return: A new CustomDataFrame resulting from the join operation.
+        """
+        # Perform the join operation
+        join_df = self.to_pandas().join(
+            other=other.to_pandas() if isinstance(other, CustomDataFrame) else other,
+            on=on,
+            how=how,
+            lsuffix=lsuffix,
+            rsuffix=rsuffix,
+            sort=sort,
+            validate=validate,
+            *args,
+            **kwargs,
+        )
+
+        # Update colspecs
+        colspecs = self._update_colspecs_after_merge(
+            other, join_df, on=on, suffixes=(lsuffix, rsuffix),
+        )
+
+        types = self.types
+
+        return self.__class__(join_df, colspecs=colspecs, types=types)
+    
 
 class CustomDataFrame(DataObject):
     def __init__(
@@ -1178,6 +1268,14 @@ class CustomDataFrame(DataObject):
                     ]
                 ):
                     data = pd.Series(data).to_frame().T
+                elif all(
+                        [
+                        isinstance(entry, (pd.Series, pd.DataFrame))
+                        for entry in entries
+                    ]
+                ):
+                    data = pd.concat(data.values(), axis=1)
+                    
             data = pd.DataFrame(data)
         if isinstance(data, pd.Series):
             data = data.to_frame(name=data.name).T
@@ -1773,3 +1871,5 @@ def concat(objs, *args, **kwargs):
     types = objs[0].types
 
     return objs[0].__class__(df, colspecs=colspecs, types=types)
+
+

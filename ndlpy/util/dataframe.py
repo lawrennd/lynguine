@@ -6,13 +6,14 @@ import pandas as pd
 import ndlpy.config.context as context
 from ndlpy.log import Logger
 
+
+
 cntxt = context.Context(name="ndlpy")
 log = Logger(
     name=__name__,
     level=cntxt["logging"]["level"],
     filename=cntxt["logging"]["filename"],
 )
-
 
 def convert_datetime_to_str(df):
     """
