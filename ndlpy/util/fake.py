@@ -678,3 +678,17 @@ def row_allocation_additional_scores_series(num_ruows):
 
 def DataFrame(num_rows):
     return pd.DataFrame(rows(num_rows))
+
+class Generate:
+    person = mi.Person("en")
+    @classmethod
+    def givenName(cls):
+        return person.first_name()
+    def familyName(cls):
+        return person.surname()
+    def prefix(cls):
+        return random.choice(prefices)
+    def suffix(cls):
+        return random.choice(suffices)
+    def name(cls):
+        return person.name()

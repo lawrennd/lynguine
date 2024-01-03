@@ -10,10 +10,10 @@ from datetime import datetime
 from pandas.testing import assert_frame_equal
 
 import ndlpy
-import ndlpy.util.fake as fake
+from ndlpy.util.fake import Generate
 from ndlpy.access.io import (
     read_json, write_json, read_json_file, write_json_file,
-    write_csv, read_csv, write_excel, read_excel, read_local, read_bibtex, write_yaml,
+    write_csv, read_csv, write_excel, read_excel, read_local, read_fake, read_bibtex, write_yaml,
     read_yaml, write_json_directory, read_json_directory,
     write_yaml_directory, read_yaml_directory, write_markdown_directory, write_bibtex, write_bibtex_file,
     read_markdown_directory,
@@ -23,6 +23,7 @@ from ndlpy.util.misc import extract_full_filename, extract_root_directory
 from ndlpy.util.dataframe import reorder_dataframe
 import ndlpy.access.io as io_module
 import ndlpy.config.context as context
+import ndlpy.util.fake
 
 import bibtexparser as bp
 
@@ -606,7 +607,57 @@ def test_read_local_error_logging(mocker):
     with pytest.raises(ValueError):
         read_local({'wrong_key': 'value'})
     log_mock.error.assert_called_once()
+
+
+@pytest.fixture
+def valid_details():
+    return {
+        'nrows': 5,
+        'cols': {
+            'col1': 'familyName',
+            'col2': 'givenName',
+            'col3': 'familyName',
+        }
+    }
+
+@pytest.fixture
+def mock_generate(mocker):
+    mocker.patch.object(ndlpy.util.fake.Generate, 'familyName', return_value='Ogedegbe')
+    mocker.patch.object(ndlpy.util.fake.Generate, 'givenName', return_value='Henrietta')
     
+def test_read_fake_with_valid_input(mock_generate, valid_details):
+    df = read_fake(valid_details)
+    assert isinstance(df, pd.DataFrame)
+    assert df.shape == (5, 3)  # 5 rows and 3 columns
+    assert all(col in df.columns for col in valid_details['cols'])
+
+def test_read_fake_with_non_dict_input(mock_generate):
+    with pytest.raises(ValueError):
+        read_fake(['not', 'a', 'dict'])
+
+def test_read_fake_missing_required_keys(mock_generate):
+    with pytest.raises(ValueError):
+        read_fake({'nrows': 5})
+
+def test_read_fake_invalid_nrows(mock_generate):
+    with pytest.raises(ValueError):
+        read_fake({'nrows': -1, 'cols': {'col1': 'givenName'}})
+
+def test_read_fake_invalid_cols(mock_generate):
+    with pytest.raises(ValueError):
+        read_fake({'nrows': 5, 'cols': 'not-a-dict'})
+
+def test_read_fake_non_callable_generator(valid_details, mock_generate):
+    valid_details['cols']['col1'] = 'non_callable'
+    with pytest.raises(ValueError):
+        read_fake(valid_details)
+
+def test_read_fake_nonexistent_generator(valid_details, mock_generate):
+    valid_details['cols']['col1'] = 'nonexistent_gen'
+    with pytest.raises(ValueError):
+        read_fake(valid_details)
+
+
 # test for read_gsheet
 def test_read_gsheet(sample_context, mocker):
     if GSPREAD_AVAILABLE:
@@ -750,7 +801,7 @@ def test_write_read_csv(tmpdir):
         "delimiter": ",",
         "quotechar": "\"",
     }
-    data = pd.DataFrame(fake.rows(30))
+    data = pd.DataFrame(ndlpy.util.fake.rows(30))
     write_csv(data, details)
     read_data = read_csv(details)
     assert_frame_equal(data, read_data)
@@ -762,7 +813,7 @@ def test_write_read_excel(tmpdir):
         "header": 0,
         "sheet": "Sheet1",
     }
-    data = pd.DataFrame(fake.rows(30))
+    data = pd.DataFrame(ndlpy.util.fake.rows(30))
     write_excel(data, details)
     read_data = read_excel(details)
     assert_frame_equal(data, read_data)
@@ -772,7 +823,7 @@ def test_write_read_json(tmpdir):
         "filename": "test.json",
         "directory": str(tmpdir),
     }
-    data = pd.DataFrame(fake.rows(30))
+    data = pd.DataFrame(ndlpy.util.fake.rows(30))
     write_json(data, details)
     read_data = read_json(details)
     assert_frame_equal(data, read_data)
@@ -782,7 +833,7 @@ def test_write_read_yaml(tmpdir):
         "filename": "test.yaml",
         "directory": str(tmpdir),
     }
-    data = pd.DataFrame(fake.rows(30))
+    data = pd.DataFrame(ndlpy.util.fake.rows(30))
     write_yaml(data, details)
     read_data = read_yaml(details)
     assert_frame_equal(read_data, data)
@@ -835,8 +886,8 @@ def test_write_read_bibtex(tmpdir):
         "filename": "test.bib",
         "directory": str(tmpdir),
     }
-    row = lambda: fake.to_bibtex(fake.bibliography_entry())
-    bib_rows = fake.rows(200, row)
+    row = lambda: ndlpy.util.fake.to_bibtex(ndlpy.util.fake.bibliography_entry())
+    bib_rows = ndlpy.util.fake.rows(200, row)
 
     # List any duplicated ids.
     ids = [entry["ID"] for entry in bib_rows]
@@ -870,7 +921,7 @@ def test_write_read_json_directory(tmpdir):
             },
         ],
     }
-    data = pd.DataFrame(fake.rows(30))
+    data = pd.DataFrame(ndlpy.util.fake.rows(30))
     for ind in data.index:
         data.at[ind, "sourceRoot"], data.at[ind, "sourceDirectory"] = extract_root_directory(str(tmpdir))
         data.at[ind, "sourceFilename"] = data.at[ind, "name"] + extension
@@ -891,7 +942,7 @@ def test_write_read_yaml_directory(tmpdir):
             },
         ],
     }
-    data = pd.DataFrame(fake.rows(30))
+    data = pd.DataFrame(ndlpy.util.fake.rows(30))
     for ind in data.index:
         data.at[ind, "sourceRoot"], data.at[ind, "sourceDirectory"] = extract_root_directory(str(tmpdir))
         data.at[ind, "sourceFilename"] = data.at[ind, "name"] + extension
@@ -911,7 +962,7 @@ def test_write_read_markdown_directory(tmpdir):
             },
         ],
     }
-    data = pd.DataFrame(fake.rows(30))
+    data = pd.DataFrame(ndlpy.util.fake.rows(30))
     for ind in data.index:
         data.at[ind, "sourceRoot"], data.at[ind, "sourceDirectory"] = extract_root_directory(str(tmpdir))
         data.at[ind, "sourceFilename"] = data.at[ind, "name"] + extension
@@ -976,6 +1027,8 @@ def test_finalize_data_invalid_ignore_column():
     ('directory', 'ndlpy.access.io.read_plain_directory'),
     ('meta_directory', 'ndlpy.access.io.read_meta_directory'),
     ('docx_directory', 'ndlpy.access.io.read_docx_directory'),
+    ('fake', 'ndlpy.access.io.read_fake'),
+    ('local', 'ndlpy.access.io.read_local'),
     ('uncategorised_type', None),
 ])
 def test_read_data(mocker, data_type, read_func):
