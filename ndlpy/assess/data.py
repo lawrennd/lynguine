@@ -564,11 +564,63 @@ class DataObject:
         else:
             return cdf
     
-    def sort_values(self, by, axis=0, ascending=True, inplace=False, **kwargs):
-        raise NotImplementedError("This is a base class")
+    def sort_values(self, *args, inplace=False, **kwargs):
+        """
+        Sort by the values along either axis.
 
-    def sort_index(self, axis=0, level=None, ascending=True, inplace=False, **kwargs):
-        raise NotImplementedError("This is a base class")
+        :param by: str or list of str
+        :param axis: {0 or 'index', 1 or 'columns'}, default 0
+        :param ascending: bool or list of bool, default True
+        :param inplace: bool, default False
+        :param kind: {'quicksort', 'mergesort', 'heapsort'}, default 'quicksort'
+        :param na_position: {'first', 'last'}, default 'last'
+        :param ignore_index: bool, default False
+        :param key: callable, optional
+        :return: sorted_obj : CustomDataFrame
+        :raises ValueError: If any of the keys are not in the index
+        """
+        df = self.to_pandas().sort_values(
+            *args,
+            inplace=False,
+            **kwargs,
+        )
+        if inplace:
+            self._distribute_data(df)
+        else:
+            return self.__class__(
+                df,
+                colspecs=self.colspecs,
+                index=self.get_index(),
+                column=self.get_column(),
+                selector=self.get_selector(),
+            )
+
+    def sort_index(self, *args, inplace=False, **kwargs):
+        """
+        Sort object by labels (along an axis).
+
+        :param axis: {0 or 'index', 1 or 'columns'}, default 0
+        :param level: int or level name or list of ints or list of level names
+        :param ascending: bool or list of bool, default True
+        :param inplace: bool, default False
+        :param kind: {'quicksort', 'mergesort', 'heapsort'}, default 'quicksort'
+        :param na_position: {'first', 'last'}, default 'last'
+        :param sort_remaining: bool, default True
+        :param ignore_index: bool, default False
+        :param key: callable, optional.
+        :return: sorted_obj : CustomDataFrame
+        """
+        df = self.to_pandas().sort_index(*args, inplace=False, **kwargs)
+        if inplace:
+            self._distribute_data(df)
+        else:
+            return self.__class__(
+                df,
+                colspecs=self.colspecs,
+                index=self.get_index(),
+                column=self.get_column(),
+                selector=self.get_selector(),
+            )
 
     def convert(self, other):
         """
@@ -849,13 +901,13 @@ class DataObject:
         )
 
     @property
-    def _log(self):
+    def log(self):
         """
         Access the system log.
 
         :return: Reference to the system log.
         """
-        return log
+        return _log
 
     @property
     def T(self):
@@ -1801,63 +1853,6 @@ class CustomDataFrame(DataObject):
     def filter(self, *args, **kwargs):
         return self.from_pandas(self.to_pandas().filter(*args, **kwargs))
 
-    def sort_values(self, *args, inplace=False, **kwargs):
-        """
-        Sort by the values along either axis.
-
-        :param by: str or list of str
-        :param axis: {0 or 'index', 1 or 'columns'}, default 0
-        :param ascending: bool or list of bool, default True
-        :param inplace: bool, default False
-        :param kind: {'quicksort', 'mergesort', 'heapsort'}, default 'quicksort'
-        :param na_position: {'first', 'last'}, default 'last'
-        :param ignore_index: bool, default False
-        :param key: callable, optional
-        :return: sorted_obj : CustomDataFrame
-        :raises ValueError: If any of the keys are not in the index
-        """
-        df = self.to_pandas().sort_values(
-            *args,
-            inplace=False,
-            **kwargs,
-        )
-        if inplace:
-            self._distribute_data(df)
-        else:
-            return self.__class__(
-                df,
-                colspecs=self.colspecs,
-                index=self.get_index(),
-                column=self.get_column(),
-                selector=self.get_selector(),
-            )
-
-    def sort_index(self, *args, inplace=False, **kwargs):
-        """
-        Sort object by labels (along an axis).
-
-        :param axis: {0 or 'index', 1 or 'columns'}, default 0
-        :param level: int or level name or list of ints or list of level names
-        :param ascending: bool or list of bool, default True
-        :param inplace: bool, default False
-        :param kind: {'quicksort', 'mergesort', 'heapsort'}, default 'quicksort'
-        :param na_position: {'first', 'last'}, default 'last'
-        :param sort_remaining: bool, default True
-        :param ignore_index: bool, default False
-        :param key: callable, optional.
-        :return: sorted_obj : CustomDataFrame
-        """
-        df = self.to_pandas().sort_index(*args, inplace=False, **kwargs)
-        if inplace:
-            self._distribute_data(df)
-        else:
-            return self.__class__(
-                df,
-                colspecs=self.colspecs,
-                index=self.get_index(),
-                column=self.get_column(),
-                selector=self.get_selector(),
-            )
 
     def _finalize_df(self, df, details, strict_columns=False):
         """
