@@ -48,7 +48,7 @@ class _HConfig(context._Config):
     def __len__(self):
         # This isn't quite right as should filter out parents that in self._data
         if self._parent is None:
-            return len(self._data())
+            return len(self._data)
         return len(list(self.__iter__()))
 
     def __contains__(self, key):
