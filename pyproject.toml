@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "ndlpy"
-version = "0.1.0"
+version = "0.2.0"
 description = "Package of utility files for python scripts."
 authors = ["Neil D. Lawrence <lawrennd@gmail.com>"]
 license = "MIT"
