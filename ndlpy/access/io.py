@@ -1111,7 +1111,7 @@ def read_local(details):
     # Create data frame from details
     
     try:
-        df = pd.DataFrame(data=details["data"])
+        df = pd.DataFrame(**details)
     except KeyError as e:
         errmsg = f"Could not create data frame from details specified in \"local\" entry. Missing key {e}."
         log.error(errmsg)
