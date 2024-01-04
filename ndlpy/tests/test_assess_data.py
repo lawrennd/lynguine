@@ -131,11 +131,6 @@ def test_from_settings_with_empty_settings():
     assert isinstance(cdf, ndlpy.assess.data.CustomDataFrame)
     assert cdf.empty
 
-
-def test_join_functionality(valid_settings):
-    # Modify valid_settings to test different join scenarios
-    # Assert the correct join operation is performed
-    pass
     
 # Grouping and Sorting
 def test_groupby_sum():
