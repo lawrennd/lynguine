@@ -641,6 +641,10 @@ def test_read_fake_with_valid_list_input(mock_generate, valid_details_list):
     assert df.shape == (5, 3)  # 5 rows and 3 columns
     assert all(col in df.columns for col in valid_details_list['cols'])
 
+def test_read_fake_invalid_list(mock_generate):
+    with pytest.raises(ValueError):
+        read_fake({'nrows': 10, ['cols': "not_a_valid_generate_attribute'])
+
 # test for read_fake with cols input as dict
 def test_read_fake_with_valid_input(mock_generate, valid_details):
     df = read_fake(valid_details)
