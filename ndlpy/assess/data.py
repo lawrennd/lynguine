@@ -661,7 +661,6 @@ class DataObject:
         return self.__class__(
             data=self.to_pandas().sum(axis),
             colspecs=colspecs,
-            types=self.types,
             column=column,
         )
 
@@ -675,7 +674,6 @@ class DataObject:
         return self.__class__(
             data=self.to_pandas().mean(axis),
             colspecs=colspecs,
-            types=self.types,
             column=column,
         )
 
@@ -936,15 +934,6 @@ class DataObject:
         """
         self._colspecs = value
         
-    @property
-    def types(self):
-        """
-        Return the data types of the DataFrame.
-
-        :return: A Series with the data type of each column.
-        """
-        return self._types
-
     @property
     def _data_dictionary(self):
         """
@@ -1273,9 +1262,8 @@ class DataObject:
             right, merged_df, on=on, suffixes=suffixes
         )
 
-        types = self.types
 
-        return self.__class__(merged_df, colspecs=colspecs, types=types)
+        return self.__class__(merged_df, colspecs=colspecs)
 
     def join(
             self,
@@ -1325,14 +1313,55 @@ class DataObject:
             other, join_df, on=on, suffixes=(lsuffix, rsuffix),
         )
 
-        types = self.types
 
-        return self.__class__(join_df, colspecs=colspecs, types=types)
+        return self.__class__(join_df, colspecs=colspecs)
     
 
 class CustomDataFrame(DataObject):
+    types = {
+        # Input types are standard DataFrames but are not mutable.
+        "input": [
+            "input",
+            "data",
+            "constants",
+            "global_consts",
+        ],
+        # Output types are standard DataFrames that are mutable and
+        # intended to be recorded once operations on the
+        # CustomDataFrame are complete.
+        "output": [
+            "output",
+            "writedata",
+            "writeseries",
+            "parameters",
+            "globals",
+        ],
+        # Parameter types do not have an index, they are globally valid.
+        "parameters": [
+            "constants",
+            "global_consts",
+            "parameters",
+            "globals",
+            "parameter_cache",
+            "global_cache",
+        ],
+        # Cache types are standard DataFrames that are mutable and
+        # intended to be used for intermediate calculations.
+        "cache": [
+            "cache",
+            "series_cache",
+            "parameter_cache",
+            "global_cache",
+        ],
+        # Series types are standard DataFrames that are mutable and
+        # may have multiple rows with the same index.
+        "series": [
+            "writeseries",
+            "series_cache",
+        ],
+    }
     def __init__(
-        self, data, colspecs=None, index=None, column=None, selector=None, types=None
+        self, data, colspecs=None, index=None, column=None, selector=None
     ):
         if data is None:
             data = {}
@@ -1363,57 +1392,13 @@ class CustomDataFrame(DataObject):
         if isinstance(data, list):
             data = pd.DataFrame(data)
 
-        # Define the types.
-        if types is None:
-            types = {
-                # Input types are standard DataFrames but are not mutable.
-                "input": [
-                    "input",
-                    "data",
-                    "constants",
-                    "global_consts",
-                ],
-                # Output types are standard DataFrames that are mutable and
-                # intended to be recorded once operations on the
-                # CustomDataFrame are complete.
-                "output": [
-                    "output",
-                    "writedata",
-                    "writeseries",
-                    "parameters",
-                    "globals",
-                ],
-                # Parameter types do not have an index, they are globally valid.
-                "parameters": [
-                    "constants",
-                    "global_consts",
-                    "parameters",
-                    "globals",
-                    "parameter_cache",
-                    "global_cache",
-                ],
-                # Cache types are standard DataFrames that are mutable and
-                # intended to be used for intermediate calculations.
-                "cache": [
-                    "cache",
-                    "series_cache",
-                    "parameter_cache",
-                    "global_cache",
-                ],
-                # Series types are standard DataFrames that are mutable and
-                # may have multiple rows with the same index.
-                "series": [
-                    "writeseries",
-                    "series_cache",
-                ],
-            }
 
         # If the colspecs isn't specified assume it's of "cache" type.
         if colspecs is None:
             colspecs = {"cache": list(data.columns)}
         elif isinstance(colspecs, str):
             # Check if colspecs is in any of the types dictionary's entries.
-            all_types = [typ for typs in types.values() for typ in typs]
+            all_types = [typ for typs in self.types.values() for typ in typs]
             if colspecs in all_types:
                 colspecs = {
                     colspecs: list(data.columns),
@@ -1431,7 +1416,6 @@ class CustomDataFrame(DataObject):
                 colspecs["cache"] = []
             colspecs["cache"] += cache
 
-        self._types = types
         self._colspecs = colspecs
         self._d = {}
 
@@ -1811,7 +1795,7 @@ class CustomDataFrame(DataObject):
                         )
             else:
                 d = data[cols]
-                if typ in self._types["series"]:
+                if typ in self.types["series"]:
                     self._d[typ] = d
                 else:
                     # If it's not a series type make sure it's deduplicated.
@@ -1896,6 +1880,6 @@ def concat(objs, *args, **kwargs):
     # This needs to be decided based on how types are to be handled
     types = objs[0].types
 
-    return objs[0].__class__(df, colspecs=colspecs, types=types)
+    return objs[0].__class__(df, colspecs=colspecs)
 
 
