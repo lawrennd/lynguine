@@ -1647,10 +1647,19 @@ class CustomDataFrame(DataObject):
                 row_key = key
                 col_key = slice(None)  # Equivalent to selecting all columns
 
-            # Allow pandas to handle the index slicing (e.g. for DatetimeIndex
-            ind = self._data_object.to_pandas().loc[row_key].index
-            result_df = pd.DataFrame(index=ind, data=None).astype("object")
             colspecs = {}
+            # check if index is a datetime index.
+            if isinstance(self._data_object.index, pd.DatetimeIndex):
+                # if so, allow pandas to handle the slicing.
+                ind = self._data_object.to_pandas().loc[row_key].index
+                result_df = pd.DataFrame(index=ind, data=None).astype("object")
+            elif isinstance(row_key, (list, tuple, pd.Index)):
+                # if not, check if the row_key is a list of indices.
+                # if so, create a new dataframe with the index of the row_key.
+                result_df = pd.DataFrame(index=row_key, data=None).astype("object")
+            else:
+                # create a data series to handle the result with index.name given by row
+                result_df = pd.Series(name=row_key, data=None).astype("object")
 
             for typ, data in self._data_object._d.items():
                 if data.empty:
@@ -1680,8 +1689,12 @@ class CustomDataFrame(DataObject):
                     )
                     selected_data = data.loc[row_key, filtered_cols]
                     if isinstance(selected_data, pd.Series):
-                        selected_data = selected_data.to_frame().T
-                    result_df = result_df.join(selected_data, how="outer")
+                        if not isinstance(result_df, pd.Series):
+                            raise ValueError(f"The selected data has a row key \"{row_key}\" that has induced a series, but the result_df is of type \"{type(result_df)}\"")
+                        # Concatenate the two data series
+                        result_df = pd.concat([result_df, selected_data])
+                    else:
+                        result_df = result_df.join(selected_data, how="outer")
                     colspecs[typ] = filtered_cols
 
             # Find empty colspecs
