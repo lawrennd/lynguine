@@ -26,6 +26,7 @@ from ..util.misc import (
     reorder_dictionary,
     prompt_stdin,
 )
+from ..util.fake import Generate
 
 from ..config.context import Context
 from ..util.dataframe import reorder_dataframe
@@ -1020,13 +1021,84 @@ def read_excel(details):
 
     return data
 
+
+def read_fake(details):
+    """
+    Read data from an artificially generated source.
+
+    :param details: The details of the data to be read.
+    :type details: dict
+    :return: The data read from the source.
+    :rtype: pandas.DataFrame
+    """
+
+    if not isinstance(details, dict):
+        errmsg = "\"fake\" specified in config but not in form of a dictionary."
+        log.error(errmsg)
+        raise ValueError(errmsg)
+
+    required_keys = ["nrows", "cols"]
+    for key in required_keys:
+        if key not in details:
+            errmsg = f"\"fake\" specified in config but missing \"{key}\" key."
+            log.error(errmsg)
+            raise ValueError(errmsg)
+        
+    if isinstance(details["cols"], list):
+        log.info("\"cols\" for fake data specified as a list, converting to dictionary with all columns set to the given name of column.")
+        cols_are_attributes = [hasattr(Generate, col) for col in details["cols"]]
+        if all(cols_are_attributes):
+            details["cols"] = {col: col for col in details["cols"]}
+        else:
+            # Extract which columns aren't attributes and return in error message.
+            wrong_cols = [col for col, is_attr in zip(details["cols"], cols_are_attributes) if not is_attr]
+            errmsg = f"\"fake\" specified as the type and columns are provided as a list, but the following columns are not attributes of ndlpy.util.fake.Generate: \"{', '.join(wrong_cols)}\""
+            log.error(errmsg)
+            raise ValueError(errmsg)
+        
+    if not isinstance(details["cols"], dict):
+        errmsg = ("\"fake\" specified in config which requires that cols are specified as a dictionary, "
+                  "with dictionary entries representing the type of fake data to be generated.")
+        log.error(errmsg)
+        raise ValueError(errmsg)
+
+    if not isinstance(details["nrows"], int) or details["nrows"] < 0:
+        errmsg = "\"nrows\" must be a non-negative integer."
+        log.error(errmsg)
+        raise ValueError(errmsg)
+
+    cols = details['cols']  # Correct reference to cols
+    for col, gen in cols.items():
+        if hasattr(Generate, gen):
+            gen_func = getattr(Generate, gen)
+            if callable(gen_func):
+                cols[col] = gen_func
+            else:
+                errmsg = f"\"fake\" specified in config but \"{gen}\" is not a callable function attribute of ndlpy.util.fake.Generate."
+                if list_convert:
+                    errmsg += " This is likely because the \"cols\" were specified as a list and not a dictionary, meaning that in dictionary conversion I've created columns where the function attributes match the column title."
+                log.error(errmsg)
+                raise ValueError(errmsg)
+        else:
+            errmsg = f"\"{gen}\" specified as column's fake function, \"{gen}\" is not an attribute of ndlpy.util.fake.Generate."
+            log.error(errmsg)
+            raise ValueError(errmsg)
+
+    data = []
+    for _ in range(details["nrows"]):
+        row = {col: gen() for col, gen in cols.items()}
+        data.append(row)
+
+    return pd.DataFrame(data)
+    
+    
 def read_local(details):
     """
     Read data directly from details file.
 
     :param details: The details of the data to be read.
     :type details: dict
-    :return: The data read from the file.
+    :return: The data read from the settings file..
     :rtype: pandas.DataFrame
     :raises ValueError: If the 'details' is not a dictionary or is missing required keys.
     """
@@ -1491,6 +1563,8 @@ def read_data(details):
         df = read_docx_directory(details)
     elif ftype == "local":
         df = read_local(details)
+    elif ftype == "fake":
+        df = read_fake(details)
     else:
         errmsg = f'Unknown type "{ftype}" in read_data.'
         log.error(errmsg)        

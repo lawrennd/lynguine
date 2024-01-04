@@ -17,7 +17,14 @@ def create_merged_dataframe():
     colspecs = {"input": ["A", "B"], "output": ["C", "D"], "parameters": ["E", "F"]}
     
     return ndlpy.assess.data.CustomDataFrame(data, colspecs=colspecs)
+
+def create_series_dataframe():
+    # Sample data for creating a CustomDataFrame instance
+    data = {"A": [1, 2], "B": [3, 4], "C": [5, 5], "D": [6, 6], "E": [7, 7], "F": [8, 8]}
+    colspecs = {"input": ["A", "B"], "output": ["C", "D"], "writeseries": ["E", "F"]}
     
+    return ndlpy.assess.data.CustomDataFrame(data, colspecs=colspecs)
+
 
 # test creation of a dataframe
 def test_dataframe_creation():
@@ -169,6 +176,14 @@ def test_invalid_data_creation():
     with pytest.raises(ValueError):
         df = ndlpy.assess.data.CustomDataFrame({'A': [1, 2], 'B': [3, 4, 5]})
 
+# Test get_selectors()
+def test_get_selectors():
+    custom_df = create_merged_dataframe()
+    assert custom_df.get_selectors() == []
+
+    custom_df = create_series_dataframe()
+    assert custom_df.get_selectors() == ["E", "F"]
+    
 # Test loc accessor
 def test_loc_accessor():
     # Test accessing and setting multiple elements

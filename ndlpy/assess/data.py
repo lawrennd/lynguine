@@ -126,6 +126,24 @@ class DataObject:
         else:
             raise KeyError("Invalid selector set.")
 
+    def get_selectors(self):
+        """
+        Return valid selectors, these are columns that are present in the type "series"
+        :return: The valid selectors.
+        """
+
+        # iterate through the colspecs finding columns of type series
+        selectors = [
+            col
+            for typ in self.types["series"]
+            for col in self.colspecs.get(typ, [])
+        ]
+        
+        if self._selector is not None and self._selector in selectors:
+            # Return selectors with selector at front (to ensure it is default) for widgets)
+            selectors.insert(0, selectors.pop(selectors.index(self._selector)))
+        return selectors
+        
     def get_value(self):
         """
         Get the value that is in the cell defined as focus for the DataFrame.
@@ -875,7 +893,6 @@ class DataObject:
             data=self.to_pandas().pivot_table(*args, **kwargs),
         )
 
-
     def _apply_operator(self, other, operator):
         """
         Apply a specified operator to the DataFrame.
@@ -907,8 +924,16 @@ class DataObject:
 
         :return: Reference to the system log.
         """
-        return _log
+        return self._log
 
+    @log.setter
+    def log(self, value):
+        """
+        Set the system log.
+
+        :param value: The new system log.
+        """
+        self._log = value
     @property
     def T(self):
         """
@@ -988,6 +1013,15 @@ class DataObject:
         """
         return self._colspecs
 
+    @colspecs.setter
+    def colspecs(self, value):
+        """
+        Set the column specifications.
+
+        :param value: New column specifications.
+        """
+        self._colspecs = value
+        
     @property
     def _data_dictionary(self):
         """
@@ -1372,7 +1406,51 @@ class DataObject:
         return data
     
 class CustomDataFrame(DataObject):
-    def __init__(self, data, colspecs=None, index=None, column=None, selector=None):
+    types = {
+        # Input types are standard DataFrames but are not mutable.
+        "input": [
+            "input",
+            "data",
+            "constants",
+            "global_consts",
+        ],
+        # Output types are standard DataFrames that are mutable and
+        # intended to be recorded once operations on the
+        # CustomDataFrame are complete.
+        "output": [
+            "output",
+            "writedata",
+            "writeseries",
+            "parameters",
+            "globals",
+        ],
+        # Parameter types do not have an index, they are globally valid.
+        "parameters": [
+            "constants",
+            "global_consts",
+            "parameters",
+            "globals",
+            "parameter_cache",
+            "global_cache",
+        ],
+        # Cache types are standard DataFrames that are mutable and
+        # intended to be used for intermediate calculations.
+        "cache": [
+            "cache",
+            "series_cache",
+            "parameter_cache",
+            "global_cache",
+        ],
+        # Series types are standard DataFrames that are mutable and
+        # may have multiple rows with the same index.
+        "series": [
+            "writeseries",
+            "series_cache",
+        ],
+    }
+    def __init__(
+        self, data, colspecs=None, index=None, column=None, selector=None
+    ):
         if data is None:
             data = {}
         if isinstance(data, dict):
@@ -1400,7 +1478,7 @@ class CustomDataFrame(DataObject):
         if isinstance(data, np.ndarray):
             data = pd.DataFrame(data)
         if isinstance(data, list):
-            data = pd.DataFame(data)
+            data = pd.DataFrame(data)
 
 
         # If the colspecs isn't specified assume it's of "cache" type.
@@ -1445,12 +1523,16 @@ class CustomDataFrame(DataObject):
                 column = self.columns[0]
         self.set_column(column)
 
+        self._selector = selector
         # Set selector if not specified
-        if selector is None:
-            selectors = self.columns
+        if self._selector is None:
+            selectors = self.get_selectors()
             if len(selectors) > 0:
-                selector = self.columns[0]
-        self.set_selector(selector)
+                self._selector = self.columns[0]
+        elif selector not in self.get_selectors():
+            raise ValueError(
+                f"Provided selector '{selector}' not found in CustomDataFrame."
+            )
 
         self.at = self._AtAccessor(self)
         self.loc = self._LocAccessor(self)
