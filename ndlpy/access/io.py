@@ -26,7 +26,6 @@ from ..util.misc import (
     reorder_dictionary,
     prompt_stdin,
 )
-
 from ..util.fake import Generate
 
 from ..config.context import Context
@@ -1044,7 +1043,19 @@ def read_fake(details):
             errmsg = f"\"fake\" specified in config but missing \"{key}\" key."
             log.error(errmsg)
             raise ValueError(errmsg)
-
+        
+    if isinstance(details["cols"], list):
+        log.info("\"cols\" for fake data specified as a list, converting to dictionary with all columns set to the given name of column.")
+        cols_are_attributes = [hasattr(Generate, col) for col in details["cols"]]
+        if all(cols_are_attributes):
+            details["cols"] = {col: col for col in details["cols"]}
+        else:
+            # Extract which columns aren't attributes and return in error message.
+            wrong_cols = [col for col, is_attr in zip(details["cols"], cols_are_attributes) if not is_attr]
+            errmsg = f"\"fake\" specified as the type and columns are provided as a list, but the following columns are not attributes of ndlpy.util.fake.Generate: \"{', '.join(wrong_cols)}\""
+            log.error(errmsg)
+            raise ValueError(errmsg)
+        
     if not isinstance(details["cols"], dict):
         errmsg = ("\"fake\" specified in config which requires that cols are specified as a dictionary, "
                   "with dictionary entries representing the type of fake data to be generated.")
@@ -1063,7 +1074,9 @@ def read_fake(details):
             if callable(gen_func):
                 cols[col] = gen_func
             else:
-                errmsg = f"\"fake\" specified in config but \"{gen}\" is not a callable function attribute of ndlpy.util.fake.Generate"
+                errmsg = f"\"fake\" specified in config but \"{gen}\" is not a callable function attribute of ndlpy.util.fake.Generate."
+                if list_convert:
+                    errmsg += " This is likely because the \"cols\" were specified as a list and not a dictionary, meaning that in dictionary conversion I've created columns where the function attributes match the column title."
                 log.error(errmsg)
                 raise ValueError(errmsg)
         else:

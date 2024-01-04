@@ -616,21 +616,38 @@ def valid_details():
         'cols': {
             'col1': 'familyName',
             'col2': 'givenName',
-            'col3': 'familyName',
+            'col3': 'address',
         }
+    }
+
+@pytest.fixture
+def valid_details_list():
+    # Return the cols as a list instead of a dict
+    return {
+        'nrows': 5,
+        'cols' : ['familyName', 'givenName', 'address']
     }
 
 @pytest.fixture
 def mock_generate(mocker):
     mocker.patch.object(ndlpy.util.fake.Generate, 'familyName', return_value='Ogedegbe')
     mocker.patch.object(ndlpy.util.fake.Generate, 'givenName', return_value='Henrietta')
-    
+    mocker.patch.object(ndlpy.util.fake.Generate, 'address', return_value='123 Main St')
+
+# test for read_fake with cols input as list
+def test_read_fake_with_valid_list_input(mock_generate, valid_details_list):
+    df = read_fake(valid_details_list)
+    assert isinstance(df, pd.DataFrame)
+    assert df.shape == (5, 3)  # 5 rows and 3 columns
+    assert all(col in df.columns for col in valid_details_list['cols'])
+
+# test for read_fake with cols input as dict
 def test_read_fake_with_valid_input(mock_generate, valid_details):
     df = read_fake(valid_details)
     assert isinstance(df, pd.DataFrame)
     assert df.shape == (5, 3)  # 5 rows and 3 columns
     assert all(col in df.columns for col in valid_details['cols'])
-
+    
 def test_read_fake_with_non_dict_input(mock_generate):
     with pytest.raises(ValueError):
         read_fake(['not', 'a', 'dict'])

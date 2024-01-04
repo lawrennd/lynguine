@@ -684,11 +684,30 @@ class Generate:
     @classmethod
     def givenName(cls):
         return person.first_name()
+    @classmethod
     def familyName(cls):
         return person.surname()
+    @classmethod
     def prefix(cls):
         return random.choice(prefices)
+    @classmethod
     def suffix(cls):
         return random.choice(suffices)
+    @classmethod
     def name(cls):
         return person.name()
+    @classmethod
+    def city(cls):
+        return addess.city()
+    @classmethod
+    def state(cls):
+        return addess.state()
+    @classmethod
+    def address(cls):
+        return addess.address()
+    @classmethod
+    def email(cls):
+        return person.email()
+    @classmethod
+    def date(cls):
+        return datetime.datetime()
