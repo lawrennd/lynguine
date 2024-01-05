@@ -495,7 +495,7 @@ class DataObject:
                     # Use join from the item if it's there.
                     
                     join = settings[item] if "how" in settings[item] else default_joins
-                newdf, details = access.io.read_data(item)
+                newdf, details = self._finalize_df(access.io.read_data(item))
                 colspecs = key
                 jdf = cls.__class__(newdf, colspecs=colspecs)
                 cdf = cdf.join(jdf, how=default_joins)

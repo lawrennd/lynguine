@@ -8,6 +8,8 @@ import wget
 import ndlpy.config.context as context
 from ndlpy.log import Logger
 
+from keyword import iskeyword
+
 cntxt = context.Context(name="ndlpy")
 log = Logger(
     name=__name__,
@@ -180,16 +182,45 @@ def remove_nan(dictionary):
                 del dictionary2[key]
     return dictionary2
 
-
-def to_valid_var(variable):
+def is_valid_var(variable):
     """
-    Replace invalid variable name characters with underscore
+    Test if a variable name is valid.
 
-    :param variable: The variable name to be converted.
+    :param variable: The variable name to be tested.
     :type variable: str
-    :return: The variable name converted to a valid variable name.
+    :return: True if the variable name is valid, False otherwise.
+    :rtype: bool
     """
-    return re.sub(r"\W|^(?=\d)", "_", variable.lower())
+    if not isinstance(variable, str):
+        return False
+    return variable.isidentifier() and not iskeyword(variable)
+
+    return re.match(r"^[a-zA-Z_][a-zA-Z0-9_]*$", variable) is not None
+
+def to_valid_var(variable: int | float | str) -> str:
+    """
+    Convert a given input (scalar or string) to a valid Python variable name.
+    Replaces invalid characters with underscores and ensures the name is not a Python keyword.
+
+    :param variable: The input to be converted to a valid variable name.
+    :type variable: int, float, or str
+    :return: The input converted to a valid variable name.
+    """
+    if not isinstance(variable, (int, float, str)):
+        raise TypeError("Input must be an integer, float, or string")
+    
+    if isinstance(variable, (int, float)):
+        var_name = str(variable).replace("-", "neg").replace(".", "_")
+        if var_name[0].isdigit():
+            var_name = "n" + var_name
+    else:
+        var_name = re.sub(r"\W|^(?=\d)", "_", variable.lower())
+
+    # Append underscore if the result is a Python keyword
+    if iskeyword(var_name) or len(var_name) == 0:
+        var_name += "_"
+
+    return var_name
 
 
 def to_camel_case(text):
