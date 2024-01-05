@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 
+from .. import access
 from ..log import Logger
 from ..config.context import Context
 
@@ -507,6 +508,56 @@ class DataObject:
         """
         return self.to_pandas().to_string(*args, **kwargs)
 
+    types =  {
+            # Input types are standard DataFrames but are not mutable.
+            "input": [
+                "input",
+                "allocation", # Original referia style 
+                "additional", # Original referia style supplementary info
+                "data",
+                "constants",
+                "global_consts",
+            ],
+            # Output types are standard DataFrames that are mutable and
+            # intended to be recorded once operations on the
+            # CustomDataFrame are complete.
+            "output": [
+                "output",
+                "writedata",
+                "writeseries",
+                "parameters",
+                "scores",
+                "globals",
+            ],
+            # Parameter types do not have an index, they are globally valid.
+            "parameters": [
+                "constants",
+                "global_consts",
+                "parameters",
+                "globals",
+                "parameter_cache",
+                "global_cache",
+            ],
+            # Cache types are standard DataFrames that are mutable and
+            # intended to be used for intermediate calculations.
+            "cache": [
+                "cache",
+                "series_cache",
+                "parameter_cache",
+                "global_cache",
+            ],
+            # Series types are standard DataFrames that are mutable and
+            # may have multiple rows with the same index.
+            "series": [
+                "writeseries",
+                "series_cache",
+            ],
+        }
+    @classmethod
+    @property
+    def valid_data_types(cls):
+        return set([item for key in cls.types for item in cls.types[key]])
+
     @classmethod
     def from_csv(cls, *args, **kwargs):
         """
@@ -540,24 +591,53 @@ class DataObject:
         """
 
         default_joins = "outer"
-        data_keys = uniq([item for key in self.types for item in self.types[key]])
-        cdf = pd.DataFrame(dtype="object")
+        cdf = cls({})
+        found_data = False
         for key in settings:
             # Check if the settings key is a valid data key
-            if key in data_entries:
+            if key in cls.valid_data_types:
+                found_data = True
                 items = settings[key]
                 if not isinstance(items, list):
                     items = [items]
                 # Iterate through adding the entries.
                 for item in items:
                     # Use join from the item if it's there.
-                    
-                    join = settings[item] if "how" in settings[item] else default_joins
-                newdf, details = self._finalize_df(access.io.read_data(item))
-                colspecs = key
-                jdf = cls.__class__(newdf, colspecs=colspecs)
-                cdf = cdf.join(jdf, how=default_joins)
-        return df
+                    join = item["how"] if "how" in item else default_joins
+                    newdf = cdf._finalize_df(*access.io.read_data(item))
+                    if key in cls.types["parameters"]:
+                        if key not in cdf._d:
+                            # Set the series to the new data.
+                            if cdf.empty:
+                                cdf = cls(data=newdf, colspecs={key: list(newdf.columns)})
+                            else:
+                                cdf._d[key] = newdf.iloc[0]
+                                cdf._colspecs[key] = list(cdf._d[key].index)
+                            
+                        else:
+                            # Add augment the series with the new data.
+                            if cdf.empty:
+                                cdf = cls(data=newdf, colspecs={key: list(newdf.columns)})
+                            else:
+                                cdf._d[key] = pd.concat([cdf._d[key], newdf.iloc[0]])
+                                cdf._colspecs[key] = list(cdf._d[key].index)
+                    else:
+                        # Add the new data to the dataframe.
+                        if key not in cdf._d:
+                            if cdf.empty:
+                                cdf = cls(data=newdf, colspecs={key: list(newdf.columns)})
+                            else:
+                                cdf._d[key] = newdf
+                                cdf._colspecs[key] = list(cdf._d[key].columns)
+                        else:
+                            cdf._d[key] = cdf._d[key].join(newdf, how=join)
+                            cdf._colspecs[key] = list(cdf._d[key].index)
+        if not found_data:
+            errmsg = f'No valid data found in settings. Data fields must be one of "{", ".join(cls.valid_data_types)}"'
+            log.error(errmsg)
+            raise ValueError(errmsg)
+        else:
+            return cdf
     
     def sort_values(self, *args, inplace=False, **kwargs):
         """
@@ -983,6 +1063,13 @@ class DataObject:
             return pd.Index([])
 
     @property
+    def empty(self):
+        """
+        Return True if DataFrame is empty.
+        """
+        return self.to_pandas().empty
+    
+    @property
     def values(self):
         """
         Return the values of the DataFrame as a NumPy array.
@@ -1337,7 +1424,6 @@ class DataObject:
             right, merged_df, on=on, suffixes=suffixes
         )
 
-
         return self.__class__(merged_df, colspecs=colspecs)
 
     def join(
@@ -1388,10 +1474,13 @@ class DataObject:
             other, join_df, on=on, suffixes=(lsuffix, rsuffix),
         )
 
-
         return self.__class__(join_df, colspecs=colspecs)
-    
 
+    def _finalize_df(self, data, details):
+        """
+        This function is used to attend to any modifications in the details dict to finalize the data frame. It fixes up the index, adds columns, sets the right data type etc."""
+        return data
+    
 class CustomDataFrame(DataObject):
     types = {
         # Input types are standard DataFrames but are not mutable.
@@ -1555,8 +1644,7 @@ class CustomDataFrame(DataObject):
 
             :param key: A tuple containing the row and column label.
             :return: The element at the specified row and column location.
-            :raises KeyError: If the specified key is not a tuple or if it does not correspond
-                              to a valid row and column label.
+            :raises KeyError: If the specified key is not a tuple or if it does not correspond to a valid row and column label.
             """
             if not isinstance(key, tuple) or len(key) != 2:
                 raise KeyError("Key must be a tuple of (row_label, col_label)")
@@ -1647,8 +1735,19 @@ class CustomDataFrame(DataObject):
                 row_key = key
                 col_key = slice(None)  # Equivalent to selecting all columns
 
-            result_df = pd.DataFrame()
             colspecs = {}
+            # check if index is a datetime index.
+            if isinstance(self._data_object.index, pd.DatetimeIndex):
+                # if so, allow pandas to handle the slicing.
+                ind = self._data_object.to_pandas().loc[row_key].index
+                result_df = pd.DataFrame(index=ind, data=None).astype("object")
+            elif isinstance(row_key, (list, tuple, pd.Index)):
+                # if not, check if the row_key is a list of indices.
+                # if so, create a new dataframe with the index of the row_key.
+                result_df = pd.DataFrame(index=row_key, data=None).astype("object")
+            else:
+                # create a data series to handle the result with index.name given by row
+                result_df = pd.Series(name=row_key, data=None).astype("object")
 
             for typ, data in self._data_object._d.items():
                 if data.empty:
@@ -1665,13 +1764,9 @@ class CustomDataFrame(DataObject):
                         if isinstance(col_key, (list, tuple, pd.Index))
                         else data.index
                     )
-                    if len(result_df.index) == 0:  # There are no rows in this df
-                        ind = data.name if data.name is not None else 0
-                        for col in selected_cols:
-                            result_df.at[ind, col] = data[col]
-                    else:
-                        for col in selected_cols:
-                            result_df = result_df.assign(**{col: data[col]})
+                    for col in selected_cols:
+                        result_df[col] = data[col]
+                    
                     colspecs[typ] = selected_cols
                 else:
                     # Handle regular data
@@ -1682,8 +1777,12 @@ class CustomDataFrame(DataObject):
                     )
                     selected_data = data.loc[row_key, filtered_cols]
                     if isinstance(selected_data, pd.Series):
-                        selected_data = selected_data.to_frame().T
-                    result_df = result_df.join(selected_data, how="outer")
+                        if not isinstance(result_df, pd.Series):
+                            raise ValueError(f"The selected data has a row key \"{row_key}\" that has induced a series, but the result_df is of type \"{type(result_df)}\"")
+                        # Concatenate the two data series
+                        result_df = pd.concat([result_df, selected_data])
+                    else:
+                        result_df = result_df.join(selected_data, how="outer")
                     colspecs[typ] = filtered_cols
 
             # Find empty colspecs
@@ -1906,7 +2005,7 @@ class CustomDataFrame(DataObject):
             if typ in self.types["parameters"]:
                 if df1 is None:
                     ind = data.name if data.name is not None else 0
-                    df1 = pd.DataFrame(index=[ind], columns=self.colspecs[typ])
+                    df1 = pd.DataFrame(index=self.index)
                 df1 = df1.assign(**data)
             else:
                 if df1 is None:
@@ -1938,6 +2037,57 @@ class CustomDataFrame(DataObject):
         return self.from_pandas(self.to_pandas().filter(*args, **kwargs))
 
 
+    def _finalize_df(self, df, details, strict_columns=False):
+        """
+        This function augments the raw data and sets the index of the data frame.
+        :param df: The data frame to be augmented.
+        :param details: The details of the data frame.
+        :param strict_columns: Whether to enforce strict columns.
+        :return: The augmented data frame.
+        """
+    
+        if "index" not in details:
+            errmsg = "Missing index field in data frame specification in _referia.yml"
+            self._log.error(errmsg)
+            raise ValueError(errmsg)
+
+        if not isinstance(details["index"], str):
+            errmsg = f'"index" should be a string in details.'
+            self._log.error(errmsg)
+            raise ValueError(errmsg)
+
+        index_column_name = details["index"]
+        
+        if "columns" in details:
+            # Make sure the listed columns are present.
+            for column in details["columns"]:
+                if column not in df.columns:
+                    df[column] = None
+            if strict_columns:
+                if "columns" not in details:
+                    errmsg = f"You can't have strict_columns set to True and not list the columns in the details structure."
+                    self._log.error(errmsg)
+                    raise ValueError(errmsg)
+                    
+                for column in df.columns:
+                    if column not in details["columns"] and column!=index_column_name:
+                        errmsg = f"DataFrame contains column: \"{column}\" which is not in the columns list of the specification and strict_columns is set to True."
+                        self._log.error(errmsg)
+                        raise ValueError(errmsg)
+                    
+        if "selector" in details:
+            if isinstance(details["selector"], str):
+                self.set_selector(details["selector"])
+            else:
+                errmsg = f'"selector" should be a string in details.'
+                self._log.error(errmsg)
+                raise ValueError(errmsg)
+            
+        if index_column_name in df.columns:
+            df.set_index(df[index_column_name], inplace=True)
+            del df[index_column_name]            
+                    
+        return df
 
 def concat(objs, *args, **kwargs):
     """
@@ -1965,7 +2115,6 @@ def concat(objs, *args, **kwargs):
 
     # Handle types - assuming a consistent approach is defined
     # This needs to be decided based on how types are to be handled
-    types = objs[0].types
 
     return objs[0].__class__(df, colspecs=colspecs)
 

@@ -200,7 +200,16 @@ class _HConfig(context._Config):
 
         :return: An iterator over the keys.
         """
-        return self.__iter__()
+        # First yield keys from the current settings
+        for key in self._data.keys():
+            yield key
+            
+        # Then, if a parent exists, yield keys from the parent
+        # that are not already in the current settings
+        if self._parent is not None:
+            for key in self._parent:
+                if key not in self._data:
+                    yield key
 
 
 class Settings(_HConfig):

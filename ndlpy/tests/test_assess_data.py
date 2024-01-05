@@ -26,12 +26,19 @@ def create_series_dataframe():
     return ndlpy.assess.data.CustomDataFrame(data, colspecs=colspecs)
 
 
-# Basic Functionality
+# test creation of a dataframe
 def test_dataframe_creation():
     df = create_test_dataframe()
     assert isinstance(df, ndlpy.assess.data.CustomDataFrame)
     assert df.shape == (3, 2)
 
+# test creation of an empty dataframe
+def test_empty_dataframe_creation():
+    df = ndlpy.assess.data.CustomDataFrame({})
+    assert isinstance(df, ndlpy.assess.data.CustomDataFrame)
+    assert df.empty
+
+# Test column access to data frame
 def test_column_access():
     df = create_test_dataframe()
     assert all(df['A'] == pd.Series(data=[1, 2, 3], index=df.index, name="A"))
@@ -73,7 +80,57 @@ def test_join():
     result = df1.join(df2, lsuffix="_1", rsuffix="_2")
     assert result.equals(ndlpy.assess.data.CustomDataFrame({'key_1': ['K0', 'K1', 'K2'], 'A_1': ['A0', 'A1', 'A2'], 'key_2': ['K0', 'K1', 'K2'], 'A_2': ['A0', 'A1', 'A2'], 'B': ['B0', 'B1', 'B2']}))
     diff = DeepDiff(result.colspecs, {"input" : ["key_1", "A_1"], "output" : ["key_2", "A_2", "B"]})
-    assert not diff, "The column specifications don't match in merge"
+    assert not diff, "The column specifications don't match in join"
+
+
+@pytest.fixture
+def valid_local_settings():
+    # Return a sample settings object that is valid
+    return {
+        "globals":
+        {
+            "type" : "local",
+            "index" : "index",
+            "data" : [
+            {
+                'index': 'indexValue',
+                'key1': 'value1',
+                'key2': 'value2',
+                'key3': 'value3',
+            }],
+            "select" : 'indexValue'
+        }
+    }
+
+# test from_settings with a valid setting that specifies local data.
+def test_from_settings_with_valid_settings(valid_local_settings):
+    cdf = ndlpy.assess.data.CustomDataFrame.from_settings(valid_local_settings)
+    assert isinstance(cdf, ndlpy.assess.data.CustomDataFrame)
+    assert cdf == ndlpy.assess.data.CustomDataFrame(pd.DataFrame({'key1': 'value1', 'key2' : 'value2', 'key3': 'value3'}, index=['indexValue']))
+    assert cdf.colspecs == {"globals" : ["key1", "key2", "key3"]}
+
+def test_from_settings_with_invalid_type():
+    with pytest.raises(ValueError):
+        ndlpy.assess.data.CustomDataFrame.from_settings("not-a-dictionary")
+
+def test_from_settings_with_missing_keys():
+    incomplete_settings = {
+        # Settings with missing keys
+        "key1": "value1",
+    }
+    with pytest.raises(ValueError):
+        ndlpy.assess.data.CustomDataFrame.from_settings(incomplete_settings)
+
+def test_from_settings_with_empty_settings():
+    cdf = ndlpy.assess.data.CustomDataFrame.from_settings({"globals":
+                                                           {"type" : "local",
+                                                            "data" : {},
+                                                            "index" : "index",
+                                                            "select" : 'indexValue'}})
+    # Assert the result is as expected (empty dataframe, etc.)
+    assert isinstance(cdf, ndlpy.assess.data.CustomDataFrame)
+    assert cdf.empty
+
     
 # Grouping and Sorting
 def test_groupby_sum():
@@ -141,7 +198,6 @@ def test_dtypes_with_no_subframes():
 def test_invalid_data_creation():
     with pytest.raises(ValueError):
         df = ndlpy.assess.data.CustomDataFrame({'A': [1, 2], 'B': [3, 4, 5]})
-
 
 # Test get_selectors()
 def test_get_selectors():
