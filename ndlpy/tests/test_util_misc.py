@@ -165,8 +165,8 @@ def test_to_valid_var(variable, expected):
 def test_scalars_to_valid_var():
     assert to_valid_var(123) == "n123"
     assert to_valid_var(-123) == "neg123"
-    assert to_valid_var(12.34) == "n12_34"
-    assert to_valid_var(-12.34) == "neg12_34"
+    assert to_valid_var(12.34) == "n12p34"
+    assert to_valid_var(-12.34) == "neg12p34"
 
 def test_string_to_valid_var():
     assert to_valid_var("validName") == "validname"
@@ -190,10 +190,35 @@ def test_unicode_strings():
     assert to_valid_var("переменная") == "переменная"  # Cyrillic characters
 
 # Testing to_camel_case
+def test_camel_capitalize():
+    assert camel_capitalize("test") == "Test"
+    assert camel_capitalize("TEST") == "TEST"  # Uppercase stays uppercase
+    assert camel_capitalize("tESt") == "Test"
+    assert camel_capitalize("") == ""  # Empty string handling
+
+def test_to_camel_case_with_strings():
+    assert to_camel_case("hello world") == "helloWorld"
+    assert to_camel_case("hello-world") == "helloWorld"
+    assert to_camel_case("hello_world") == "helloWorld"
+    assert to_camel_case("Hello world") == "helloWorld"
+    assert to_camel_case("hello/World") == "helloOrWorld"
+    assert to_camel_case("hello@world") == "helloAtWorld"
+    assert to_camel_case("HELLO WORLD") == "helloWORLD"  # Preserving uppercase words
+
+def test_to_camel_case_with_scalars():
+    assert to_camel_case(123) == "n123"
+    assert to_camel_case(-123.45) == "neg123p45"
+
+def test_to_camel_case_with_edge_cases():
+    with pytest.raises(ValueError):
+        to_camel_case("")
+    with pytest.raises(TypeError):
+        to_camel_case(["not", "a", "string"])
+
 @pytest.mark.parametrize("text, expected", [
     ("hello world", "helloWorld"),
-    ("HELLO WORLD", "HELLOWORLD"),
-    ("Camel case", "CamelCase"),
+    ("HELLO WORLD", "helloWORLD"),
+    ("Camel case", "camelCase"),
     ("with/slash", "withOrSlash"),
     ("with@symbol", "withAtSymbol"),
     ("with-hyphen", "withHyphen"),
