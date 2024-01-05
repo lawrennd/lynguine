@@ -218,6 +218,7 @@ def to_valid_var(variable: int | float | str) -> str:
 
     # Append underscore if the result is a Python keyword
     if iskeyword(var_name) or len(var_name) == 0:
+        log.warning(f"Variable name '{var_name}' is a Python keyword or empty. Appending underscore.")
         var_name += "_"
 
     return var_name
