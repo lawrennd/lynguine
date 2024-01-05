@@ -1111,7 +1111,7 @@ def read_local(details):
     # Create data frame from details
     
     try:
-        df = pd.DataFrame(**details)
+        df = pd.DataFrame(data=details["data"])
     except KeyError as e:
         errmsg = f"Could not create data frame from details specified in \"local\" entry. Missing key {e}."
         log.error(errmsg)
@@ -1121,10 +1121,6 @@ def read_local(details):
         log.error(errmsg)
         raise ValueError(errmsg)
 
-    # Optionally set index name if not already set
-    if df.index.name is None:
-        log.debug('Index name not set in data frame. Setting to "index".')
-        df.index.name = "index"
 
     return df
 

@@ -1403,6 +1403,8 @@ class DataObject:
         return self.__class__(join_df, colspecs=colspecs)
 
     def _finalize_df(self, data, details):
+        """
+        This function is used to attend to any modifications in the details dict to finalize the data frame. It fixes up the index, adds columns, sets the right data type etc."""
         return data
     
 class CustomDataFrame(DataObject):

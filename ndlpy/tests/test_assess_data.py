@@ -91,13 +91,13 @@ def valid_local_settings():
         {
             "type" : "local",
             "index" : "index",
-            "data" :
+            "data" : [
             {
                 'index': 'indexValue',
                 'key1': 'value1',
                 'key2': 'value2',
                 'key3': 'value3',
-            },
+            }],
             "select" : 'indexValue'
         }
     }
