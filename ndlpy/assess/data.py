@@ -27,7 +27,7 @@ class Accessor:
 
 class DataObject:
     def __init__(
-        self, data=None, colspecs=None, index=None, column=None, selector=None
+            self, data=None, colspecs=None, index=None, column=None, selector=None, subindex=None
     ):
         self.at = self._AtAccessor(self)
         self.iloc = self._IlocAccessor(self)
@@ -51,10 +51,44 @@ class DataObject:
     def set_subindex(self, val):
         raise NotImplementedError("This is a base class")
 
-    def get_subindices(self):
-        raise NotImplementedError("This is a base class")
 
-    def get_index(self):
+    def get_subseries(self) -> pd.DataFrame:
+        """
+        Get the subseries that is the focus for the DataFrame.
+
+        :return: The subseries that is the focus for the DataFrame.
+        """
+        # The series types are stored in cls.types["series"]
+        # Extract DataFrames from that class and merge them.
+        series = None
+        for typ in self.types["series"]:
+            if typ in self.colspecs:
+                data = self[self.colspecs[typ]]
+                if series is None:
+                    series = data
+                else:
+                    series = series.join(data, how="outer")
+
+        # Use the in focus index to choose which part of the series is returned.
+        return series[series.index.isin([self.get_index()])]
+    
+
+    def get_subindices(self) -> pd.Index:
+        """
+        Get the subindices that are the focus for the DataFrame.
+
+        :return: The subindices that are the focus for the DataFrame.
+        """
+        
+        if self._selector is None:
+            return []
+        try:
+            subseries = self.get_subseries()[self._selector]
+            return pd.Index(subseries.values, name=self._selector, dtype="object")
+        except KeyError as err:
+            raise KeyError(f"Could not find index \"{err}\" in the subseries when using it as a selector.")
+
+    def get_index(self) -> int:
         """
         Get the index that is the focus for the DataFrame.
 
@@ -62,7 +96,7 @@ class DataObject:
         """
         return self._index
 
-    def set_index(self, index):
+    def set_index(self, index : int) -> None:
         """
         Set the index to be the focus for the DataFrame.
 
@@ -125,6 +159,30 @@ class DataObject:
         else:
             raise KeyError("Invalid selector set.")
 
+    def get_subindex(self) -> int:
+        """
+        Get the subindex that is the focus for the DataFrame.
+        The subindex is the index used to disambiguate a series in
+        the focus.
+
+        :return: The subindex that is the focus for the DataFrame.
+        """
+        return self._subindex
+
+    def set_subindex(self, index : int):
+        """
+        Set the subindex that is the focus for the DataFrame.
+
+        :param index: The index to set the subindex to.
+        :raise KeyError: If the index is not in the DataFrame.
+        """
+        if index is None:
+            self._subindex = None
+        elif index in self.index:
+            self._subindex = index
+        else:
+            raise KeyError("Invalid subindex set.")
+        
     def get_selectors(self):
         """
         Return valid selectors, these are columns that are present in the type "series"
@@ -837,6 +895,23 @@ class DataObject:
         )
 
     @property
+    def dtypes(self) -> pd.Series:
+        """
+        Property to return the data types of the columns across all sub-DataFrames.
+        :return: A Series containing the data types of the columns.
+        """
+        all_dtypes = {}
+        for df_name, df in self._d.items():
+            if df_name in self.types["parameters"]:
+                # the data should be a series
+                for col in df.index:
+                    all_dtypes[col] = df.dtype
+            else:
+                for col in df.dtypes.index:
+                    all_dtypes[col] = df.dtypes[col]
+        return pd.Series(all_dtypes)
+    
+    @property
     def log(self):
         """
         Access the system log.
@@ -1361,7 +1436,7 @@ class CustomDataFrame(DataObject):
         ],
     }
     def __init__(
-        self, data, colspecs=None, index=None, column=None, selector=None
+            self, data, colspecs=None, index=None, column=None, selector=None, subindex=None
     ):
         if data is None:
             data = {}
@@ -1440,12 +1515,24 @@ class CustomDataFrame(DataObject):
         if self._selector is None:
             selectors = self.get_selectors()
             if len(selectors) > 0:
-                self._selector = self.columns[0]
+                self._selector = selectors[0]
         elif selector not in self.get_selectors():
             raise ValueError(
                 f"Provided selector '{selector}' not found in CustomDataFrame."
             )
 
+        self._subindex = subindex
+        # Set subindex if not specified
+        if self._subindex is None:
+            subindices = self.get_subindices()
+            if len(subindices) > 0:
+                self._subindex = self.columns[0]
+        elif subindex not in self.get_subindices():
+            raise ValueError(
+                f"Provided subindex '{subindex}' not found in CustomDataFrame."
+            )
+        
+                
         self.at = self._AtAccessor(self)
         self.loc = self._LocAccessor(self)
         self.iloc = self._ILocAccessor(self)
@@ -1800,7 +1887,7 @@ class CustomDataFrame(DataObject):
                 else:
                     # If it's not a series type make sure it's deduplicated.
                     if d.index.has_duplicates:
-                        self._log.debug(
+                        log.debug(
                             'Removing duplicated elements from "{typ}" loaded data.'
                         )
                         self._d[typ] = d[~d.index.duplicated(keep="first")]

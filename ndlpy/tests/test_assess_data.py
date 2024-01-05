@@ -109,6 +109,34 @@ def test_pivot_table():
     table = df.pivot_table(values='D', index=['A', 'B'], columns=['C'])
     assert isinstance(table, ndlpy.assess.data.CustomDataFrame)
 
+def create_sample_dataframes():
+    return {
+        'df1': pd.DataFrame({'A': [1, 2, 3], 'B': ['x', 'y', 'z']}),
+        'df2': pd.DataFrame({'B': [4.0, 5.0, 6.0], 'C': [True, False, True]})
+    }
+
+def test_dtypes_with_consistent_columns():
+    data = create_sample_dataframes()
+    custom_df = ndlpy.assess.data.CustomDataFrame(data["df1"])
+    expected_dtypes = pd.Series({'A': np.dtype('int64'), 'B': np.dtype('object')})
+    diff = DeepDiff(custom_df.dtypes, expected_dtypes)
+    assert not diff, "The df dtypes don't match expectations"
+
+    custom_df = ndlpy.assess.data.CustomDataFrame(data["df2"])
+    expected_dtypes = pd.Series({'B': np.dtype('float64'), 'C': np.dtype('bool')})
+    diff = DeepDiff(custom_df.dtypes, expected_dtypes)
+    assert not diff, "The df dtypes don't match expectations"
+
+
+def test_dtypes_with_empty_dataframe():
+    data = {'df1': pd.DataFrame()}
+    custom_df = ndlpy.assess.data.CustomDataFrame(data)
+    assert custom_df.dtypes.empty
+
+def test_dtypes_with_no_subframes():
+    custom_df = ndlpy.assess.data.CustomDataFrame({})
+    assert custom_df.dtypes.empty
+    
 # Edge Cases and Error Handling
 def test_invalid_data_creation():
     with pytest.raises(ValueError):
