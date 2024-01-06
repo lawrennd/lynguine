@@ -4,7 +4,7 @@ import numpy as np
 from . import context
 from ..log import Logger
 
-from ..access.io import read_yaml_file
+from ndlpy.access.io import read_yaml_file
 
 ctxt = context.Context()
 log = Logger(
@@ -91,9 +91,9 @@ class _HConfig(context._Config):
         :return: The number of keys.
         :rtype: int
         """
-        # This isn't quite right as should filter out parents that in self._data
+        # TODO: This isn't quite right as should filter out parents that in self._data
         if self._parent is None:
-            return len(self._data())
+            return len(self._data)
         return len(list(self.__iter__()))
 
     def __contains__(self, key):
@@ -217,47 +217,19 @@ class Interface(_HConfig):
     A interface object that loads in local interface files.
     """
 
-    def __init__(self, data=None, user_file=None, directory=".", field=None):
+    def __init__(self, data=None):
         """
         Initialise the interface object.
 
-        :param user_file: The name of the user file to be loaded in.
-        :type user_file: str
-        :param directory: The directory to look for the user file in.
-        :type directory: str
-        :param field: The field to be loaded in.
-        :type field: str
+        :param data: 
         :return: None
         """
 
-        self._parent = None
-        if data is not None:
-            self._data = data
-            return
-        if user_file is None:
-            ufile = "_" + __name__ + ".yml"
-        else:
-            ufile = user_file
-        if type(user_file) is list:
-            for ufile in user_file:
-                if os.path.exists(os.path.join(os.path.expandvars(directory), ufile)):
-                    break
-        self._user_file = ufile
-        self._directory = directory
-        fname = os.path.join(os.path.expandvars(directory), ufile)
-        self._filename = fname
-        self._data = {}
-        if os.path.exists(self._filename):
-            data = read_yaml_file(self._filename)
-            if field is None:
-                self._data = data
-            elif field in data:
-                self._data = data[field]
-            else:
-                raise ValueError(
-                    f'Field "{field}" specified but not found in file "{fname}"'
-                )
+        if data is None:
+            data = {}
 
+        self._data = data
+        self._parent = None
         self._inputs = []
         self._output = []
         self._parameters = []
@@ -266,7 +238,7 @@ class Interface(_HConfig):
         if "inherit" in self._data:
             if "directory" not in self._data["inherit"]:
                 raise ValueError(
-                    f"Inherit specified in settings file {user_file} in directory {directory} but no directory to inherit from is specified."
+                    f"Inherit specified in interface file {user_file} in directory {directory} but no directory to inherit from is specified."
                 )
             else:
                 directory = self._data["inherit"]["directory"]
@@ -274,18 +246,18 @@ class Interface(_HConfig):
                     filename = user_file
                 else:
                     filename = self._data["inherit"]["filename"]
-                self._parent = Interface(user_file=filename, directory=directory)
+                self._parent = Interface.from_file(user_file=filename, directory=directory)
                 self._parent._writable = False
                 if "writable" in self._data and self._data["inherit"]["writable"]:
                     self._parent._writable = True
-        if self._data == {}:
-            log.warning(f'No configuration file found at "{user_file}".')
 
+        
         self._expand_vars()
         self._restructure()
         if self._parent is not None:
             self._process_parent()
-
+        
+        
     def _expand_vars(self):
         """
         Expand the environment variables in the configuration.
@@ -322,3 +294,43 @@ class Interface(_HConfig):
         Process the parent interface file.
         """
         del self._data["inherit"]
+
+
+    @classmethod
+    def from_file(cls, user_file=None, directory=".", field=None):
+        """
+        Construct an Interface from the details in a file.
+
+        :param user_file: The name of the user file to be loaded in.
+        :type user_file: str
+        :param directory: The directory to look for the user file in.
+        :type directory: str
+        :param field: The field to be loaded in.
+        :type field: str
+        
+        """
+        if user_file is None:
+            ufile = "_" + __name__ + ".yml"
+        else:
+            ufile = user_file
+        if type(user_file) is list:
+            for ufile in user_file:
+                if os.path.exists(os.path.join(os.path.expandvars(directory), ufile)):
+                    break
+        fname = os.path.join(os.path.expandvars(directory), ufile)
+        data = {}
+        if os.path.exists(fname):
+            data = read_yaml_file(fname)
+            if field is not None:
+                if field in data:
+                    data = data[field]
+                else:
+                    raise ValueError(
+                        f'Field "{field}" specified but not found in file "{fname}"'
+                    )
+        if data == {}:
+            log.warning(f'No configuration file found at "{user_file}".')
+
+        return cls(data)
+
+        
