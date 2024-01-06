@@ -8,7 +8,7 @@ from ndlpy.util.misc import prompt_stdin
 from ..log import Logger
 from ..config.context import Context
 
-from ..config.settings import Settings
+from ..config.interface import Interface
 
 ctxt = Context()
 log = Logger(
@@ -23,13 +23,13 @@ class FileDownloader:
     A class for downloading data files from a url.
     """
 
-    def __init__(self, settings, data_resources, data_name):
+    def __init__(self, interface, data_resources, data_name):
         """
         Initialize the FileDownloader class.
         :param data_resources: The data resources dictionary.
         :param data_name: The name of the data to download.
         """
-        self.settings = settings
+        self.interface = interface
         self.data_resources = data_resources
         self.data_name = data_name
         if self.data_name not in self.data_resources:
@@ -37,23 +37,23 @@ class FileDownloader:
         self._dr = self.data_resources[self.data_name]
 
     @property
-    def settings(self):
+    def interface(self):
         """
-        Return the settings object.
-        :return: The settings object.
+        Return the interface object.
+        :return: The interface object.
         """
-        return self._settings
+        return self._interface
 
-    @settings.setter
-    def settings(self, value):
+    @interface.setter
+    def interface(self, value):
         """
-        Set the settings object.
-        :param value: The settings object.
+        Set the interface object.
+        :param value: The interface object.
         :return: None
         """
-        if not isinstance(value, Settings):
-            raise TypeError("settings must be of type Settings.")
-        self._settings = value
+        if not isinstance(value, Interface):
+            raise TypeError("interface must be of type Interface.")
+        self._interface = value
 
     @property
     def data_name(self):
@@ -112,10 +112,10 @@ class FileDownloader:
                 f"\nAfter downloading, the data will take up {self._dr['size']} bytes of space."
             )
 
-        storage_path = os.path.join(self.settings["default_cache_path"], self.data_name)
+        storage_path = os.path.join(self.interface["default_cache_path"], self.data_name)
         print(f"\nData will be stored in {storage_path}.\n")
 
-        if self.settings["overide_manual_authorize"]:
+        if self.interface["overide_manual_authorize"]:
             if self._dr.get("license"):
                 print(
                     "You have agreed to the following license:\n" + self._dr["license"]
@@ -268,16 +268,16 @@ class FileDownloader:
         save_name = filename if not suffix else filename + suffix
         self._download_url(
             url=full_url,
-            store_directory=self.settings["default_cache_path"],
+            store_directory=self.interface["default_cache_path"],
             save_name=save_name,
         )
 
 
 class GitDownloader(FileDownloader):
-    def __init__(self, settings, data_resources, data_name, git_url):
-        super().__init__(settings, data_resources, data_name)
+    def __init__(self, interface, data_resources, data_name, git_url):
+        super().__init__(interface, data_resources, data_name)
         self._git_url = git_url
-        self._repo_path = self.settings["default_cache_path"]
+        self._repo_path = self.interface["default_cache_path"]
 
     def _process_data(self):
         """
