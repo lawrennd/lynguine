@@ -6,5 +6,5 @@ from .util import files
 from .util import html
 from . import log
 from .config import context
-from .config import settings
+from .config import interface
 from .access import io
