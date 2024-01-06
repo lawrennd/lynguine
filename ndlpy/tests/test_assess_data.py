@@ -87,7 +87,7 @@ def test_join():
 def valid_local_settings():
     # Return a sample interface object that is valid
     return {
-        "globals":
+        "input":
         {
             "type" : "local",
             "index" : "index",
@@ -107,7 +107,7 @@ def test_from_interface_with_valid_settings(valid_local_settings):
     cdf = ndlpy.assess.data.CustomDataFrame.from_interface(valid_local_settings)
     assert isinstance(cdf, ndlpy.assess.data.CustomDataFrame)
     assert cdf == ndlpy.assess.data.CustomDataFrame(pd.DataFrame({'key1': 'value1', 'key2' : 'value2', 'key3': 'value3'}, index=['indexValue']))
-    assert cdf.colspecs == {"globals" : ["key1", "key2", "key3"]}
+    assert cdf.colspecs == {"input" : ["key1", "key2", "key3"]}
 
 def test_from_interface_with_invalid_type():
     with pytest.raises(ValueError):

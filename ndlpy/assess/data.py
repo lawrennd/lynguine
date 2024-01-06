@@ -613,7 +613,6 @@ class DataObject:
                             else:
                                 cdf._d[key] = newdf.iloc[0]
                                 cdf._colspecs[key] = list(cdf._d[key].index)
-                            raise Exception
                         else:
                             # Add augment the series with the new data.
                             if cdf.empty:
@@ -1549,12 +1548,13 @@ class CustomDataFrame(DataObject):
                     data = pd.concat(data.values(), axis=1)
                     
             data = pd.DataFrame(data)
-        if isinstance(data, pd.Series):
-            data = data.to_frame(name=data.name).T
-        if isinstance(data, np.ndarray):
-            data = pd.DataFrame(data)
         if isinstance(data, list):
             data = pd.DataFrame(data)
+        if isinstance(data, np.ndarray):
+            data = pd.DataFrame(data)
+        if isinstance(data, pd.Series):
+            data = data.to_frame(name=data.name).T
+
 
 
         # If the colspecs isn't specified assume it's of "cache" type.
@@ -1582,7 +1582,6 @@ class CustomDataFrame(DataObject):
 
         self._colspecs = colspecs
         self._d = {}
-
         self._distribute_data(data)
 
         # Set index if not specified
@@ -1621,7 +1620,6 @@ class CustomDataFrame(DataObject):
                 f"Provided subindex '{subindex}' not found in CustomDataFrame."
             )
         
-                
         self.at = self._AtAccessor(self)
         self.loc = self._LocAccessor(self)
         self.iloc = self._ILocAccessor(self)
@@ -1975,6 +1973,7 @@ class CustomDataFrame(DataObject):
                 for col in cols:
                     if all(data[col] == data[col].iloc[0]):
                         self._d[typ][col] = data[col].iloc[0]
+                        
                     else:
                         raise ValueError(
                             f'Column "{col}" is specified as a parameter column and yet the values of the column are not all the same.'
