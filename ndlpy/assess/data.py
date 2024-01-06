@@ -556,7 +556,7 @@ class DataObject:
                             else:
                                 cdf._d[key] = newdf.iloc[0]
                                 cdf._colspecs[key] = list(cdf._d[key].index)
-                            
+                            raise Exception
                         else:
                             # Add augment the series with the new data.
                             if cdf.empty:
@@ -1918,7 +1918,7 @@ class CustomDataFrame(DataObject):
         for typ, data in self._d.items():
             if typ in self.types["parameters"]:
                 if df1 is None:
-                    ind = data.name if data.name is not None else 0
+                    ind = data.index.name if data.index.name is not None else 0
                     df1 = pd.DataFrame(index=self.index)
                 df1 = df1.assign(**data)
             else:
@@ -1998,7 +1998,8 @@ class CustomDataFrame(DataObject):
                 raise ValueError(errmsg)
             
         if index_column_name in df.columns:
-            df.set_index(df[index_column_name], inplace=True)
+            index = pd.Index(df[index_column_name], name=index_column_name)
+            df.set_index(index, inplace=True)
             del df[index_column_name]            
                     
         return df
