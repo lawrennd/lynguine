@@ -200,26 +200,26 @@ class _HConfig(context._Config):
 
         :return: An iterator over the keys.
         """
-        # First yield keys from the current settings
+        # First yield keys from the current interface
         for key in self._data.keys():
             yield key
             
         # Then, if a parent exists, yield keys from the parent
-        # that are not already in the current settings
+        # that are not already in the current interface
         if self._parent is not None:
             for key in self._parent:
                 if key not in self._data:
                     yield key
 
 
-class Settings(_HConfig):
+class Interface(_HConfig):
     """
-    A settings object that loads in local settings files.
+    A interface object that loads in local interface files.
     """
 
     def __init__(self, data=None, user_file=None, directory=".", field=None):
         """
-        Initialise the settings object.
+        Initialise the interface object.
 
         :param user_file: The name of the user file to be loaded in.
         :type user_file: str
@@ -274,7 +274,7 @@ class Settings(_HConfig):
                     filename = user_file
                 else:
                     filename = self._data["inherit"]["filename"]
-                self._parent = Settings(user_file=filename, directory=directory)
+                self._parent = Interface(user_file=filename, directory=directory)
                 self._parent._writable = False
                 if "writable" in self._data and self._data["inherit"]["writable"]:
                     self._parent._writable = True
@@ -319,6 +319,6 @@ class Settings(_HConfig):
 
     def _process_parent(self):
         """
-        Process the parent settings file.
+        Process the parent interface file.
         """
         del self._data["inherit"]
