@@ -2,7 +2,7 @@ import pytest
 import os
 import pytest
 from unittest.mock import MagicMock
-from ndlpy.access.download import FileDownloader, GitDownloader, Settings
+from ndlpy.access.download import FileDownloader, GitDownloader, Interface
 
 class MockResponse:
     def __init__(self, data):
@@ -28,7 +28,7 @@ def monkeypatch_mock_urlopen(monkeypatch):
 
 @pytest.fixture
 def sample_settings(tmpdir):
-    return Settings(
+    return Interface(
         data={
             "default_cache_path" : tmpdir,
             "overide_manual_authorize" : False,

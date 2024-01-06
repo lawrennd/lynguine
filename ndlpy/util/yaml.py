@@ -1,4 +1,4 @@
-from ..config.settings import Settings
+from ..config.interface import Interface
 
 import re
 from ..access import io
@@ -42,9 +42,9 @@ def header_field(field, fields, user_file=["_config.yml"]):
     :type user_file: str
     """
     if field not in fields:
-        settings = Settings(user_file, directory=".")
-        if field in settings:
-            answer = settings[field]
+        interface = Interface(user_file, directory=".")
+        if field in interface:
+            answer = interface[field]
         else:
             raise FileFormatError(1, "Field not found in file or defaults.", field)
     else:

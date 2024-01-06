@@ -524,22 +524,22 @@ class DataObject:
         return cls.from_pandas(df=pd.DataFrame.from_dict(data, *args, **kwargs))
 
     @classmethod
-    def from_settings(cls, settings):
+    def from_interface(cls, interface):
         """
-        Construct a CustomDataFrame from a settings object.
+        Construct a CustomDataFrame from a interface object.
 
-        :param settings: Settings object.
+        :param interface: Interface object.
         :return: A CustomDataFrame object.
         """
 
         default_joins = "outer"
         cdf = cls({})
         found_data = False
-        for key in settings:
-            # Check if the settings key is a valid data key
+        for key in interface:
+            # Check if the interface key is a valid data key
             if key in cls.valid_data_types:
                 found_data = True
-                items = settings[key]
+                items = interface[key]
                 if not isinstance(items, list):
                     items = [items]
                 # Iterate through adding the entries.
@@ -576,7 +576,7 @@ class DataObject:
                             cdf._d[key] = cdf._d[key].join(newdf, how=join)
                             cdf._colspecs[key] = list(cdf._d[key].index)
         if not found_data:
-            errmsg = f'No valid data found in settings. Data fields must be one of "{", ".join(cls.valid_data_types)}"'
+            errmsg = f'No valid data found in interface. Data fields must be one of "{", ".join(cls.valid_data_types)}"'
             log.error(errmsg)
             raise ValueError(errmsg)
         else:

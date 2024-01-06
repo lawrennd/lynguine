@@ -1,12 +1,12 @@
 import os
 import re
 
-from ..config.settings import Settings
+from ..config.interface import Interface
 
-settings = Settings()
+interface = Interface()
 
 # Using list comprehensions and set for avoiding duplicate directories.
-TEX_DIRECTORIES = list(set(["."] + settings.get("bibinputs", "").split(":") + settings.get("texinputs", "").split(":")))
+TEX_DIRECTORIES = list(set(["."] + interface.get("bibinputs", "").split(":") + interface.get("texinputs", "").split(":")))
 if "TEXINPUTS" in os.environ:
     TEX_DIRECTORIES += os.environ["TEXINPUTS"].split(":")
 if "BIBINPUTS" in os.environ:

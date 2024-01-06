@@ -85,7 +85,7 @@ def test_join():
 
 @pytest.fixture
 def valid_local_settings():
-    # Return a sample settings object that is valid
+    # Return a sample interface object that is valid
     return {
         "globals":
         {
@@ -102,27 +102,27 @@ def valid_local_settings():
         }
     }
 
-# test from_settings with a valid setting that specifies local data.
-def test_from_settings_with_valid_settings(valid_local_settings):
-    cdf = ndlpy.assess.data.CustomDataFrame.from_settings(valid_local_settings)
+# test from_interface with a valid setting that specifies local data.
+def test_from_interface_with_valid_settings(valid_local_settings):
+    cdf = ndlpy.assess.data.CustomDataFrame.from_interface(valid_local_settings)
     assert isinstance(cdf, ndlpy.assess.data.CustomDataFrame)
     assert cdf == ndlpy.assess.data.CustomDataFrame(pd.DataFrame({'key1': 'value1', 'key2' : 'value2', 'key3': 'value3'}, index=['indexValue']))
     assert cdf.colspecs == {"globals" : ["key1", "key2", "key3"]}
 
-def test_from_settings_with_invalid_type():
+def test_from_interface_with_invalid_type():
     with pytest.raises(ValueError):
-        ndlpy.assess.data.CustomDataFrame.from_settings("not-a-dictionary")
+        ndlpy.assess.data.CustomDataFrame.from_interface("not-a-dictionary")
 
-def test_from_settings_with_missing_keys():
+def test_from_interface_with_missing_keys():
     incomplete_settings = {
         # Settings with missing keys
         "key1": "value1",
     }
     with pytest.raises(ValueError):
-        ndlpy.assess.data.CustomDataFrame.from_settings(incomplete_settings)
+        ndlpy.assess.data.CustomDataFrame.from_interface(incomplete_settings)
 
-def test_from_settings_with_empty_settings():
-    cdf = ndlpy.assess.data.CustomDataFrame.from_settings({"globals":
+def test_from_interface_with_empty_settings():
+    cdf = ndlpy.assess.data.CustomDataFrame.from_interface({"globals":
                                                            {"type" : "local",
                                                             "data" : {},
                                                             "index" : "index",
