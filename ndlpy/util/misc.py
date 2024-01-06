@@ -180,6 +180,21 @@ def remove_nan(dictionary):
                 del dictionary2[key]
     return dictionary2
 
+def is_valid_var(variable):
+    """
+    Test if a variable name is valid.
+
+    :param variable: The variable name to be tested.
+    :type variable: str
+    :return: True if the variable name is valid, False otherwise.
+    :rtype: bool
+    """
+    if not isinstance(variable, str):
+        return False
+    return variable.isidentifier() and not iskeyword(variable)
+
+    return re.match(r"^[a-zA-Z_][a-zA-Z0-9_]*$", variable) is not None
+
 
 def to_valid_var(variable):
     """
