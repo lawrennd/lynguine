@@ -42,7 +42,7 @@ def header_field(field, fields, user_file=["_config.yml"]):
     :type user_file: str
     """
     if field not in fields:
-        interface = Interface(user_file, directory=".")
+        interface = Interface.from_file(user_file, directory=".")
         if field in interface:
             answer = interface[field]
         else:
