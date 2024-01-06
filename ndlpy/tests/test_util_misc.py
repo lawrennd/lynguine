@@ -5,7 +5,7 @@ from datetime import datetime
 from ndlpy.util.misc import (
     reorder_dictionary,
     extract_full_filename,  extract_root_directory, extract_file_type, extract_abs_filename, camel_capitalize,
-    remove_nan, to_valid_var, to_camel_case, sub_path_environment, get_path_env,
+    remove_nan, is_valid_var, to_valid_var, to_camel_case, sub_path_environment, get_path_env,
     get_url_file
 )
 
@@ -125,6 +125,34 @@ def test_remove_nan():
     expected_dict = {"c": 1, "d": {"db": 2}}
     assert remove_nan(input_dict) == expected_dict
 
+# Testing is_valid_var
+def test_valid_var_names():
+    assert is_valid_var("valid_var_name")
+    assert is_valid_var("_alsoValid123")
+    assert is_valid_var("__name__")
+    assert is_valid_var("validVarName")
+    assert is_valid_var("validVarName123")
+    
+def test_invalid_var_names():
+    assert not is_valid_var("1invalid")
+    assert not is_valid_var("for")  # 'for' is a keyword
+    assert not is_valid_var("invalid-var")
+    assert not is_valid_var("invalid var")
+    assert not is_valid_var("")
+
+def test_non_string_input():
+    assert not is_valid_var(123)
+    assert not is_valid_var(12.34)
+    assert not is_valid_var(["list", "is", "not", "a", "string"])
+    assert not is_valid_var({"dict": "is not a string"})
+    assert not is_valid_var(None)
+    assert not is_valid_var(True)
+
+def test_unicode_var_names():
+    assert is_valid_var("变量")  # Chinese characters
+    assert is_valid_var("переменная")  # Cyrillic characters
+
+    
 # Testing to_valid_var
 @pytest.mark.parametrize("variable, expected", [
     ("Invalid Variable", "invalid_variable"),
@@ -134,11 +162,63 @@ def test_remove_nan():
 def test_to_valid_var(variable, expected):
     assert to_valid_var(variable) == expected
 
+def test_scalars_to_valid_var():
+    assert to_valid_var(123) == "n123"
+    assert to_valid_var(-123) == "neg123"
+    assert to_valid_var(12.34) == "n12p34"
+    assert to_valid_var(-12.34) == "neg12p34"
+
+def test_string_to_valid_var():
+    assert to_valid_var("validName") == "validname"
+    assert to_valid_var("Invalid-Name") == "invalid_name"
+    assert to_valid_var("123invalid") == "_123invalid"
+    assert to_valid_var("name with space") == "name_with_space"
+    assert to_valid_var("for") == "for_"  # Python keyword
+
+def test_non_string_non_scalar_input():
+    with pytest.raises(TypeError):
+        to_valid_var(["not", "a", "string"])
+    with pytest.raises(TypeError):
+        to_valid_var({"not": "a string"})
+
+def test_empty_and_special_char_strings():
+    assert to_valid_var("") == "_"
+    assert to_valid_var("@#$%^&*()") == "_________"
+
+def test_unicode_strings():
+    assert to_valid_var("变量") == "变量"  # Unicode characters
+    assert to_valid_var("переменная") == "переменная"  # Cyrillic characters
+
 # Testing to_camel_case
+def test_camel_capitalize():
+    assert camel_capitalize("test") == "Test"
+    assert camel_capitalize("TEST") == "TEST"  # Uppercase stays uppercase
+    assert camel_capitalize("tESt") == "Test"
+    assert camel_capitalize("") == ""  # Empty string handling
+
+def test_to_camel_case_with_strings():
+    assert to_camel_case("hello world") == "helloWorld"
+    assert to_camel_case("hello-world") == "helloWorld"
+    assert to_camel_case("hello_world") == "helloWorld"
+    assert to_camel_case("Hello world") == "helloWorld"
+    assert to_camel_case("hello/World") == "helloOrWorld"
+    assert to_camel_case("hello@world") == "helloAtWorld"
+    assert to_camel_case("HELLO WORLD") == "helloWORLD"  # Preserving uppercase words
+
+def test_to_camel_case_with_scalars():
+    assert to_camel_case(123) == "n123"
+    assert to_camel_case(-123.45) == "neg123p45"
+
+def test_to_camel_case_with_edge_cases():
+    with pytest.raises(ValueError):
+        to_camel_case("")
+    with pytest.raises(TypeError):
+        to_camel_case(["not", "a", "string"])
+
 @pytest.mark.parametrize("text, expected", [
     ("hello world", "helloWorld"),
-    ("HELLO WORLD", "HELLOWORLD"),
-    ("Camel case", "CamelCase"),
+    ("HELLO WORLD", "helloWORLD"),
+    ("Camel case", "camelCase"),
     ("with/slash", "withOrSlash"),
     ("with@symbol", "withAtSymbol"),
     ("with-hyphen", "withHyphen"),

@@ -8,6 +8,8 @@ import wget
 import ndlpy.config.context as context
 from ndlpy.log import Logger
 
+from keyword import iskeyword
+
 cntxt = context.Context(name="ndlpy")
 log = Logger(
     name=__name__,
@@ -145,18 +147,18 @@ def extract_abs_filename(details):
     return os.path.abspath(extract_full_filename(details))
 
 
-def camel_capitalize(text):
+def camel_capitalize(word : str) -> str:
     """
-    Capitalize the text in camel case.
+    Capitalize the word in camel case.
 
-    :param text: The text to be capitalized.
-    :type text: str
-    :return: The capitalized text.
+    :param word: The word to be capitalized.
+    :type word: str
+    :return: The capitalized word.
     """
-    if text == text.upper():
-        return text
+    if word == word.upper():
+        return word
     else:
-        return text.capitalize()
+        return word.capitalize()
 
 
 def remove_nan(dictionary):
@@ -195,19 +197,34 @@ def is_valid_var(variable):
 
     return re.match(r"^[a-zA-Z_][a-zA-Z0-9_]*$", variable) is not None
 
-
-def to_valid_var(variable):
+def to_valid_var(variable: int | float | str) -> str:
     """
-    Replace invalid variable name characters with underscore
+    Convert a given input (scalar or string) to a valid Python variable name.
+    Replaces invalid characters with underscores and ensures the name is not a Python keyword.
 
-    :param variable: The variable name to be converted.
-    :type variable: str
-    :return: The variable name converted to a valid variable name.
+    :param variable: The input to be converted to a valid variable name.
+    :type variable: int, float, or str
+    :return: The input converted to a valid variable name.
     """
-    return re.sub(r"\W|^(?=\d)", "_", variable.lower())
+    if not isinstance(variable, (int, float, str)):
+        raise TypeError("Input must be an integer, float, or string")
+    
+    if isinstance(variable, (int, float)):
+        var_name = str(variable).replace("-", "neg").replace(".", "p")
+        if var_name[0].isdigit():
+            var_name = "n" + var_name
+    else:
+        var_name = re.sub(r"\W|^(?=\d)", "_", variable.lower())
+
+    # Append underscore if the result is a Python keyword
+    if iskeyword(var_name) or len(var_name) == 0:
+        log.warning(f"Variable name '{var_name}' is a Python keyword or empty. Appending underscore.")
+        var_name += "_"
+
+    return var_name
 
 
-def to_camel_case(text):
+def to_camel_case(text : str) -> str:
     """
     Remove non alpha-numeric characters and convert to camel case.
 
@@ -215,29 +232,28 @@ def to_camel_case(text):
     :type text: str
     :return: The text converted to camel case.
     :rtype: str
+    :raises ValueError: If the text is empty.
     """
+    if isinstance(text, str) and len(text) == 0:
+        raise ValueError("Provided a zero length string to convert to camel case.")
+    if not isinstance(text, str):
+        text = to_valid_var(text)  # Assuming to_valid_var is defined as previously discussed
 
-    if len(text) == 0:
-        raise ValueError(f"Provided a zero length string to convert to camel case.")
 
-    # Remove non alpha-numeric characters
-    text = text.replace("/", " or ")
-    text = text.replace("@", " at ")
-    non_alpha_chars = set([ch for ch in set(list(text)) if not ch.isalnum()])
-    if len(non_alpha_chars) > 0:
-        for ch in non_alpha_chars:
-            text = text.replace(ch, " ")
+    # Replace specific non alpha-numeric characters with words
+    replacements = {"/": " or ", "@": " at "}
+    for key, value in replacements.items():
+        text = text.replace(key, value)
 
-    s = text.split()
-    if s[0] == s[0].capitalize() or s[0] == s[0].upper():
-        start = s[0]
+    # Remove remaining non alpha-numeric characters
+    text = re.sub(r'[^a-zA-Z0-9]', ' ', text)
+
+    # Split and capitalize
+    words = text.split()
+    if words:
+        return words[0].lower() + ''.join(camel_capitalize(word) for word in words[1:])
     else:
-        start = s[0].lower()
-
-    if len(s) > 1:
-        return start + "".join(camel_capitalize(i) for i in s[1:])
-    else:
-        return start
+        return ""
 
 
 def sub_path_environment(
