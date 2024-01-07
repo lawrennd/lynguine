@@ -12,7 +12,7 @@ import glob
 import datetime
 import subprocess
 
-def get_cvs_version(filename, full_path):
+def get_cvs_version(filename : str, full_path : str) -> str:
     """
     Get the CVS version of a file.
 
@@ -34,10 +34,10 @@ def get_cvs_version(filename, full_path):
         for line in cvs_lines:
             split_vals = line.split('/')        
             if len(split_vals)>2 and split_vals[1]==filename:
-                cvs_ver = split_vals[2] 
+                cvs_ver = split_vals[2]
     return cvs_ver
 
-def get_svn_version(filename, full_path):
+def get_svn_version(filename : str, full_path : str) -> str:
     """
     Get the SVN version of a file.
 
@@ -79,9 +79,12 @@ def get_svn_version(filename, full_path):
         svn_ver = []
     return svn_ver
 
-def get_git_version(filename, full_path, git_path):
+import subprocess
+import os
+
+def get_git_version(filename: str, full_path: str, git_path: str) -> str:
     """
-    Get the GIT version of a file.
+    Get the latest Git version (commit hash) of a file.
 
     :param filename: The name of the file to get the version of.
     :type filename: str
@@ -89,29 +92,27 @@ def get_git_version(filename, full_path, git_path):
     :type full_path: str
     :param git_path: The path to the git repository.
     :type git_path: str
-    :return: The GIT version of the file.
+    :return: The latest Git commit hash of the file.
     :rtype: str
     """
-    # extract GIT version.
     base_dir = os.path.dirname(full_path)
     git_filename = os.path.join(base_dir, filename)
-    
-    file_lines = []
-    svn_ver = {}
-    in_file = 0
-    counter = 11
-    if os.path.exists(git_filename):
-        out_repo = subprocess.call(["git", "--git-dir", os.path.join(git_path,'.git'), '--work-tree', base_dir, "ls-files", filename, "--error-unmatch"])
-        print(out_repo)
-        if out_repo != 1:
-            output = subprocess.check_output(["git", "--git-dir", os.path.join(git_path,'.git'), '--work-tree', base_dir, "ls-files", filename, "--error-unmatch"])
-            print(output)
-            git_ver = 0.1
-        else:
-            git_ver = []
-    return git_ver
 
-def read_txt_file(filename, dir_name=".", comment_char="#"):
+    if os.path.exists(git_filename):
+        try:
+            # Run the git log command to get the latest commit hash
+            output = subprocess.check_output(
+                ["git", "--git-dir", os.path.join(git_path, '.git'), '--work-tree', base_dir, "log", "-n", "1", "--pretty=format:%H", "--", filename],
+                stderr=subprocess.STDOUT
+            )
+            return output.decode().strip()
+        except subprocess.CalledProcessError:
+            # Return an empty string or a suitable message if the command fails
+            return ""
+    else:
+        return ""
+
+def read_txt_file(filename : str, dir_name : str=".", comment_char : str="#") -> str:
     """
     Read in a text file ignoring lines that start with a comment character.
 
@@ -130,11 +131,11 @@ def read_txt_file(filename, dir_name=".", comment_char="#"):
     if os.path.exists(fullname):
         with open(fullname) as file:
             lines = [line for line in file if not line.startswith(comment_char)]
-        return "\n".join(lines)
+        return "".join(lines)
     else:
         raise FileNotFoundError(f"File {fullname} not found.")
     
-def extract_file_details(filename, dir_name=".", comment_char="#", seperator=","):
+def extract_file_details(filename : str, dir_name : str=".", comment_char : str="#", seperator : str=",") -> list[list[str]]:
     """
     Read csv file ignoring empty lines and those that start with a comment character.
 
