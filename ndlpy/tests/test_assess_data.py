@@ -2,6 +2,7 @@
 
 import pytest
 import ndlpy.assess.data
+import ndlpy.config.interface
 import pandas as pd
 import numpy as np
 
@@ -89,7 +90,7 @@ def test_join():
 @pytest.fixture
 def valid_local_settings():
     # Return a sample interface object that is valid
-    return {
+    return ndlpy.config.interface.Interface({
         "input":
         {
             "type" : "local",
@@ -103,7 +104,7 @@ def valid_local_settings():
             }],
             "select" : 'indexValue'
         }
-    }
+    })
 
 # test from_interface with a valid setting that specifies local data.
 def test_from_interface_with_valid_settings(valid_local_settings):
@@ -117,19 +118,19 @@ def test_from_interface_with_invalid_type():
         ndlpy.assess.data.CustomDataFrame.from_interface("not-a-dictionary")
 
 def test_from_interface_with_missing_keys():
-    incomplete_settings = {
+    incomplete_settings = ndlpy.config.interface.Interface({
         # Settings with missing keys
         "key1": "value1",
-    }
+    })
     with pytest.raises(ValueError):
         ndlpy.assess.data.CustomDataFrame.from_interface(incomplete_settings)
 
 def test_from_interface_with_empty_settings():
-    cdf = ndlpy.assess.data.CustomDataFrame.from_interface({"globals":
+    cdf = ndlpy.assess.data.CustomDataFrame.from_interface(ndlpy.config.interface.Interface({"globals":
                                                            {"type" : "local",
                                                             "data" : {},
                                                             "index" : "index",
-                                                            "select" : 'indexValue'}})
+                                                            "select" : 'indexValue'}}))
     # Assert the result is as expected (empty dataframe, etc.)
     assert isinstance(cdf, ndlpy.assess.data.CustomDataFrame)
     assert cdf.empty
@@ -215,6 +216,7 @@ def test_ismutable():
 # Test mutable property
 def test_mutable():
     custom_df = create_test_dataframe(colspecs="input")
+    custom_df.autocache=False
     assert custom_df.mutable == False
     custom_df = create_test_dataframe(colspecs="output")
     assert custom_df.mutable == True

@@ -1718,6 +1718,7 @@ class CustomDataFrame(DataObject):
         self._d = {}
         self._distribute_data(data)
 
+        self.autocache = True        
         self.interface = Interface({})
 
         # Set index if not specified
