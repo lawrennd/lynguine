@@ -20,7 +20,7 @@ log = Logger(
 """Utility functions for helping, e.g. to create the relevant yaml files quickly."""
 
 
-def reorder_dictionary(dictionary, order, sort_remaining=True):
+def reorder_dictionary(dictionary : dict | list[dict], order : list[str], sort_remaining=True : bool) -> dict | list[dict]:
     """
     Reorder a dictionary according to a given order.
 
@@ -50,7 +50,7 @@ def reorder_dictionary(dictionary, order, sort_remaining=True):
     return {key: dictionary[key] for key in order if key in dictionary}
 
 
-def extract_full_filename(details):
+def extract_full_filename(details : dict) -> str:
     """
     Return the filename from the details of directory and filename
 
@@ -72,8 +72,8 @@ def extract_full_filename(details):
 
 
 def extract_root_directory(
-    directory, environs=["HOME", "USERPROFILE", "TEMP", "TMPDIR", "TMP"]
-):
+    directory, environs=["HOME", "USERPROFILE", "TEMP", "TMPDIR", "TMP"] : list[str]
+) -> tuple[str, str]:
     """
     Extract a root directory and a subdirectory from a given directory string.
 
@@ -107,7 +107,7 @@ def extract_root_directory(
         return sub_path_environment(root), directory
 
 
-def extract_file_type(filename):
+def extract_file_type(filename : str) -> str:
     """
     Return a standardised file type.
 
@@ -134,7 +134,7 @@ def extract_file_type(filename):
     raise ValueError(f'Unrecognised type of file in "{filename}"')
 
 
-def extract_abs_filename(details):
+def extract_abs_filename(details : dict) -> str:
     """
     Return the absolute filename by adding current directory if it's not present
 
@@ -161,7 +161,7 @@ def camel_capitalize(word : str) -> str:
         return word.capitalize()
 
 
-def remove_nan(dictionary):
+def remove_nan(dictionary : dict) -> dict:
     """
     Delete missing entries from dictionary
 
@@ -182,7 +182,7 @@ def remove_nan(dictionary):
                 del dictionary2[key]
     return dictionary2
 
-def is_valid_var(variable):
+def is_valid_var(variable) -> bool:
     """
     Test if a variable name is valid.
 
@@ -194,8 +194,6 @@ def is_valid_var(variable):
     if not isinstance(variable, str):
         return False
     return variable.isidentifier() and not iskeyword(variable)
-
-    return re.match(r"^[a-zA-Z_][a-zA-Z0-9_]*$", variable) is not None
 
 def to_valid_var(variable: int | float | str) -> str:
     """
@@ -257,8 +255,8 @@ def to_camel_case(text : str) -> str:
 
 
 def sub_path_environment(
-    path, environs=["HOME", "USERPROFILE", "TEMP", "TMPDIR", "TMP", "BASE"]
-):
+    path : str, environs=["HOME", "USERPROFILE", "TEMP", "TMPDIR", "TMP", "BASE"] : list[str]
+) -> str:
     """
     Replace a path with values from environment variables.
 
@@ -275,7 +273,7 @@ def sub_path_environment(
     return path
 
 
-def get_path_env(environs=["HOME", "USERPROFILE", "TEMP", "TMPDIR", "TMP", "BASE"]):
+def get_path_env(environs=["HOME", "USERPROFILE", "TEMP", "TMPDIR", "TMP", "BASE"] : list[str]) -> str:
     """
     Return the current path with environment variables.
 
@@ -285,7 +283,7 @@ def get_path_env(environs=["HOME", "USERPROFILE", "TEMP", "TMPDIR", "TMP", "BASE
     return sub_path_environment(os.path.abspath(os.getcwd()), environs)
 
 
-def get_url_file(url, directory=None, filename=None, ext=None):
+def get_url_file(url : str, directory=None : str, filename=None : str, ext=None : str) -> None:
     """
     Download a file from a url and save it to disk.
 
@@ -316,7 +314,7 @@ def get_url_file(url, directory=None, filename=None, ext=None):
         return filename
 
 
-def prompt_stdin(prompt):
+def prompt_stdin(prompt : str) -> bool:
     """
     Ask user for agreeing to data set licenses.
 
