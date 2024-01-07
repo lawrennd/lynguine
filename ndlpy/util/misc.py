@@ -20,7 +20,7 @@ log = Logger(
 """Utility functions for helping, e.g. to create the relevant yaml files quickly."""
 
 
-def reorder_dictionary(dictionary : dict | list[dict], order : list[str], sort_remaining=True : bool) -> dict | list[dict]:
+def reorder_dictionary(dictionary : dict | list[dict], order : list[str], sort_remaining : bool = True) -> dict | list[dict]:
     """
     Reorder a dictionary according to a given order.
 
@@ -72,7 +72,7 @@ def extract_full_filename(details : dict) -> str:
 
 
 def extract_root_directory(
-    directory, environs=["HOME", "USERPROFILE", "TEMP", "TMPDIR", "TMP"] : list[str]
+    directory, environs : list[str] = ["HOME", "USERPROFILE", "TEMP", "TMPDIR", "TMP"] 
 ) -> tuple[str, str]:
     """
     Extract a root directory and a subdirectory from a given directory string.
@@ -255,7 +255,7 @@ def to_camel_case(text : str) -> str:
 
 
 def sub_path_environment(
-    path : str, environs=["HOME", "USERPROFILE", "TEMP", "TMPDIR", "TMP", "BASE"] : list[str]
+    path : str, environs : list[str] = ["HOME", "USERPROFILE", "TEMP", "TMPDIR", "TMP", "BASE"] 
 ) -> str:
     """
     Replace a path with values from environment variables.
@@ -273,7 +273,7 @@ def sub_path_environment(
     return path
 
 
-def get_path_env(environs=["HOME", "USERPROFILE", "TEMP", "TMPDIR", "TMP", "BASE"] : list[str]) -> str:
+def get_path_env(environs : list[str] = ["HOME", "USERPROFILE", "TEMP", "TMPDIR", "TMP", "BASE"]) -> str:
     """
     Return the current path with environment variables.
 
@@ -283,7 +283,7 @@ def get_path_env(environs=["HOME", "USERPROFILE", "TEMP", "TMPDIR", "TMP", "BASE
     return sub_path_environment(os.path.abspath(os.getcwd()), environs)
 
 
-def get_url_file(url : str, directory=None : str, filename=None : str, ext=None : str) -> None:
+def get_url_file(url : str, directory : str = None, filename : str = None, ext : str = None) -> str:
     """
     Download a file from a url and save it to disk.
 
