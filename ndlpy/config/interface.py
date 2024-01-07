@@ -331,6 +331,10 @@ class Interface(_HConfig):
         if data == {}:
             log.warning(f'No configuration file found at "{user_file}".')
 
-        return cls(data)
+        interface = cls(data)
+        interface._directory = directory
+        interface._user_file = user_file
+        
+        return interface
 
         

@@ -126,13 +126,109 @@ class DataObject:
         :param column: The column to set.
         :raise KeyError: If the column is not in the DataFrame.
         """
+        if column == "_":
+            self._column = "_"
+            log.warning(f"Set column to \"_\".")
+            return
         if column is None:
-            self._column = None
-        elif column in self.columns:
-            self._column = column
-        else:
-            raise KeyError("Invalid column set.")
+            log.debug(f"Was asked to set column to None.")
+            # Note column is not being set here.
+            return
 
+        if column not in self.columns and column!=self.index.name:
+            # In the vrs 0.1.0 this used to warn and run self.add_column(column)
+            errmsg = f"Attempting to add column \"{column}\" as a set request has been given to non existent column."
+            log.warning(errmsg)
+            raise KeyError(errmsg)
+        else:
+            self._column = column
+
+    def ismutable(self, column):
+        """
+        Is a given column mutable?
+
+        :param column: The column to check.
+        :return: True if the column is mutable, False otherwise.
+        """
+        if column not in self.columns:
+            if self.autocache:
+                return True
+            else:
+                return False
+
+        if self._col_source(column) in self.types["input"]:
+            return False
+        else:
+            return True
+
+    @property
+    def autocache(self):
+        """
+        Whether the data structure will automatically cache values.
+
+        :return True if the data structure will automatically cache values, False otherwise.
+        """
+        return False
+    
+    @property
+    def mutable(self):
+        """
+        Is the data structure mutable.
+
+        :return True if the data structure is mutable, False otherwise.
+        """
+        if self.autocache:
+            return True
+        for typ in self._d:
+            if typ not in self.types["input"]:
+                return True
+        return False
+        
+    def _col_source(self, column):
+        """
+        Return the source of a column.
+
+        :param column: The column to check.
+        """
+        for typ, data in self._d.items():
+            if typ in self.types["parameters"]:
+                if column in data.index:
+                    return typ
+            elif column in data.columns:
+                return typ
+        if self.autocache:
+            return "cache"
+        else:
+            return None
+        
+
+    def isparameter(self, column):
+        """
+        Test if the column is a given column a parameter (i.e. applicable for all rows)?
+
+        :param column: The column to check.
+        :return: True if the column is a parameter, False otherwise.
+        """
+        if self._col_source(column) in self.types["parameters"]:
+            return True
+        else:
+            return False
+        
+    def isseries(self, column):
+        """
+        Test if a given column is a series column (i.e. one where the index can be repeated and have multiple rows associated with it).
+
+        :param column: The column to check.
+        :return: True if the column is a series column, False otherwise.
+        """
+        if self._col_source(column) in self.types["series"]:
+            return True
+        else:
+            return False
+        
+
+        
+        
     def get_selector(self):
         """
         Get the selector that is the focus for the DataFrame.

@@ -11,6 +11,9 @@ from deepdiff import DeepDiff
 def create_test_dataframe(colspecs="cache"):
     return ndlpy.assess.data.CustomDataFrame({'A': [1, 2, 3], 'B': [4, 5, 6]}, colspecs=colspecs)
 
+def create_test_dataframe2(colspecs={"parameters" : ["A"], "writeseries" : ["B"]}):
+    return ndlpy.assess.data.CustomDataFrame({'A': [1, 1, 1], 'B': [4, 5, 6]}, colspecs=colspecs)
+
 def create_merged_dataframe():
     # Sample data for creating a CustomDataFrame instance
     data = {"A": [1, 2], "B": [3, 4], "C": [5, 5], "D": [6, 6], "E": [7, 7], "F": [8, 8]}
@@ -199,6 +202,46 @@ def test_invalid_data_creation():
     with pytest.raises(ValueError):
         df = ndlpy.assess.data.CustomDataFrame({'A': [1, 2], 'B': [3, 4, 5]})
 
+
+# Test ismutable method
+def test_ismutable():
+    custom_df = create_test_dataframe(colspecs="input")
+    assert custom_df.ismutable("A") == False
+    custom_df = create_test_dataframe(colspecs="output")
+    assert custom_df.ismutable('B') == True
+    custom_df = create_test_dataframe2()
+    assert custom_df.ismutable('A') == True
+
+# Test mutable property
+def test_mutable():
+    custom_df = create_test_dataframe(colspecs="input")
+    assert custom_df.mutable == False
+    custom_df = create_test_dataframe(colspecs="output")
+    assert custom_df.mutable == True
+
+# Test _col_source method
+def test_col_source():
+    custom_df = create_test_dataframe(colspecs={"input": ["A"], "output": ["B"]})
+    assert custom_df._col_source('A') == 'input'
+    assert custom_df._col_source('B') == 'output'
+    custom_df = create_test_dataframe(colspecs={"writeseries": ["A"], "cache": ["B"]})
+    assert custom_df._col_source('A') == 'writeseries'
+    assert custom_df._col_source('B') == 'cache'  # Assuming autocache is True
+
+# Test isparameter method
+def test_isparameter():
+    custom_df = create_test_dataframe2(colspecs={"globals": ["A"], "writeseries": ["B"]})
+    assert custom_df.isparameter('A') == True
+    assert custom_df.isparameter('B') == False
+
+# Test isseries method
+def test_isseries():
+    custom_df = create_test_dataframe2(colspecs={"globals": ["A"], "writeseries": ["B"]})
+    assert custom_df.isseries('A') == False
+    assert custom_df.isseries('B') == True
+
+
+        
 # Test get_selectors()
 def test_get_selectors():
     custom_df = create_merged_dataframe()
