@@ -4,6 +4,7 @@ import numpy as np
 from .. import access
 from ..log import Logger
 from ..config.context import Context
+from ..config.interface import Interface
 
 """Wrapper classes for data objects"""
 
@@ -168,8 +169,44 @@ class DataObject:
 
         :return True if the data structure will automatically cache values, False otherwise.
         """
-        return False
-    
+        if self._autocache:
+            return True
+        else:
+            return False
+
+    @autocache.setter
+    def autocache(self, value):
+        """
+        Set whether the data structure will automatically cache values.
+
+        :param value: The value to set.
+        :raise ValueError: If the value is not boolean.
+        """
+        
+        if not isinstance(value, bool):
+            raise ValueError(f"autocache value must be boolean, set as \"{value}\"")
+        self._autocache = value
+
+    @property
+    def interface(self):
+        """
+        Return the interface object.
+        :return: The interface object.
+        """
+        return self._interface
+
+    @interface.setter
+    def interface(self, value):
+        """
+        Set the interface object.
+        :param value: The interface object.
+        :return: None
+        """
+        if not isinstance(value, Interface):
+            raise TypeError("interface must be of type Interface.")
+        else:
+            self._interface = value
+        
     @property
     def mutable(self):
         """
@@ -732,6 +769,7 @@ class DataObject:
             log.error(errmsg)
             raise ValueError(errmsg)
         else:
+            cdf.interface = interface
             return cdf
     
     def sort_values(self, *args, inplace=False, **kwargs):
@@ -1680,6 +1718,8 @@ class CustomDataFrame(DataObject):
         self._d = {}
         self._distribute_data(data)
 
+        self.interface = Interface({})
+
         # Set index if not specified
         if index is None:
             indices = self.index
@@ -1720,6 +1760,7 @@ class CustomDataFrame(DataObject):
         self.loc = self._LocAccessor(self)
         self.iloc = self._ILocAccessor(self)
 
+        
     class _AtAccessor:
         def __init__(self, data):
             """
