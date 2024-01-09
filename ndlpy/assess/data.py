@@ -341,6 +341,9 @@ class DataObject:
 
         :return: The value that is the focus for the DataFrame.
         """
+        if self.get_column() == self.index.name:
+            return self.get_index()
+            
         return self.at[self.get_index(), self.get_column()]
 
     def set_value(self, value):
