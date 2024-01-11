@@ -1571,6 +1571,37 @@ def read_hstack(details):
     return final_df
     
 
+def read_vstack(details):
+    """
+    Read data from a vertical stack of data sources.
+
+    :param details: The details of the data to be read.
+    :type details: dict
+    :return: The data read from the file.
+    :rtype: pandas.DataFrame
+    """
+    
+    if details.get('type') != 'vstack':
+        raise ValueError('Expected details type to be "vstack".')
+
+    if 'data_sources' not in details:
+        raise ValueError('Details must include "data_sources".')
+
+    dfs = []
+    for source_details in details['data_sources']:
+        df = read_data(source_details)
+        dfs.append(df)
+
+    if not dfs:
+        raise ValueError('No data sources provided for vstack.')
+
+    # Option for resetting index
+    reset_index = details.get('reset_index', False)
+
+    # Perform vertical stacking
+    stacked_df = pd.concat(dfs, axis=0, ignore_index=reset_index)
+    return stacked_df
+
 def read_data(details):
     """
     Read in the data from the details given in configuration.

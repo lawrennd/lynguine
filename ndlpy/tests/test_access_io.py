@@ -610,7 +610,7 @@ def test_read_local_error_logging(mocker):
 
 
 # Mock read_data function for testing
-def mock_read_data(source_details):
+def mock_read_data_hstack(source_details):
     # This function should return different DataFrames based on source_details
     # For testing purposes, let's return simple DataFrames
     if source_details.get('type') == 'source1':
@@ -622,7 +622,7 @@ def mock_read_data(source_details):
 
 @pytest.fixture
 def mock_read_data_fixture(mocker):
-    mocker.patch('ndlpy.access.io.read_data', side_effect=mock_read_data)
+    mocker.patch('ndlpy.access.io.read_data', side_effect=mock_read_data_hstack)
 
 def test_read_hstack_basic_join(mock_read_data_fixture):
     details = {
@@ -701,6 +701,46 @@ def test_read_hstack_wrong_type():
     }
     with pytest.raises(ValueError):
         ndlpy.access.io.read_hstack(details)
+
+
+@pytest.fixture
+def mock_read_data_vstack(mocker):
+    def read_data_side_effect(source_details):
+        if source_details.get('type') == 'source1':
+            return pd.DataFrame({'A': [1, 2]})
+        elif source_details.get('type') == 'source2':
+            return pd.DataFrame({'A': [3, 4]})
+        return pd.DataFrame()
+
+    mocker.patch('ndlpy.access.io.read_data', side_effect=read_data_side_effect)
+
+def test_read_vstack_basic(mock_read_data_vstack):
+    details = {
+        'type': 'vstack',
+        'data_sources': [{'type': 'source1'}, {'type': 'source2'}]
+    }
+    result = ndlpy.access.io.read_vstack(details)
+    assert len(result) == 4
+    assert list(result['A']) == [1, 2, 3, 4]
+
+def test_read_vstack_with_index_reset(mock_read_data_vstack):
+    details = {
+        'type': 'vstack',
+        'data_sources': [{'type': 'source1'}, {'type': 'source2'}],
+        'reset_index': True
+    }
+    result = ndlpy.access.io.read_vstack(details)
+    assert result.index.equals(pd.Index([0, 1, 2, 3]))
+
+def test_read_vstack_no_data_sources():
+    details = {'type': 'vstack', 'data_sources': []}
+    with pytest.raises(ValueError):
+        ndlpy.access.io.read_vstack(details)
+
+def test_read_vstack_wrong_type():
+    details = {'type': 'hstack', 'data_sources': [{'type': 'source1'}]}
+    with pytest.raises(ValueError):
+        ndlpy.access.io.read_vstack(details)
 
 
 @pytest.fixture
