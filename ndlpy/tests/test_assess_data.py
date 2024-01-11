@@ -89,7 +89,7 @@ def test_join():
 
 def test_to_flow_valid_output(mocker):
     mocker.patch('ndlpy.access.io.write_data')
-    test_df = ndlpy.assess.data.CustomDataFrame()
+    test_df = ndlpy.assess.data.CustomDataFrame({})
     test_df._d = {'output': 'some_data'}
     
     interface = {'output': [{'param1': 'value1'}]}
@@ -98,7 +98,7 @@ def test_to_flow_valid_output(mocker):
     ndlpy.access.io.write_data.assert_called_with('some_data', {'param1': 'value1'})
 
 def test_to_flow_invalid_interface():
-    test_df = ndlpy.assess.data.CustomDataFrame()
+    test_df = ndlpy.assess.data.CustomDataFrame({})
     test_df.types = {'output': ['output_type']}
     
     with pytest.raises(ValueError):
@@ -106,7 +106,7 @@ def test_to_flow_invalid_interface():
 
 def test_to_flow_no_output_data(mocker):
     mocker.patch('ndlpy.assess.data.log.warning')
-    test_df = ndlpy.assess.data.CustomDataFrame()
+    test_df = ndlpy.assess.data.CustomDataFrame({})
     test_df._d = {'non_output_type': 'some_data'}
     
     interface = {'output_type': [{'param1': 'value1'}]}
@@ -114,13 +114,23 @@ def test_to_flow_no_output_data(mocker):
     test_df.to_flow(interface)
     ndlpy.assess.data.log.warning.assert_called()
 
+def test_to_flow_no_data_is_none(mocker):
+    mocker.patch('ndlpy.assess.data.log.warning')
+    test_df = ndlpy.assess.data.CustomDataFrame({})
+    test_df._d = {'non_output_type': None}
+    
+    interface = {'output_type': [{'param1': 'value1'}]}
+    
+    test_df.to_flow(interface)
+    ndlpy.assess.data.log.warning.assert_called()
+    
 def test_to_flow_error_in_write_data(mocker):
     mocker.patch('ndlpy.access.io.write_data', side_effect=Exception("Test error"))
     mocker.patch('ndlpy.assess.data.log.error')
     test_df = ndlpy.assess.data.CustomDataFrame({})
     test_df._d = {'output': 'some_data'}
     
-    interface = {'output_type': [{'param1': 'value1'}]}
+    interface = {'output': [{'param1': 'value1'}]}
     
     test_df.to_flow(interface)
     ndlpy.assess.data.log.error.assert_called()
