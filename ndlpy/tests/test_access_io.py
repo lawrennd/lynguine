@@ -609,6 +609,100 @@ def test_read_local_error_logging(mocker):
     log_mock.error.assert_called_once()
 
 
+# Mock read_data function for testing
+def mock_read_data(source_details):
+    # This function should return different DataFrames based on source_details
+    # For testing purposes, let's return simple DataFrames
+    if source_details.get('type') == 'source1':
+        return pd.DataFrame({'A': [1, 2], 'B': [3, 4]})
+    elif source_details.get('type') == 'source2':
+        return pd.DataFrame({'B': [5, 6], 'C': [7, 8]})
+    # Add more conditions as needed for testing
+    return pd.DataFrame()
+
+@pytest.fixture
+def mock_read_data_fixture(mocker):
+    mocker.patch('ndlpy.access.io.read_data', side_effect=mock_read_data)
+
+def test_read_hstack_basic_join(mock_read_data_fixture):
+    details = {
+        'type': 'hstack',
+        'data_sources': [
+            {'type': 'source1'},
+            {'type': 'source2', 'how': 'inner'}
+        ]
+    }
+    result = ndlpy.access.io.read_hstack(details)
+    expected_columns = ['A', 'B', 'C']
+    assert all(column in result.columns for column in expected_columns)
+    assert len(result) == 2  # Check the number of rows
+
+def test_read_hstack_basic_merge_b(mock_read_data_fixture):
+    details = {
+        'type': 'hstack',
+        'data_sources': [
+            {'type': 'source1'},
+            {'type': 'source2', 'on' : "B", 'how': 'inner'}
+        ]
+    }
+    result = ndlpy.access.io.read_hstack(details)
+    expected_columns = ['A', 'B', 'C']
+    assert all(column in result.columns for column in expected_columns)
+    assert len(result) == 0  # Check the number of rows (join on B leads to nothing with inner)
+    
+def test_read_hstack_with_defaults(mock_read_data_fixture):
+    details = {
+        'type': 'hstack',
+        'data_sources': [
+            {'type': 'source1'},
+            {'type': 'source2'}  # Rely on default join parameters
+        ]
+    }
+    result = ndlpy.access.io.read_hstack(details)
+    expected_columns = ['A', 'B', 'B_right', 'C']
+    assert all(column in result.columns for column in expected_columns)
+
+def test_read_hstack_with_default_suffixes(mock_read_data_fixture):
+    details = {
+        'type': 'hstack',
+        'data_sources': [
+            {'type': 'source1'},
+            {'type': 'source2'}
+        ]
+    }
+    result = ndlpy.access.io.read_hstack(details)
+    expected_columns = ['A', 'B', 'B_right', 'C']
+    assert all(column in result.columns for column in expected_columns)
+
+def test_read_hstack_with_suffixes(mock_read_data_fixture):
+    details = {
+        'type': 'hstack',
+        'data_sources': [
+            {'type': 'source1'},
+            {'type': 'source2', 'lsuffix': '_lefty', 'rsuffix': '_righty'}
+        ]
+    }
+    result = ndlpy.access.io.read_hstack(details)
+    expected_columns = ['A', 'B_lefty', 'B_righty', 'C']
+    assert all(column in result.columns for column in expected_columns)
+
+def test_read_hstack_no_data_sources():
+    details = {
+        'type': 'hstack',
+        'data_sources': []
+    }
+    with pytest.raises(ValueError):
+        ndlpy.access.io.read_hstack(details)
+
+def test_read_hstack_wrong_type():
+    details = {
+        'type': 'vstack',  # Incorrect type for testing
+        'data_sources': [{'type': 'source1'}]
+    }
+    with pytest.raises(ValueError):
+        ndlpy.access.io.read_hstack(details)
+
+
 @pytest.fixture
 def valid_details():
     return {

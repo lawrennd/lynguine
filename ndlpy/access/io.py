@@ -1521,6 +1521,56 @@ def finalize_data(df, details):
     return df, details
 
 
+def read_hstack(details):
+    """
+    Read data from a horizontal stack of data sources.
+
+    :param details: The details of the data to be read.
+    :type details: dict
+    :return: The data read from the file.
+    :rtype: pandas.DataFrame
+    """
+    
+    if details.get('type') != 'hstack':
+        raise ValueError('Expected details type to be "hstack".')
+
+    if 'data_sources' not in details:
+        raise ValueError('Details must include "data_sources".')
+
+    # Initialize an empty list to hold DataFrames
+    dfs = []
+
+    # Iterate over each data source in the details
+    for source_details in details['data_sources']:
+        # Read each DataFrame using the read_data function
+        df = read_data(source_details)
+        dfs.append(df)
+
+        # Set default values if not provided in source_details
+        source_details.setdefault('on', 'index')
+        source_details.setdefault('how', 'left')
+        source_details.setdefault('lsuffix', '')
+        source_details.setdefault('rsuffix', '_right')
+
+    if not dfs:
+        raise ValueError('No data sources provided for hstack.')
+
+    # Initialize final_df for horizontal stacking
+    final_df = None
+
+    # Iterate over the list of DataFrames and their corresponding details
+    for df, source_details in zip(dfs, details['data_sources']):
+        if final_df is None:
+            final_df = df
+        else:
+            if source_details['on'] == 'index':
+                final_df = final_df.join(df, how=source_details['how'], lsuffix=source_details['lsuffix'], rsuffix=source_details['rsuffix'])
+            else:
+                final_df = pd.merge(final_df, df, on=source_details['on'], how=source_details['how'], suffixes=(source_details['lsuffix'], source_details['rsuffix']))
+
+    return final_df
+    
+
 def read_data(details):
     """
     Read in the data from the details given in configuration.
@@ -1535,7 +1585,11 @@ def read_data(details):
     else:
         raise ValueError(f'Field "type" missing in data source details for read_data, details are given as "{", ".join(details)}".')
 
-    if ftype == "excel":
+    if ftype == "hstack":
+        df = read_hstack(details)
+    elif ftype == "vstack":
+        df = read_vstack(details)
+    elif ftype == "excel":
         df = read_excel(details)
     elif ftype == "gsheet":
         df = read_gsheet(details)
