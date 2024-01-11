@@ -87,6 +87,44 @@ def test_join():
     assert not diff, "The column specifications don't match in join"
 
 
+def test_to_flow_valid_output(mocker):
+    mocker.patch('ndlpy.access.io.write_data')
+    test_df = ndlpy.assess.data.CustomDataFrame()
+    test_df._d = {'output': 'some_data'}
+    
+    interface = {'output': [{'param1': 'value1'}]}
+    
+    test_df.to_flow(interface)
+    ndlpy.access.io.write_data.assert_called_with('some_data', {'param1': 'value1'})
+
+def test_to_flow_invalid_interface():
+    test_df = ndlpy.assess.data.CustomDataFrame()
+    test_df.types = {'output': ['output_type']}
+    
+    with pytest.raises(ValueError):
+        test_df.to_flow(None)  # None is not a valid interface
+
+def test_to_flow_no_output_data(mocker):
+    mocker.patch('ndlpy.assess.data.log.warning')
+    test_df = ndlpy.assess.data.CustomDataFrame()
+    test_df._d = {'non_output_type': 'some_data'}
+    
+    interface = {'output_type': [{'param1': 'value1'}]}
+    
+    test_df.to_flow(interface)
+    ndlpy.assess.data.log.warning.assert_called()
+
+def test_to_flow_error_in_write_data(mocker):
+    mocker.patch('ndlpy.access.io.write_data', side_effect=Exception("Test error"))
+    mocker.patch('ndlpy.assess.data.log.error')
+    test_df = ndlpy.assess.data.CustomDataFrame({})
+    test_df._d = {'output': 'some_data'}
+    
+    interface = {'output_type': [{'param1': 'value1'}]}
+    
+    test_df.to_flow(interface)
+    ndlpy.assess.data.log.error.assert_called()
+    
 @pytest.fixture
 def valid_local_settings():
     # Return a sample interface object that is valid
@@ -134,6 +172,7 @@ def test_from_flow_with_empty_settings():
     # Assert the result is as expected (empty dataframe, etc.)
     assert isinstance(cdf, ndlpy.assess.data.CustomDataFrame)
     assert cdf.empty
+
 
     
 # Grouping and Sorting
