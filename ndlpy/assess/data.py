@@ -717,14 +717,31 @@ class DataObject:
         """
         return cls.from_pandas(df=pd.DataFrame.from_dict(data, *args, **kwargs))
 
+
     def to_flow(self, interface):
         """
-        Writes the data to the flows specified in the interface.
+        Writes the output data to the flows specified in the interface.
 
         :param interface: Interface object.
         """
-        pass
-
+        if not isinstance(interface, (dict, Interface)):
+            raise ValueError("Interface must be a dictionary or of type Interface.")
+        data_written = False
+        for typ, details in interface.items():
+            if typ in self.types["output"]:
+                data = self._d.get(typ)
+                if data is not None:
+                    for item in details:
+                        try:
+                            access.io.write_data(data, item)
+                            data_written = True
+                            log.info(f"Data for type '{typ}' written successfully.")
+                        except Exception as e:
+                            log.error(f"Error writing data for type '{typ}': {e}")
+                else:
+                    log.warning(f"No data found for type '{typ}' to write.")
+        if not data_written:
+            log.warning(f"No data written, implying no data of type \"output\" found, data in CustomDataFrame are \"{', '.join(self._d)}\".")
         
     @classmethod
     def from_flow(cls, interface):
@@ -735,6 +752,10 @@ class DataObject:
         :return: A CustomDataFrame object.
         """
 
+        # TODO: For input, convert this to a simple "read_data" operation
+        # and have the merges handled by read_hstack and
+        # read_vstack. Make it illegal to do a read_hstack or
+        # read_vstack if it's an output.
         default_joins = "outer"
         cdf = cls({})
         found_data = False
