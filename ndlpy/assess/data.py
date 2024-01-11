@@ -717,8 +717,17 @@ class DataObject:
         """
         return cls.from_pandas(df=pd.DataFrame.from_dict(data, *args, **kwargs))
 
+    def to_flow(self, interface):
+        """
+        Writes the data to the flows specified in the interface.
+
+        :param interface: Interface object.
+        """
+        pass
+
+        
     @classmethod
-    def from_interface(cls, interface):
+    def from_flow(cls, interface):
         """
         Construct a CustomDataFrame from a interface object.
 
