@@ -1534,23 +1534,23 @@ def read_hstack(details):
     if details.get('type') != 'hstack':
         raise ValueError('Expected details type to be "hstack".')
 
-    if 'data_sources' not in details:
-        raise ValueError('Details must include "data_sources".')
+    if 'specifications' not in details:
+        raise ValueError('Details must include "specifications".')
 
     # Initialize an empty list to hold DataFrames
     dfs = []
 
     # Iterate over each data source in the details
-    for source_details in details['data_sources']:
+    for specs in details['specifications']:
         # Read each DataFrame using the read_data function
-        df = read_data(source_details)
+        df = read_data(specs)
         dfs.append(df)
 
-        # Set default values if not provided in source_details
-        source_details.setdefault('on', 'index')
-        source_details.setdefault('how', 'left')
-        source_details.setdefault('lsuffix', '')
-        source_details.setdefault('rsuffix', '_right')
+        # Set default values if not provided in specs
+        specs.setdefault('on', 'index')
+        specs.setdefault('how', 'left')
+        specs.setdefault('lsuffix', '')
+        specs.setdefault('rsuffix', '_right')
 
     if not dfs:
         raise ValueError('No data sources provided for hstack.')
@@ -1559,14 +1559,14 @@ def read_hstack(details):
     final_df = None
 
     # Iterate over the list of DataFrames and their corresponding details
-    for df, source_details in zip(dfs, details['data_sources']):
+    for df, specs in zip(dfs, details['specifications']):
         if final_df is None:
             final_df = df
         else:
-            if source_details['on'] == 'index':
-                final_df = final_df.join(df, how=source_details['how'], lsuffix=source_details['lsuffix'], rsuffix=source_details['rsuffix'])
+            if specs['on'] == 'index':
+                final_df = final_df.join(df, how=specs['how'], lsuffix=specs['lsuffix'], rsuffix=specs['rsuffix'])
             else:
-                final_df = pd.merge(final_df, df, on=source_details['on'], how=source_details['how'], suffixes=(source_details['lsuffix'], source_details['rsuffix']))
+                final_df = pd.merge(final_df, df, on=specs['on'], how=specs['how'], suffixes=(specs['lsuffix'], specs['rsuffix']))
 
     return final_df
     
@@ -1584,12 +1584,12 @@ def read_vstack(details):
     if details.get('type') != 'vstack':
         raise ValueError('Expected details type to be "vstack".')
 
-    if 'data_sources' not in details:
-        raise ValueError('Details must include "data_sources".')
+    if 'specifications' not in details:
+        raise ValueError('Details must include "specifications".')
 
     dfs = []
-    for source_details in details['data_sources']:
-        df = read_data(source_details)
+    for specs in details['specifications']:
+        df = read_data(specs)
         dfs.append(df)
 
     if not dfs:
