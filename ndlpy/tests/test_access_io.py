@@ -610,12 +610,12 @@ def test_read_local_error_logging(mocker):
 
 
 # Mock read_data function for testing
-def mock_read_data_hstack(source_details):
-    # This function should return different DataFrames based on source_details
+def mock_read_data_hstack(specs):
+    # This function should return different DataFrames based on specs
     # For testing purposes, let's return simple DataFrames
-    if source_details.get('type') == 'source1':
+    if specs.get('type') == 'source1':
         return pd.DataFrame({'A': [1, 2], 'B': [3, 4]})
-    elif source_details.get('type') == 'source2':
+    elif specs.get('type') == 'source2':
         return pd.DataFrame({'B': [5, 6], 'C': [7, 8]})
     # Add more conditions as needed for testing
     return pd.DataFrame()
@@ -627,7 +627,7 @@ def mock_read_data_fixture(mocker):
 def test_read_hstack_basic_join(mock_read_data_fixture):
     details = {
         'type': 'hstack',
-        'data_sources': [
+        'specifications': [
             {'type': 'source1'},
             {'type': 'source2', 'how': 'inner'}
         ]
@@ -640,7 +640,7 @@ def test_read_hstack_basic_join(mock_read_data_fixture):
 def test_read_hstack_basic_merge_b(mock_read_data_fixture):
     details = {
         'type': 'hstack',
-        'data_sources': [
+        'specifications': [
             {'type': 'source1'},
             {'type': 'source2', 'on' : "B", 'how': 'inner'}
         ]
@@ -653,7 +653,7 @@ def test_read_hstack_basic_merge_b(mock_read_data_fixture):
 def test_read_hstack_with_defaults(mock_read_data_fixture):
     details = {
         'type': 'hstack',
-        'data_sources': [
+        'specifications': [
             {'type': 'source1'},
             {'type': 'source2'}  # Rely on default join parameters
         ]
@@ -665,7 +665,7 @@ def test_read_hstack_with_defaults(mock_read_data_fixture):
 def test_read_hstack_with_default_suffixes(mock_read_data_fixture):
     details = {
         'type': 'hstack',
-        'data_sources': [
+        'specifications': [
             {'type': 'source1'},
             {'type': 'source2'}
         ]
@@ -677,7 +677,7 @@ def test_read_hstack_with_default_suffixes(mock_read_data_fixture):
 def test_read_hstack_with_suffixes(mock_read_data_fixture):
     details = {
         'type': 'hstack',
-        'data_sources': [
+        'specifications': [
             {'type': 'source1'},
             {'type': 'source2', 'lsuffix': '_lefty', 'rsuffix': '_righty'}
         ]
@@ -686,10 +686,10 @@ def test_read_hstack_with_suffixes(mock_read_data_fixture):
     expected_columns = ['A', 'B_lefty', 'B_righty', 'C']
     assert all(column in result.columns for column in expected_columns)
 
-def test_read_hstack_no_data_sources():
+def test_read_hstack_no_specifications():
     details = {
         'type': 'hstack',
-        'data_sources': []
+        'specifications': []
     }
     with pytest.raises(ValueError):
         ndlpy.access.io.read_hstack(details)
@@ -697,7 +697,7 @@ def test_read_hstack_no_data_sources():
 def test_read_hstack_wrong_type():
     details = {
         'type': 'vstack',  # Incorrect type for testing
-        'data_sources': [{'type': 'source1'}]
+        'specifications': [{'type': 'source1'}]
     }
     with pytest.raises(ValueError):
         ndlpy.access.io.read_hstack(details)
@@ -705,10 +705,10 @@ def test_read_hstack_wrong_type():
 
 @pytest.fixture
 def mock_read_data_vstack(mocker):
-    def read_data_side_effect(source_details):
-        if source_details.get('type') == 'source1':
+    def read_data_side_effect(specs):
+        if specs.get('type') == 'source1':
             return pd.DataFrame({'A': [1, 2]})
-        elif source_details.get('type') == 'source2':
+        elif specs.get('type') == 'source2':
             return pd.DataFrame({'A': [3, 4]})
         return pd.DataFrame()
 
@@ -717,7 +717,7 @@ def mock_read_data_vstack(mocker):
 def test_read_vstack_basic(mock_read_data_vstack):
     details = {
         'type': 'vstack',
-        'data_sources': [{'type': 'source1'}, {'type': 'source2'}]
+        'specifications': [{'type': 'source1'}, {'type': 'source2'}]
     }
     result = ndlpy.access.io.read_vstack(details)
     assert len(result) == 4
@@ -726,19 +726,19 @@ def test_read_vstack_basic(mock_read_data_vstack):
 def test_read_vstack_with_index_reset(mock_read_data_vstack):
     details = {
         'type': 'vstack',
-        'data_sources': [{'type': 'source1'}, {'type': 'source2'}],
+        'specifications': [{'type': 'source1'}, {'type': 'source2'}],
         'reset_index': True
     }
     result = ndlpy.access.io.read_vstack(details)
     assert result.index.equals(pd.Index([0, 1, 2, 3]))
 
-def test_read_vstack_no_data_sources():
-    details = {'type': 'vstack', 'data_sources': []}
+def test_read_vstack_no_specifications():
+    details = {'type': 'vstack', 'specifications': []}
     with pytest.raises(ValueError):
         ndlpy.access.io.read_vstack(details)
 
 def test_read_vstack_wrong_type():
-    details = {'type': 'hstack', 'data_sources': [{'type': 'source1'}]}
+    details = {'type': 'hstack', 'specifications': [{'type': 'source1'}]}
     with pytest.raises(ValueError):
         ndlpy.access.io.read_vstack(details)
 

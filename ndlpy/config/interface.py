@@ -52,6 +52,9 @@ class _HConfig(context._Config):
         """
         if key in self._data or self._parent is None:
             self._data[key] = value
+            if self._parent is not None:
+                if key in self._parent:
+                    del self._parent[key]
         else:
             self._parent[key] = value
 
@@ -63,9 +66,12 @@ class _HConfig(context._Config):
         :type key: str
         :return: None
         """
-        if key in self._data or self._parent is None:
+        if key not in self.keys():
+            raise KeyError(f"Key {key} not found in object.")
+        
+        if key in self._data:
             del self._data[key]
-        else:
+        if self._parent is not None and key in self._parent:
             del self._parent[key]
 
     def __iter__(self):
@@ -91,10 +97,7 @@ class _HConfig(context._Config):
         :return: The number of keys.
         :rtype: int
         """
-        # TODO: This isn't quite right as should filter out parents that in self._data
-        if self._parent is None:
-            return len(self._data)
-        return len(list(self.__iter__()))
+        return len(self.keys())
 
     def __contains__(self, key):
         """
@@ -105,10 +108,7 @@ class _HConfig(context._Config):
         :return: True if the key is in the object, False otherwise.
         :rtype: bool
         """
-        if self._parent is None:
-            return key in self._data
-        else:
-            return key in self._data or key in self._parent
+        return key in self.keys()
 
     def keys(self):
         """
@@ -120,7 +120,13 @@ class _HConfig(context._Config):
         if self._parent is None:
             return self._data.keys()
         else:
-            return self._data.keys() + self._parent.keys()
+            tmp_dict = {}
+            for key in self._data:
+                tmp_dict[key] = None
+            for key in self._parent:
+                if key not in tmp_dict:
+                    tmp_dict[key] = None
+            return tmp_dict.keys()
 
     def items(self):
         """
@@ -129,10 +135,8 @@ class _HConfig(context._Config):
         :return: The items.
         :rtype: list
         """
-        if self._parent is None:
-            return self._data.items()
-        else:
-            return self._data.items() + self._parent.items()
+        for key in self.keys():
+            yield (key, self[key])
 
     def values(self):
         """
@@ -144,8 +148,11 @@ class _HConfig(context._Config):
         if self._parent is None:
             return self._data.values()
         else:
-            return self._data.values() + self._parent.values()
-
+            tmp_dict = {}
+            for key in self.keys():
+                tmp_dict[key] = self[key]
+            return tmp_dict.values()
+                
     def get(self, key, default=None):
         """
         Return the value of the key providing a default if the key is not found.
@@ -157,10 +164,10 @@ class _HConfig(context._Config):
         :return: The value of the key.
         :rtype: object
         """
-        if key in self._data or self._parent is None:
-            return self._data.get(key, default)
+        if key in self.keys():
+            return self.__getitem__(key)
         else:
-            return self._parent.get(key, default)
+            return default
 
     def update(self, *args, **kwargs):
         """
@@ -181,10 +188,9 @@ class _HConfig(context._Config):
         :return: A string representation of the object.
         :rtype: str
         """
-        if self._parent is None:
-            return str(self._data)
-        else:
-            return str(self._data) + '{"parent": ' + str(self._parent) + "}"
+        # Create a string representation similar to a regular dictionary
+        items_str = ', '.join([f"{repr(key)}: {repr(self[key])}" for key in self])
+        return f"{{{items_str}}}"
 
     def __repr__(self):
         """
@@ -192,7 +198,10 @@ class _HConfig(context._Config):
 
         :return: A string representation of the object.
         """
-        return f"{self.__class__.__name__}({self._data})"
+        # More formal representation, typically used for debugging
+        class_name = self.__class__.__name__
+        items_repr = ', '.join([f"{repr(key)}: {repr(self[key])}" for key in self])
+        return f"{class_name}({{{items_repr}}})"
 
     def __iter__(self):
         """
@@ -250,24 +259,74 @@ class Interface(_HConfig):
                 self._parent._writable = False
                 if "writable" in self._data and self._data["inherit"]["writable"]:
                     self._parent._writable = True
-
+                if "ignore" not in self._data["inherit"]:
+                    self._data["inherit"]["ignore"] = []
+                if "append" not in self._data["inherit"]:
+                    self._data["inherit"]["append"] = []
         
         self._expand_vars()
         self._restructure()
         if self._parent is not None:
             self._process_parent()
         
+
+    def __getitem__(self, key):
+        """
+        Get an item from the interface. If an item is not found,
+        search the parent. If an item is specified in "inherit",
+        "ignore" then ignore it in the parent. If an item is specified
+        in "inherit", "append" then append it to the parent values.
+
+        :param key: The key to be returned.
+        :type str:
+        :return value: The value of the key.
+        :rtype: object
+
+        """
+
+        if self._parent is None:
+            if key in self._data:
+                return self._data[key]
+            else:
+                raise ValueError(
+                    f"Key {key} not found in Interface object. Available keys are \"{', '.join(self._data.keys())}\""
+                )
+        else:
+            if key in self._data:
+                # Check if key is also in parent and is listed as an append key.
+                if key in self._parent and key in self._data["inherit"]["append"]:
+                    # Key should be appended to parent values
+                    val = self._data[key]
+                    par_val = self._parent[key]
+                    if isinstance(par_val, dict):
+                        tmp = par_val.copy()
+                        tmp.update(val)
+                        return tmp
+                    elif isinstance(par_val, list):
+                        return par_val + val
+                    else:
+                        raise ValueError(
+                            f"Key {key} specified in inherit append list, but entry is not of type \"dict\" or type \"list\" so appending doesn't make sense. Type of entry is \"{type(val)}\"."
+                        )
+                else:
+                    return self._data[key]
+            elif key in self._parent: # key not in data, but is in parent.
+                return self._parent[key]
+            else:
+                # Key is not in parent or data.
+                raise ValueError(
+                    f"Key {key} is not found in the Interface or its parents. Available keys are \"{', '.join(self.keys())}. The following keys are explicitly ignored in inherited Interfaces \"{', '.join(self._data['inherit']['ignore'])}\"."
+                    )
         
     def _expand_vars(self):
         """
-        Expand the environment variables in the configuration.
+c        Expand the environment variables in the configuration.
 
         :return: None
         """
         for key, item in self._data.items():
             if isinstance(item, str):
                 self._data[key] = os.path.expandvars(item)
-                print(self._data[key])
 
     def _restructure(self):
         """
@@ -293,8 +352,13 @@ class Interface(_HConfig):
         """
         Process the parent interface file.
         """
-        del self._data["inherit"]
-
+        delete_keys = []
+        if self._parent is not None:
+            for key in self._data["inherit"]["ignore"]:
+                if key in self._parent._data.keys():
+                    delete_keys.append(key)
+        for key in delete_keys:
+            del self._parent._data[key]
 
     @classmethod
     def from_file(cls, user_file=None, directory=".", field=None):

@@ -16,6 +16,27 @@ user_yaml_content_inherit = """
 inherit:
   directory: .
   filename: parent_settings.yml
+  append:
+    - list_to_append
+    - dict_to_append
+  ignore:
+    - some_ignored_parent_setting
+logging:
+  level: DEBUG
+  filename: user_log.log
+list_to_append:
+- item3
+dict_to_append:
+    key2: new_value2
+    key3: value3
+"""
+
+user_yaml_content_inherit_append = """
+inherit:
+  directory: .
+  filename: parent_settings.yml
+  append:
+    - logging
 logging:
   level: DEBUG
   filename: user_log.log
@@ -26,6 +47,13 @@ logging:
   level: INFO
   filename: default_log.log
 some_parent_setting: value_from_parent
+some_ignored_parent_setting: ignored_value_from_parent
+list_to_append:
+- item1
+- item2
+dict_to_append:
+    key1: value1
+    key2: value2
 """
 
 parent2_yaml = """
@@ -65,8 +93,14 @@ def test_inherited_interface(monkeypatch):
     interface = Interface.from_file(user_file="user_settings.yml", directory=".")
     # Assuming inheritance is correctly implemented in your Interface class
     assert interface["logging"]["level"] == "DEBUG"  # Overridden in user settings
+    assert "some_parent_setting" in interface.keys()
     assert interface["some_parent_setting"] == "value_from_parent"  # Inherited
-
+    assert "some_ignored_parent_setting" not in interface.keys()
+    assert len(interface["list_to_append"]) == 3
+    assert interface["list_to_append"] == ["item1", "item2", "item3"]
+    assert interface["dict_to_append"]["key1"] == "value1"    
+    assert interface["dict_to_append"]["key2"] == "new_value2"
+        
 def test_env_variable_expansion(monkeypatch):
     env_yaml_content = """
     path: $HOME/test
@@ -143,6 +177,7 @@ def test_interface_inheritance(monkeypatch):
     parent_config = Interface.from_file(user_file="parent.yml")
     child_config = Interface.from_file(user_file="child.yml")
     child_config._parent = parent_config
+    child_config._data["inherit"] = {"ignore" : [], "append" : []}
     assert child_config['key1'] == 'value1'
     assert child_config['key2'] == 'new_value2'
 
