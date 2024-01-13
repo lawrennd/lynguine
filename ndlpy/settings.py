@@ -94,7 +94,7 @@ class _HConfig(context._Config):
         return f"{self.__class__.__name__}({self._data})"
 
     def __iter__(self):
-        return self.__iter__()
+        return self._data.__iter__()
     
 
 class Settings(_HConfig):
