@@ -120,7 +120,13 @@ class _HConfig(context._Config):
         if self._parent is None:
             return self._data.keys()
         else:
-            return self._data.keys() + self._parent.keys()
+            tmp_dict = {}
+            for key in self._data:
+                tmp_dict[key] = None
+            for key in self._parent:
+                if key not in tmp_dict:
+                    tmp_dict[key] = None
+            return tmp_dict.keys()
 
     def items(self):
         """
@@ -250,17 +256,68 @@ class Interface(_HConfig):
                 self._parent._writable = False
                 if "writable" in self._data and self._data["inherit"]["writable"]:
                     self._parent._writable = True
-
+                if "ignore" not in self._data["inherit"]:
+                    self._data["inherit"]["ignore"] = []
+                if "append" not in self._data["inherit"]:
+                    self._data["inherit"]["append"] = []
         
         self._expand_vars()
         self._restructure()
         if self._parent is not None:
             self._process_parent()
         
+
+    def __getitem__(self, key):
+        """
+        Get an item from the interface. If an item is not found,
+        search the parent. If an item is specified in "inherit",
+        "ignore" then ignore it in the parent. If an item is specified
+        in "inherit", "append" then append it to the parent values.
+
+        :param key: The key to be returned.
+        :type str:
+        :return value: The value of the key.
+        :rtype: object
+
+        """
+
+        if self._parent is None:
+            if key in self._data:
+                return self._data[key]
+            else:
+                raise ValueError(
+                    f"Key {key} not found in Interface object. Available keys are \"{', '.join(self._data.keys())}\""
+                )
+        else:
+            if key in self._data:
+                # Check if key is also in parent and is listed as an append key.
+                if key in self._parent and key in self._data["inherit"]["append"]:
+                    # Key should be appended to parent values
+                    val = self._data[key]
+                    par_val = self._parent[key]
+                    if isinstance(par_val, dict):
+                        tmp = par_val.copy()
+                        tmp.update(val)
+                        return tmp
+                    elif isinstance(par_val, list):
+                        return par_val + val
+                    else:
+                        raise ValueError(
+                            f"Key {key} specified in inherit append list, but entry is not of type \"dict\" or type \"list\" so appending doesn't make sense. Type of entry is \"{type(val)}\"."
+                        )
+                else:
+                    return self._data[key]
+            elif key in self._parent: # key not in data, but is in parent.
+                return self._parent[key]
+            else:
+                # Key is not in parent or data.
+                raise ValueError(
+                    f"Key {key} is not found in the Interface or its parents. Available keys are \"{', '.join(self.keys())}. The following keys are explicitly ignored in inherited Interfaces \"{', '.join(self._data['inherit']['ignore'])}\"."
+                    )
         
     def _expand_vars(self):
         """
-        Expand the environment variables in the configuration.
+c        Expand the environment variables in the configuration.
 
         :return: None
         """
@@ -293,8 +350,13 @@ class Interface(_HConfig):
         """
         Process the parent interface file.
         """
-        del self._data["inherit"]
-
+        delete_keys = []
+        if self._parent is not None:
+            for key in self._data["inherit"]["ignore"]:
+                if key in self._parent._data.keys():
+                    delete_keys.append(key)
+        for key in delete_keys:
+            del self._parent._data[key]
 
     @classmethod
     def from_file(cls, user_file=None, directory=".", field=None):
