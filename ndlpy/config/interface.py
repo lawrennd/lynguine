@@ -52,6 +52,9 @@ class _HConfig(context._Config):
         """
         if key in self._data or self._parent is None:
             self._data[key] = value
+            if self._parent is not None:
+                if key in self._parent:
+                    del self._parent[key]
         else:
             self._parent[key] = value
 
@@ -63,9 +66,12 @@ class _HConfig(context._Config):
         :type key: str
         :return: None
         """
-        if key in self._data or self._parent is None:
+        if key not in self.keys():
+            raise KeyError(f"Key {key} not found in object.")
+        
+        if key in self._data:
             del self._data[key]
-        else:
+        if self._parent is not None and key in self._parent:
             del self._parent[key]
 
     def __iter__(self):
@@ -91,10 +97,7 @@ class _HConfig(context._Config):
         :return: The number of keys.
         :rtype: int
         """
-        # TODO: This isn't quite right as should filter out parents that in self._data
-        if self._parent is None:
-            return len(self._data)
-        return len(list(self.__iter__()))
+        return len(self.keys())
 
     def __contains__(self, key):
         """
@@ -105,10 +108,7 @@ class _HConfig(context._Config):
         :return: True if the key is in the object, False otherwise.
         :rtype: bool
         """
-        if self._parent is None:
-            return key in self._data
-        else:
-            return key in self._data or key in self._parent
+        return key in self.keys()
 
     def keys(self):
         """
@@ -135,10 +135,8 @@ class _HConfig(context._Config):
         :return: The items.
         :rtype: list
         """
-        if self._parent is None:
-            return self._data.items()
-        else:
-            return self._data.items() + self._parent.items()
+        for key in self.keys():
+            yield (key, self[key])
 
     def values(self):
         """
@@ -150,8 +148,11 @@ class _HConfig(context._Config):
         if self._parent is None:
             return self._data.values()
         else:
-            return self._data.values() + self._parent.values()
-
+            tmp_dict = {}
+            for key in self.keys():
+                tmp_dict[key] = self[key]
+            return tmp_dict.values()
+                
     def get(self, key, default=None):
         """
         Return the value of the key providing a default if the key is not found.
@@ -163,10 +164,10 @@ class _HConfig(context._Config):
         :return: The value of the key.
         :rtype: object
         """
-        if key in self._data or self._parent is None:
-            return self._data.get(key, default)
+        if key in self.keys():
+            return self.__getitem__(key)
         else:
-            return self._parent.get(key, default)
+            return default
 
     def update(self, *args, **kwargs):
         """
@@ -187,10 +188,9 @@ class _HConfig(context._Config):
         :return: A string representation of the object.
         :rtype: str
         """
-        if self._parent is None:
-            return str(self._data)
-        else:
-            return str(self._data) + '{"parent": ' + str(self._parent) + "}"
+        # Create a string representation similar to a regular dictionary
+        items_str = ', '.join([f"{repr(key)}: {repr(self[key])}" for key in self])
+        return f"{{{items_str}}}"
 
     def __repr__(self):
         """
@@ -198,7 +198,10 @@ class _HConfig(context._Config):
 
         :return: A string representation of the object.
         """
-        return f"{self.__class__.__name__}({self._data})"
+        # More formal representation, typically used for debugging
+        class_name = self.__class__.__name__
+        items_repr = ', '.join([f"{repr(key)}: {repr(self[key])}" for key in self])
+        return f"{class_name}({{{items_repr}}})"
 
     def __iter__(self):
         """
@@ -324,7 +327,6 @@ c        Expand the environment variables in the configuration.
         for key, item in self._data.items():
             if isinstance(item, str):
                 self._data[key] = os.path.expandvars(item)
-                print(self._data[key])
 
     def _restructure(self):
         """
