@@ -317,7 +317,59 @@ class Interface(_HConfig):
                 raise ValueError(
                     f"Key {key} is not found in the Interface or its parents. Available keys are \"{', '.join(self.keys())}. The following keys are explicitly ignored in inherited Interfaces \"{', '.join(self._data['inherit']['ignore'])}\"."
                     )
-        
+
+    def get_output_columns(self):
+        """
+        Return the output columns.
+
+        :return: The output columns.
+        :rtype: list
+        """
+        if "output" in self._data and "columns" in self._data["output"]:
+            return self._data["output"]["columns"]
+        else:
+            columns = []
+            if "compute" in self._data:
+                for comp in self._data["compute"]:
+                    if "field" in comp and comp["field"][0] != "_":
+                        columns.append(comp["field"])
+            if "review" in self._data:
+                for rev in self._data["review"]:
+                    if "field" in rev and rev["field"][0] != "_":
+                        columns.append(rev["field"])
+        if len(columns) > 0:
+            return columns
+        else:
+            log.warning(
+                f'No output columns specified in interface file.'
+            )
+            return []
+
+    def get_cache_columns(self):
+        """
+        Return the cache columns.
+
+        :return: The cache columns.
+        :rtype: list
+        """
+        if "cache" in self._data and "columns" in self._data["cache"]:
+            return self._data["cache"]["columns"]
+        else:
+            columns = []
+            if "compute" in self._data:
+                for comp in self._data["compute"]:
+                    if "field" in comp and comp["field"][0] == "_":
+                        columns.append(comp["field"])
+                    elif "cache" in comp:
+                        columns.append(comp["cache"])
+        if len(columns) > 0:
+            return columns
+        else:
+            log.warning(
+                f'No cache columns specified in interface file.'
+            )
+            return []
+    
     def _expand_vars(self):
         """
 c        Expand the environment variables in the configuration.

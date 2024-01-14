@@ -237,7 +237,6 @@ class DataObject:
             return "cache"
         else:
             return None
-        
 
     def isparameter(self, column):
         """
@@ -756,52 +755,92 @@ class DataObject:
         # and have the merges handled by read_hstack and
         # read_vstack. Make it illegal to do a read_hstack or
         # read_vstack if it's an output.
+        if not isinstance(interface, (dict, Interface)):
+            raise ValueError("Interface must be a dictionary or of type Interface.")
         default_joins = "outer"
         cdf = cls({})
         found_data = False
-        for key in interface:
+        for key, item in interface.items():
             # Check if the interface key is a valid data key
             if key in cls.valid_data_types:
+                if key in cdf._d:
+                    raise ValueError(
+                        f"Attempting to set the \"{key}\" portion of the data frame from flow, but have found one already exists. Current keys are \"{', '.join(cdf._d.keys())}\"."
+                    )
                 found_data = True
-                items = interface[key]
-                if not isinstance(items, list):
-                    items = [items]
-                # Iterate through adding the entries.
-                for item in items:
-                    # Use join from the item if it's there.
-                    join = item["how"] if "how" in item else default_joins
-                    newdf = cdf._finalize_df(*access.io.read_data(item))
-                    if key in cls.types["parameters"]:
-                        # If select is listed choose only the row of the data frame.
-                        if "select" in item:
-                            # Select the data from the dataframe.
-                            newds = newdf.loc[item["select"]]
-                            newdf = newds.to_frame().T
-                        if key not in cdf._d:
-                            # Set the series to the new data.
-                            if cdf.empty:
-                                cdf = cls(data=newdf, colspecs={key: list(newdf.columns)})
-                            else:
-                                cdf._d[key] = newdf.iloc[0]
-                                cdf._colspecs[key] = list(cdf._d[key].index)
+                if key not in cls.types["input"]: # allow creation of non-inputs if they don't exist
+                    if isinstance(item, dict):
+                        if access.io.data_exists(item):
+                            newdf = cdf._finalize_df(*access.io.read_data(item))
                         else:
-                            # Add augment the series with the new data.
-                            if cdf.empty:
-                                cdf = cls(data=newdf, colspecs={key: list(newdf.columns)})
+                            log.info(f"Data for type '{key}' not found, creating new..")
+                            if "columns" in item:
+                                columns = item["columns"]
                             else:
-                                cdf._d[key] = pd.concat([cdf._d[key], newdf.iloc[0]])
-                                cdf._colspecs[key] = list(cdf._d[key].index)
+                                if key in cls.types["cache"]:
+                                    columns = interface.get_cache_columns()
+                                elif key in cls.types["output"]:
+                                    columns = interface.get_output_columns()
+                                else:
+                                    raise ValueError(
+                                        f"Unrecognised key type \"{key}\". Valid data types are \"{', '.join(cls.valid_data_types)}\"."
+                                    )
+                            newdf = pd.DataFrame(index=cdf.index, columns=columns)
+                            
                     else:
-                        # Add the new data to the dataframe.
-                        if key not in cdf._d:
-                            if cdf.empty:
-                                cdf = cls(data=newdf, colspecs={key: list(newdf.columns)})
-                            else:
-                                cdf._d[key] = newdf
-                                cdf._colspecs[key] = list(cdf._d[key].columns)
-                        else:
-                            cdf._d[key] = cdf._d[key].join(newdf, how=join)
-                            cdf._colspecs[key] = list(cdf._d[key].index)
+                        raise ValueError(
+                            f"Item data descriptions must be in the form of a dictionary unless they are of type \"input\", when a list is valid and implies an \"hstack\" type is needed. The type of item you have provided for the key \"{key}\" is \"{type(item)}\"."
+                        )
+                else:
+                    if isinstance(item, list):
+                        # If there's a list, the an hstack is implied.
+                        log.info(f"Converting input \"{key}\" into an hstack as it's provided as a list.")
+                        details = {}
+                        details[key] = {"type" : "hstack", "descriptions" : item}
+                        newdf = cdf._finalize_df(*access.io.read_data(details))
+                    elif isinstance(item, dict):                        
+                        newdf = cdf._finalize_df(*access.io.read_data(item))
+                if key in cls.types["parameters"]:
+                    # If select is listed choose only the row of the data frame.
+                    if "select" in item:
+                        # Select the data from the dataframe.
+                        newds = newdf.loc[item["select"]]
+                        newdf = newds.to_frame().T
+                        
+#                        items = [items]
+                    # # Iterate through adding the entries.
+                    # for item in items:
+                    #     newdf = cdf._finalize_df(*access.io.read_data(item))
+                    #     # Use join from the item if it's there.
+                    #     join = item["how"] if "how" in item else default_joins
+                    #     if key in cls.types["parameters"]:
+                    #         # If select is listed choose only the row of the data frame.
+                    #         if "select" in item:
+                    #             # Select the data from the dataframe.
+                    #             newds = newdf.loc[item["select"]]
+                    #             newdf = newds.to_frame().T
+                    #         if key not in cdf._d:
+                    #             # Set the series to the new data.
+                    #             if cdf.empty:
+                    #                 cdf = cls(data=newdf, colspecs={key: list(newdf.columns)})
+                    #             else:
+                    #                 cdf._d[key] = newdf.iloc[0]
+                    #                 cdf._colspecs[key] = list(cdf._d[key].index)
+                    #         else:
+                    #             # Add augment the series with the new data.
+                    #             if cdf.empty:
+                    #                 cdf = cls(data=newdf, colspecs={key: list(newdf.columns)})
+                    #             else:
+                    #                 cdf._d[key] = pd.concat([cdf._d[key], newdf.iloc[0]])
+                    #                 cdf._colspecs[key] = list(cdf._d[key].index)
+                if cdf.empty:
+                    cdf = cls(data=newdf, colspecs={key: list(newdf.columns)})
+                else:
+                    cdf._d[key] = newdf
+                    cdf._colspecs[key] = list(cdf._d[key].columns)
+                            # else:
+                            #     cdf._d[key] = cdf._d[key].join(newdf, how=join)
+                            #     cdf._colspecs[key] = list(cdf._d[key].index)
         if not found_data:
             errmsg = f'No valid data found in interface. Data fields must be one of "{", ".join(cls.valid_data_types)}"'
             log.error(errmsg)
@@ -2149,7 +2188,9 @@ class CustomDataFrame(DataObject):
                 for col in cols:
                     if all(data[col] == data[col].iloc[0]):
                         self._d[typ][col] = data[col].iloc[0]
-                        
+                    # Check if the column is all NaN/None and the value is NaN.
+                    elif all(data[col].isna()) and np.isnan(data[col].iloc[0]):
+                        self._d[typ][col] = data[col].iloc[0]
                     else:
                         raise ValueError(
                             f'Column "{col}" is specified as a parameter column and yet the values of the column are not all the same.'

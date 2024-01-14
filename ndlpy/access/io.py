@@ -1543,7 +1543,7 @@ def read_hstack(details):
     # Iterate over each data source in the details
     for specs in details['specifications']:
         # Read each DataFrame using the read_data function
-        df = read_data(specs)
+        df, _ = read_data(specs)
         dfs.append(df)
 
         # Set default values if not provided in specs
@@ -1589,7 +1589,7 @@ def read_vstack(details):
 
     dfs = []
     for specs in details['specifications']:
-        df = read_data(specs)
+        df, _ = read_data(specs)
         dfs.append(df)
 
     if not dfs:
@@ -1600,6 +1600,7 @@ def read_vstack(details):
 
     # Perform vertical stacking
     stacked_df = pd.concat(dfs, axis=0, ignore_index=reset_index)
+    
     return stacked_df
 
 def read_data(details):
@@ -1683,13 +1684,9 @@ def data_exists(details):
     :return: Whether the data exists or not.
     :rtype: bool
     """
-    if "filename" in details:
-        filename = extract_full_filename(details)
-        if os.path.exists(filename):
-            return True
-        else:
-            return False
-    if details["type"] == "gsheet":
+    if "type" in details and details["type"] == "local": # this data isn't stored in a file
+        return True
+    if "type" in details and details["type"] == "gsheet":
         raise NotImplementedError(
             "Haven't yet implemented check for existence fo particular google sheets."
         )
@@ -1706,6 +1703,13 @@ def data_exists(details):
                 available = False
         return available
 
+    if "filename" in details:
+        filename = extract_full_filename(details)
+        if os.path.exists(filename):
+            return True
+        else:
+            return False
+    
     else:
         log.error("Unhandled data source availability type.")
         return False

@@ -614,9 +614,9 @@ def mock_read_data_hstack(specs):
     # This function should return different DataFrames based on specs
     # For testing purposes, let's return simple DataFrames
     if specs.get('type') == 'source1':
-        return pd.DataFrame({'A': [1, 2], 'B': [3, 4]})
+        return pd.DataFrame({'A': [1, 2], 'B': [3, 4]}), {}
     elif specs.get('type') == 'source2':
-        return pd.DataFrame({'B': [5, 6], 'C': [7, 8]})
+        return pd.DataFrame({'B': [5, 6], 'C': [7, 8]}), {}
     # Add more conditions as needed for testing
     return pd.DataFrame()
 
@@ -707,9 +707,9 @@ def test_read_hstack_wrong_type():
 def mock_read_data_vstack(mocker):
     def read_data_side_effect(specs):
         if specs.get('type') == 'source1':
-            return pd.DataFrame({'A': [1, 2]})
+            return pd.DataFrame({'A': [1, 2]}), {}
         elif specs.get('type') == 'source2':
-            return pd.DataFrame({'A': [3, 4]})
+            return pd.DataFrame({'A': [3, 4]}), {}
         return pd.DataFrame()
 
     mocker.patch('ndlpy.access.io.read_data', side_effect=read_data_side_effect)

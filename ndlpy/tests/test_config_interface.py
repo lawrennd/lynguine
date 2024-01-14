@@ -200,4 +200,55 @@ def test_interface_items(mock_interface):
 def test_interface_update(mock_interface):
     mock_interface.update({'new_key': 'new_value'})
     assert mock_interface['new_key'] == 'new_value'
+
+# Fixture for the class instance
+@pytest.fixture
+def instance():
+    interf = Interface()
+    interf._user_file = "test.yml"
+    return interf
+
+def test_get_output_columns_with_output(instance):
+    instance._data = {"output": {"columns": ["col1", "col2"]}}
+    assert instance.get_output_columns() == ["col1", "col2"]
+
+def test_get_output_columns_with_compute(instance):
+    instance._data = {
+        "compute": [
+            {"field": "col1"},
+            {"field": "_col2"},
+            {"field": "col3"},
+        ],
+        "review": [
+            {"field": "rev1"},
+            {"field": "rev2"},
+            {"field": "rev3"},
+        ]
+    }
+    assert instance.get_output_columns() == ["col1", "col3", "rev1", "rev2", "rev3"]
+
+def test_get_output_columns_no_data(instance, mocker):
+    mock_log = mocker.patch('ndlpy.interface.log')
+    assert instance.get_output_columns() == []
+    mock_log.warning.assert_called_once()
+
+def test_get_cache_columns_with_cache(instance):
+    instance._data = {"cache": {"columns": ["col1", "col2"]}}
+    assert instance.get_cache_columns() == ["col1", "col2"]
+
+def test_get_cache_columns_with_compute(instance):
+    instance._data = {
+        "compute": [
+            {"field": "col1"},
+            {"field": "_col2"},
+            {"field": "col3"},
+            {"cache": "col4"},
+        ]
+    }
+    assert instance.get_cache_columns() == ["_col2", "col4"]
+
+def test_get_cache_columns_no_data(instance, mocker):
+    mock_log = mocker.patch('ndlpy.interface.log')
+    assert instance.get_cache_columns() == []
+    mock_log.warning.assert_called_once()
     
