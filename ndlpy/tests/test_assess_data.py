@@ -92,7 +92,7 @@ def test_to_flow_valid_output(mocker):
     test_df = ndlpy.assess.data.CustomDataFrame({})
     test_df._d = {'output': 'some_data'}
     
-    interface = {'output': [{'param1': 'value1'}]}
+    interface = {'output': {'param1': 'value1'}}
     
     test_df.to_flow(interface)
     ndlpy.access.io.write_data.assert_called_with('some_data', {'param1': 'value1'})
