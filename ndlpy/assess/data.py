@@ -772,6 +772,11 @@ class DataObject:
                     join = item["how"] if "how" in item else default_joins
                     newdf = cdf._finalize_df(*access.io.read_data(item))
                     if key in cls.types["parameters"]:
+                        # If select is listed choose only the row of the data frame.
+                        if "select" in item:
+                            # Select the data from the dataframe.
+                            newds = newdf.loc[item["select"]]
+                            newdf = newds.to_frame().T
                         if key not in cdf._d:
                             # Set the series to the new data.
                             if cdf.empty:

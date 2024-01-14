@@ -153,6 +153,30 @@ def valid_local_settings():
             "select" : 'indexValue'
         }
     })
+@pytest.fixture
+def valid_local_select_settings():
+    # Return a sample interface object that is valid
+    return ndlpy.config.interface.Interface({
+        "parameters":
+        {
+            "type" : "local",
+            "index" : "index",
+            "select" : "indexValue2",
+            "data" : [
+            {
+                'index': 'indexValue',
+                'key1': 'value1',
+                'key2': 'value2',
+                'key3': 'value3',
+            },
+            {
+                'index': 'indexValue2',
+                'key1': 'value1row2',
+                'key2': 'value2row2',
+                'key3': 'value3row2',
+            }],
+        }
+    })
 
 # test from_flow with a valid setting that specifies local data.
 def test_from_flow_with_valid_settings(valid_local_settings):
@@ -161,6 +185,13 @@ def test_from_flow_with_valid_settings(valid_local_settings):
     assert cdf == ndlpy.assess.data.CustomDataFrame(pd.DataFrame({'key1': 'value1', 'key2' : 'value2', 'key3': 'value3'}, index=['indexValue']))
     assert cdf.colspecs == {"input" : ["key1", "key2", "key3"]}
 
+# test from_flow with a valid setting that specifies local data.
+def test_from_flow_with_valid_select_settings(valid_local_select_settings):
+    cdf = ndlpy.assess.data.CustomDataFrame.from_flow(valid_local_select_settings)
+    assert isinstance(cdf, ndlpy.assess.data.CustomDataFrame)
+    assert cdf == ndlpy.assess.data.CustomDataFrame(pd.DataFrame({'key1': 'value1row2', 'key2' : 'value2row2', 'key3': 'value3row2'}, index=[0]))
+    assert cdf.colspecs == {"parameters" : ["key1", "key2", "key3"]}
+    
 def test_from_flow_with_invalid_type():
     with pytest.raises(ValueError):
         ndlpy.assess.data.CustomDataFrame.from_flow("not-a-dictionary")
@@ -177,8 +208,7 @@ def test_from_flow_with_empty_settings():
     cdf = ndlpy.assess.data.CustomDataFrame.from_flow(ndlpy.config.interface.Interface({"globals":
                                                            {"type" : "local",
                                                             "data" : {},
-                                                            "index" : "index",
-                                                            "select" : 'indexValue'}}))
+                                                            "index" : "index"}}))
     # Assert the result is as expected (empty dataframe, etc.)
     assert isinstance(cdf, ndlpy.assess.data.CustomDataFrame)
     assert cdf.empty
