@@ -247,12 +247,13 @@ class Interface(_HConfig):
         if "inherit" in self._data:
             if "directory" not in self._data["inherit"]:
                 raise ValueError(
-                    f"Inherit specified in interface file {user_file} in directory {directory} but no directory to inherit from is specified."
+                    f"Inherit specified in interface file {self._user_file} in directory {directory} but no directory to inherit from is specified."
                 )
             else:
                 directory = self._data["inherit"]["directory"]
                 if "filename" not in self._data["inherit"]:
-                    filename = user_file
+                    # assume default file name
+                    filename = self.__class__.default_config_file()
                 else:
                     filename = self._data["inherit"]["filename"]
                 self._parent = Interface.from_file(user_file=filename, directory=directory)
@@ -413,6 +414,13 @@ c        Expand the environment variables in the configuration.
             del self._parent._data[key]
 
     @classmethod
+    def default_config_file(cls):
+        """
+        Default name of the interface configuration file.
+        """
+        return "_ndlpy.yml"
+    
+    @classmethod
     def from_file(cls, user_file=None, directory=".", field=None):
         """
         Construct an Interface from the details in a file.
@@ -426,7 +434,7 @@ c        Expand the environment variables in the configuration.
         
         """
         if user_file is None:
-            ufile = "_" + __name__ + ".yml"
+            ufile = cls.default_config_file()
         else:
             ufile = user_file
         if type(user_file) is list:
