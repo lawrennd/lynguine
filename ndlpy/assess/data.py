@@ -162,6 +162,18 @@ class DataObject:
         else:
             return True
 
+    def isseries(self, column):
+        """
+        Is a given column a series column?
+
+        :param column: The column to check.
+        :return: True if the column is a series column, False otherwise.
+        """
+        if self._col_source(column) in self.types["series"]:
+            return True
+        else:
+            return False
+        
     @property
     def autocache(self):
         """
@@ -340,9 +352,21 @@ class DataObject:
 
         :return: The value that is the focus for the DataFrame.
         """
-        if self.get_column() == self.index.name:
+        # Check whether the column is a series column.
+
+        col = self.get_column()
+        if col == self.index.name:
             return self.get_index()
-        return self.at[self.get_index(), self.get_column()]
+        val = self.at[self.get_index(), col]
+        if self.isseries(col):
+            # If it is a series column, return the element of val where the self._selector column equals the self._subindex value.
+            if self._selector is None:
+                raise KeyError("Selector not set.")
+            if self._subindex is None:
+                raise KeyError("Subindex not set.")
+            return val[val[self._selector] == self._subindex]
+        return val
+            
             
 
     def set_value(self, value):
@@ -643,51 +667,6 @@ class DataObject:
         """
         return self.to_pandas().to_string(*args, **kwargs)
 
-    types =  {
-            # Input types are standard DataFrames but are not mutable.
-            "input": [
-                "input",
-                "allocation", # Original referia style 
-                "additional", # Original referia style supplementary info
-                "data",
-                "constants",
-                "global_consts",
-            ],
-            # Output types are standard DataFrames that are mutable and
-            # intended to be recorded once operations on the
-            # CustomDataFrame are complete.
-            "output": [
-                "output",
-                "writedata",
-                "writeseries",
-                "parameters",
-                "scores",
-                "globals",
-            ],
-            # Parameter types do not have an index, they are globally valid.
-            "parameters": [
-                "constants",
-                "global_consts",
-                "parameters",
-                "globals",
-                "parameter_cache",
-                "global_cache",
-            ],
-            # Cache types are standard DataFrames that are mutable and
-            # intended to be used for intermediate calculations.
-            "cache": [
-                "cache",
-                "series_cache",
-                "parameter_cache",
-                "global_cache",
-            ],
-            # Series types are standard DataFrames that are mutable and
-            # may have multiple rows with the same index.
-            "series": [
-                "writeseries",
-                "series_cache",
-            ],
-        }
     @classmethod
     @property
     def valid_data_types(cls):
@@ -1729,6 +1708,7 @@ class CustomDataFrame(DataObject):
         # Series types are standard DataFrames that are mutable and
         # may have multiple rows with the same index.
         "series": [
+            "series",
             "writeseries",
             "series_cache",
         ],
@@ -1827,7 +1807,7 @@ class CustomDataFrame(DataObject):
         if self._subindex is None:
             subindices = self.get_subindices()
             if len(subindices) > 0:
-                self._subindex = self.columns[0]
+                self._subindex = subindices[0]
         elif subindex not in self.get_subindices():
             raise ValueError(
                 f"Provided subindex '{subindex}' not found in CustomDataFrame."
