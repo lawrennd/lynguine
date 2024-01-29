@@ -8,6 +8,7 @@ import numpy as np
 
 from deepdiff import DeepDiff
 
+
 # Utility function to create test DataFrames
 def create_test_dataframe(colspecs="cache"):
     return ndlpy.assess.data.CustomDataFrame({'A': [1, 2, 3], 'B': [4, 5, 6]}, colspecs=colspecs)
@@ -466,5 +467,45 @@ def test_len_with_mixed_data_types():
     custom_df = ndlpy.assess.data.CustomDataFrame(data)
     assert len(custom_df) == 3
 
-# Add more tests as needed to cover other scenarios and edge cases
+
+@pytest.fixture
+def custom_dataframe():
+    # Setup for CustomDataFrame instance
+    df = ndlpy.assess.data.CustomDataFrame([{"col1": "value1", "col2": "value2"}])
+    df._name_column_map = {}  # Assuming _name_column_map is a dict
+    df._column_name_map = {}  # Assuming _column_name_map is a dict
+    return df
+
+def test_update_name_column_map(custom_dataframe):
+    # Test updating with a new name-column pair
+    custom_dataframe.update_name_column_map("var_name", "column_name")
+    assert custom_dataframe._name_column_map["var_name"] == "column_name"
+    assert custom_dataframe._column_name_map["column_name"] == "var_name"
+
+    # Test updating with an existing column but a new name
+    with pytest.raises(ValueError):
+        custom_dataframe.update_name_column_map("new_var_name", "column_name")
+
+def test_default_mapping(custom_dataframe):
+    custom_dataframe._name_column_map = {"var1": "col1", "var2": "col2"}
+    assert custom_dataframe._default_mapping() == {"var1": "col1", "var2": "col2"}
+
+def test_mapping_with_default(custom_dataframe):
+    # Assuming set_column and get_value methods are part of CustomDataFrame
+    custom_dataframe._name_column_map = {"var1": "col1", "var2": "col2"}
+    mapping_result = custom_dataframe.mapping()
+    assert mapping_result == {"var1": "value1", "var2": "value2"}
+
+def test_mapping_with_provided_series(custom_dataframe):
+    custom_dataframe._name_column_map = {"var1": "col1", "var2": "col2"}
+    provided_series = pd.Series({"col1": "value1", "col2": "value2"})
+    mapping_result = custom_dataframe.mapping(series=provided_series)
+    assert mapping_result == {"var1": "value1", "var2": "value2"}
+
+def test_mapping_nan_removal(custom_dataframe):
+    custom_dataframe._name_column_map = {"var1": "col1", "var2": "col2"}
+    custom_dataframe.set_column("col2")
+    custom_dataframe.set_value(None)
+    mapping_result = custom_dataframe.mapping()
+    assert mapping_result == {"var1": "value1"} 
 

@@ -5,6 +5,7 @@ from .. import access
 from ..log import Logger
 from ..config.context import Context
 from ..config.interface import Interface
+from ..util.misc import remove_nan
 
 """Wrapper classes for data objects"""
 
@@ -2305,6 +2306,58 @@ class CustomDataFrame(DataObject):
                     
         return df
 
+    def update_name_column_map(self, name, column):
+        """
+        Update the map from valid variable names to columns in the data frame. Valid variable names are needed e.g. for Liquid filters.
+
+        :param name: The name of the variable.
+        :type name: str
+        :param column: The column in the data frame.
+        :type column: str
+        """
+        if column in self._column_name_map and self._column_name_map[column] != name:
+            original_name = self._column_name_map[column]
+            errmsg = f"Column \"{column}\" already exists in the name-column map and there's an attempt to update its value to \"{name}\" when it's original value was \"{original_name}\" and that would lead to unexpected behaviours. Try looking to see if you're setting column values to different names across different files and/or file loaders."
+            log.error(errmsg)
+            raise ValueError(errmsg)
+        self._name_column_map[name] = column
+        self._column_name_map[column] = name
+        
+    def _default_mapping(self):
+        """
+        Generate the default mapping from config or from columns
+
+        :returns: dictionary of mapping between variable names and column values
+        :rtype: dict
+        """
+        return self._name_column_map
+
+    def mapping(self, mapping=None, series=None):
+        """
+        Generate dictionary of mapping between variable names and column values.
+
+        :param mapping: mapping to use, if None use default mapping
+        :param series: series to use, if None use current series
+        :returns: dictionary of mapping between variable names and column values
+        :rtype: dict
+        """
+        
+        if mapping is None:
+            if series is None: # remove any columns not in self.columns
+                mapping = {name: column for name, column in self._default_mapping().items() if column in self.columns or column==self.index.name}
+            else: # remove any columns not in provided series
+                mapping = {name: column for name, column in self._default_mapping().items() if column in series.index}
+
+        format = {}
+        for name, column in mapping.items():
+            if series is None:
+                self.set_column(column)
+                format[name] = self.get_value()
+            else:
+                if column in series:
+                    format[name] = series[column]
+        return remove_nan(format)
+    
 def concat(objs, *args, **kwargs):
     """
     Concatenate a sequence of CustomDataFrame objects into a single CustomDataFrame.
