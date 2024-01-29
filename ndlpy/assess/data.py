@@ -5,7 +5,7 @@ from .. import access
 from ..log import Logger
 from ..config.context import Context
 from ..config.interface import Interface
-from ..util.misc import remove_nan
+from ..util.misc import remove_nan, to_camel_case
 
 """Wrapper classes for data objects"""
 
@@ -144,6 +144,37 @@ class DataObject:
             raise KeyError(errmsg)
         else:
             self._column = column
+    def set_value_column(self, value, column):
+        """
+        Set a value to a column in the write data frame
+
+        :param value: The value to be set.
+        :type value: object
+        :param column: The column to set the value in.
+        :type column: str
+        :return: None
+        """
+        orig_col = self.get_column()
+        self.set_column(column)
+        self.set_value(value)
+        if orig_col is not None:
+            self.set_column(orig_col)
+
+    def get_value_column(self, column):
+        """
+        Get a value from a column in the data frame(s)
+
+        :param column: The column to get the value from.
+        :type column: str
+        :return: The value from the column.
+        :rtype: object
+        """
+        orig_col = self.get_column()
+        self.set_column(column)
+        value = self.get_value()
+        if orig_col is not None:
+            self.set_column(orig_col)
+        return value
 
     def ismutable(self, column):
         """
@@ -1746,6 +1777,8 @@ class CustomDataFrame(DataObject):
         if isinstance(data, pd.Series):
             data = data.to_frame(name=data.name).T
 
+        self._name_column_map = {}
+        self._column_name_map = {}
 
 
         # If the colspecs isn't specified assume it's of "cache" type.
@@ -2337,6 +2370,421 @@ class CustomDataFrame(DataObject):
                 if column in series:
                     format[name] = series[column]
         return remove_nan(format)
+
+    def viewer_to_value(self, viewer, kwargs=None):
+        """
+        Convert a viewer structure to populated values.
+
+        :param viewer: The viewer to create the text of.
+        :type viewer: dict or list of dicts
+        :param kwargs: The mapping to use to populate the viewer.
+        :type kwargs: dict
+        :returns: The text of the viewer.
+        """
+        value = ""
+        if type(viewer) is not list:
+            viewer = [viewer]
+        for view in viewer:
+            value += self.view_to_value(view, kwargs)
+            if value != "":
+                value += "\n\n"
+        return value
+
+    def view_to_value(self, view, kwargs=None, local={}):
+        """
+        Create the text of the view.
+
+        :param view: The view to create the text of.
+        :type view: dict
+        :param kwargs: The mapping to use to populate the view.
+        :type kwargs: dict
+        :returns: The text of the view.
+        """
+        # Ensure view is a dictionary or an Interface
+        if isinstance(view, Interface):
+            view = view.to_dict()
+        elif not isinstance(view, dict):
+            raise TypeError("View should be a \"dict\" or an \"Interface\".")
+
+        if self.conditions(view):
+            if "local" in view:
+                local.update(view["local"])
+            if "list" in view:
+                values = []
+                for v in view["list"]:
+                    values.append(self.view_to_value(v, kwargs, local))
+                return values
+            if "field" in view:
+                return self.get_value_column(view["field"])
+            if "join" in view:
+                if "list" not in view["join"]:
+                    log.warning("No field \"list\" in \"concat\" viewer.")
+                elements = self.view_to_value(view["join"], kwargs, local)
+                if "separator" in view["join"]:
+                    sep = view["join"]["separator"]
+                else:
+                    sep = "\n\n"
+                return sep.join(elements)
+            if "compute" in view:
+                return self.compute_to_value(view["compute"])
+            if "liquid" in view:
+                return self.liquid_to_value(view["liquid"], kwargs, local)
+            if "tally" in view:
+                return self.tally_to_value(view["tally"], kwargs, local)
+            if "display" in view:
+                return self.display_to_value(view["display"], kwargs, local)
+            raise KeyError("View needs to contain a key which is one of \"list\", \"field\", \"join\", \"compute\", \"liquid\", \"tally\", or \"display\".")
+        
+    def summary_viewer_to_value(self, viewer, kwargs=None):
+        """
+        Convert a summary viewer structure to populated values.
+
+        :param viewer: The summary viewer to create the text of.
+        :type viewer: dict or list of dicts
+        :param kwargs: The mapping to use to populate the summary viewer.
+        :type kwargs: dict
+        :returns: The text of the summary viewer.
+        """
+        value = ""
+        if type(viewer) is not list:
+            viewer = [viewer]
+        for view in viewer:
+            value += self.summary_view_to_value(view, kwargs)
+            if value != "":
+                value += "\n\n"
+        return value
+    
+    def summary_view_to_value(self, view, kwargs=None, local={}):
+        """
+        Create the text of the summary view.
+
+        :param view: The summary view to create the text of.
+        :type view: dict
+        :param kwargs: The mapping to use to populate the summary view.
+        :type kwargs: dict
+        :returns: The text of the summary view.
+        """
+        # Ensure view is a dictionary or an Interface
+        if isinstance(view, Interface):
+            view = view.to_dict()
+        elif not isinstance(view, dict):
+            raise TypeError("View should be a \"dict\" or an \"Interface\".")
+        value = ""
+        if self.conditions(view):
+            if "list" in view:
+                values = []
+                for v in view["list"]:
+                    values.append(self.view_to_value(v, kwargs, local))
+                return values
+            if "join" in view:
+                if "list" not in view["join"]:
+                    log.warning("No field \"list\" in \"concat\" viewer.")
+                elements = self.view_to_value(view["join"], kwargs)
+                if "separator" in view["join"]:
+                    sep = view["join"]["separator"]
+                else:
+                    sep = "\n\n"
+                return sep.join(elements)
+            if "field" in view:
+                value += self.get_value_column(view["field"])
+            if "compute" in view:
+                value += self.compute_to_value(view["compute"], kwargs, local)
+            if "liquid" in view:
+                value += self.liquid_to_value(view["liquid"], kwargs, local)
+            if "tally" in view:
+                value += self.tally_to_value(view["tally"], kwargs, local)
+            if "display" in view:
+                value += self.display_to_value(view["display"], kwargs, local)
+            return value
+        else:
+            return None
+
+    def view_to_tmpname(self, view):
+        """
+        Convert a view to a name
+
+        :param view: The view to convert to a name.
+        :type view: dict
+        :returns: A name derived from the view./
+        :rtype: str
+        """
+        if "list" in view:
+            name = "list_"
+            for v in view["list"]:
+                name += self.view_to_tmpname(v)
+                name += "_"
+            return name
+        elif "field" in view:
+            return to_camel_case(view["field"])
+        elif "join" in view:
+            name = "join_"
+            if "list" not in view["join"]:
+                log.warning("No field \"list\" in \"concat\" viewer.")
+            name += self.view_to_tmpname(view["join"])
+            return name
+        elif "compute" in view:
+            return self.compute_to_tmpname(view["compute"])
+        elif "liquid" in view:
+            return self.liquid_to_tmpname(view["liquid"])
+        elif "display" in view:
+            return self.display_to_tmpname(view["display"])
+
+    def tally_to_value(self, tally, kwargs=None, local={}):
+        """
+        Create the text of the view.
+
+        :param tally: The tally to create the text of.
+        :type tally: dict
+        :param kwargs: The mapping to use to populate the tally.
+        :type kwargs: dict
+        :returns: The text of the tally.
+        
+        """
+        return self.tally_values(tally, kwargs, local)
+
+    def tally_to_tmpname(self, tally) -> str:
+        """
+        Convert a view to a temporary name
+
+        :param tally: The tally to convert to a name.
+        :type tally: dict
+        :returns: A name derived from the tally.
+        :rtype: str
+        """
+        if "tally" in view:
+            name = self.tally_to_tmpname(view["tally"])
+        return name
+
+    def conditions(self, view) -> bool:
+        """
+        Check if a given data viewer should be displayed.
+
+        :param view: The data viewer to check.
+        :type view: dict or Interface
+        :returns: True if the data viewer should be displayed, False otherwise.
+        :rtype: bool
+        """
+        if "conditions" not in view:
+            return True
+        else:
+            for condition in view["conditions"]:
+                if "present" in condition:
+                    if not condition["present"]["field"] in self.columns:
+                        return False
+                    else:
+                        self.set_column(condition["present"]["field"])
+                        if pd.isna(self.get_value()):
+                            return False
+                        else:
+                            return True
+
+                if "equal" in condition:
+                    self.set_column(condition["equal"]["field"])
+                    if not self.get_value() == condition["equal"]["value"]:
+                        return False
+        return True
+
+    def display_to_tmpname(self, display) -> str:
+        """
+        Convert a display string to a temp name
+
+        :param display: The display string to convert.
+        :type display: str
+        :returns: A name derived from the display string.
+        :rtype: str
+        """
+        return to_camel_case(display.replace("/", "_").replace("{","").replace("}", ""))
+
+
+    def display_to_value(self, display, kwargs=None, local={}):
+        """
+        Convert a display string to a string.
+
+        :param display: The display string to convert.
+        :type display: str
+        :param kwargs: The mapping to use for the display string, defaults to None
+        :type kwargs: dict, optional
+        :param local: Local overrides to use on top of the kwargs for substitution in the display string, defaults to {}
+        :type local: dict, optional
+        :returns: The string extracted from the display string.
+        :rtype: str
+        :raises KeyError: If the mapping doesn't contain the key requested in the display string.
+        """
+        if kwargs is None:
+            kwargs = self.mapping()
+        kwargs.update(local)
+        try:
+            return display.format(**kwargs)
+        except KeyError as err:
+            raise KeyError(f"The mapping doesn't contain the key {err} requested in \"{display}\". Set the mapping in \"_referia.yml\".") from err
+
+    def compute_to_value(self, compute):
+        """
+        Extract a value from a computation
+
+        :param compute: The interface details containing the computation to extract the value from.
+        :type compute: dict or Interface
+        :returns: The value extracted from the computation.
+        """
+        compute_prep = self.compute.prep(compute)
+        return self.compute.run(compute_prep)
+    
+    def compute_to_tmpname(self, compute) -> str:
+        """
+        Convert a compute specification to a descriptive name
+
+        :param compute: The compute specification to convert to a name.
+        :type compute: dict or Interface
+        :returns: A name derived from the compute specification.
+        :rtype: str
+        
+        """
+        return to_camel_case(compute["function"].replace("/", "_").replace("{","").replace("}", "").replace("%","-"))
+        
+    def liquid_to_tmpname(self, display):
+        """
+        Convert a liquid template specification to a decriptive name.
+
+        :param display: The liquid template specification to convert to a name.
+        :type display: str
+        :returns: A name derived from the liquid template specification.
+        :rtype: str
+        """
+        return to_camel_case(display.replace("/", "_").replace("{","").replace("}", "").replace("%","-"))
+
+    
+    def liquid_to_value(self, display, kwargs=None, local={}):
+        """
+        Convert a liquid template to a string.
+
+        :param display: The liquid template to convert.
+        :type display: str
+        :param kwargs: The mapping to use for the liquid template, defaults to None
+        :type kwargs: dict, optional
+        :param local: Local overrides to use on top of the kwargs for substitution in the liquid template, defaults to {}
+        :type local: dict, optional
+        """
+        if self.compute is None:
+            log.warning("Compute needs to be initialised before liquid_to_value is called.")
+            return ""
+        
+        if kwargs is None or kwargs=={}:
+            kwargs = self.mapping()
+        kwargs.update(local)
+        try:
+            return self.compute._liquid_env.from_string(display).render(**remove_nan(kwargs))
+        except Exception as err:
+            raise Exception(f"In {display}\n\n {err}") from err
+
+    def tally_to_tmpname(self, tally):
+        """Convert a tally to a temporary name"""
+        tmpname = ""
+        if "begin" in tally:
+            tmpname += "begin_"
+            tmpname += self.view_to_tmpname(tally["begin"])
+        tmpname += "display_"
+        tmpname += self.view_to_tmpname(tally)
+        if "end" in tally:
+            tmpname += "end_"
+            tmpname += self.view_to_tmpname(tally["end"])
+        return tmpname
+
+    def tally_values(self, tally, kwargs=None, local={}):
+        """
+        Create the text of the tally. A tally has a "begin" field, and an "end" field and is used for summarising a series.
+
+        :param tally: The tally to create the text of.
+        :type tally: dict
+        :param kwargs: The mapping to use to populate the tally.
+        :type kwargs: dict
+        :returns: The text of the tally.
+        """
+        value = ""
+        if "begin" in tally:
+            value += tally["begin"]
+            if value != "":
+                value += "\n\n"
+        orig_subindex = self.get_subindex()
+        subindices = self.tally_series(tally)
+        for subindex in subindices:
+            self.set_subindex(subindex)
+            value += self.view_to_value(tally, kwargs, local)
+            if value != "":
+                value += "\n\n"
+        self.set_subindex(orig_subindex)
+        if "end" in tally:
+            value += tally["end"]
+            if value != "":
+                value += "\n\n"
+        return value
+
+    def tally_series(self, tally):
+        """
+        Return the series to be used for a tally.
+
+        :param tally: The tally to create the text of.
+        :type tally: dict
+        :returns: The series to be used for a tally.
+        :rtype: pd.Series
+        
+        """
+        orig_subindex = self.get_subindex()
+        subindices = self.get_subindices()
+        if subindices is None:
+            return None
+        if orig_subindex in subindices:
+            cur_loc = subindices.get_loc(orig_subindex)
+        else:
+            cur_loc = 0
+            orig_subindex = subindices[0]
+        def subind_val(ind):
+            try:
+                return pd.Index([subindices[ind]], dtype=subindices.dtypegg)
+            except IndexError as e:
+                log.warning(f"Requested invalid index in Data.tally_series()")
+                return pd.Index([subindices[cur_loc]], dtype=subindices.dtype)
+
+        def subind_series(ind, starter=True, reverse=False):
+            try:
+                if starter:
+                    return pd.Index(subindices[ind:], dtype=subindices.dtype)
+                else:
+                    return pd.Index(subindices[:ind], dtype=subindices.dtype)
+
+            except IndexError as e:
+                log.warning(f"Requested invalid index in Data.tally_series()")
+                if starter:
+                    return pd.Index(subindices[cur_loc:], dtype=subindices.dtype)
+                else:
+                    return pd.Index(subindices[:cur_loc], dtype=subindices.dtype)
+
+        if "reverse" not in tally or not tally["reverse"]:
+            reverse=False
+        else:
+            reverse=True
+            
+        if "which" not in tally:
+            return subindices
+        elif tally["which"] == "pop":
+            return subind_val(0, reverse=reverse)
+        elif tally["which"] == "bottom":
+            return subind_val(-1, reverse=reverse)
+        elif tally["which"] == "previous":
+            return subind_val(cur_loc+1, reverse=reverse)
+        elif tally["which"] == "next":
+            return subind_val(cur_loc-1, reverse=reverse)
+        elif tally["which"] == "earlier":
+            return subind_series(cur_loc+1, reverse=reverse)
+        elif tally["which"] == "later":
+            return subind_series(cur_loc, starter=False, reverse=reverse)
+        elif tally["which"] == "others":
+            return subind_series(cur_loc, starter=False, reverse=reverse).append(subind_series(cur_loc+1))
+        elif tally["which"] == "all":
+            return subindices
+        else:
+            errmsg = "Unrecognised subindices specifier in tally."
+            log.error(errmsg)
+            raise ValueError(errmsg)
     
 def concat(objs, *args, **kwargs):
     """

@@ -477,14 +477,30 @@ def test_len_with_mixed_data_types():
     custom_df = ndlpy.assess.data.CustomDataFrame(data)
     assert len(custom_df) == 3
 
-
 @pytest.fixture
 def custom_dataframe():
-    # Setup for CustomDataFrame instance
-    df = ndlpy.assess.data.CustomDataFrame([{"col1": "value1", "col2": "value2"}])
-    df._name_column_map = {}  # Assuming _name_column_map is a dict
-    df._column_name_map = {}  # Assuming _column_name_map is a dict
+    # Setup for CustomDataFrame instance with initial data and columns
+    df = ndlpy.assess.data.CustomDataFrame([{"column1": "value1", "column2": "value2"}])
+    df.set_column('column1')
     return df
+
+# Test for set_value_column
+def test_set_value_column(custom_dataframe):
+    # Set a new value in column2
+    custom_dataframe.set_value_column('new_value', 'column2')
+    assert custom_dataframe.get_column() == 'column1'
+    custom_dataframe.set_column('column2')
+    assert custom_dataframe.get_value() == 'new_value'
+    # Verify original column is restored
+
+# Test for get_value_column
+def test_get_value_column(custom_dataframe):
+    # Retrieve value from column2
+    value = custom_dataframe.get_value_column('column2')
+    assert value == 'value2'
+    # Verify original column is restored
+    assert custom_dataframe.get_column() == 'column1'
+
 
 def test_update_name_column_map(custom_dataframe):
     # Test updating with a new name-column pair
@@ -497,25 +513,74 @@ def test_update_name_column_map(custom_dataframe):
         custom_dataframe.update_name_column_map("new_var_name", "column_name")
 
 def test_default_mapping(custom_dataframe):
-    custom_dataframe._name_column_map = {"var1": "col1", "var2": "col2"}
-    assert custom_dataframe._default_mapping() == {"var1": "col1", "var2": "col2"}
+    custom_dataframe._name_column_map = {"var1": "column1", "var2": "column2"}
+    assert custom_dataframe._default_mapping() == {"var1": "column1", "var2": "column2"}
 
 def test_mapping_with_default(custom_dataframe):
     # Assuming set_column and get_value methods are part of CustomDataFrame
-    custom_dataframe._name_column_map = {"var1": "col1", "var2": "col2"}
+    custom_dataframe._name_column_map = {"var1": "column1", "var2": "column2"}
     mapping_result = custom_dataframe.mapping()
     assert mapping_result == {"var1": "value1", "var2": "value2"}
 
 def test_mapping_with_provided_series(custom_dataframe):
-    custom_dataframe._name_column_map = {"var1": "col1", "var2": "col2"}
-    provided_series = pd.Series({"col1": "value1", "col2": "value2"})
+    custom_dataframe._name_column_map = {"var1": "column1", "var2": "column2"}
+    provided_series = pd.Series({"column1": "value1", "column2": "value2"})
     mapping_result = custom_dataframe.mapping(series=provided_series)
     assert mapping_result == {"var1": "value1", "var2": "value2"}
 
 def test_mapping_nan_removal(custom_dataframe):
-    custom_dataframe._name_column_map = {"var1": "col1", "var2": "col2"}
-    custom_dataframe.set_column("col2")
+    custom_dataframe._name_column_map = {"var1": "column1", "var2": "column2"}
+    custom_dataframe.set_column("column2")
     custom_dataframe.set_value(None)
     mapping_result = custom_dataframe.mapping()
     assert mapping_result == {"var1": "value1"} 
 
+# Test for viewer_to_value with a single dict viewer
+def test_viewer_to_value_single_dict(custom_dataframe):
+    viewer = {'field': 'column1'}
+    value = custom_dataframe.viewer_to_value(viewer)
+    assert value == 'value1\n\n'  # Assuming new lines are added after each view
+
+# Test for viewer_to_value with a list of dict viewers
+def test_viewer_to_value_list_of_dicts(custom_dataframe):
+    viewer = [{'field': 'column1'}, {'field': 'column2'}]
+    value = custom_dataframe.viewer_to_value(viewer)
+    assert value == 'value1\n\nvalue2\n\n'
+
+# Test for viewer_to_value with an empty viewer
+def test_viewer_to_value_empty(custom_dataframe):
+    viewer = {}
+    with pytest.raises(KeyError):
+        value = custom_dataframe.viewer_to_value(viewer)
+
+# Test view_to_value with a simple dict
+def test_view_to_value_dict(custom_dataframe):
+    view = {'field': 'column1'}
+    value = custom_dataframe.view_to_value(view)
+    assert value == 'value1'
+
+# Test view_to_value with invalid view format
+def test_view_to_value_invalid(custom_dataframe):
+    view = 'invalid_view'
+    with pytest.raises(TypeError):
+        custom_dataframe.view_to_value(view)
+
+# Test view_to_value with conditions
+def test_view_to_value_with_conditions(custom_dataframe):
+    view = {'field': 'column1', 'conditions': [{'present': {'field': 'column1'}}]}
+    value = custom_dataframe.view_to_value(view)
+    assert value == 'value1'
+
+# Test summary_viewer_to_value with a single dict viewer
+def test_summary_viewer_to_value_single_dict(custom_dataframe):
+    viewer = {'field': 'column1'}
+    value = custom_dataframe.summary_viewer_to_value(viewer)
+    assert value == 'value1\n\n'  # Assuming summary views add new lines as well
+
+# Test view_to_tmpname with various view types
+def test_view_to_tmpname(custom_dataframe):
+    view = {'field': 'column1'}
+    tmpname = custom_dataframe.view_to_tmpname(view)
+    assert tmpname == 'column1'  # Assuming to_camel_case function converts it to camel case
+
+    
