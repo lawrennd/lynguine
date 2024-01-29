@@ -301,6 +301,16 @@ def test_mutable():
     custom_df = create_test_dataframe(colspecs="output")
     assert custom_df.mutable == True
 
+# Test isseries method
+def test_isseries():
+    custom_df = create_test_dataframe(colspecs="output")
+    assert custom_df.isseries("A") == False
+    custom_df = create_test_dataframe(colspecs="series")
+    assert custom_df.isseries('B') == True
+    custom_df = create_test_dataframe2()
+    assert custom_df.isseries('A') == False
+    
+    
 # Test _col_source method
 def test_col_source():
     custom_df = create_test_dataframe(colspecs={"input": ["A"], "output": ["B"]})
