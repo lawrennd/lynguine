@@ -37,6 +37,7 @@ gspread-pandas = "*"
 mimesis = ">11"
 pyminizip = "*"
 wget = "*"
+pyzmq = "^25.1.2"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
