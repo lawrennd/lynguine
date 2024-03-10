@@ -25,7 +25,7 @@ def mock_interface(mocker):
     interface_mock.__contains__.side_effect = interface_mock_data.__contains__
     
     interface_mock._directory = "mock_directory"  # Assuming _directory is expected by Compute
-    mocker.patch('referia.assess.compute.Interface.from_file', return_value=interface_mock)
+    mocker.patch('ndlpy.assess.compute.Interface.from_file', return_value=interface_mock)
     return interface_mock
 
 @pytest.fixture
