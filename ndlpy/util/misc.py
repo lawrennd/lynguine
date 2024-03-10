@@ -5,6 +5,9 @@ import os
 import sys
 import wget
 
+import markdown
+import markdownify
+
 import ndlpy.config.context as context
 from ndlpy.log import Logger
 
@@ -346,3 +349,26 @@ def prompt_stdin(prompt : str) -> bool:
             print("\nUnexpected end of input. Please try again.")
 
             
+def markdown2html(text):
+    """
+    Convert markdown to HTML.
+
+    :param text: The markdown text to be converted.
+    :type text: str
+    :return: The HTML.
+    :rtype: str
+    """
+    
+    return markdown.markdown(text)
+
+def html2markdown(text, **args):
+    """
+    Convert HTML to markdown.
+
+    :param text: The HTML text to be converted.
+    :type text: str
+    :return: The markdown.
+    :rtype: str
+    """
+    
+    return markdownify.markdownify(text, **args)

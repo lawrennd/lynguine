@@ -6,7 +6,7 @@ from ndlpy.util.misc import (
     reorder_dictionary,
     extract_full_filename,  extract_root_directory, extract_file_type, extract_abs_filename, camel_capitalize,
     remove_nan, is_valid_var, to_valid_var, to_camel_case, sub_path_environment, get_path_env,
-    get_url_file
+    get_url_file, markdown2html, html2markdown
 )
 
 # Sample data for testing
@@ -16,6 +16,11 @@ sample_details = {
 }
 
 
+def test_markdown2html():
+    assert markdown2html("# Test") == "<h1>Test</h1>"
+
+def test_html2markdown():
+    assert html2markdown("<h1>Test</h1>") == "Test\n====\n\n"
 
 def test_reorder_dictionary_basic():
     dictionary = {'B': 2, 'A': 1, 'C': 3}

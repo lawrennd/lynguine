@@ -6,6 +6,7 @@ from ..log import Logger
 from ..config.context import Context
 from ..config.interface import Interface
 from ..util.misc import remove_nan, to_camel_case
+from ..assess.compute import Compute
 
 """Wrapper classes for data objects"""
 
@@ -758,6 +759,7 @@ class DataObject:
         Construct a CustomDataFrame from a interface object.
 
         :param interface: Interface object.
+        :type interface: ndlpy.config.interface.Interface or dict.
         :return: A CustomDataFrame object.
         """
 
@@ -769,6 +771,8 @@ class DataObject:
             raise ValueError("Interface must be a dictionary or of type Interface.")
         default_joins = "outer"
         cdf = cls({})
+        # Initialize compute from the interface
+        cdf.compute = Compute.from_flow(interface)
         found_data = False
         for key, item in interface.items():
             # Check if the interface key is a valid data key
@@ -1696,6 +1700,14 @@ class DataObject:
 
         return self.__class__(join_df, colspecs=colspecs)
 
+    def _extract_compute(self, interface):
+        """
+        Set up the compute method to use the provided interface.
+
+        :param interface: The interface to use for the compute method.
+        """
+        return None
+    
     def _finalize_df(self, data, details):
         """
         This function is used to attend to any modifications in the details dict to finalize the data frame. It fixes up the index, adds columns, sets the right data type etc."""
