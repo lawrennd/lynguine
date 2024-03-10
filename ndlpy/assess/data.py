@@ -1863,6 +1863,26 @@ class CustomDataFrame(DataObject):
         self.loc = self._LocAccessor(self)
         self.iloc = self._ILocAccessor(self)
 
+    @property
+    def compute(self):
+        """
+        Return the compute object.
+
+        :return: The compute object.
+        :rtype: Compute
+        """
+        return self._compute
+
+    @compute.setter
+    def compute(self, value):
+        """
+        Set the compute object.
+
+        :param value: The compute object.
+        :type value: Compute
+        :return: None
+        """
+        self._compute = value
         
     class _AtAccessor:
         def __init__(self, data):
@@ -2677,9 +2697,11 @@ class CustomDataFrame(DataObject):
         :type local: dict, optional
         """
         if self.compute is None:
-            log.warning("Compute needs to be initialised before liquid_to_value is called.")
-            return ""
-        
+            errmsg = f"Compute needs to be initialised before liquid_to_value is called."
+            log.error(errmsg)
+            raise ValueError(errmsg)
+
+        print(display)
         if kwargs is None or kwargs=={}:
             kwargs = self.mapping()
         kwargs.update(local)

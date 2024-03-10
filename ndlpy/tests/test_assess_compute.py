@@ -53,10 +53,10 @@ def test_compute_creation(mocker, mock_interface):
     # Create a MagicMock object that behaves like a dictionary
 
     # Patch Interface.from_file to return the mock_interface
-    mocker.patch('referia.assess.compute.Interface.from_file', return_value=mock_interface)
+    mocker.patch('ndlpy.assess.compute.Interface.from_file', return_value=mock_interface)
 
     # Patch Compute.__init__ to avoid initialization side effects
-    mocker.patch('referia.assess.compute.Compute.__init__', return_value=None)
+    mocker.patch('ndlpy.assess.compute.Compute.__init__', return_value=None)
 
     # Create a CustomDataFrame object to pass as the 'data' argument
     mock_data = CustomDataFrame([{"cat": "dog"}], colspecs="input")
