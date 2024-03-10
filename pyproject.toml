@@ -17,7 +17,7 @@ classifiers = [
 ]
 
 [tool.poetry.dependencies]
-python = ">=3.11"
+python = ">=3.11,<4.0"
 python-frontmatter = "*"
 bibtexparser = "*"
 pyyaml = "*"
