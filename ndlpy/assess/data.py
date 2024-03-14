@@ -773,6 +773,7 @@ class DataObject:
         cdf = cls({})
         # Initialize compute from the interface
         cdf.compute = Compute.from_flow(interface)
+        print(cdf.compute)
         found_data = False
         for key, item in interface.items():
             # Check if the interface key is a valid data key
@@ -806,14 +807,16 @@ class DataObject:
                             f"Item data descriptions must be in the form of a dictionary unless they are of type \"input\", when a list is valid and implies an \"hstack\" type is needed. The type of item you have provided for the key \"{key}\" is \"{type(item)}\"."
                         )
                 else:
-                    if isinstance(item, list):
-                        # If there's a list, the an hstack is implied.
-                        log.info(f"Converting input \"{key}\" into an hstack as it's provided as a list.")
-                        details = {}
-                        details[key] = {"type" : "hstack", "descriptions" : item}
-                        newdf = cdf._finalize_df(*access.io.read_data(details))
-                    elif isinstance(item, dict):                        
-                        newdf = cdf._finalize_df(*access.io.read_data(item))
+                    # if isinstance(item, list):
+                    #     # If there's a list, the an hstack is implied.
+                    #     log.info(f"Converting input \"{key}\" into an hstack as it's provided as a list.")
+                    #     details = {}
+                    #     details[key] = {"type" : "hstack", "descriptions" : item}
+                    newdf = cdf._finalize_df(*access.io.read_data(details))
+                    # elif isinstance(item, dict):
+                    #     print(cdf.compute)
+                    #     newdf = cdf._finalize_df(*access.io.read_data(item))
+                    # print(type(item))
                 if key in cls.types["parameters"]:
                     # If select is listed choose only the row of the data frame.
                     if "select" in item:
@@ -848,6 +851,8 @@ class DataObject:
                     #                 cdf._d[key] = pd.concat([cdf._d[key], newdf.iloc[0]])
                     #                 cdf._colspecs[key] = list(cdf._d[key].index)
                 if cdf.empty:
+                    print("Data is empty")
+                    print(newdf)
                     cdf = cls(data=newdf, colspecs={key: list(newdf.columns)})
                 else:
                     cdf._d[key] = newdf
@@ -855,6 +860,7 @@ class DataObject:
                             # else:
                             #     cdf._d[key] = cdf._d[key].join(newdf, how=join)
                             #     cdf._colspecs[key] = list(cdf._d[key].index)
+            print(cdf.compute)
         if not found_data:
             errmsg = f'No valid data found in interface. Data fields must be one of "{", ".join(cls.valid_data_types)}"'
             log.error(errmsg)
@@ -2308,13 +2314,13 @@ class CustomDataFrame(DataObject):
         """
     
         if "index" not in details:
-            errmsg = "Missing index field in data frame specification in _referia.yml"
-            self._log.error(errmsg)
+            errmsg = f"Missing index field in data frame specification in interface file"
+            log.error(errmsg)
             raise ValueError(errmsg)
 
         if not isinstance(details["index"], str):
             errmsg = f'"index" should be a string in details.'
-            self._log.error(errmsg)
+            log.error(errmsg)
             raise ValueError(errmsg)
 
         index_column_name = details["index"]
@@ -2327,13 +2333,13 @@ class CustomDataFrame(DataObject):
             if strict_columns:
                 if "columns" not in details:
                     errmsg = f"You can't have strict_columns set to True and not list the columns in the details structure."
-                    self._log.error(errmsg)
+                    log.error(errmsg)
                     raise ValueError(errmsg)
                     
                 for column in df.columns:
                     if column not in details["columns"] and column!=index_column_name:
                         errmsg = f"DataFrame contains column: \"{column}\" which is not in the columns list of the specification and strict_columns is set to True."
-                        self._log.error(errmsg)
+                        log.error(errmsg)
                         raise ValueError(errmsg)
                     
         if "selector" in details:
@@ -2341,7 +2347,7 @@ class CustomDataFrame(DataObject):
                 self.set_selector(details["selector"])
             else:
                 errmsg = f'"selector" should be a string in details.'
-                self._log.error(errmsg)
+                log.error(errmsg)
                 raise ValueError(errmsg)
             
         if index_column_name in df.columns:
