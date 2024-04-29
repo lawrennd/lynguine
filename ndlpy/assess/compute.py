@@ -35,8 +35,83 @@ class Compute():
         for comptype in ["precompute", "compute", "postcompute"]:
             self._computes[comptype]=[]
         self.load_liquid(interface)
-        self.add_liquid_filters()
+        self.add_liquid_filters(
+)    def prep(self, settings : dict, data : CustomDataFrame ) -> dict:
+        """
+        Prepare a compute entry for use.
 
+        :param settings: The settings to be used.
+        :type settings: dict
+        :param data: The data to be used.
+        :type data: ndlpy.assess.data.CustomDataFrame
+        :return: The prepared compute entry.
+        :rtype: dict
+
+        """
+        compute_prep = {
+            "function": self.gcf_(function=settings["function"], data=data),
+            "args" : self.gca_(**settings),
+            "refresh" : "refresh" in settings and settings["refresh"],
+        }
+        if "field" in settings:
+            compute_prep["field"] = settings["field"]
+        return compute_prep
+
+    def run(self, data : CustomDataFrame, interface : Interface) -> None:
+        """
+        Run computations on all rows of the data.
+
+        :param data: The data to be updated.
+        :type data: ndlpy.assess.data.CustomDataFrame
+        :param interface: The interface to be used.
+        :type interface: ndlpy.config.interface.Interface
+        :return: None
+        """
+        if "compute" not in interface:
+            msg = f"Interface does not contain a compute section."
+            log.info(msg)
+            return
+        
+        computes = interface["compute"]
+        if not isinstance(computes, list):
+            computes = [computes]
+        
+        for compute in computes:
+            compute_prep = self.prep(compute)
+            fargs = compute_prep["args"]
+            if "field" in compute: # if field is in compute, then we are computing or updating a new field
+                data[compute["field"]] = compute_prep["function"](data, **fargs)
+            else:
+                compute_prep["function"](data, **fargs)
+             
+    def filter(self, data : CustomDataFrame, interface : Interface) -> None:
+        """
+        Filter the data based on the interface. The filter allows
+        removal of rows from the data.
+
+        :param data: The data to be updated.
+        :type data: ndlpy.assess.data.CustomDataFrame
+        :param interface: The interface to be used.
+        :type interface: ndlpy.config.interface.Interface
+        :return: None
+        """
+        
+        if "filter" not in interface:
+            log.info(msg)
+            return
+        
+        filters = interface["filter"]
+        if not isinstance(filters, list):
+            filters = [filters]
+
+        filt = pd.Series(True, index=data.index)
+        for filter in filters:
+            filter_prep = self.prep(filter)
+            fargs = filter_prep["args"]
+            newfilt = filter_prep["function"](data, **fargs)
+            filt = (filt & newfilt)
+        data.filter_row(filt)
+            
     def load_liquid(self, interface):
         """Load the liquid environment."""
         loader = None
