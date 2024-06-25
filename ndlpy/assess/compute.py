@@ -12,7 +12,6 @@ from ..util.text import render_liquid
 
 from ..util.liquid import url_escape, markdownify, relative_url, absolute_url, to_i
 
-
 cntxt = Context(name="ndlpy")
            
 log = Logger(
@@ -35,8 +34,9 @@ class Compute():
         for comptype in ["precompute", "compute", "postcompute"]:
             self._computes[comptype]=[]
         self.load_liquid(interface)
-        self.add_liquid_filters(
-)    def prep(self, settings : dict, data : CustomDataFrame ) -> dict:
+        self.add_liquid_filters()
+
+    def prep(self, settings : dict, data : "CustomDataFrame" ) -> dict:
         """
         Prepare a compute entry for use.
 
@@ -57,7 +57,7 @@ class Compute():
             compute_prep["field"] = settings["field"]
         return compute_prep
 
-    def run(self, data : CustomDataFrame, interface : Interface) -> None:
+    def run(self, data : "CustomDataFrame", interface : Interface) -> None:
         """
         Run computations on all rows of the data.
 
@@ -84,7 +84,7 @@ class Compute():
             else:
                 compute_prep["function"](data, **fargs)
              
-    def filter(self, data : CustomDataFrame, interface : Interface) -> None:
+    def filter(self, data : "CustomDataFrame", interface : Interface) -> None:
         """
         Filter the data based on the interface. The filter allows
         removal of rows from the data.
