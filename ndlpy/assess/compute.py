@@ -35,8 +35,9 @@ class Compute():
         for comptype in ["precompute", "compute", "postcompute"]:
             self._computes[comptype]=[]
         self.load_liquid(interface)
-        self.add_liquid_filters(
-)    def prep(self, settings : dict, data : CustomDataFrame ) -> dict:
+        self.add_liquid_filters()
+
+    def prep(self, settings : dict, data : CustomDataFrame ) -> dict:
         """
         Prepare a compute entry for use.
 
