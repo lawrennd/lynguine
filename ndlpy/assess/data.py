@@ -134,7 +134,9 @@ class DataObject:
             log.warning(f"Set column to \"_\".")
             return
         if column is None:
-            log.debug(f"Was asked to set column to None.")
+            errmsg = f"Was asked to set column to None."
+            log.warning(errmsg)
+            raise KeyError(errmsg)
             # Note column is not being set here.
             return
 
@@ -773,7 +775,6 @@ class DataObject:
         cdf = cls({})
         # Initialize compute from the interface
         cdf.compute = Compute.from_flow(interface)
-        print(cdf.compute)
         found_data = False
         for key, item in interface.items():
             # Check if the interface key is a valid data key
@@ -812,7 +813,7 @@ class DataObject:
                     #     log.info(f"Converting input \"{key}\" into an hstack as it's provided as a list.")
                     #     details = {}
                     #     details[key] = {"type" : "hstack", "descriptions" : item}
-                    newdf = cdf._finalize_df(*access.io.read_data(details))
+                    newdf = cdf._finalize_df(*access.io.read_data(item))
                     # elif isinstance(item, dict):
                     #     print(cdf.compute)
                     #     newdf = cdf._finalize_df(*access.io.read_data(item))
@@ -1708,11 +1709,13 @@ class DataObject:
 
     def _extract_compute(self, interface):
         """
-        Set up the compute method to use the provided interface.
+        Extract the compute object.
 
-        :param interface: The interface to use for the compute method.
+        :param interface: The interface to the compute object.
+        :type interface: ndlpy.config.interface.Interface or dict
+        :returns: The compute object.
         """
-        return None
+        return Compute.from_flow(interface)
     
     def _finalize_df(self, data, details):
         """
@@ -1841,7 +1844,8 @@ class CustomDataFrame(DataObject):
             columns = self.columns
             if len(columns) > 0:
                 column = self.columns[0]
-        self.set_column(column)
+        else:
+            self.set_column(column)
 
         self._selector = selector
         # Set selector if not specified
