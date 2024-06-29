@@ -6,12 +6,12 @@
 
 [![codecov](https://codecov.io/gh/lawrennd/ndlpy/branch/main/graph/badge.svg?token=YOUR_CODECOV_TOKEN)](https://codecov.io/gh/lawrennd/ndlpy)
 
-This is a set of very scruffy libraries built up over the years for python scripting.
-
+This is a library for python capabilities used across different libraries like `lamd` and `referia`.
 To install use
 
+```bash
 %pip install referia
-
+```
 
 The softare consists of TK principle parts.
 
