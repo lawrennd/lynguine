@@ -134,6 +134,10 @@ class DataObject:
             log.warning(f"Set column to \"_\".")
             return
         if column is None:
+            if len(self.columns) == 0:
+                self._column = None
+                log.warning(f"Set column to \"{self._column}\".")
+                return
             errmsg = f"Was asked to set column to None."
             log.warning(errmsg)
             raise KeyError(errmsg)
@@ -772,9 +776,10 @@ class DataObject:
         if not isinstance(interface, (dict, Interface)):
             raise ValueError("Interface must be a dictionary or of type Interface.")
         default_joins = "outer"
-        cdf = cls({})
-        # Initialize compute from the interface
-        cdf.compute = Compute.from_flow(interface)
+        # Initialize compute from the interface so it can be used below.
+        compute = Compute.from_flow(interface)
+        cdf = cls({}, compute=compute)
+        
         found_data = False
         for key, item in interface.items():
             # Check if the interface key is a valid data key
@@ -852,16 +857,17 @@ class DataObject:
                     #                 cdf._d[key] = pd.concat([cdf._d[key], newdf.iloc[0]])
                     #                 cdf._colspecs[key] = list(cdf._d[key].index)
                 if cdf.empty:
-                    print("Data is empty")
-                    print(newdf)
+                    compute = cdf.compute
                     cdf = cls(data=newdf, colspecs={key: list(newdf.columns)})
+                    cdf.compute = compute
                 else:
                     cdf._d[key] = newdf
                     cdf._colspecs[key] = list(cdf._d[key].columns)
                             # else:
                             #     cdf._d[key] = cdf._d[key].join(newdf, how=join)
                             #     cdf._colspecs[key] = list(cdf._d[key].index)
-            print(cdf.compute)
+        print(cdf.compute)
+                            
         if not found_data:
             errmsg = f'No valid data found in interface. Data fields must be one of "{", ".join(cls.valid_data_types)}"'
             log.error(errmsg)
@@ -1767,10 +1773,21 @@ class CustomDataFrame(DataObject):
         ],
     }
     def __init__(
-            self, data, colspecs=None, index=None, column=None, selector=None, subindex=None
+            self, data, colspecs=None, index=None, column=None, selector=None, subindex=None, compute=None
     ):
         if data is None:
             data = {}
+
+        # Check if compute is an Interface or a dictionary.
+        if compute is None:
+            self.compute = Compute({})
+        elif isinstance(compute, dict) or isinstance(compute, Interface):
+            self.compute = self._extract_compute(compute)
+        elif isinstance(compute, Compute):
+            self.compute = compute
+        else:
+            raise ValueError("compute must be an Interface, dict, or Compute object.")
+            
         if isinstance(data, dict):
             if len(data) > 0:  # Check that dictionary has contents.
                 # Check if all entries are scalar.
@@ -1843,9 +1860,8 @@ class CustomDataFrame(DataObject):
         if column is None:
             columns = self.columns
             if len(columns) > 0:
-                column = self.columns[0]
-        else:
-            self.set_column(column)
+                column = self.columns[0]       
+        self.set_column(column)
 
         self._selector = selector
         # Set selector if not specified

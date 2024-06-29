@@ -222,8 +222,12 @@ class _HConfig(context._Config):
 
 
 class Interface(_HConfig):
-    """
-    A interface object that loads in local interface files.
+    """A interface object that loads in local interface files.
+
+    The interface can be hierarchical in that one interface can
+    inherit from another interface where typically outputs from that
+    interface are used as inputs to the current interface. The
+    interface can also append to the parent interface values.
     """
 
     def __init__(self, data=None):
@@ -233,7 +237,6 @@ class Interface(_HConfig):
         :param data: 
         :return: None
         """
-
         if data is None:
             data = {}
 
