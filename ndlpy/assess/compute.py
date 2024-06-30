@@ -232,6 +232,14 @@ class Compute():
         """
         pass
 
+    def _compute_functions_list(self) -> list[dict]:
+        """
+        Return a list of compute functions.
+
+        :return: A list of compute functions.
+        :rtype: list
+        """
+        return []
     
     def filter(self, data : "CustomDataFrame", interface : Interface) -> None:
         """

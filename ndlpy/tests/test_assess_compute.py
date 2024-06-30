@@ -108,3 +108,85 @@ def test_prep(compute_instance, mock_data, mocker):
     assert result_comprehensive['refresh'] is True
     assert 'field' in result_comprehensive and result_comprehensive['field'] == "test_field"
     assert 'args' in result_comprehensive and 'arg1' in result_comprehensive['args']
+
+@pytest.fixture
+def mock_compute_functions():
+    # Define a mocked list of functions including 'test_function'
+    mocked_functions = [
+        {"name": "test_function", "function": lambda x: x, "default_args": {}}
+    ]
+    return mocked_functions
+
+# Test gcf_ functionality
+def test_gcf_(compute_instance, mocker, mock_data):
+    # Mock _compute_functions_list with multiple functions
+    mocked_functions = [
+        {"name": "test_function_one", "function": lambda x: x, "default_args": {}},
+        {"name": "test_function_two", "function": lambda y=0: y*2, "default_args": {"param": "default"}, "docstr" : "This is the documentation."}
+    ]
+    mocker.patch.object(compute_instance, '_compute_functions_list', return_value=mocked_functions)
+
+    # Test for the first function
+    function_one = compute_instance.gcf_("test_function_one", mock_data)
+    assert callable(function_one)
+    assert function_one.__name__ == "test_function_one"
+
+    # Test for the second function
+    function_two = compute_instance.gcf_("test_function_two", mock_data)
+    assert callable(function_two)
+    assert function_two(mock_data, args={"y":5}) == 10  # Testing the functionality
+    assert function_two.__name__ == "test_function_two"
+    assert function_two.__doc__ == "This is the documentation."
+
+# Updated test_gca_ test
+def test_gca_(compute_instance, mocker):
+    # Call gca_ method with various arguments
+    mocked_functions = [
+        {"name": "test_function", "function": lambda x: x, "default_args": {}}
+        ]
+    mocker.patch.object(compute_instance, '_compute_functions_list', return_value=mocked_functions)
+    args_empty = compute_instance.gca_("test_function")
+    assert isinstance(args_empty, dict)
+    for arglist in ["subseries_args", "column_args", "row_args", "view_args", "function_args", "args", "default_args"]:
+        assert arglist in args_empty and not args_empty[arglist] 
+
+    # Test with different argument types
+    args_full = compute_instance.gca_("test_function", args={
+        "field": "test_field", "refresh" : True}, row_args={"row1": "value1"})
+    assert isinstance(args_full, dict)
+    print(args_full)
+    assert args_full["args"]['field'] == "test_field"
+    assert args_full["args"]['refresh'] is True
+    assert 'row1' in args_full["row_args"] and args_full["row_args"]['row1'] == "value1"
+
+
+# Test run method
+def test_run(compute_instance, mock_data, mocker):
+    compute = {"function": lambda **kwargs: 42, "args": {}}
+    result = compute_instance.run(compute, mock_data)
+    assert result is None or result == 42
+
+# Test preprocess method
+def test_preprocess(compute_instance, mock_data, mock_interface, mocker):
+    mocker.patch.object(compute_instance, 'prep', return_value={"function": lambda x: x, "args": {}})
+    compute_instance.preprocess(mock_data, mock_interface)
+    # Assert preprocess functionality
+
+# Test run_all method
+def test_run_all(compute_instance, mocker, mock_data):
+    mocker.patch.object(compute_instance, 'run', return_value=None)
+    mocker.patch.object(compute_instance, '_computes', {'precompute': [], 'compute': [], 'postcompute': []})
+    compute_instance.run_all(mock_data)
+    # Assert run_all functionality
+    
+# Test _compute_functions_list method
+def test_compute_functions_list(compute_instance):
+    functions_list = compute_instance._compute_functions_list()
+    
+    assert isinstance(functions_list, list)
+    for func in functions_list:
+        assert isinstance(func, dict)
+        assert 'name' in func
+        assert 'function' in func
+        assert callable(func['function'])
+        assert 'default_args' in func
