@@ -83,7 +83,32 @@ class Compute():
                 data[compute["field"]] = compute_prep["function"](data, **fargs)
             else:
                 compute_prep["function"](data, **fargs)
-             
+
+    def preprocess(self, data, interface):
+        """
+        Run all preprocess computations.
+
+        :return: None
+        """
+        pass
+
+    def run_all(self, data, df=None, index=None, pre=False, post=False):
+        """
+        Run any computation elements on the data frame.
+
+        :param df: The data frame to be used.
+        :type df: pandas.DataFrame or ndlpy.assess.data.CustomDataFrame
+        :param index: The index to be used.
+        :type index: object
+        :param pre: Whether to run precomputes.
+        :type pre: bool
+        :param post: Whether to run postcomputes.
+        :type post: bool
+        :return: None
+        """
+        pass
+
+    
     def filter(self, data : "CustomDataFrame", interface : Interface) -> None:
         """
         Filter the data based on the interface. The filter allows

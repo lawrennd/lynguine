@@ -68,3 +68,14 @@ def test_compute_creation(mocker, mock_interface):
     assert result is not None
 
 
+# Updated mock_compute_functions fixture
+@pytest.fixture
+def mock_compute_functions(mocker, compute_instance):
+    # Define a list of functions including 'test_function'
+    mocked_functions = [
+        {"name": "test_function", "function": lambda x: x, "default_args": {}}
+    ]
+    # Patch the _compute_functions_list method to return mocked_functions
+    mocker.patch.object(compute_instance, '_compute_functions_list', return_value=mocked_functions)
+    return mocked_functions
+

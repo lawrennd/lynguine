@@ -108,8 +108,10 @@ class DataObject:
         :raise KeyError: If the index is not in the DataFrame.
         """
         if index is None:
+            log.debug("Setting index to None.")
             self._index = None
         elif index in self.index:
+            log.debug(f"Setting index to {index}.")
             self._index = index
         else:
             raise KeyError("Invalid index set.")
