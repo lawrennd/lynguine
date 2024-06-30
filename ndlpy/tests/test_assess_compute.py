@@ -79,3 +79,32 @@ def mock_compute_functions(mocker, compute_instance):
     mocker.patch.object(compute_instance, '_compute_functions_list', return_value=mocked_functions)
     return mocked_functions
 
+def test_prep(compute_instance, mock_data, mocker):
+    # Mock the gcf_ and gca_ methods
+    mocker.patch.object(compute_instance, 'gcf_', return_value=lambda x: x)
+    mocker.patch.object(compute_instance, 'gca_', return_value={'arg1': 'value1', 'arg2': 'value2'})
+
+    # Test with minimal settings
+    settings_minimal = {"function": "test_function_minimal"}
+    result_minimal = compute_instance.prep(settings_minimal, mock_data)
+    assert 'function' in result_minimal
+    assert callable(result_minimal['function'])
+
+    # Test with additional settings
+    settings_additional = {"function": "test_function_additional", "field": "test_field", "refresh": True}
+    result_additional = compute_instance.prep(settings_additional, mock_data)
+    assert result_additional['function'] is not None
+    assert result_additional['refresh'] is True
+    assert 'field' in result_additional and result_additional['field'] == "test_field"
+
+    # Test with comprehensive settings
+    settings_comprehensive = {
+        "function": "test_function_comprehensive",
+        "field": "test_field",
+        "refresh": True,
+    }
+    result_comprehensive = compute_instance.prep(settings_comprehensive, mock_data)
+    assert result_comprehensive['function'] is not None
+    assert result_comprehensive['refresh'] is True
+    assert 'field' in result_comprehensive and result_comprehensive['field'] == "test_field"
+    assert 'args' in result_comprehensive and 'arg1' in result_comprehensive['args']

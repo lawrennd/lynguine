@@ -57,6 +57,130 @@ class Compute():
             compute_prep["field"] = settings["field"]
         return compute_prep
 
+    def gca_(self, function, field=None, refresh=False, args={}, row_args={}, view_args={}, function_args={}, subseries_args={}, column_args={}):
+        """
+        Args generator for compute functions.
+
+        :param function: The name of the function to be used.
+        :type function: str
+        :param field: The field to be used.
+        :type field: str
+        :param refresh: Whether to refresh the field.
+        :type refresh: bool
+        :param args: The arguments to be used.
+        :type args: dict
+        :param row_args: The row arguments to be used.
+        :type row_args: dict
+        :param view_args: The view arguments to be used.
+        :type view_args: dict
+        :param function_args: The function arguments to be used.
+        :type function_args: dict
+        :param subseries_args: The subseries arguments to be used.
+        :type subseries_args: dict
+        :param column_args: The column arguments to be used.
+        :type column_args: dict
+        :return: The arguments to be used.
+        :rtype: dict
+        """
+
+        found_function = False
+        for list_function in self._compute_functions_list():
+            if list_function["name"] == function:
+                found_function = True
+                break
+        if not found_function:
+            errmsg = f"Function \"{function}\" not found in list_functions."
+            log.error(errmsg)
+            raise ValueError(errmsg)
+        return {
+            "subseries_args" : subseries_args,
+            "column_args" : column_args,
+            "row_args" : row_args,
+            "view_args" : view_args,
+            "function_args" : function_args,
+            "args" : args,
+            "default_args" : list_function["default_args"],
+        }
+
+
+    def gcf_(self, function, data):
+        """
+        Function generator for compute functions.
+
+        :param function: The name of the function to be used.
+        :type function: str
+        :param data: The data to be used.
+        :type data: ndlpy.assess.data.CustomDataFrame
+        :return: The function to be used.
+        """
+        found_function = False
+        for list_function in self._compute_functions_list():
+            if list_function["name"] == function:
+                found_function = True
+                break
+        if not found_function:
+            raise ValueError(f"Function \"{function}\" not found in list_functions.")
+
+        def compute_function(data, args={}, subseries_args={}, column_args={}, row_args={}, view_args={}, function_args = {}, default_args={}):
+            """
+            Compute a function using arguments found in subseries (column of sub-series specified by value in dictionary), or columns (full column specified by value in dictionary) or the same row (value from row as specified in the dictionary).
+            :param args: The arguments to be used.
+            :type args: dict
+            :param subseries_args: The subseries arguments to be used.
+            :type subseries_args: dict
+            :param column_args: The column arguments to be used.
+            :type column_args: dict
+            :param row_args: The row arguments to be used.
+            :type row_args: dict
+            :param view_args: The view arguments to be used.
+            :type view_args: dict
+            :param function_args: The function arguments to be used.
+            :type function_args: dict
+            :param default_args: The default arguments to be used.
+            :type default_args: dict
+            :return: The result of the computation.
+            """
+
+            kwargs = default_args.copy()
+            kwargs.update(args)
+            for key, value in function_args.items():
+                kwargs[key] = self.gcf_(value, data)
+            for key, column in column_args.items():
+                if otherdf is None:
+                    orig_col = data.get_column()
+                    data.set_column(column)
+                if key in kwargs:
+                    log.warning(f"No key \"{key}\" already column_args found in kwargs.")
+                kwargs[key] = data.get_column_values()
+                data.set_column(orig_col)
+                
+            for key, column in subseries_args.items():
+                orig_col = data.get_column()
+                data.set_column(column)
+                if key in kwargs:
+                    log.warning(f"No key \"{key}\" from subseries_args already found in kwargs.")   
+                kwargs[key] = data.get_subseries_values()
+                data.set_column(orig_col)
+
+            ## Arguments based on liquid, or format, or join.
+            for key, view in view_args.items():
+                orig_col = data.get_column()
+                kwargs[key] = data.view_to_value(view)
+                data.set_column(orig_col)
+                
+            for key, column in row_args.items():
+                if key in kwargs:
+                    log.warning(f"No key \"{key}\" from row_args already found in kwargs.")
+                kwargs[key] = data.get_value_column(column)
+            # kwargs.update(remove_nan(data.mapping(args)))
+            log.debug(f"The keyword arguments for the compute function are {kwargs}.")
+            return list_function["function"](**kwargs)
+
+        compute_function.__name__ = list_function["name"]
+        if "docstr" in list_function:
+            compute_function.__doc__ = list_function["docstr"]
+        return compute_function
+
     def run(self, data : "CustomDataFrame", interface : Interface) -> None:
         """
         Run computations on all rows of the data.

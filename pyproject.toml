@@ -24,7 +24,7 @@ pyyaml = "*"
 openpyxl = "*"
 XlsxWriter = "*"
 pandas = "*"
-numpy = ">=1.0.0,<2.0.0"
+numpy = ">=1.0.0,<2.0.0" # to deal with this https://github.com/explosion/thinc/issues/939
 pypandoc = "*"
 gitpython = "*"
 anyascii = "*"
