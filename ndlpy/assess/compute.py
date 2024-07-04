@@ -397,3 +397,17 @@ p        :return: None
             raise ValueError("Interface must be a dictionary or of type Interface.")
         return cls(interface)
        
+    # Render a string output
+    def __str__(self):
+        """
+        Create a string version of the object for printing.
+        :return: A string version of the object.
+        """
+        val = ""
+        for comptype in ["precompute", "compute", "postcompute"]:
+            if comptype in self._computes and len(self._computes[comptype])>0:
+                val += f"{comptype}: {self._computes[comptype]}\n"
+            else:
+                val += f"{comptype}: None\n"
+
+        return val

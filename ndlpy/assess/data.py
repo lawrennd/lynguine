@@ -826,6 +826,7 @@ class DataObject:
                     #     print(cdf.compute)
                     #     newdf = cdf._finalize_df(*access.io.read_data(item))
                     # print(type(item))
+
                 if key in cls.types["parameters"]:
                     # If select is listed choose only the row of the data frame.
                     if "select" in item:
@@ -1893,6 +1894,8 @@ class CustomDataFrame(DataObject):
         self.loc = self._LocAccessor(self)
         self.iloc = self._ILocAccessor(self)
 
+        self._augment_column_names(data)
+
     @property
     def compute(self):
         """
@@ -2345,13 +2348,14 @@ class CustomDataFrame(DataObject):
         :param strict_columns: Whether to enforce strict columns.
         :return: The augmented data frame.
         """
-                    
+        
 
         if "mapping" in interface:
             
             for name, column in interface["mapping"].items():
                 self.update_name_column_map(column=column, name=name)
 
+               
         self._augment_column_names(df)
 
 
