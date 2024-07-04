@@ -51,7 +51,7 @@ input:
       arg3: ColumnName1
 ```
 
-For example
+Often the data will be stored in another file (csv, excel, yaml etc) but sometimes it's convenient to store it as a `local` in a field calld 'data'. In the next example we do this to illustrate how the `compute` capability can be used to augment the file. Here two fields are added, the full name (used as an index) and today's date as an access date.
 
 ```python
 import yaml
@@ -70,13 +70,15 @@ yaml_text = """input:
   - familyName: Paz Luiz
     givenName: Miguel
   compute:
-    field: fullName
+  - field: fullName
     function: render_liquid
     args:
       template: '{{familyName | replace: " ", "-"}}_{{givenName | replace: " ", "-"}}'
     row_args:
       givenName: givenName
-      familyName: familyName"""
+      familyName: familyName
+  - field: accessDate
+    function: today"""
 
 interface = Interface(yaml.safe_load(yaml_text))
 
