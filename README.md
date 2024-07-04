@@ -53,8 +53,12 @@ input:
 
 For example
 
-```yaml
-input:
+```python
+import yaml
+from ndlpy.config.interface import Interface
+from ndlpy.assess.data import CustomDataFrame
+
+interface = Interface(yaml.safe_load("""input:
   type: local
   index: fullName
   data:
@@ -68,10 +72,15 @@ input:
     field: fullName
     function: render_liquid
     args:
-      template: {{familyName | replace: " ", "-"}}_{{givenName | replace: " ", "-"}}
+      template: '{{familyName | replace: " ", "-"}}_{{givenName | replace: " ", "-"}}'
     row_args:
       givenName: givenName
-      familyName: familyName
+      familyName: familyName"""))
+
+data = CustomDataFrame.from_flow(interface)
+print(data)
+
+
 ```
 
 would create a new field fullname which is then used as the index.
