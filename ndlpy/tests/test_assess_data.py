@@ -1,4 +1,4 @@
-# tests/test_ndlpy_dataframe.py
+# tests/test_assess_data.py
 
 import pytest
 import ndlpy.assess.data
@@ -583,4 +583,52 @@ def test_view_to_tmpname(custom_dataframe):
     tmpname = custom_dataframe.view_to_tmpname(view)
     assert tmpname == 'column1'  # Assuming to_camel_case function converts it to camel case
 
-    
+# Fixture to create a sample CustomDataFrame for testing
+@pytest.fixture
+def sample_custom_dataframe():
+    data = pd.DataFrame({
+        'A': [1, 2, 3],
+        'B': [4, 5, 6],
+        'C': [7, 8, 9]
+    })
+    return ndlpy.assess.data.CustomDataFrame(data)
+
+# Test cases for _convert_numpy_array method
+def test_convert_numpy_array_shape_match(sample_custom_dataframe):
+    array = np.array([[10, 11, 12], [13, 14, 15], [16, 17, 18]])
+    result = sample_custom_dataframe._convert_numpy_array(array)
+    assert result.to_pandas().equals(pd.DataFrame(array, index=sample_custom_dataframe.index, columns=sample_custom_dataframe.columns))
+
+# Test cases for _convert_numpy_array method with different array shapes    
+def test_convert_numpy_array_single_dimensional(sample_custom_dataframe):
+    array = np.array([10, 11, 12])
+    result = sample_custom_dataframe._convert_numpy_array(array)
+    expected_df = pd.DataFrame(array, index=sample_custom_dataframe.index, columns=['A'])
+    assert result.to_pandas().equals(expected_df)
+     
+def test_convert_numpy_array_single_row(sample_custom_dataframe):
+    array = np.array([[10, 11, 12]])
+    result = sample_custom_dataframe._convert_numpy_array(array)
+    expected_df = pd.DataFrame(array, index=[sample_custom_dataframe.get_index()], columns=sample_custom_dataframe.columns)
+    assert result.to_pandas().equals(expected_df)
+
+def test_convert_numpy_array_single_column(sample_custom_dataframe):
+    array = np.array([[10], [11], [12]])
+    result = sample_custom_dataframe._convert_numpy_array(array)
+    expected_df = pd.DataFrame(array, index=sample_custom_dataframe.index, columns=['A'])
+    assert result.to_pandas().equals(expected_df)
+
+def test_convert_numpy_array_incompatible_shape(sample_custom_dataframe):
+    array = np.array([[10, 11], [12, 13], [14, 15]])
+    with pytest.raises(ValueError, match="NumPy array shape is not compatible with CustomDataFrame."):
+        sample_custom_dataframe._convert_numpy_array(array)
+
+def test_convert_numpy_array_width_mismatch(sample_custom_dataframe):
+    array = np.array([[10, 11]])
+    with pytest.raises(ValueError, match="NumPy array width doesn't match CustomDataFrame array width."):
+        sample_custom_dataframe._convert_numpy_array(array)
+
+def test_convert_numpy_array_depth_mismatch(sample_custom_dataframe):
+    array = np.array([[10], [11]])
+    with pytest.raises(ValueError, match="NumPy array depth doesn't match CustomDataFrame array depth."):
+        sample_custom_dataframe._convert_numpy_array(array)

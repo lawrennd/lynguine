@@ -113,7 +113,7 @@ def test_prep(compute_instance, mock_data, mocker):
 def mock_compute_functions():
     # Define a mocked list of functions including 'test_function'
     mocked_functions = [
-        {"name": "test_function", "function": lambda x: x, "default_args": {}}
+        {"name": "test_function", "function": lambda self, x: x, "default_args": {}}
     ]
     return mocked_functions
 
@@ -121,7 +121,7 @@ def mock_compute_functions():
 def test_gcf_(compute_instance, mocker, mock_data):
     # Mock _compute_functions_list with multiple functions
     mocked_functions = [
-        {"name": "test_function_one", "function": lambda x: x, "default_args": {}},
+        {"name": "test_function_one", "function": lambda self, x: x, "default_args": {}, "context" : True},
         {"name": "test_function_two", "function": lambda y=0: y*2, "default_args": {"param": "default"}, "docstr" : "This is the documentation."}
     ]
     mocker.patch.object(compute_instance, '_compute_functions_list', return_value=mocked_functions)
@@ -190,3 +190,4 @@ def test_compute_functions_list(compute_instance):
         assert 'function' in func
         assert callable(func['function'])
         assert 'default_args' in func
+

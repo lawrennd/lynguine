@@ -14,12 +14,6 @@ from ..util.liquid import url_escape, markdownify, relative_url, absolute_url, t
 
 cntxt = Context(name="ndlpy")
            
-log = Logger(
-    name=__name__,
-    level=cntxt["logging"]["level"],
-    filename=cntxt["logging"]["filename"],
-    
-)
 
 class Compute():
     def __init__(self, interface):
@@ -32,10 +26,61 @@ class Compute():
 
         self._computes = {}
         for comptype in ["precompute", "compute", "postcompute"]:
-            self._computes[comptype]=[]
+            if comptype in interface:
+                if isinstance(interface[comptype], dict):
+                    interface[comptype] = [interface[comptype]]
+                    self._computes[comptype]=interface[comptype]
+            else:
+                self._computes[comptype] = []
         self.load_liquid(interface)
         self.add_liquid_filters()
 
+        self.setup_logger()
+
+    def setup_logger(self):
+        """
+        Setup the logger.
+
+p        :return: None
+        """
+        self.logger = Logger(
+            name=__name__,
+            level=cntxt["logging"]["level"],
+            filename=cntxt["logging"]["filename"],
+        )
+        
+
+    @property
+    def computes(self):
+        """
+        Return the computes.
+
+        :return: The computes.
+        :rtype: list
+        """
+        return self._computes["compute"]
+
+    @property
+    def precomputes(self):
+        """
+        Return the precomputes.
+
+        :return: The precomputes.
+        :rtype: list
+        """
+        return self._computes["precompute"]
+
+    @property
+    def postcomputes(self):
+        """
+        Return the post computes.
+
+        :return: The post computes.
+        :rtype: list
+        """
+        return self._computes["postcompute"]
+    
+        
     def prep(self, settings : dict, data : "CustomDataFrame" ) -> dict:
         """
         Prepare a compute entry for use.
@@ -90,7 +135,7 @@ class Compute():
                 break
         if not found_function:
             errmsg = f"Function \"{function}\" not found in list_functions."
-            log.error(errmsg)
+            self.logger.error(errmsg)
             raise ValueError(errmsg)
         return {
             "subseries_args" : subseries_args,
@@ -113,13 +158,10 @@ class Compute():
         :type data: ndlpy.assess.data.CustomDataFrame
         :return: The function to be used.
         """
-        found_function = False
-        for list_function in self._compute_functions_list():
-            if list_function["name"] == function:
-                found_function = True
-                break
-        if not found_function:
+        list_function = next((f for f in self._compute_functions_list() if f["name"] == function), None)
+        if not list_function:
             raise ValueError(f"Function \"{function}\" not found in list_functions.")
+        
 
         def compute_function(data, args={}, subseries_args={}, column_args={}, row_args={}, view_args={}, function_args = {}, default_args={}):
             """
@@ -150,7 +192,7 @@ class Compute():
                     orig_col = data.get_column()
                     data.set_column(column)
                 if key in kwargs:
-                    log.warning(f"No key \"{key}\" already column_args found in kwargs.")
+                    self.logger.warning(f"No key \"{key}\" already column_args found in kwargs.")
                 kwargs[key] = data.get_column_values()
                 data.set_column(orig_col)
                 
@@ -158,7 +200,7 @@ class Compute():
                 orig_col = data.get_column()
                 data.set_column(column)
                 if key in kwargs:
-                    log.warning(f"No key \"{key}\" from subseries_args already found in kwargs.")   
+                    self.logger.warning(f"No key \"{key}\" from subseries_args already found in kwargs.")   
                 kwargs[key] = data.get_subseries_values()
                 data.set_column(orig_col)
 
@@ -170,10 +212,13 @@ class Compute():
                 
             for key, column in row_args.items():
                 if key in kwargs:
-                    log.warning(f"No key \"{key}\" from row_args already found in kwargs.")
+                    self.logger.warning(f"No key \"{key}\" from row_args already found in kwargs.")
                 kwargs[key] = data.get_value_column(column)
             # kwargs.update(remove_nan(data.mapping(args)))
-            log.debug(f"The keyword arguments for the compute function are {kwargs}.")
+            self.logger.debug(f"The keyword arguments for the compute function are {kwargs}.")
+            print(f"Function: {list_function['function']}")
+            if "context" in list_function and list_function["context"]:# if the compute context is required
+                return list_function["function"](self, **kwargs)
             return list_function["function"](**kwargs)
 
         compute_function.__name__ = list_function["name"]
@@ -193,7 +238,7 @@ class Compute():
         """
         if "compute" not in interface:
             msg = f"Interface does not contain a compute section."
-            log.info(msg)
+            self.logger.info(msg)
             return
         
         computes = interface["compute"]
@@ -208,15 +253,31 @@ class Compute():
             else:
                 compute_prep["function"](data, **fargs)
 
-    def preprocess(self, data, interface):
+    def preprocess(self, data : "CustomDataFrame", interface : Interface) -> None:
         """
-        Run all preprocess computations.
+        Run all compute computations inside the data frame.
 
+        :param data: The data to be updated.
+        :type data: ndlpy.assess.data.CustomDataFrame
+        :param interface: The interface to be used.
+        :type interface: ndlpy.config.interface.Interface
         :return: None
         """
-        pass
+        if "compute" not in interface:
+            msg = f"Interface does not contain a compute section."
+            self.logger.info(msg)
+            return
+        else:
+            computes = interface["compute"]
+            for compute in computes:
+                compute_prep = self.prep(compute)
+                fargs = compute_prep["args"]
+                if "field" in compute:
+                    data[compute["field"]] = compute_prep["function"](data, **fargs)
+                else:
+                    compute_prep["function"](data, **fargs)
 
-    def run_all(self, data, df=None, index=None, pre=False, post=False):
+    def run_all(self, data : "CustomDataFrame", df=None, index=None, pre=False, post=False):
         """
         Run any computation elements on the data frame.
 
@@ -239,7 +300,25 @@ class Compute():
         :return: A list of compute functions.
         :rtype: list
         """
-        return []
+        return [
+            {
+                "name" : "render_liquid",
+                "function" : render_liquid,
+                "context" : True, # compute context required for liquid_env
+                "default_args" : {
+                },
+                "docstr": "Render a liquid template.",
+            },
+            {
+                "name" : "today",
+                "function" : datetime.datetime.now().strftime,
+                "context" : False, # no compute context required
+                "default_args": {
+                    "format": "%Y-%m-%d",
+                },
+                "docstr" : "Return today's date as a string.",
+            },
+        ]
     
     def filter(self, data : "CustomDataFrame", interface : Interface) -> None:
         """
@@ -254,7 +333,7 @@ class Compute():
         """
         
         if "filter" not in interface:
-            log.info(msg)
+            self.logger.info(msg)
             return
         
         filters = interface["filter"]

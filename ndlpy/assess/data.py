@@ -5,7 +5,8 @@ from .. import access
 from ..log import Logger
 from ..config.context import Context
 from ..config.interface import Interface
-from ..util.misc import remove_nan, to_camel_case
+from ..util.misc import remove_nan, to_camel_case, is_valid_var
+
 from ..assess.compute import Compute
 
 """Wrapper classes for data objects"""
@@ -650,7 +651,7 @@ class DataObject:
 
     def to_stata(self, *args, **kwargs):
         """
-        Export the DataFrame to Stata dta format.
+        Export the DataFrame to Stata data format.
 
         :param args: Positional arguments to be passed to pandas.DataFrame.to_stata.
         :param kwargs: Keyword arguments to be passed to pandas.DataFrame.to_stata.
@@ -785,7 +786,7 @@ class DataObject:
         found_data = False
         for key, item in interface.items():
             # Check if the interface key is a valid data key
-            if key in cls.valid_data_types:
+            if key in cls.valid_data_types: # input, output, cache, parameters
                 if key in cdf._d:
                     raise ValueError(
                         f"Attempting to set the \"{key}\" portion of the data frame from flow, but have found one already exists. Current keys are \"{', '.join(cdf._d.keys())}\"."
@@ -868,7 +869,6 @@ class DataObject:
                             # else:
                             #     cdf._d[key] = cdf._d[key].join(newdf, how=join)
                             #     cdf._colspecs[key] = list(cdf._d[key].index)
-        print(cdf.compute)
                             
         if not found_data:
             errmsg = f'No valid data found in interface. Data fields must be one of "{", ".join(cls.valid_data_types)}"'
@@ -876,7 +876,8 @@ class DataObject:
             raise ValueError(errmsg)
         else:
             cdf.interface = interface
-            return cdf
+
+        return cdf
     
     def sort_values(self, *args, inplace=False, **kwargs):
         """
@@ -1013,11 +1014,12 @@ class DataObject:
                 raise ValueError(
                     "NumPy array depth doesn't match CustomDataFrame array depth."
                 )
+            print(self.index)
             return self.__class__(
                 data=pd.DataFrame(
                     array,
                     index=self.index,
-                    columns=self.get_column(),
+                    columns=pd.Index([self.get_column()]),
                 ),
             )
         else:
@@ -1292,6 +1294,7 @@ class DataObject:
         parameters = False
         for typ, data in self._d.items():
             if typ not in self.types["parameters"]:
+                print(data.index)
                 return data.index
             else:
                 parameters = True
@@ -1715,7 +1718,7 @@ class DataObject:
 
         return self.__class__(join_df, colspecs=colspecs)
 
-    def _extract_compute(self, interface):
+    def _extract_compute(self, interface : Interface) -> Compute:
         """
         Extract the compute object.
 
@@ -1723,12 +1726,13 @@ class DataObject:
         :type interface: ndlpy.config.interface.Interface or dict
         :returns: The compute object.
         """
-        return Compute.from_flow(interface)
-    
-    def _finalize_df(self, data, details):
+        raise NotImplementedError("This is a base class")
+                            
+    def _finalize_df(self, data, interface):
         """
         This function is used to attend to any modifications in the details dict to finalize the data frame. It fixes up the index, adds columns, sets the right data type etc."""
-        return data
+
+        raise NotImplementedError("This is a base class")
     
 class CustomDataFrame(DataObject):
     types = {
@@ -2325,52 +2329,76 @@ class CustomDataFrame(DataObject):
     def filter(self, *args, **kwargs):
         return self.from_pandas(self.to_pandas().filter(*args, **kwargs))
 
+    def _extract_compute(self, interface : Interface) -> Compute:
+        """
+        Extract the compute object.
 
-    def _finalize_df(self, df, details, strict_columns=False):
+        :param interface: The interface to the compute object.
+        :type interface: ndlpy.config.interface.Interface or dict
+        :returns: The compute object.
+        """
+        return Compute.from_flow(interface).computes
+    
+    def _finalize_df(self, df : "CustomDataFrame", interface : Interface, strict_columns=False) -> "CustomDataFrame":
         """
         This function augments the raw data and sets the index of the data frame.
         :param df: The data frame to be augmented.
-        :param details: The details of the data frame.
+        :param interface: The details of the data frame.
         :param strict_columns: Whether to enforce strict columns.
         :return: The augmented data frame.
         """
-    
-        if "index" not in details:
+                    
+
+        if "mapping" in interface:
+            
+            for name, column in interface["mapping"].items():
+                self.update_name_column_map(column=column, name=name)
+
+        self._augment_column_names(df)
+
+
+        
+        if "index" not in interface:
             errmsg = f"Missing index field in data frame specification in interface file"
             log.error(errmsg)
             raise ValueError(errmsg)
 
-        if not isinstance(details["index"], str):
-            errmsg = f'"index" should be a string in details.'
+        if not isinstance(interface["index"], str):
+            errmsg = f'"index" should be a string in interface.'
             log.error(errmsg)
             raise ValueError(errmsg)
 
-        index_column_name = details["index"]
+        index_column_name = interface["index"]
         
-        if "columns" in details:
+        if "columns" in interface:
             # Make sure the listed columns are present.
-            for column in details["columns"]:
+            for column in interface["columns"]:
                 if column not in df.columns:
                     df[column] = None
             if strict_columns:
-                if "columns" not in details:
-                    errmsg = f"You can't have strict_columns set to True and not list the columns in the details structure."
+                if "columns" not in interface:
+                    errmsg = f"You can't have strict_columns set to True and not list the columns in the interface structure."
                     log.error(errmsg)
                     raise ValueError(errmsg)
-                    
+                
                 for column in df.columns:
-                    if column not in details["columns"] and column!=index_column_name:
+                    if column not in interface["columns"] and column!=index_column_name:
                         errmsg = f"DataFrame contains column: \"{column}\" which is not in the columns list of the specification and strict_columns is set to True."
                         log.error(errmsg)
                         raise ValueError(errmsg)
-                    
-        if "selector" in details:
-            if isinstance(details["selector"], str):
-                self.set_selector(details["selector"])
-            else:
-                errmsg = f'"selector" should be a string in details.'
-                log.error(errmsg)
-                raise ValueError(errmsg)
+        if "compute" in interface:
+            compute = Compute.from_flow(interface)
+            for comp in compute.computes:
+                compute_prep = compute.prep(comp, self)
+                fargs = compute_prep["args"]
+                if "field" in comp: # if field is in compute, then we are computing or updating a new field
+                    for ind in df.index:
+                        df.loc[ind, comp["field"]] = compute_prep["function"](df.loc[ind], **fargs)
+
+                else:
+                    errmsg = f"Compute object in interface file is missing field key."
+                    log.error(errmsg)
+                    raise ValueError(errmsg)
             
         if index_column_name in df.columns:
             index = pd.Index(df[index_column_name], name=index_column_name)
@@ -2379,6 +2407,30 @@ class CustomDataFrame(DataObject):
                     
         return df
 
+    def _augment_column_names(self, data):
+        """
+        Add each column name to the column name map if not already there.
+        """
+        for column in data.columns:
+            # If column title is valid variable name, add it to the column name map
+            if column not in self._column_name_map:
+                if is_valid_var(column):
+                    self.update_name_column_map(name=column, column=column)
+                else:
+                    name = to_camel_case(column)
+                    # Keep variable names as private
+                    if name == "_":
+                        name = "_" + name
+
+                    log.warning(f"Column \"{column}\" is not a valid variable name and there is no mapping entry to provide an alternative. Auto-generating a mapping entry \"{name}\" to provide a valid variable name to use as proxy for \"{column}\".")
+                    if is_valid_var(name):
+                        self.update_name_column_map(name=name, column=column)
+                    else:
+                        errmsg = f"Column \"{column}\" is not a valid variable name. Tried autogenerating a camel case name \"{name}\" but it is also not valid. Please add a mapping entry to provide an alternative to use as proxy for \"{column}\"."
+                        log.error(errmsg)
+                        raise ValueError(errmsg)
+    
+    
     def update_name_column_map(self, name, column):
         """
         Update the map from valid variable names to columns in the data frame. Valid variable names are needed e.g. for Liquid filters.
@@ -2729,7 +2781,6 @@ class CustomDataFrame(DataObject):
             log.error(errmsg)
             raise ValueError(errmsg)
 
-        print(display)
         if kwargs is None or kwargs=={}:
             kwargs = self.mapping()
         kwargs.update(local)

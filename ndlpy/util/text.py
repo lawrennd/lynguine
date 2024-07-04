@@ -1,12 +1,12 @@
-def render_liquid(data, template, **kwargs):
+from ndlpy.util.misc import remove_nan
+
+def render_liquid(compute, template, **kwargs):
     """
     Wrapper to liquid renderer.
 
-    :param data: The data to be rendered.
-    :type data: dict
     :param template: The template to be rendered.
     :type template: str
     :return: The rendered template.
     :rtype: str
     """
-    return data.liquid_to_value(template)
+    return compute.liquid_env.from_string(template).render(**remove_nan(kwargs))

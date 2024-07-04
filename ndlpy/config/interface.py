@@ -279,7 +279,7 @@ class Interface(_HConfig):
         Get an item from the interface. If an item is not found,
         search the parent. If an item is specified in "inherit",
         "ignore" then ignore it in the parent. If an item is specified
-        in "inherit", "append" then append it to the parent values.
+        in "inherit:append" then append it to the parent values.
 
         :param key: The key to be returned.
         :type str:

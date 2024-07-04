@@ -29,6 +29,39 @@ import ndlpy
 
 ctxt = ndlpy.config.context.Context()
 ```
+
+The `interface` module contains the key structure of `ndlpy`. It specifies incoming and outgoing flows, as well as computational operations. Each flow is specified in the following form.
+
+```yaml
+input:
+  source:
+```  
+
+Preprocessing can be done with a compute field.
+
+```yaml
+input:
+  compute:
+    field: ColumnName0
+    function: computeFunction
+    args:
+      arg1: argument1
+      arg2: argument2
+    row_args:
+      arg3: ColumnName1
+```
+
+For example
+
+```yaml
+input:
+  compute:
+    field: fullName
+	function: liquid_to_value
+	liquid: {{familyName | replace: " ", "-"}}_{{givenName | replace: " ", "-"}}
+	row_args:
+	  givenName: givenName
+	  familyName: familyName
 ### Access
 
 Secondly the software uses the access, assess, address decomposition. Where `access` is used for accessing data and consists of `io` and `download`. `io` allows for reading from and writing to various different file formats such as `json`, `yaml`, `markdown`, `csv`, `xls`, `bibtex`. 

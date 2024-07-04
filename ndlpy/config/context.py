@@ -209,3 +209,5 @@ class Context(_Config):
                 self._data["logging"]["filename"] = default_log
         else:
             self._data["logging"] = {"level": 20, "filename": default_log}
+
+            
