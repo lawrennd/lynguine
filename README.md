@@ -55,13 +55,27 @@ For example
 
 ```yaml
 input:
+  type: local
+  index: fullName
+  data:
+  - familyName: Xing
+    givenName: Pei
+  - familyName: Venkatasubramanian
+    givenName: Siva
+  - familyName: Paz Luiz
+    givenName: Miguel
   compute:
     field: fullName
-	function: liquid_to_value
-	liquid: {{familyName | replace: " ", "-"}}_{{givenName | replace: " ", "-"}}
+	function: render_liquid
+	args:
+	  template: {{familyName | replace: " ", "-"}}_{{givenName | replace: " ", "-"}}
 	row_args:
 	  givenName: givenName
 	  familyName: familyName
+```
+
+would create a new field fullname which is then used as the index.
+
 ### Access
 
 Secondly the software uses the access, assess, address decomposition. Where `access` is used for accessing data and consists of `io` and `download`. `io` allows for reading from and writing to various different file formats such as `json`, `yaml`, `markdown`, `csv`, `xls`, `bibtex`. 
