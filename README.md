@@ -58,7 +58,8 @@ import yaml
 from ndlpy.config.interface import Interface
 from ndlpy.assess.data import CustomDataFrame
 
-interface = Interface(yaml.safe_load("""input:
+# Let's assume this is the text stored in the interface file
+yaml_text = """input:
   type: local
   index: fullName
   data:
@@ -75,12 +76,12 @@ interface = Interface(yaml.safe_load("""input:
       template: '{{familyName | replace: " ", "-"}}_{{givenName | replace: " ", "-"}}'
     row_args:
       givenName: givenName
-      familyName: familyName"""))
+      familyName: familyName"""
+
+interface = Interface(yaml.safe_load(yaml_text))
 
 data = CustomDataFrame.from_flow(interface)
 print(data)
-
-
 ```
 
 would create a new field fullname which is then used as the index.
