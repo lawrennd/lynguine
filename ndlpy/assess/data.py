@@ -787,6 +787,10 @@ class DataObject:
         for key, item in interface.items():
             # Check if the interface key is a valid data key
             if key in cls.valid_data_types: # input, output, cache, parameters
+                if "mapping" in item:
+                    mapping = item["mapping"]
+                else:
+                    mapping = []
                 if key in cdf._d:
                     raise ValueError(
                         f"Attempting to set the \"{key}\" portion of the data frame from flow, but have found one already exists. Current keys are \"{', '.join(cdf._d.keys())}\"."
@@ -870,7 +874,15 @@ class DataObject:
                             # else:
                             #     cdf._d[key] = cdf._d[key].join(newdf, how=join)
                             #     cdf._colspecs[key] = list(cdf._d[key].index)
-                            
+                if isinstance(mapping, dict):
+                    mapping = [mapping]
+                               
+                for mapp in mapping:
+                    for name, column in mapp.items():
+                        if column in cdf._d[key]:
+                            cdf.update_name_column_map(name, column)
+                cdf._augment_column_names(cdf._d[key])
+                
         if not found_data:
             errmsg = f'No valid data found in interface. Data fields must be one of "{", ".join(cls.valid_data_types)}"'
             log.error(errmsg)
@@ -1894,7 +1906,6 @@ class CustomDataFrame(DataObject):
         self.loc = self._LocAccessor(self)
         self.iloc = self._ILocAccessor(self)
 
-        self._augment_column_names(data)
 
     @property
     def compute(self):
