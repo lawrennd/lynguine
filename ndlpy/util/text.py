@@ -9,4 +9,4 @@ def render_liquid(compute, template, **kwargs):
     :return: The rendered template.
     :rtype: str
     """
-    return compute.liquid_env.from_string(template).render(**remove_nan(kwargs))
+    return compute._liquid_env.from_string(template).render(**remove_nan(kwargs))

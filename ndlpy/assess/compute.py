@@ -213,7 +213,11 @@ p        :return: None
             for key, column in row_args.items():
                 if key in kwargs:
                     self.logger.warning(f"No key \"{key}\" from row_args already found in kwargs.")
-                kwargs[key] = data.get_value_column(column)
+                # if it's a series or a dictionary return element
+                if isinstance(data, (pd.Series, dict)):
+                    kwargs[key] = data[column]
+                else:
+                    kwargs[key] = data.get_value_column(column)
             # kwargs.update(remove_nan(data.mapping(args)))
             self.logger.debug(f"The keyword arguments for the compute function are {kwargs}.")
             print(f"Function: {list_function['function']}")

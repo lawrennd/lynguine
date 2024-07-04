@@ -1014,7 +1014,6 @@ class DataObject:
                 raise ValueError(
                     "NumPy array depth doesn't match CustomDataFrame array depth."
                 )
-            print(self.index)
             return self.__class__(
                 data=pd.DataFrame(
                     array,
@@ -1294,7 +1293,6 @@ class DataObject:
         parameters = False
         for typ, data in self._d.items():
             if typ not in self.types["parameters"]:
-                print(data.index)
                 return data.index
             else:
                 parameters = True
