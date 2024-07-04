@@ -91,7 +91,7 @@ import ndlpy
 
 The `util` module provides various utilities for working with data. They include 
 
-* `dataframe`, 
+* `dataframe` for operating on data frames. 
 * `fake` for generating fake data.
 * `files` for interacting with files.
 * `html` for working with html.
