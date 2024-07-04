@@ -7,6 +7,7 @@ import ndlpy.config.interface
 import yaml
 import pandas as pd
 import numpy as np
+import datetime
 
 from deepdiff import DeepDiff
 
@@ -48,8 +49,7 @@ def valid_local_data():
 @pytest.fixture
 def local_name_inputs():
 
-    input_yaml_text="""
-input:
+    input_yaml_text="""input:
   type: local
   index: fullName
   data:
@@ -74,7 +74,7 @@ input:
 # test from_flow with a valid setting that specifies local data.
 def test_from_flow_with_compute(valid_local_data):
     cdf = ndlpy.assess.data.CustomDataFrame.from_flow(valid_local_data)
-    today = '04 July 2024'
+    today = datetime.datetime.now().strftime(format="%Y-%m-%d")
     assert isinstance(cdf, ndlpy.assess.data.CustomDataFrame)
     assert cdf == ndlpy.assess.data.CustomDataFrame(pd.DataFrame([{'key1': 'value1', 'key2' : 'value2', 'key3': 'value3', 'today' : today}, {'key1': 'value1row2', 'key2' : 'value2row2', 'key3': 'value3row3', 'today' : today}], index=pd.Index(['indexValue', 'indexValue2'], name='index')))
     assert cdf.colspecs == {"input" : ["key1", "key2", "key3", "today"]}

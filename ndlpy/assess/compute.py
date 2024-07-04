@@ -30,6 +30,8 @@ class Compute():
                 if isinstance(interface[comptype], dict):
                     interface[comptype] = [interface[comptype]]
                     self._computes[comptype]=interface[comptype]
+                elif isinstance(interface[comptype], list):
+                    self._computes[comptype]=interface[comptype]
             else:
                 self._computes[comptype] = []
         self.load_liquid(interface)
