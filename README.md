@@ -66,12 +66,12 @@ input:
     givenName: Miguel
   compute:
     field: fullName
-	function: render_liquid
-	args:
-	  template: {{familyName | replace: " ", "-"}}_{{givenName | replace: " ", "-"}}
-	row_args:
-	  givenName: givenName
-	  familyName: familyName
+    function: render_liquid
+    args:
+      template: {{familyName | replace: " ", "-"}}_{{givenName | replace: " ", "-"}}
+    row_args:
+      givenName: givenName
+      familyName: familyName
 ```
 
 would create a new field fullname which is then used as the index.
