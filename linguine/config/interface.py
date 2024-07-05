@@ -4,7 +4,7 @@ import numpy as np
 from . import context
 from ..log import Logger
 
-from ndlpy.access.io import read_yaml_file
+from linguine.access.io import read_yaml_file
 
 ctxt = context.Context()
 log = Logger(
@@ -421,7 +421,7 @@ c        Expand the environment variables in the configuration.
         """
         Default name of the interface configuration file.
         """
-        return "_ndlpy.yml"
+        return "_linguine.yml"
     
     @classmethod
     def from_file(cls, user_file=None, directory=".", field=None):

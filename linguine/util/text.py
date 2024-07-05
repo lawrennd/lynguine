@@ -1,4 +1,4 @@
-from ndlpy.util.misc import remove_nan
+from linguine.util.misc import remove_nan
 
 def render_liquid(compute, template, **kwargs):
     """

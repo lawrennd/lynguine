@@ -1,12 +1,12 @@
 import pytest
 from pytest_mock import mocker
-import ndlpy.util.talk as talk
-import ndlpy.util.yaml as ny
+import linguine.util.talk as talk
+import linguine.util.yaml as ny
 
 # Test for talk_field function
 def test_talk_field(mocker):
-    mock_header_fields = mocker.patch('ndlpy.util.yaml.header_fields', return_value={'title': 'Sample Talk'})
-    mock_header_field = mocker.patch('ndlpy.util.yaml.header_field', return_value='Sample Talk')
+    mock_header_fields = mocker.patch('linguine.util.yaml.header_fields', return_value={'title': 'Sample Talk'})
+    mock_header_field = mocker.patch('linguine.util.yaml.header_field', return_value='Sample Talk')
 
     result = talk.talk_field('title', 'sample_talk.md')
 
@@ -16,8 +16,8 @@ def test_talk_field(mocker):
 
 # Test for extract_all function
 def test_extract_all_no_fields(mocker):
-    mocker.patch('ndlpy.util.yaml.header_fields', return_value={})
-    mocker.patch('ndlpy.util.yaml.header_field', side_effect=lambda field, fields, _: fields.get(field))
+    mocker.patch('linguine.util.yaml.header_fields', return_value={})
+    mocker.patch('linguine.util.yaml.header_field', side_effect=lambda field, fields, _: fields.get(field))
 
     result = talk.extract_all('sample_talk.md')
     assert result == []
@@ -32,8 +32,8 @@ def test_extract_all_with_fields(mocker):
         'slidesipynb': True,
         'pptx': True
     }
-    mocker.patch('ndlpy.util.yaml.header_fields', return_value=fields)
-    mocker.patch('ndlpy.util.yaml.header_field', side_effect=lambda field, fields, _: fields.get(field))
+    mocker.patch('linguine.util.yaml.header_fields', return_value=fields)
+    mocker.patch('linguine.util.yaml.header_field', side_effect=lambda field, fields, _: fields.get(field))
 
     result = talk.extract_all('sample_talk.md')
     assert result == [
@@ -63,7 +63,7 @@ def test_extract_inputs_with_includes(mocker):
     mocker.patch('os.path.join', side_effect=lambda a, b: os.path.normpath(f"{a}/{b}"))
 
     # Mocking latex.extract_inputs to return include filenames
-    mocker.patch('ndlpy.util.tex.extract_inputs', return_value=['include1.md', 'missing_include.md'])
+    mocker.patch('linguine.util.tex.extract_inputs', return_value=['include1.md', 'missing_include.md'])
 
     result = talk.extract_inputs('sample_talk.md')
     
@@ -75,7 +75,7 @@ def test_extract_inputs_with_includes(mocker):
 # Test for special filename case
 def test_extract_inputs_special_filename(mocker):
     mocker.patch('os.path.exists', return_value=True)
-    mocker.patch('ndlpy.util.tex.extract_inputs', return_value=['\\filename.svg'])
+    mocker.patch('linguine.util.tex.extract_inputs', return_value=['\\filename.svg'])
     mocker.patch('builtins.open', mocker.mock_open(read_data=''))
 
     result = talk.extract_inputs('sample_talk.md')
@@ -90,7 +90,7 @@ def test_extract_bibinputs_not_implemented():
 def test_extract_inputs_file_not_exist(mocker):
     mocker.patch('os.path.exists', return_value=False)
     mocker.patch('os.path.join', side_effect=lambda a, b: f"{a}/{b}")
-    mocker.patch('ndlpy.util.tex.extract_inputs', return_value=[])
+    mocker.patch('linguine.util.tex.extract_inputs', return_value=[])
 
     result = talk.extract_inputs('nonexistent.md')
     assert result == ['nonexistent.md']
@@ -98,7 +98,7 @@ def test_extract_inputs_file_not_exist(mocker):
 def test_extract_inputs_with_includes(mocker):
     mocker.patch('os.path.exists', side_effect=[True, False, True])
     mocker.patch('os.path.join', side_effect=lambda a, b: f"{a}/{b}")
-    mocker.patch('ndlpy.util.tex.extract_inputs', return_value=['include1.md', 'include2.md'])
+    mocker.patch('linguine.util.tex.extract_inputs', return_value=['include1.md', 'include2.md'])
     mocker.patch('builtins.open', mocker.mock_open(read_data='data'))
 
     result = talk.extract_inputs('sample_talk.md')
@@ -117,8 +117,8 @@ def test_extract_diagrams_no_file_warning(mocker):
 def test_extract_diagrams_with_files(mocker):
     mocker.patch('os.path.exists', return_value=True)
     mocker.patch('os.path.join', side_effect=lambda a, b: f"{a}/{b}")
-    mocker.patch('ndlpy.util.tex.extract_inputs', return_value=[])
-    mocker.patch('ndlpy.util.tex.extract_diagrams', return_value=['diagram1', 'diagram2'])
+    mocker.patch('linguine.util.tex.extract_inputs', return_value=[])
+    mocker.patch('linguine.util.tex.extract_diagrams', return_value=['diagram1', 'diagram2'])
     mocker.patch('builtins.open', mocker.mock_open(read_data='data'))
 
     result = talk.extract_diagrams('sample_talk.md', diagrams_dir='/diagrams', snippets_path='/snippets', absolute_path=False)

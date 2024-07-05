@@ -1,7 +1,7 @@
 import pytest
 import os
-import ndlpy
-from ndlpy.util.liquid import load_template_env, url_escape, markdownify, relative_url, absolute_url, to_i
+import linguine
+from linguine.util.liquid import load_template_env, url_escape, markdownify, relative_url, absolute_url, to_i
 
 def test_load_template_env_default(mocker):
     """
@@ -12,7 +12,7 @@ def test_load_template_env_default(mocker):
 
     mock_os_path_join = mocker.patch('os.path.join', return_value="cat")
     env = load_template_env()
-    mock_os_path_join.assert_called_once_with(os.path.dirname(ndlpy.__file__), "templates")
+    mock_os_path_join.assert_called_once_with(os.path.dirname(linguine.__file__), "templates")
     mock_env.assert_called_once()
     assert env == mock_env.return_value
 
@@ -46,10 +46,10 @@ def test_url_escape():
 
 def test_markdownify(mocker):
     # Mock the markdown2html function
-    mocker.patch('ndlpy.util.misc.markdown2html', return_value="<h1>Test</h1>")
+    mocker.patch('linguine.util.misc.markdown2html', return_value="<h1>Test</h1>")
     assert markdownify("# Test") == "<h1>Test</h1>"
     # Test for error handling
-    mocker.patch('ndlpy.util.misc.markdown2html', side_effect=Exception('mock error'))
+    mocker.patch('linguine.util.misc.markdown2html', side_effect=Exception('mock error'))
     with pytest.raises(ValueError) as exc_info:
         markdownify("# Test")
     assert str(exc_info.value) == "Error converting markdown to HTML: mock error"

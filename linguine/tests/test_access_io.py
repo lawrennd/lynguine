@@ -9,9 +9,9 @@ from unittest.mock import patch, mock_open, MagicMock
 from datetime import datetime
 from pandas.testing import assert_frame_equal
 
-import ndlpy
-from ndlpy.util.fake import Generate
-from ndlpy.access.io import (
+import linguine
+from linguine.util.fake import Generate
+from linguine.access.io import (
     read_json, write_json, read_json_file, write_json_file,
     write_csv, read_csv, write_excel, read_excel, read_local, read_fake, read_bibtex, write_yaml,
     read_yaml, write_json_directory, read_json_directory,
@@ -19,11 +19,11 @@ from ndlpy.access.io import (
     read_markdown_directory,
     bibtex_column_order, bibtex_sort_by
 )
-from ndlpy.util.misc import extract_full_filename, extract_root_directory
-from ndlpy.util.dataframe import reorder_dataframe
-import ndlpy.access.io as io_module
-import ndlpy.config.context as context
-import ndlpy.util.fake
+from linguine.util.misc import extract_full_filename, extract_root_directory
+from linguine.util.dataframe import reorder_dataframe
+import linguine.access.io as io_module
+import linguine.config.context as context
+import linguine.util.fake
 
 import bibtexparser as bp
 
@@ -58,12 +58,12 @@ yaml_details["filename"] = yaml_file_name
 
 @pytest.fixture
 def mock_read_json_file():
-    with patch('ndlpy.access.io.read_json_file') as mock:
+    with patch('linguine.access.io.read_json_file') as mock:
         yield mock
 
 @pytest.fixture
 def mock_write_json_file():
-    with patch('ndlpy.access.io.write_json_file') as mock:
+    with patch('linguine.access.io.write_json_file') as mock:
         yield mock
 
 @pytest.fixture
@@ -97,8 +97,8 @@ def sample_context():
 # Example test for read_json
 def test_read_json(mocker):
     # Mock dependencies
-    mocker.patch('ndlpy.access.io.extract_full_filename', return_value="path/to/file.json")
-    mocker.patch('ndlpy.access.io.read_json_file', return_value=[{'a': 1, 'b': 2}])
+    mocker.patch('linguine.access.io.extract_full_filename', return_value="path/to/file.json")
+    mocker.patch('linguine.access.io.read_json_file', return_value=[{'a': 1, 'b': 2}])
 
     # Test details
     details = {'path': 'path/to/file.json'}
@@ -112,8 +112,8 @@ def test_read_json(mocker):
 
 # Example test for write_json
 def test_write_json(mocker):
-    mock_write_json_file = mocker.patch('ndlpy.access.io.write_json_file')
-    mocker.patch('ndlpy.access.io.extract_full_filename', return_value="path/to/file.json")
+    mock_write_json_file = mocker.patch('linguine.access.io.write_json_file')
+    mocker.patch('linguine.access.io.extract_full_filename', return_value="path/to/file.json")
 
     # Test data and details
     df = pd.DataFrame([{'a': 1, 'b': 2}])
@@ -129,8 +129,8 @@ def test_write_json(mocker):
 # Test for read_yaml
 def test_read_yaml(mocker):
     # Mock dependencies
-    mocker.patch('ndlpy.access.io.extract_full_filename', return_value="path/to/file.yaml")
-    mocker.patch('ndlpy.access.io.read_yaml_file', return_value=[{'c': 3, 'd': 4}])
+    mocker.patch('linguine.access.io.extract_full_filename', return_value="path/to/file.yaml")
+    mocker.patch('linguine.access.io.read_yaml_file', return_value=[{'c': 3, 'd': 4}])
 
     # Test details
     details = {'path': 'path/to/file.yaml'}
@@ -144,8 +144,8 @@ def test_read_yaml(mocker):
 
 # Test for write_yaml
 def test_write_yaml(mocker):
-    mock_write_yaml_file = mocker.patch('ndlpy.access.io.write_yaml_file')
-    mocker.patch('ndlpy.access.io.extract_full_filename', return_value="path/to/file.yaml")
+    mock_write_yaml_file = mocker.patch('linguine.access.io.write_yaml_file')
+    mocker.patch('linguine.access.io.extract_full_filename', return_value="path/to/file.yaml")
 
     # Test data and details
     df = pd.DataFrame([{'c': 3, 'd': 4}])
@@ -159,11 +159,11 @@ def test_write_yaml(mocker):
 
 # Test for read_markdown
 def test_read_markdown(mocker):
-    mock_extract_full_filename = mocker.patch('ndlpy.access.io.extract_full_filename', return_value='test.md')
-    mock_read_markdown_file = mocker.patch('ndlpy.access.io.read_markdown_file', return_value={'key': 'value'})
+    mock_extract_full_filename = mocker.patch('linguine.access.io.extract_full_filename', return_value='test.md')
+    mock_read_markdown_file = mocker.patch('linguine.access.io.read_markdown_file', return_value={'key': 'value'})
 
     details = {'filename': 'test.md'}
-    result = ndlpy.access.io.read_markdown(details)
+    result = linguine.access.io.read_markdown(details)
 
     assert isinstance(result, pd.DataFrame)
     assert result.to_dict('records')[0] == {'key': 'value'}
@@ -174,8 +174,8 @@ def test_read_markdown(mocker):
 # Test for read_bibtex
 def test_read_bibtex(mocker):
     # Mock dependencies
-    mocker.patch('ndlpy.access.io.extract_full_filename', return_value="path/to/file.bib")
-    mock_read_bibtex_file = mocker.patch('ndlpy.access.io.read_bibtex_file', return_value=[{'author': 'Doe', 'year': 2020, 'title': 'Sample'}])
+    mocker.patch('linguine.access.io.extract_full_filename', return_value="path/to/file.bib")
+    mock_read_bibtex_file = mocker.patch('linguine.access.io.read_bibtex_file', return_value=[{'author': 'Doe', 'year': 2020, 'title': 'Sample'}])
 
     # Test details
     details = {
@@ -192,8 +192,8 @@ def test_read_bibtex(mocker):
 
 # Test for write_bibtex
 def test_write_bibtex(mocker):
-    mock_write_bibtex_file = mocker.patch('ndlpy.access.io.write_bibtex_file')
-    mocker.patch('ndlpy.access.io.extract_full_filename', return_value="path/to/file.bib")
+    mock_write_bibtex_file = mocker.patch('linguine.access.io.write_bibtex_file')
+    mocker.patch('linguine.access.io.extract_full_filename', return_value="path/to/file.bib")
 
     # Test data and details
     df = pd.DataFrame([{'author': 'Doe', 'year': 2020, 'title': 'Sample'}])
@@ -211,7 +211,7 @@ def test_read_directory(mocker):
     mocker.patch('os.path.expandvars', side_effect=lambda x: x)
     mocker.patch('glob.glob', return_value=['file1.txt', 'file2.txt'])
     mocker.patch('re.match', return_value=True)
-    mocker.patch('ndlpy.access.io.read_files', return_value=pd.DataFrame([{'data': 'content'}]))
+    mocker.patch('linguine.access.io.read_files', return_value=pd.DataFrame([{'data': 'content'}]))
 
     details = {'source': [{'directory': 'test_dir', 'glob': '*.txt'}],
                'store_fields' : {'sourceRoot': 'sourceRoot', 'sourceDirectory': 'sourceDirectory', 'sourceFilename': 'sourceFilename'},
@@ -227,7 +227,7 @@ def test_read_directory(mocker):
 # Test for read_list
 def test_read_list(mocker):
     # Mock read_files function
-    mocker.patch('ndlpy.access.io.read_files', return_value=pd.DataFrame([{'data': 'content'}]))
+    mocker.patch('linguine.access.io.read_files', return_value=pd.DataFrame([{'data': 'content'}]))
 
     filelist = ['file1.txt', 'file2.txt']
 
@@ -241,7 +241,7 @@ def test_read_list(mocker):
 def test_read_files(mocker):
     # Mock dependencies
     mocker.patch('os.path.exists', return_value=True)
-    mocker.patch('ndlpy.access.io.default_file_reader', return_value=lambda x: {'file': x})
+    mocker.patch('linguine.access.io.default_file_reader', return_value=lambda x: {'file': x})
 
     filelist = ['file1.txt', 'file2.txt']
 
@@ -259,7 +259,7 @@ def test_write_directory(mocker):
     mocker.patch('os.path.expandvars', side_effect=lambda x: x)
     mocker.patch('os.path.exists', return_value=False)
     mocker.patch('os.makedirs')
-    mock_filewriter = mocker.patch('ndlpy.access.io.write_json_file', side_effect=lambda data, filename, **args: None)
+    mock_filewriter = mocker.patch('linguine.access.io.write_json_file', side_effect=lambda data, filename, **args: None)
 
     df = pd.DataFrame([{'filename': 'file1.json', 'root': '/path', 'directory': '/to', 'data': 'content1'},
                        {'filename': 'file2.json', 'root': '/path', 'directory': '/to', 'data': 'content2'}])
@@ -311,8 +311,8 @@ def test_default_file_writer():
         
 # test for read_file
 def test_read_file(mocker):
-    mocker.patch('ndlpy.access.io.extract_file_type', return_value='yaml')
-    mocker.patch('ndlpy.access.io.read_yaml_file', return_value={'key': 'value'})
+    mocker.patch('linguine.access.io.extract_file_type', return_value='yaml')
+    mocker.patch('linguine.access.io.read_yaml_file', return_value={'key': 'value'})
 
     result = io_module.read_file("test.yaml")
 
@@ -376,7 +376,7 @@ def test_write_yaml_file(mocker):
 # test for read_yaml_file
 def test_read_yaml_meta_file(mocker):
     mocker.patch('os.path.exists', return_value=True)
-    mock_read_yaml = mocker.patch('ndlpy.access.io.read_yaml_file', return_value={'meta': 'data'})
+    mock_read_yaml = mocker.patch('linguine.access.io.read_yaml_file', return_value={'meta': 'data'})
 
     filename = "test"
     result = io_module.read_yaml_meta_file(filename)
@@ -386,7 +386,7 @@ def test_read_yaml_meta_file(mocker):
 
 # test for write_yaml_meata_file
 def test_write_yaml_meta_file(mocker):
-    mock_write_yaml = mocker.patch('ndlpy.access.io.write_yaml_file')
+    mock_write_yaml = mocker.patch('linguine.access.io.write_yaml_file')
 
     data = {'meta': 'data'}
     filename = "test"
@@ -410,7 +410,7 @@ def test_read_markdown_file(mocker):
 def test_read_docx_file(tmpdir,mocker):
     mocker.patch('tempfile.gettempdir', return_value=tmpdir)
     mocker.patch('pypandoc.convert_file')
-    mock_read_markdown = mocker.patch('ndlpy.access.io.read_markdown_file', return_value={'key': 'value'})
+    mock_read_markdown = mocker.patch('linguine.access.io.read_markdown_file', return_value={'key': 'value'})
 
     filename = "test.docx"
     result = io_module.read_docx_file(filename)
@@ -420,8 +420,8 @@ def test_read_docx_file(tmpdir,mocker):
 
 # test for read_talk_file
 def test_read_talk_file(mocker):
-    mock_read_markdown = mocker.patch('ndlpy.access.io.read_markdown_file', return_value={'key': 'value'})
-    mock_remove_nan = mocker.patch('ndlpy.access.io.remove_nan', return_value={'key': 'value'})
+    mock_read_markdown = mocker.patch('linguine.access.io.read_markdown_file', return_value={'key': 'value'})
+    mock_remove_nan = mocker.patch('linguine.access.io.remove_nan', return_value={'key': 'value'})
 
     filename = "talk.md"
     result = io_module.read_talk_file(filename)
@@ -432,8 +432,8 @@ def test_read_talk_file(mocker):
 
 # test for read_talk_include_file
 def test_read_talk_include_file(mocker):
-    mock_read_markdown = mocker.patch('ndlpy.access.io.read_markdown_file', return_value={'key': 'value', 'nan_field': np.nan})
-    mock_remove_nan = mocker.patch('ndlpy.access.io.remove_nan', return_value={'key': 'value'})
+    mock_read_markdown = mocker.patch('linguine.access.io.read_markdown_file', return_value={'key': 'value', 'nan_field': np.nan})
+    mock_remove_nan = mocker.patch('linguine.access.io.remove_nan', return_value={'key': 'value'})
 
     filename = "talk_include.md"
     result = io_module.read_talk_include_file(filename)
@@ -494,8 +494,8 @@ def test_create_document_content():
     
 # test for create_letter 
 def test_create_letter(mocker):
-    mock_create_document_content = mocker.patch('ndlpy.access.io.create_document_content', return_value=('data', 'filename.md', 'content'))
-    mock_write_letter_file = mocker.patch('ndlpy.access.io.write_letter_file')
+    mock_create_document_content = mocker.patch('linguine.access.io.create_document_content', return_value=('data', 'filename.md', 'content'))
+    mock_write_letter_file = mocker.patch('linguine.access.io.write_letter_file')
 
     io_module.create_letter()
 
@@ -516,7 +516,7 @@ def test_write_letter_file(mocker):
 
 # test for write_formlink 
 def test_write_formlink(mocker):
-    mock_write_url_file = mocker.patch('ndlpy.access.io.write_url_file')
+    mock_write_url_file = mocker.patch('linguine.access.io.write_url_file')
 
     data = {'key': 'value'}
     filename = "formlink.txt"
@@ -528,7 +528,7 @@ def test_write_formlink(mocker):
 # test for write_docx_file
 def test_write_docx_file(tmpdir, mocker):
     mocker.patch('tempfile.gettempdir', return_value=tmpdir)
-    mock_write_markdown_file = mocker.patch('ndlpy.access.io.write_markdown_file')
+    mock_write_markdown_file = mocker.patch('linguine.access.io.write_markdown_file')
     mocker.patch('pypandoc.convert_file')
 
     data = {'key': 'value'}
@@ -542,7 +542,7 @@ def test_write_docx_file(tmpdir, mocker):
 # test for write_tex_file
 def test_write_tex_file(tmpdir, mocker):
     mocker.patch('tempfile.gettempdir', return_value=tmpdir)
-    mock_write_markdown_file = mocker.patch('ndlpy.access.io.write_markdown_file')
+    mock_write_markdown_file = mocker.patch('linguine.access.io.write_markdown_file')
     mocker.patch('pypandoc.convert_file')
 
     data = {'key': 'value'}
@@ -556,8 +556,8 @@ def test_write_tex_file(tmpdir, mocker):
 # test for read_csv
 def test_read_csv(mocker):
     mock_read_csv = mocker.patch('pandas.read_csv', return_value=pd.DataFrame({'col1': [1, 2], 'col2': [3, 4]}))
-    mocker.patch('ndlpy.access.io.extract_dtypes', return_value={'col1': 'int'})
-    mocker.patch('ndlpy.access.io.extract_full_filename', return_value='test.csv')
+    mocker.patch('linguine.access.io.extract_dtypes', return_value={'col1': 'int'})
+    mocker.patch('linguine.access.io.extract_full_filename', return_value='test.csv')
 
     details = {'header': 0, 'delimiter': ',', 'quotechar': '"'}
     result = io_module.read_csv(details)
@@ -568,8 +568,8 @@ def test_read_csv(mocker):
 # test for read_excel
 def test_read_excel(mocker):
     mock_read_excel = mocker.patch('pandas.read_excel', return_value=pd.DataFrame({'col1': [1, 2], 'col2': [3, 4]}))
-    mocker.patch('ndlpy.access.io.extract_dtypes', return_value={'col1': 'int'})
-    mocker.patch('ndlpy.access.io.extract_full_filename', return_value='test.xlsx')
+    mocker.patch('linguine.access.io.extract_dtypes', return_value={'col1': 'int'})
+    mocker.patch('linguine.access.io.extract_full_filename', return_value='test.xlsx')
 
     details = {'header': 0, 'sheet': 'Sheet1'}
     result = io_module.read_excel(details)
@@ -586,13 +586,13 @@ def test_read_local_valid_dict():
     assert list(df.columns) == ['a', 'b']
 
 def test_read_local_invalid_input(mocker):
-    log_mock = mocker.patch('ndlpy.access.io.log')
+    log_mock = mocker.patch('linguine.access.io.log')
     with pytest.raises(ValueError):
         read_local(['not', 'a', 'dict'])
     log_mock.error.assert_called_once()
 
 def test_read_local_missing_keys(mocker):
-    log_mock = mocker.patch('ndlpy.access.io.log')
+    log_mock = mocker.patch('linguine.access.io.log')
     with pytest.raises(ValueError):
         read_local({'values': [{'a': 1, 'b': 2}]})  # 'data' key is missing
     log_mock.error.assert_called_once()
@@ -603,7 +603,7 @@ def test_read_local_default_index_name():
     assert df.index.name == 'index'
 
 def test_read_local_error_logging(mocker):
-    log_mock = mocker.patch('ndlpy.access.io.log')
+    log_mock = mocker.patch('linguine.access.io.log')
     with pytest.raises(ValueError):
         read_local({'wrong_key': 'value'})
     log_mock.error.assert_called_once()
@@ -622,7 +622,7 @@ def mock_read_data_hstack(specs):
 
 @pytest.fixture
 def mock_read_data_fixture(mocker):
-    mocker.patch('ndlpy.access.io.read_data', side_effect=mock_read_data_hstack)
+    mocker.patch('linguine.access.io.read_data', side_effect=mock_read_data_hstack)
 
 def test_read_hstack_basic_join(mock_read_data_fixture):
     details = {
@@ -632,7 +632,7 @@ def test_read_hstack_basic_join(mock_read_data_fixture):
             {'type': 'source2', 'how': 'inner'}
         ]
     }
-    result = ndlpy.access.io.read_hstack(details)
+    result = linguine.access.io.read_hstack(details)
     expected_columns = ['A', 'B', 'C']
     assert all(column in result.columns for column in expected_columns)
     assert len(result) == 2  # Check the number of rows
@@ -645,7 +645,7 @@ def test_read_hstack_basic_merge_b(mock_read_data_fixture):
             {'type': 'source2', 'on' : "B", 'how': 'inner'}
         ]
     }
-    result = ndlpy.access.io.read_hstack(details)
+    result = linguine.access.io.read_hstack(details)
     expected_columns = ['A', 'B', 'C']
     assert all(column in result.columns for column in expected_columns)
     assert len(result) == 0  # Check the number of rows (join on B leads to nothing with inner)
@@ -658,7 +658,7 @@ def test_read_hstack_with_defaults(mock_read_data_fixture):
             {'type': 'source2'}  # Rely on default join parameters
         ]
     }
-    result = ndlpy.access.io.read_hstack(details)
+    result = linguine.access.io.read_hstack(details)
     expected_columns = ['A', 'B', 'B_right', 'C']
     assert all(column in result.columns for column in expected_columns)
 
@@ -670,7 +670,7 @@ def test_read_hstack_with_default_suffixes(mock_read_data_fixture):
             {'type': 'source2'}
         ]
     }
-    result = ndlpy.access.io.read_hstack(details)
+    result = linguine.access.io.read_hstack(details)
     expected_columns = ['A', 'B', 'B_right', 'C']
     assert all(column in result.columns for column in expected_columns)
 
@@ -682,7 +682,7 @@ def test_read_hstack_with_suffixes(mock_read_data_fixture):
             {'type': 'source2', 'lsuffix': '_lefty', 'rsuffix': '_righty'}
         ]
     }
-    result = ndlpy.access.io.read_hstack(details)
+    result = linguine.access.io.read_hstack(details)
     expected_columns = ['A', 'B_lefty', 'B_righty', 'C']
     assert all(column in result.columns for column in expected_columns)
 
@@ -692,7 +692,7 @@ def test_read_hstack_no_specifications():
         'specifications': []
     }
     with pytest.raises(ValueError):
-        ndlpy.access.io.read_hstack(details)
+        linguine.access.io.read_hstack(details)
 
 def test_read_hstack_wrong_type():
     details = {
@@ -700,7 +700,7 @@ def test_read_hstack_wrong_type():
         'specifications': [{'type': 'source1'}]
     }
     with pytest.raises(ValueError):
-        ndlpy.access.io.read_hstack(details)
+        linguine.access.io.read_hstack(details)
 
 
 @pytest.fixture
@@ -712,14 +712,14 @@ def mock_read_data_vstack(mocker):
             return pd.DataFrame({'A': [3, 4]}), {}
         return pd.DataFrame()
 
-    mocker.patch('ndlpy.access.io.read_data', side_effect=read_data_side_effect)
+    mocker.patch('linguine.access.io.read_data', side_effect=read_data_side_effect)
 
 def test_read_vstack_basic(mock_read_data_vstack):
     details = {
         'type': 'vstack',
         'specifications': [{'type': 'source1'}, {'type': 'source2'}]
     }
-    result = ndlpy.access.io.read_vstack(details)
+    result = linguine.access.io.read_vstack(details)
     assert len(result) == 4
     assert list(result['A']) == [1, 2, 3, 4]
 
@@ -729,18 +729,18 @@ def test_read_vstack_with_index_reset(mock_read_data_vstack):
         'specifications': [{'type': 'source1'}, {'type': 'source2'}],
         'reset_index': True
     }
-    result = ndlpy.access.io.read_vstack(details)
+    result = linguine.access.io.read_vstack(details)
     assert result.index.equals(pd.Index([0, 1, 2, 3]))
 
 def test_read_vstack_no_specifications():
     details = {'type': 'vstack', 'specifications': []}
     with pytest.raises(ValueError):
-        ndlpy.access.io.read_vstack(details)
+        linguine.access.io.read_vstack(details)
 
 def test_read_vstack_wrong_type():
     details = {'type': 'hstack', 'specifications': [{'type': 'source1'}]}
     with pytest.raises(ValueError):
-        ndlpy.access.io.read_vstack(details)
+        linguine.access.io.read_vstack(details)
 
 
 @pytest.fixture
@@ -764,9 +764,9 @@ def valid_details_list():
 
 @pytest.fixture
 def mock_generate(mocker):
-    mocker.patch.object(ndlpy.util.fake.Generate, 'familyName', return_value='Ogedegbe')
-    mocker.patch.object(ndlpy.util.fake.Generate, 'givenName', return_value='Henrietta')
-    mocker.patch.object(ndlpy.util.fake.Generate, 'address', return_value='123 Main St')
+    mocker.patch.object(linguine.util.fake.Generate, 'familyName', return_value='Ogedegbe')
+    mocker.patch.object(linguine.util.fake.Generate, 'givenName', return_value='Henrietta')
+    mocker.patch.object(linguine.util.fake.Generate, 'address', return_value='123 Main St')
 
 # test for read_fake with cols input as list
 def test_read_fake_with_valid_list_input(mock_generate, valid_details_list):
@@ -816,10 +816,10 @@ def test_read_fake_nonexistent_generator(valid_details, mock_generate):
 # test for read_gsheet
 def test_read_gsheet(sample_context, mocker):
     if GSPREAD_AVAILABLE:
-        mocker.patch('ndlpy.access.io.ctxt', sample_context)
-        mocker.patch('ndlpy.access.io.extract_dtypes', return_value={'col1': 'int'})
-        mocker.patch('ndlpy.access.io.extract_full_filename', return_value='sheet_id')
-        mocker.patch('ndlpy.access.io.extract_sheet', return_value=0)
+        mocker.patch('linguine.access.io.ctxt', sample_context)
+        mocker.patch('linguine.access.io.extract_dtypes', return_value={'col1': 'int'})
+        mocker.patch('linguine.access.io.extract_full_filename', return_value='sheet_id')
+        mocker.patch('linguine.access.io.extract_sheet', return_value=0)
         mock_spread = mocker.MagicMock()
         mocker.patch('gspread_pandas.Spread', return_value=mock_spread)
         mock_spread.sheet_to_df.return_value = pd.DataFrame({'col1': [1, 2], 'col2': [3, 4]})
@@ -837,7 +837,7 @@ def test_write_excel(mocker):
     mock_to_excel = mocker.patch('pandas.DataFrame.to_excel', return_value=pd.DataFrame({'col1': [1, 2], 'col2': [3, 4]}))
     mock_to_excel = mocker.patch('pandas.DataFrame.to_excel', return_value=pd.DataFrame({'col1': [1, 2], 'col2': [3, 4]}))
     
-    mocker.patch('ndlpy.access.io.extract_full_filename', return_value='test.xlsx')
+    mocker.patch('linguine.access.io.extract_full_filename', return_value='test.xlsx')
 
     df = pd.DataFrame({'col1': [1, 2], 'col2': [3, 4]})
     details = {'header': 0, 'sheet': 'Sheet1'}
@@ -849,7 +849,7 @@ def test_write_excel(mocker):
 # test for write_csv
 def test_write_csv(mocker):
     mock_open = mocker.patch('builtins.open', mocker.mock_open())
-    mocker.patch('ndlpy.access.io.extract_full_filename', return_value='test.csv')
+    mocker.patch('linguine.access.io.extract_full_filename', return_value='test.csv')
 
     df = pd.DataFrame({'col1': [1, 2], 'col2': [3, 4]})
     details = {'delimiter': ',', 'quotechar': '"'}
@@ -860,9 +860,9 @@ def test_write_csv(mocker):
 # test for write_gsheet
 def test_write_gsheet(sample_context, mocker):
     if GSPREAD_AVAILABLE:
-        mocker.patch('ndlpy.access.io.ctxt', sample_context)
-        mocker.patch('ndlpy.access.io.extract_full_filename', return_value='sheet_id')
-        mocker.patch('ndlpy.access.io.extract_sheet', return_value=0)
+        mocker.patch('linguine.access.io.ctxt', sample_context)
+        mocker.patch('linguine.access.io.extract_full_filename', return_value='sheet_id')
+        mocker.patch('linguine.access.io.extract_sheet', return_value=0)
         mock_spread = mocker.MagicMock()
         mocker.patch('gspread_pandas.Spread', return_value=mock_spread)
 
@@ -891,7 +891,7 @@ def test_gdrf_(mocker):
     details = {'glob': '*.test', 'source': 'source_dir'}
 
     # Mock the read_directory function and check if it's called correctly
-    mock_read_dir = mocker.patch('ndlpy.access.io.read_directory', return_value=pd.DataFrame([{'data': 'content'}]))
+    mock_read_dir = mocker.patch('linguine.access.io.read_directory', return_value=pd.DataFrame([{'data': 'content'}]))
     test_reader(details)
     mock_read_dir.assert_called_once()
 
@@ -914,7 +914,7 @@ def test_gdwf_(mocker):
     details = {'glob': '*.test', 'source': 'source_dir'}
 
     # Mock the write_directory function and check if it's called correctly
-    mock_write_dir = mocker.patch('ndlpy.access.io.write_directory')
+    mock_write_dir = mocker.patch('linguine.access.io.write_directory')
     test_writer(df, details)
     mock_write_dir.assert_called_once()
 
@@ -956,7 +956,7 @@ def test_write_read_csv(tmpdir):
         "delimiter": ",",
         "quotechar": "\"",
     }
-    data = pd.DataFrame(ndlpy.util.fake.rows(30))
+    data = pd.DataFrame(linguine.util.fake.rows(30))
     write_csv(data, details)
     read_data = read_csv(details)
     assert_frame_equal(data, read_data)
@@ -968,7 +968,7 @@ def test_write_read_excel(tmpdir):
         "header": 0,
         "sheet": "Sheet1",
     }
-    data = pd.DataFrame(ndlpy.util.fake.rows(30))
+    data = pd.DataFrame(linguine.util.fake.rows(30))
     write_excel(data, details)
     read_data = read_excel(details)
     assert_frame_equal(data, read_data)
@@ -978,7 +978,7 @@ def test_write_read_json(tmpdir):
         "filename": "test.json",
         "directory": str(tmpdir),
     }
-    data = pd.DataFrame(ndlpy.util.fake.rows(30))
+    data = pd.DataFrame(linguine.util.fake.rows(30))
     write_json(data, details)
     read_data = read_json(details)
     assert_frame_equal(data, read_data)
@@ -988,7 +988,7 @@ def test_write_read_yaml(tmpdir):
         "filename": "test.yaml",
         "directory": str(tmpdir),
     }
-    data = pd.DataFrame(ndlpy.util.fake.rows(30))
+    data = pd.DataFrame(linguine.util.fake.rows(30))
     write_yaml(data, details)
     read_data = read_yaml(details)
     assert_frame_equal(read_data, data)
@@ -1041,8 +1041,8 @@ def test_write_read_bibtex(tmpdir):
         "filename": "test.bib",
         "directory": str(tmpdir),
     }
-    row = lambda: ndlpy.util.fake.to_bibtex(ndlpy.util.fake.bibliography_entry())
-    bib_rows = ndlpy.util.fake.rows(200, row)
+    row = lambda: linguine.util.fake.to_bibtex(linguine.util.fake.bibliography_entry())
+    bib_rows = linguine.util.fake.rows(200, row)
 
     # List any duplicated ids.
     ids = [entry["ID"] for entry in bib_rows]
@@ -1076,7 +1076,7 @@ def test_write_read_json_directory(tmpdir):
             },
         ],
     }
-    data = pd.DataFrame(ndlpy.util.fake.rows(30))
+    data = pd.DataFrame(linguine.util.fake.rows(30))
     for ind in data.index:
         data.at[ind, "sourceRoot"], data.at[ind, "sourceDirectory"] = extract_root_directory(str(tmpdir))
         data.at[ind, "sourceFilename"] = data.at[ind, "name"] + extension
@@ -1097,7 +1097,7 @@ def test_write_read_yaml_directory(tmpdir):
             },
         ],
     }
-    data = pd.DataFrame(ndlpy.util.fake.rows(30))
+    data = pd.DataFrame(linguine.util.fake.rows(30))
     for ind in data.index:
         data.at[ind, "sourceRoot"], data.at[ind, "sourceDirectory"] = extract_root_directory(str(tmpdir))
         data.at[ind, "sourceFilename"] = data.at[ind, "name"] + extension
@@ -1117,7 +1117,7 @@ def test_write_read_markdown_directory(tmpdir):
             },
         ],
     }
-    data = pd.DataFrame(ndlpy.util.fake.rows(30))
+    data = pd.DataFrame(linguine.util.fake.rows(30))
     for ind in data.index:
         data.at[ind, "sourceRoot"], data.at[ind, "sourceDirectory"] = extract_root_directory(str(tmpdir))
         data.at[ind, "sourceFilename"] = data.at[ind, "name"] + extension
@@ -1131,7 +1131,7 @@ def test_finalize_data_index_name():
     df = pd.DataFrame({'a': [1, 2], 'b': [3, 4]})
     details = {'index': {'name': 'test_index'}}
 
-    finalized_df, _ = ndlpy.access.io.finalize_data(df, details)
+    finalized_df, _ = linguine.access.io.finalize_data(df, details)
 
     assert finalized_df.index.name == 'test_index'
 
@@ -1139,7 +1139,7 @@ def test_finalize_data_rename_columns():
     df = pd.DataFrame({'a': [1, 2], 'b': [3, 4]})
     details = {'rename_columns': {'a': 'x', 'b': 'y'}}
 
-    finalized_df, _ = ndlpy.access.io.finalize_data(df, details)
+    finalized_df, _ = linguine.access.io.finalize_data(df, details)
 
     assert all(column in finalized_df.columns for column in ['x', 'y'])
 
@@ -1147,7 +1147,7 @@ def test_finalize_data_ignore_columns():
     df = pd.DataFrame({'a': [1, 2], 'b': [3, 4], 'c': [5, 6]})
     details = {'ignore_columns': ['c']}
 
-    finalized_df, _ = ndlpy.access.io.finalize_data(df, details)
+    finalized_df, _ = linguine.access.io.finalize_data(df, details)
 
     assert 'c' not in finalized_df.columns
 
@@ -1156,45 +1156,45 @@ def test_finalize_data_invalid_rename_column():
     details = {'rename_columns': {'x': 'new_x'}}
 
     with pytest.raises(ValueError):
-        ndlpy.access.io.finalize_data(df, details)
+        linguine.access.io.finalize_data(df, details)
 
 def test_finalize_data_invalid_ignore_column():
     df = pd.DataFrame({'a': [1, 2], 'b': [3, 4]})
     details = {'ignore_columns': ['x']}
 
     with pytest.raises(ValueError):
-        ndlpy.access.io.finalize_data(df, details)
+        linguine.access.io.finalize_data(df, details)
 
 
 # test read_data
 @pytest.mark.parametrize("data_type, read_func", [
-    ('excel', 'ndlpy.access.io.read_excel'),
-    ('gsheet', 'ndlpy.access.io.read_gsheet'),
-    ('csv', 'ndlpy.access.io.read_csv'),
-    ('bibtex', 'ndlpy.access.io.read_bibtex'),
-    ('json', 'ndlpy.access.io.read_json'),
-    ('yaml', 'ndlpy.access.io.read_yaml'),
-    ('markdown', 'ndlpy.access.io.read_markdown'),
-    ('bibtex_directory', 'ndlpy.access.io.read_bibtex_directory'),
-    ('json_directory', 'ndlpy.access.io.read_json_directory'),
-    ('yaml_directory', 'ndlpy.access.io.read_yaml_directory'),
-    ('markdown_directory', 'ndlpy.access.io.read_markdown_directory'),
-    ('directory', 'ndlpy.access.io.read_plain_directory'),
-    ('meta_directory', 'ndlpy.access.io.read_meta_directory'),
-    ('docx_directory', 'ndlpy.access.io.read_docx_directory'),
-    ('fake', 'ndlpy.access.io.read_fake'),
-    ('local', 'ndlpy.access.io.read_local'),
+    ('excel', 'linguine.access.io.read_excel'),
+    ('gsheet', 'linguine.access.io.read_gsheet'),
+    ('csv', 'linguine.access.io.read_csv'),
+    ('bibtex', 'linguine.access.io.read_bibtex'),
+    ('json', 'linguine.access.io.read_json'),
+    ('yaml', 'linguine.access.io.read_yaml'),
+    ('markdown', 'linguine.access.io.read_markdown'),
+    ('bibtex_directory', 'linguine.access.io.read_bibtex_directory'),
+    ('json_directory', 'linguine.access.io.read_json_directory'),
+    ('yaml_directory', 'linguine.access.io.read_yaml_directory'),
+    ('markdown_directory', 'linguine.access.io.read_markdown_directory'),
+    ('directory', 'linguine.access.io.read_plain_directory'),
+    ('meta_directory', 'linguine.access.io.read_meta_directory'),
+    ('docx_directory', 'linguine.access.io.read_docx_directory'),
+    ('fake', 'linguine.access.io.read_fake'),
+    ('local', 'linguine.access.io.read_local'),
     ('uncategorised_type', None),
 ])
 def test_read_data(mocker, data_type, read_func):
     if read_func is None:
         with pytest.raises(ValueError):
-            ndlpy.access.io.read_data({'type': data_type})
+            linguine.access.io.read_data({'type': data_type})
         return
     details = {'type': data_type}
     mock_func = mocker.patch(read_func, return_value=pd.DataFrame({'a': [1, 2]}))
 
-    result, details = ndlpy.access.io.read_data(details)
+    result, details = linguine.access.io.read_data(details)
 
     mock_func.assert_called_once_with(details)
     assert all(result == pd.DataFrame({'a': [1, 2]}))
@@ -1202,13 +1202,13 @@ def test_read_data(mocker, data_type, read_func):
 
 # test convert_data
 def test_convert_data(mocker):
-    mock_read_data = mocker.patch('ndlpy.access.io.read_data', return_value=(pd.DataFrame({'a': [1, 2]}), {}))
-    mock_write_data = mocker.patch('ndlpy.access.io.write_data')
+    mock_read_data = mocker.patch('linguine.access.io.read_data', return_value=(pd.DataFrame({'a': [1, 2]}), {}))
+    mock_write_data = mocker.patch('linguine.access.io.write_data')
 
     read_details = {'type': 'excel'}
     write_details = {'type': 'csv'}
 
-    ndlpy.access.io.convert_data(read_details, write_details)
+    linguine.access.io.convert_data(read_details, write_details)
 
     mock_read_data.assert_called_once_with(read_details)
     mock_write_data.assert_called_once()
@@ -1217,30 +1217,30 @@ def test_convert_data(mocker):
 def test_data_exists_file(mocker):
     mocker.patch('os.path.exists', return_value=True)
     details = {'filename': 'test.csv'}
-    assert ndlpy.access.io.data_exists(details)
+    assert linguine.access.io.data_exists(details)
 
     mocker.patch('os.path.exists', return_value=False)
-    assert not ndlpy.access.io.data_exists(details)
+    assert not linguine.access.io.data_exists(details)
 
 
 # test load_or_create_df
 def test_load_or_create_df_exists(mocker):
     existing_df = pd.DataFrame({'a': [1, 2]})
     details = {'filename': 'test.csv'}
-    mocker.patch('ndlpy.access.io.data_exists', return_value=True)
-    mocker.patch('ndlpy.access.io.read_data', return_value=(existing_df, details))
+    mocker.patch('linguine.access.io.data_exists', return_value=True)
+    mocker.patch('linguine.access.io.read_data', return_value=(existing_df, details))
 
-    result = ndlpy.access.io.load_or_create_df(details, None)
+    result = linguine.access.io.load_or_create_df(details, None)
 
     assert result[0].equals(existing_df)
 
 # test load_or_create_df
 def test_load_or_create_df_not_exists(mocker):
-    mocker.patch('ndlpy.access.io.data_exists', return_value=False)
+    mocker.patch('linguine.access.io.data_exists', return_value=False)
     details = {'filename': 'test.csv', 'columns': ['col1', 'col2']}
     index = pd.Index([1, 2], name='index')
 
-    result = ndlpy.access.io.load_or_create_df(details, index)
+    result = linguine.access.io.load_or_create_df(details, index)
 
     assert result[0].index.equals(index)
     assert list(result[0].columns) == ['index', 'col1', 'col2']
@@ -1248,37 +1248,37 @@ def test_load_or_create_df_not_exists(mocker):
 # test load_or_create_df
 def test_load_or_create_df_no_index(mocker):
     existing_df = pd.DataFrame({'a': [1, 2]})
-    mocker.patch('ndlpy.access.io.data_exists', return_value=False)
-    mocker.patch('ndlpy.access.io.read_data', return_value=existing_df)
+    mocker.patch('linguine.access.io.data_exists', return_value=False)
+    mocker.patch('linguine.access.io.read_data', return_value=existing_df)
 
     details = {'filename': 'test.csv'}
     with pytest.raises(FileNotFoundError):
-        ndlpy.access.io.load_or_create_df(details, None)
+        linguine.access.io.load_or_create_df(details, None)
 
 
 @pytest.mark.parametrize("data_type, write_func", [
-    ('excel', 'ndlpy.access.io.write_excel'),
-    ('gsheet', 'ndlpy.access.io.write_gsheet'),
-    ('csv', 'ndlpy.access.io.write_csv'),
-    ('bibtex', 'ndlpy.access.io.write_bibtex'),
-    ('json', 'ndlpy.access.io.write_json'),
-    ('yaml', 'ndlpy.access.io.write_yaml'),
-    ('markdown', 'ndlpy.access.io.write_markdown'),
-    ('yaml_directory', 'ndlpy.access.io.write_yaml_directory'),
-    ('markdown_directory', 'ndlpy.access.io.write_markdown_directory'),
-    ('meta_directory', 'ndlpy.access.io.write_meta_directory'),
+    ('excel', 'linguine.access.io.write_excel'),
+    ('gsheet', 'linguine.access.io.write_gsheet'),
+    ('csv', 'linguine.access.io.write_csv'),
+    ('bibtex', 'linguine.access.io.write_bibtex'),
+    ('json', 'linguine.access.io.write_json'),
+    ('yaml', 'linguine.access.io.write_yaml'),
+    ('markdown', 'linguine.access.io.write_markdown'),
+    ('yaml_directory', 'linguine.access.io.write_yaml_directory'),
+    ('markdown_directory', 'linguine.access.io.write_markdown_directory'),
+    ('meta_directory', 'linguine.access.io.write_meta_directory'),
     ('uncategorised_type', None),
 ])
 def test_write_data(mocker, data_type, write_func):
     details = {'type': data_type}
     if write_func is None:
         with pytest.raises(ValueError):
-            ndlpy.access.io.write_data({'type': data_type}, details)
+            linguine.access.io.write_data({'type': data_type}, details)
         return
     mock_func = mocker.patch(write_func)
     df = pd.DataFrame({'a': [1, 2]})
 
-    ndlpy.access.io.write_data(df, details)
+    linguine.access.io.write_data(df, details)
 
     mock_func.assert_called_once_with(df, details)
 
@@ -1286,32 +1286,32 @@ def test_write_data(mocker, data_type, write_func):
 def test_globals_data_exists(mocker):
     details = {'filename': 'globals.csv'}
     existing_df = pd.DataFrame({'a': [1, 2]})
-    mocker.patch('ndlpy.access.io.data_exists', return_value=True)
-    mocker.patch('ndlpy.access.io.read_data', return_value=(existing_df, details))
+    mocker.patch('linguine.access.io.data_exists', return_value=True)
+    mocker.patch('linguine.access.io.read_data', return_value=(existing_df, details))
 
-    result, details = ndlpy.access.io.globals_data(details)
+    result, details = linguine.access.io.globals_data(details)
 
     assert result.equals(existing_df)
 
 # test globals_data
 def test_globals_data_not_exists(mocker):
-    mocker.patch('ndlpy.access.io.data_exists', return_value=False)
+    mocker.patch('linguine.access.io.data_exists', return_value=False)
     details = {'filename': 'globals.csv', 'columns': ['col1', 'col2']}
     index = pd.Index([1, 2], name='index')
 
-    result, details = ndlpy.access.io.globals_data(details, index)
+    result, details = linguine.access.io.globals_data(details, index)
 
     assert result.index.equals(index)
     assert list(result.columns) == ['index', 'col1', 'col2']
     
 @pytest.mark.parametrize("func, config_key", [
-    (ndlpy.access.io.write_globals, 'globals'),
-    (ndlpy.access.io.write_cache, 'cache'),
-    (ndlpy.access.io.write_scores, 'scores'),
-    (ndlpy.access.io.write_series, 'series'),
+    (linguine.access.io.write_globals, 'globals'),
+    (linguine.access.io.write_cache, 'cache'),
+    (linguine.access.io.write_scores, 'scores'),
+    (linguine.access.io.write_series, 'series'),
 ])
 def test_write_functions(mocker, func, config_key):
-    mock_write_data = mocker.patch('ndlpy.access.io.write_data')
+    mock_write_data = mocker.patch('linguine.access.io.write_data')
     config = {config_key: {'type': 'csv'}}
     df = pd.DataFrame({'index': [1, 2], 'col1': [3, 4]}, index=[1, 2])
 

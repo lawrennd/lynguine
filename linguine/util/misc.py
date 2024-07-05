@@ -8,12 +8,12 @@ import wget
 import markdown
 import markdownify
 
-import ndlpy.config.context as context
-from ndlpy.log import Logger
+import linguine.config.context as context
+from linguine.log import Logger
 
 from keyword import iskeyword
 
-cntxt = context.Context(name="ndlpy")
+cntxt = context.Context(name="linguine")
 log = Logger(
     name=__name__,
     level=cntxt["logging"]["level"],

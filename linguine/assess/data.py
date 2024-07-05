@@ -768,7 +768,7 @@ class DataObject:
         Construct a CustomDataFrame from a interface object.
 
         :param interface: Interface object.
-        :type interface: ndlpy.config.interface.Interface or dict.
+        :type interface: linguine.config.interface.Interface or dict.
         :return: A CustomDataFrame object.
         """
 
@@ -1743,7 +1743,7 @@ class DataObject:
         Extract the compute object.
 
         :param interface: The interface to the compute object.
-        :type interface: ndlpy.config.interface.Interface or dict
+        :type interface: linguine.config.interface.Interface or dict
         :returns: The compute object.
         """
         raise NotImplementedError("This is a base class")
@@ -2355,7 +2355,7 @@ class CustomDataFrame(DataObject):
         Extract the compute object.
 
         :param interface: The interface to the compute object.
-        :type interface: ndlpy.config.interface.Interface or dict
+        :type interface: linguine.config.interface.Interface or dict
         :returns: The compute object.
         """
         return Compute.from_flow(interface).computes
@@ -2433,7 +2433,11 @@ class CustomDataFrame(DataObject):
         """
         Add each column name to the column name map if not already there.
         """
-        for column in data.columns:
+        if isinstance(data, pd.Series): # if data is a series, likely its a parameter and its index is equivalent to columns
+            columns = data.index 
+        else:
+            columns = data.columns
+        for column in columns:
             # If column title is valid variable name, add it to the column name map
             if column not in self._column_name_map:
                 if is_valid_var(column):
