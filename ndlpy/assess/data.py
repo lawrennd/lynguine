@@ -892,6 +892,15 @@ class DataObject:
 
         return cdf
     
+    def save_flows(self):
+        """
+        Save the output flows.
+        """
+        for typ in self.types["output"]:
+            if typ in self._d:
+                log.info(f"Saving data for flow type '{typ}'")
+                access.io.write_data(self._d[typ], self.interface[typ])
+    
     def sort_values(self, *args, inplace=False, **kwargs):
         """
         Sort by the values along either axis.
