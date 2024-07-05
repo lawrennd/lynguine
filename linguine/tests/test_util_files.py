@@ -1,7 +1,7 @@
 import pytest
 import subprocess
 from unittest.mock import mock_open, patch
-from ndlpy.util.files import get_cvs_version, get_svn_version, get_git_version, read_txt_file, extract_file_details
+from linguine.util.files import get_cvs_version, get_svn_version, get_git_version, read_txt_file, extract_file_details
 
 def test_get_cvs_version_found():
     mock_file_content = "D/filename/1.1/\n"

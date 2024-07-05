@@ -8,7 +8,7 @@ import filecmp
 import unittest
 
 
-import ndlpy.talk as nt
+import linguine.talk as nt
 
     
 

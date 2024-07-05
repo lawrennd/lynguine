@@ -2,9 +2,9 @@ import os
 import io
 import pytest
 import yaml
-import ndlpy
+import linguine
 
-from ndlpy.config.context import Context
+from linguine.config.context import Context
 
 # Sample data that might be in your YAML files
 machine_yaml_content = """
@@ -33,7 +33,7 @@ def mock_yaml_open(monkeypatch, file_content, file_path):
 
     monkeypatch.setattr("builtins.open", MockOpen)
 
-dirname = os.path.dirname(ndlpy.config.context.__file__)
+dirname = os.path.dirname(linguine.config.context.__file__)
 filepaths = [
     os.path.join(dirname, "machine.yml"),
     os.path.join(dirname, "defaults.yml"),

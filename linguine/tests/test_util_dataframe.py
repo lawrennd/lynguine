@@ -2,7 +2,7 @@ import pytest
 import pandas as pd
 from datetime import datetime
 
-from ndlpy.util.dataframe import (
+from linguine.util.dataframe import (
     reorder_dataframe,
     convert_datetime, convert_int, convert_string, convert_year_iso,
     addmonth, addyear, augmentmonth, augmentyear, augmentcurrency, fillna, ascending,

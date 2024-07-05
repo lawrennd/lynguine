@@ -1,10 +1,10 @@
 # linguine
 
 
-![Tests](https://github.com/lawrennd/ndlpy/actions/workflows/python-tests.yml/badge.svg)
+![Tests](https://github.com/lawrennd/linguine/actions/workflows/python-tests.yml/badge.svg)
 
 
-[![codecov](https://codecov.io/gh/lawrennd/ndlpy/branch/main/graph/badge.svg?token=YOUR_CODECOV_TOKEN)](https://codecov.io/gh/lawrennd/linguine)
+[![codecov](https://codecov.io/gh/lawrennd/linguine/branch/main/graph/badge.svg?token=YOUR_CODECOV_TOKEN)](https://codecov.io/gh/lawrennd/linguine)
 
 The `linguine` library is a library based on DOA principles for managing data. It provides these capabilities to support other libraries like `lamd` and `referia`.
 To install use

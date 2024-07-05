@@ -1,5 +1,5 @@
 import pytest
-from ndlpy.util.yaml import (
+from linguine.util.yaml import (
     update_from_file,
     header_field,
     header_fields,
@@ -24,7 +24,7 @@ def mock_read_yaml_file(monkeypatch):
     def mock_read(filename):
         return mock_yaml_content[filename]
 
-    monkeypatch.setattr("ndlpy.access.io.read_yaml_file", mock_read)
+    monkeypatch.setattr("linguine.access.io.read_yaml_file", mock_read)
 
 
 @pytest.fixture
@@ -32,7 +32,7 @@ def mock_read_markdown_file(monkeypatch):
     def mock_read(filename):
         return mock_yaml_content[filename]
 
-    monkeypatch.setattr("ndlpy.access.io.read_markdown_file", mock_read)
+    monkeypatch.setattr("linguine.access.io.read_markdown_file", mock_read)
 
 
 # Test update_from_file

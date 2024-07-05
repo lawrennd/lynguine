@@ -1,7 +1,7 @@
 import os
 import pytest
 from io import StringIO
-from ndlpy.config.interface import Interface, _HConfig  # Adjust the import as per your project structure
+from linguine.config.interface import Interface, _HConfig  # Adjust the import as per your project structure
 
 # Mocked content of YAML files
 
@@ -228,7 +228,7 @@ def test_get_output_columns_with_compute(instance):
     assert instance.get_output_columns() == ["col1", "col3", "rev1", "rev2", "rev3"]
 
 def test_get_output_columns_no_data(instance, mocker):
-    mock_log = mocker.patch('ndlpy.interface.log')
+    mock_log = mocker.patch('linguine.interface.log')
     assert instance.get_output_columns() == []
     mock_log.warning.assert_called_once()
 
@@ -248,7 +248,7 @@ def test_get_cache_columns_with_compute(instance):
     assert instance.get_cache_columns() == ["_col2", "col4"]
 
 def test_get_cache_columns_no_data(instance, mocker):
-    mock_log = mocker.patch('ndlpy.interface.log')
+    mock_log = mocker.patch('linguine.interface.log')
     assert instance.get_cache_columns() == []
     mock_log.warning.assert_called_once()
     

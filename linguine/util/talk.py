@@ -2,8 +2,8 @@ import os
 from datetime import date
 import warnings
 
-import ndlpy.util.tex as latex
-import ndlpy.util.yaml as ny
+import linguine.util.tex as latex
+import linguine.util.yaml as ny
 
 today = date.today()    
 
