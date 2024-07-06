@@ -2091,7 +2091,10 @@ class CustomDataFrame(DataObject):
                         if not isinstance(result_df, pd.Series):
                             raise ValueError(f"The selected data has a row key \"{row_key}\" that has induced a series, but the result_df is of type \"{type(result_df)}\"")
                         # Concatenate the two data series
-                        result_df = pd.concat([result_df, selected_data])
+                        if result_df.empty:
+                            result_df = selected_data
+                        elif not selected_data.empty:
+                            result_df = pd.concat([result_df, selected_data])
                     else:
                         result_df = result_df.join(selected_data, how="outer")
                     colspecs[typ] = filtered_cols
