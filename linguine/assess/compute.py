@@ -222,7 +222,6 @@ p        :return: None
                     kwargs[key] = data.get_value_column(column)
             # kwargs.update(remove_nan(data.mapping(args)))
             self.logger.debug(f"The keyword arguments for the compute function are {kwargs}.")
-            print(f"Function: {list_function['function']}")
             if "context" in list_function and list_function["context"]:# if the compute context is required
                 return list_function["function"](self, **kwargs)
             return list_function["function"](**kwargs)

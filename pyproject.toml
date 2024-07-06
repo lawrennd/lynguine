@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "linguine"
+name = "pylinguine"
 version = "0.1.0"
 description = "Package for linguine data oriented architecture interfaces."
 authors = ["Neil D. Lawrence <lawrennd@gmail.com>"]
@@ -11,8 +11,7 @@ classifiers = [
     "License :: OSI Approved :: MIT License",	
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.6",
-    "Programming Language :: Python :: Implementation :: CPython",
+    "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: Implementation :: PyPy"
 ]
 
