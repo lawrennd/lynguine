@@ -70,8 +70,8 @@ yaml_text = """input:
     givenName: Siva
   - familyName: Paz Luiz
     givenName: Miguel
-  compute:
-  - field: fullName
+  compute:  # compute is used for preprocessing as data is loaded
+  - field: fullName # the field fullName is created from this compute command
     function: render_liquid
     args:
       template: '{{familyName | replace: " ", "-"}}_{{givenName | replace: " ", "-"}}'
