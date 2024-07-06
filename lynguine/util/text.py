@@ -1,4 +1,4 @@
-from linguine.util.misc import remove_nan
+from lynguine.util.misc import remove_nan
 
 def render_liquid(compute, template, **kwargs):
     """

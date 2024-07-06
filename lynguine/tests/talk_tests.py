@@ -8,7 +8,7 @@ import filecmp
 import unittest
 
 
-import linguine.talk as nt
+import lynguine.talk as nt
 
     
 

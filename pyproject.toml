@@ -1,12 +1,12 @@
 [tool.poetry]
 name = "lynguine"
 version = "0.1.0"
-description = "Package for linguine data oriented architecture interfaces."
+description = "Package for lynguine data oriented architecture interfaces."
 authors = ["Neil D. Lawrence <lawrennd@gmail.com>"]
 license = "MIT"
 readme = "README.md"
-homepage = "https://github.com/lawrennd/linguine"
-include = ["linguine/defaults.yml"]
+homepage = "https://github.com/lawrennd/lynguine"
+include = ["lynguine/defaults.yml"]
 classifiers = [
     "License :: OSI Approved :: MIT License",	
     "Programming Language :: Python",
@@ -50,7 +50,7 @@ pytest-mock = "^3.3.1"
 deepdiff = "^6.6.0"
 
 [tool.poetry.scripts]
-ndlconvert = "linguine.ndlconvert:main"
+ndlconvert = "lynguine.ndlconvert:main"
 
 # pyproject.toml
 [tool.pytest.ini_options]

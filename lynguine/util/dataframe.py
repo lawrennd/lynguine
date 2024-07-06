@@ -3,12 +3,12 @@ import math
 import numpy as np
 import pandas as pd
 
-import linguine.config.context as context
-from linguine.log import Logger
+import lynguine.config.context as context
+from lynguine.log import Logger
 
 
 
-cntxt = context.Context(name="linguine")
+cntxt = context.Context(name="lynguine")
 log = Logger(
     name=__name__,
     level=cntxt["logging"]["level"],
@@ -20,9 +20,9 @@ def convert_datetime_to_str(df):
     Convert datetime columns to strings in isoformat for ease of writing.
 
     :param df: The DataFrame to convert.
-    :type df: pandas.DataFrame or linguine.data.CustomDataFrame
+    :type df: pandas.DataFrame or lynguine.data.CustomDataFrame
     :return: The converted DataFrame.
-    :rtype: pandas.DataFrame or linguine.data.CustomDataFram
+    :rtype: pandas.DataFrame or lynguine.data.CustomDataFram
     """
     write_df = df.copy(deep=True)
     for col in df.select_dtypes(include=["datetime64"]).columns.tolist():
@@ -41,7 +41,7 @@ def reorder_dataframe(df, order):
     This function reorders the given data frame columns with the order given by the columns listed in order and any remaining columns placed alphabetically after order.
 
     :param df: The DataFrame to reorder.
-    :type df: pd.DataFrame or linguine.data.CustomDataFrame
+    :type df: pd.DataFrame or lynguine.data.CustomDataFrame
     :
     """
     # Remove any columns from order that are not in the dataframe
@@ -66,7 +66,7 @@ def convert_int(df, columns):
     Preprocessor to set integer type on columns.
 
     :param df: The dataframe to be converted.
-    :type df: pandas.DataFrame or linguine.data.CustomDataFrame
+    :type df: pandas.DataFrame or lynguine.data.CustomDataFrame
     :param columns: The columns to be converted.
     :type columns: list
     :return: The converted dataframe.
@@ -89,11 +89,11 @@ def convert_string(df, columns):
     Preprocessor to set string type on columns.
 
     :param df: The dataframe to be converted.
-    :type df: pandas.DataFrame or linguine.data.CustomDataFrame
+    :type df: pandas.DataFrame or lynguine.data.CustomDataFrame
     :param columns: The columns to be converted.
     :type columns: list
     :return: The converted dataframe.
-    :rtype: pandas.DataFrame or linguine.data.CustomDataFrame
+    :rtype: pandas.DataFrame or lynguine.data.CustomDataFrame
     """
     if type(columns) is not list:
         columns = [columns]
@@ -108,11 +108,11 @@ def convert_year_iso(df, column="year", month=1, day=1):
     Preprocessor to set string type on columns.
 
     :param df: The dataframe to be converted.
-    :type df: pandas.DataFrame or linguine.data.CustomDataFrame
+    :type df: pandas.DataFrame or lynguine.data.CustomDataFrame
     :param columns: The columns to be converted.
     :type columns: list
     :return: The converted dataframe.
-    :rtype: pandas.DataFrame or linguine.data.CustomDataFrame
+    :rtype: pandas.DataFrame or lynguine.data.CustomDataFrame
     """
 
     def year_to_iso(field):
@@ -159,11 +159,11 @@ def addmonth(df, source="date"):
     Add month column based on source date field.
 
     :param df: The dataframe to be augmented.
-    :type df: pandas.DataFrame or linguine.data.CustomDataFrame
+    :type df: pandas.DataFrame or lynguine.data.CustomDataFrame
     :param source: The source column to be used.
     :type source: str
     :return: The augmented dataframe.
-    :rtype: pandas.DataFrame or linguine.data.CustomDataFrame
+    :rtype: pandas.DataFrame or lynguine.data.CustomDataFrame
     :raises KeyError: If the source column is not in the dataframe
     :raises TypeError: If the source column is not of type datetime.date
     :raises ValueError: If the source column is not a valid date
@@ -176,11 +176,11 @@ def addyear(df, source="date"):
     Add year column and based on source date field.
 
     :param df: The dataframe to be augmented.
-    :type df: pandas.DataFrame or linguine.data.CustomDataFrame
+    :type df: pandas.DataFrame or lynguine.data.CustomDataFrame
     :param source: The source column to be used.
     :type source: str
     :return: The augmented dataframe.
-    :rtype: pandas.DataFrame or linguine.data.CustomDataFrame
+    :rtype: pandas.DataFrame or lynguine.data.CustomDataFrame
     """
     return df[source].apply(lambda x: x.year if x is not None else pd.NA)
 
@@ -190,13 +190,13 @@ def augmentmonth(df, destination="month", source="date"):
     Augment the month column based on source date field.
 
     :param df: The dataframe to be augmented.
-    :type df: pandas.DataFrame or linguine.data.CustomDataFrame
+    :type df: pandas.DataFrame or lynguine.data.CustomDataFrame
     :param destination: The destination column to be used.
     :type destination: str
     :param source: The source column to be used.
     :type source: str
     :return: The augmented dataframe.
-    :rtype: pandas.DataFrame or linguine.data.CustomDataFrame
+    :rtype: pandas.DataFrame or lynguine.data.CustomDataFrame
     """
     val = pd.Series(index=df.index, dtype=object)
     for index, entry in df.iterrows():
@@ -212,13 +212,13 @@ def augmentyear(df, destination="year", source="date"):
     Augment the year column based on source date field.
 
     :param df: The dataframe to be augmented.
-    :type df: pandas.DataFrame or linguine.data.CustomDataFrame
+    :type df: pandas.DataFrame or lynguine.data.CustomDataFrame
     :param destination: The destination column to be used.
     :type destination: str
     :param source: The source column to be used.
     :type source: str
     :return: The augmented dataframe.
-    :rtype: pandas.DataFrame or linguine.data.CustomDataFrame
+    :rtype: pandas.DataFrame or lynguine.data.CustomDataFrame
     """
     val = pd.Series(index=df.index)
     for index, entry in df.iterrows():
@@ -234,11 +234,11 @@ def augmentcurrency(df, source="amount", sf=0):
     Preprocessor to set integer type on columns.
 
     :param df: The dataframe to be converted.
-    :type df: pandas.DataFrame or linguine.data.CustomDataFrame
+    :type df: pandas.DataFrame or lynguine.data.CustomDataFrame
     :param columns: The columns to be converted.
     :type columns: list
     :return: The converted dataframe.
-    :rtype: pandas.DataFrame or linguine.data.CustomDataFrame
+    :rtype: pandas.DataFrame or lynguine.data.CustomDataFrame
     """
     fstr = f"{{0:,.{sf}f}}"
     return df[source].apply(lambda x: fstr.format(x))
@@ -249,13 +249,13 @@ def fillna(df, column, value):
     Fill missing values in a column with a given value.
 
     :param df: The dataframe to be converted.
-    :type df: pandas.DataFrame or linguine.data.CustomDataFrame
+    :type df: pandas.DataFrame or lynguine.data.CustomDataFrame
     :param column: The column to be converted.
     :type column: str
     :param value: The value to be used to fill missing values.
     :type value: str
     :return: The converted dataframe.
-    :rtype: pandas.DataFrame or linguine.data.CustomDataFrame
+    :rtype: pandas.DataFrame or lynguine.data.CustomDataFrame
     """
     return df[column].fillna(value)
 
@@ -266,11 +266,11 @@ def ascending(df, by):
     Sort in ascending order
 
     :param df: The dataframe to be sorted.
-    :type df: pandas.DataFrame or linguine.data.CustomDataFrame
+    :type df: pandas.DataFrame or lynguine.data.CustomDataFrame
     :param by: The column to be sorted by.
     :type by: str
     :return: The sorted dataframe.
-    :rtype: pandas.DataFrame or linguine.data.CustomDataFrame
+    :rtype: pandas.DataFrame or lynguine.data.CustomDataFrame
     """
     return df.sort_values(by=by, ascending=True)
 
@@ -280,11 +280,11 @@ def descending(df, by):
     Sort in descending order
 
     :param df: The dataframe to be sorted.
-    :type df: pandas.DataFrame or linguine.data.CustomDataFrame
+    :type df: pandas.DataFrame or lynguine.data.CustomDataFrame
     :param by: The column to be sorted by.
     :type by: str
     :return: The sorted dataframe.
-    :rtype: pandas.DataFrame or linguine.data.CustomDataFrame
+    :rtype: pandas.DataFrame or lynguine.data.CustomDataFrame
     """
     return df.sort_values(by=by, ascending=False)
 
@@ -295,11 +295,11 @@ def recent(df, column="year", since_year=2000):
     Filter on whether item is recent
 
     :param df: The dataframe to be filtered.
-    :type df: pandas.DataFrame or linguine.data.CustomDataFrame
+    :type df: pandas.DataFrame or lynguine.data.CustomDataFrame
     :param column: The column to be filtered on.
     :type column: str
     :return: The filtered dataframe.
-    :rtype: pandas.DataFrame or linguine.data.CustomDataFrame
+    :rtype: pandas.DataFrame or lynguine.data.CustomDataFrame
 
     """
     return df[column] >= since_year
@@ -310,7 +310,7 @@ def current(df, start="start", end="end", current=None, today=None):
     Filter on whether the row is current as given by start and end dates. If current is given then it is used instead of the range check. If today is given then it is used instead of the current date.
 
     :param df: The dataframe to be filtered.
-    :type df: pandas.DataFrame or linguine.data.CustomDataFrame
+    :type df: pandas.DataFrame or lynguine.data.CustomDataFrame
     :param start: The start date of the entry.
     :type start: str
     :param end: The end date of the entry.
@@ -320,7 +320,7 @@ def current(df, start="start", end="end", current=None, today=None):
     :param today: The date to be used as today.
     :type today: datetime.date
     :return: The filtered dataframe.
-    :rtype: pandas.DataFrame or linguine.data.CustomDataFrame
+    :rtype: pandas.DataFrame or lynguine.data.CustomDataFrame
     """
     if today is None:
         now = pd.to_datetime(datetime.datetime.now().date())
@@ -338,11 +338,11 @@ def former(df, end="end"):
     Filter on whether item is former.
 
     :param df: The dataframe to be filtered.
-    :type df: pandas.DataFrame or linguine.data.CustomDataFrame
+    :type df: pandas.DataFrame or lynguine.data.CustomDataFrame
     :param end: The end date of the entry.
     :type end: str
     :return: The filtered dataframe.
-    :rtype: pandas.DataFrame or linguine.data.CustomDataFrame
+    :rtype: pandas.DataFrame or lynguine.data.CustomDataFrame
     """
     now = pd.to_datetime(datetime.datetime.now().date())
     return df[end] < now
@@ -353,13 +353,13 @@ def onbool(df, column="current", invert=False):
     Filter on whether column is positive (or negative if inverted)
 
     :param df: The dataframe to be filtered.
-    :type df: pandas.DataFrame or linguine.data.CustomDataFrame
+    :type df: pandas.DataFrame or lynguine.data.CustomDataFrame
     :param column: The column to be filtered on.
     :type column: str
     :param invert: Whether to invert the filter.
     :type invert: bool
     :return: The filtered dataframe.
-    :rtype: pandas.DataFrame or linguine.data.CustomDataFrame
+    :rtype: pandas.DataFrame or lynguine.data.CustomDataFrame
     """
     if invert:
         return ~df[column]
@@ -372,12 +372,12 @@ def columnis(df, column, value):
     Filter on whether a given column is equal to a given value
 
     :param df: The dataframe to be filtered.
-    :type df: pandas.DataFrame or linguine.data.CustomDataFrame
+    :type df: pandas.DataFrame or lynguine.data.CustomDataFrame
     :param column: The column to be filtered on.
     :type column: str
     :param value: The value to be used to filter.
     :return: The filtered dataframe.
-    :rtype: pandas.DataFrame or linguine.data.CustomDataFrame
+    :rtype: pandas.DataFrame or lynguine.data.CustomDataFrame
     """
 
     return df[column] == value
@@ -388,12 +388,12 @@ def columncontains(df, column, value):
     Filter on whether column contains a given value
 
     :param df: The dataframe to be filtered.
-    :type df: pandas.DataFrame or linguine.data.CustomDataFrame
+    :type df: pandas.DataFrame or lynguine.data.CustomDataFrame
     :param column: The column to be filtered on.
     :type column: str
     :param value: The value to be used to filter.
     :return: The filtered dataframe.
-    :rtype: pandas.DataFrame or linguine.data.CustomDataFrame
+    :rtype: pandas.DataFrame or lynguine.data.CustomDataFrame
     """
     colis = columnis(df, column, value)
     return colis | df[column].apply(

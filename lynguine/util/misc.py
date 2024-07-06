@@ -8,12 +8,12 @@ import wget
 import markdown
 import markdownify
 
-import linguine.config.context as context
-from linguine.log import Logger
+import lynguine.config.context as context
+from lynguine.log import Logger
 
 from keyword import iskeyword
 
-cntxt = context.Context(name="linguine")
+cntxt = context.Context(name="lynguine")
 log = Logger(
     name=__name__,
     level=cntxt["logging"]["level"],

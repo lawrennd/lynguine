@@ -1,6 +1,6 @@
 import pytest
-from linguine.assess.compute import Compute  # Adjust the import as necessary
-from linguine.assess.data import CustomDataFrame
+from lynguine.assess.compute import Compute  # Adjust the import as necessary
+from lynguine.assess.data import CustomDataFrame
 from unittest.mock import MagicMock
 
 @pytest.fixture
@@ -25,7 +25,7 @@ def mock_interface(mocker):
     interface_mock.__contains__.side_effect = interface_mock_data.__contains__
     
     interface_mock._directory = "mock_directory"  # Assuming _directory is expected by Compute
-    mocker.patch('linguine.assess.compute.Interface.from_file', return_value=interface_mock)
+    mocker.patch('lynguine.assess.compute.Interface.from_file', return_value=interface_mock)
     return interface_mock
 
 @pytest.fixture
@@ -35,7 +35,7 @@ def mock_data(mocker):
 @pytest.fixture
 def compute_instance(mocker, mock_interface):
     # Ensure that Logger is also mocked if necessary
-    mocker.patch('linguine.log.Logger')
+    mocker.patch('lynguine.log.Logger')
     return Compute(mock_interface)
 
 # Patch test_function into the Compute instance
@@ -53,10 +53,10 @@ def test_compute_creation(mocker, mock_interface):
     # Create a MagicMock object that behaves like a dictionary
 
     # Patch Interface.from_file to return the mock_interface
-    mocker.patch('linguine.assess.compute.Interface.from_file', return_value=mock_interface)
+    mocker.patch('lynguine.assess.compute.Interface.from_file', return_value=mock_interface)
 
     # Patch Compute.__init__ to avoid initialization side effects
-    mocker.patch('linguine.assess.compute.Compute.__init__', return_value=None)
+    mocker.patch('lynguine.assess.compute.Compute.__init__', return_value=None)
 
     # Create a CustomDataFrame object to pass as the 'data' argument
     mock_data = CustomDataFrame([{"cat": "dog"}], colspecs="input")

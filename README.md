@@ -1,16 +1,16 @@
-# linguine
+# lynguine
 
 
-![Tests](https://github.com/lawrennd/linguine/actions/workflows/python-tests.yml/badge.svg)
+![Tests](https://github.com/lawrennd/lynguine/actions/workflows/python-tests.yml/badge.svg)
 
 
-[![codecov](https://codecov.io/gh/lawrennd/linguine/branch/main/graph/badge.svg?token=YOUR_CODECOV_TOKEN)](https://codecov.io/gh/lawrennd/linguine)
+[![codecov](https://codecov.io/gh/lawrennd/lynguine/branch/main/graph/badge.svg?token=YOUR_CODECOV_TOKEN)](https://codecov.io/gh/lawrennd/lynguine)
 
-The `linguine` library is a library based on DOA principles for managing data. It provides these capabilities to support other libraries like `lamd` and `referia`.
+The `lynguine` library is a library based on DOA principles for managing data. It provides these capabilities to support other libraries like `lamd` and `referia`.
 To install use
 
 ```bash
-%pip install linguine
+%pip install lynguine
 ```
 
 The softare consists of TK principle parts.
@@ -25,12 +25,12 @@ First `config` which consists of `interface` and `context`.
 
 The local context can be loaded in using the following command.
 ```
-import linguine as ln
+import lynguine as ln
 
 ctxt = ln.config.context.Context()
 ```
 
-The `interface` module contains the key structure of `linguine`. It specifies incoming and outgoing flows, as well as computational operations. Each flow is specified in the following form.
+The `interface` module contains the key structure of `lynguine`. It specifies incoming and outgoing flows, as well as computational operations. Each flow is specified in the following form.
 
 ```yaml
 input:
@@ -55,8 +55,8 @@ Often the data will be stored in another file (csv, excel, yaml etc) but sometim
 
 ```python
 import yaml
-from linguine.config.interface import Interface
-from linguine.assess.data import CustomDataFrame
+from lynguine.config.interface import Interface
+from lynguine.assess.data import CustomDataFrame
 
 # Let's assume this is the text stored in the interface file
 yaml_text = """input:
@@ -96,21 +96,21 @@ Secondly the software uses the access, assess, address decomposition. Where `acc
 
 #### A short example
 
-Perhaps you would like to create a bibtex file from the PMLR proceedings volume 1, Gaussian processes in practice. In the short example below, we use `linguine` to first download the relevant URL, then we load it in and save as bibtex.
+Perhaps you would like to create a bibtex file from the PMLR proceedings volume 1, Gaussian processes in practice. In the short example below, we use `lynguine` to first download the relevant URL, then we load it in and save as bibtex.
 
 ```python
-import linguine
+import lynguine
 ```
 
 
 ### Assess
 
-Assess is about taking the raw data and processing it. Under `assess` `linguine` provides `data` and `compute`. The `data` module provides a `CustomDataFrame` object that provides access to the data and manipulation capabilities. the `compute` module wraps various compute capabilities for preprocessing and processing the data. 
+Assess is about taking the raw data and processing it. Under `assess` `lynguine` provides `data` and `compute`. The `data` module provides a `CustomDataFrame` object that provides access to the data and manipulation capabilities. the `compute` module wraps various compute capabilities for preprocessing and processing the data. 
 
 #### A short example
 
 ```python
-import linguine
+import lynguine
 ```
 
 ### Util
@@ -131,7 +131,7 @@ The `util` module provides various utilities for working with data. They include
 ### A short example
 
 ```python
-import linguine
+import lynguine
 ```
 
 ### Tests
@@ -147,6 +147,6 @@ If you have poetry installed you can run the tests using
 poetry run pytest 
 ```
 
-### Why linguine?
+### Why lynguine?
 
-The name comes from the idea that data oriented architecture is like a set of streams of data, like linguine pasta. In Italian the word also means "little toungues" so there's also a connocation of translation between services.
+The name comes from the idea that data oriented architecture is like a set of streams of data, like linguine pasta. In Italian the word also means "little toungues" so there's also a connotation of translation between services.

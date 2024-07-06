@@ -4,4 +4,4 @@ import nose, warnings
 
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
-    nose.main("linguine", defaultTest="linguine/tests", argv=["", ""])
+    nose.main("lynguine", defaultTest="lynguine/tests", argv=["", ""])

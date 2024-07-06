@@ -2,7 +2,7 @@ import pytest
 import os
 import pytest
 from unittest.mock import MagicMock
-from linguine.access.download import FileDownloader, GitDownloader, Interface
+from lynguine.access.download import FileDownloader, GitDownloader, Interface
 
 class MockResponse:
     def __init__(self, data):

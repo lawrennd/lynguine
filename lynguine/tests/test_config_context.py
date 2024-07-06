@@ -2,9 +2,9 @@ import os
 import io
 import pytest
 import yaml
-import linguine
+import lynguine
 
-from linguine.config.context import Context
+from lynguine.config.context import Context
 
 # Sample data that might be in your YAML files
 machine_yaml_content = """
@@ -33,7 +33,7 @@ def mock_yaml_open(monkeypatch, file_content, file_path):
 
     monkeypatch.setattr("builtins.open", MockOpen)
 
-dirname = os.path.dirname(linguine.config.context.__file__)
+dirname = os.path.dirname(lynguine.config.context.__file__)
 filepaths = [
     os.path.join(dirname, "machine.yml"),
     os.path.join(dirname, "defaults.yml"),

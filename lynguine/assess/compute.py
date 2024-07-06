@@ -12,7 +12,7 @@ from ..util.text import render_liquid
 
 from ..util.liquid import url_escape, markdownify, relative_url, absolute_url, to_i
 
-cntxt = Context(name="linguine")
+cntxt = Context(name="lynguine")
            
 
 class Compute():
@@ -20,7 +20,7 @@ class Compute():
         """Initialize the compute object.
 
         :param interface: The interface to be used.
-        :type interface: linguine.config.interface.Interface
+        :type interface: lynguine.config.interface.Interface
         :return: None
         """
 
@@ -90,7 +90,7 @@ p        :return: None
         :param settings: The settings to be used.
         :type settings: dict
         :param data: The data to be used.
-        :type data: linguine.assess.data.CustomDataFrame
+        :type data: lynguine.assess.data.CustomDataFrame
         :return: The prepared compute entry.
         :rtype: dict
 
@@ -157,7 +157,7 @@ p        :return: None
         :param function: The name of the function to be used.
         :type function: str
         :param data: The data to be used.
-        :type data: linguine.assess.data.CustomDataFrame
+        :type data: lynguine.assess.data.CustomDataFrame
         :return: The function to be used.
         """
         list_function = next((f for f in self._compute_functions_list() if f["name"] == function), None)
@@ -236,9 +236,9 @@ p        :return: None
         Run computations on all rows of the data.
 
         :param data: The data to be updated.
-        :type data: linguine.assess.data.CustomDataFrame
+        :type data: lynguine.assess.data.CustomDataFrame
         :param interface: The interface to be used.
-        :type interface: linguine.config.interface.Interface
+        :type interface: lynguine.config.interface.Interface
         :return: None
         """
         if "compute" not in interface:
@@ -263,9 +263,9 @@ p        :return: None
         Run all compute computations inside the data frame.
 
         :param data: The data to be updated.
-        :type data: linguine.assess.data.CustomDataFrame
+        :type data: lynguine.assess.data.CustomDataFrame
         :param interface: The interface to be used.
-        :type interface: linguine.config.interface.Interface
+        :type interface: lynguine.config.interface.Interface
         :return: None
         """
         if "compute" not in interface:
@@ -287,7 +287,7 @@ p        :return: None
         Run any computation elements on the data frame.
 
         :param df: The data frame to be used.
-        :type df: pandas.DataFrame or linguine.assess.data.CustomDataFrame
+        :type df: pandas.DataFrame or lynguine.assess.data.CustomDataFrame
         :param index: The index to be used.
         :type index: object
         :param pre: Whether to run precomputes.
@@ -331,9 +331,9 @@ p        :return: None
         removal of rows from the data.
 
         :param data: The data to be updated.
-        :type data: linguine.assess.data.CustomDataFrame
+        :type data: lynguine.assess.data.CustomDataFrame
         :param interface: The interface to be used.
-        :type interface: linguine.config.interface.Interface
+        :type interface: lynguine.config.interface.Interface
         :return: None
         """
         

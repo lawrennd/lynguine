@@ -1,5 +1,5 @@
 import os
-import linguine
+import lynguine
 import liquid as liq  # More descriptive alias
 import urllib.parse
 
@@ -17,7 +17,7 @@ def load_template_env(ext=".md", template_dir=None):
     :rtype: liquid.Environment
     """
     if template_dir is None:
-        template_dir = os.path.join(os.path.dirname(linguine.__file__), "templates")
+        template_dir = os.path.join(os.path.dirname(lynguine.__file__), "templates")
 
     template_path = [template_dir]
     try:
@@ -55,7 +55,7 @@ def markdownify(string):
     :rtype: str
     """
     try:
-        return linguine.util.misc.markdown2html(string)
+        return lynguine.util.misc.markdown2html(string)
     except Exception as e:
         raise ValueError(f"Error converting markdown to HTML: {e}")
 

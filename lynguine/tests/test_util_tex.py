@@ -3,7 +3,7 @@ from io import StringIO
 from unittest.mock import MagicMock
 import os
 import re
-from linguine.util import tex  
+from lynguine.util import tex  
 
 # Sample YAML content for the settings file
 settings_content = """
@@ -88,9 +88,9 @@ def test_extract_diagrams(lines, type, expected):
 # Test for create_bib_file_given_tex
 def test_create_bib_file_given_tex(mock_settings_file, mocker):
     lines = ["Some LaTeX content with \\cite{Ref1}", "\\bibliography{bibfile}"]
-    mocker.patch('linguine.util.tex.extract_bib_files', return_value=["bibfile"])
-    mocker.patch('linguine.util.tex.extract_citations', return_value=["Ref1"])
-    mocker.patch('linguine.util.tex.make_bib_file', return_value="Bibliography Content")
+    mocker.patch('lynguine.util.tex.extract_bib_files', return_value=["bibfile"])
+    mocker.patch('lynguine.util.tex.extract_citations', return_value=["Ref1"])
+    mocker.patch('lynguine.util.tex.make_bib_file', return_value="Bibliography Content")
 
     bib_content = tex.create_bib_file_given_tex(lines)
 
