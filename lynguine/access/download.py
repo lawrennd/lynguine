@@ -4,7 +4,7 @@ from urllib.request import urlopen
 from urllib.error import HTTPError, URLError
 import git
 
-from linguine.util.misc import prompt_stdin
+from lynguine.util.misc import prompt_stdin
 from ..log import Logger
 from ..config.context import Context
 

@@ -180,7 +180,7 @@ def write_json(df, details):
 
     :param df: The data to be written.
 
-    :type df: pandas.DataFrame or linguine.data.CustomDataFrame
+    :type df: pandas.DataFrame or lynguine.data.CustomDataFrame
     :param details: The details of the file to be written.
     :type details: dict
     """
@@ -237,7 +237,7 @@ def write_yaml(df, details):
     Write data to a yaml file.
 
     :param df: The data to be written.
-    :type df: pandas.DataFrame or linguine.data.CustomDataFrame
+    :type df: pandas.DataFrame or lynguine.data.CustomDataFrame
     :param details: The details of the file to be written.
     :type details: dict
     """
@@ -274,7 +274,7 @@ def write_bibtex(df, details):
     Write data to a bibtex file.
 
     :param df: The data to be written.
-    :type df: pandas.DataFrame or linguine.data.CustomDataFrame
+    :type df: pandas.DataFrame or lynguine.data.CustomDataFrame
     :param details: The details of the file to be written.
     :type details: dict
     """
@@ -436,7 +436,7 @@ def write_directory(df, details, filewriter=None, filewriter_args={}):
     Write scoring data to a directory of files.
 
     :param df: The data to be written.
-    :type df: pandas.DataFrame or linguine.data.CustomDataFrame
+    :type df: pandas.DataFrame or lynguine.data.CustomDataFrame
     :param details: The details of the file to be written.
     :type details: dict
     :param filewriter: The function to be used to write the file.
@@ -1052,7 +1052,7 @@ def read_fake(details):
         else:
             # Extract which columns aren't attributes and return in error message.
             wrong_cols = [col for col, is_attr in zip(details["cols"], cols_are_attributes) if not is_attr]
-            errmsg = f"\"fake\" specified as the type and columns are provided as a list, but the following columns are not attributes of linguine.util.fake.Generate: \"{', '.join(wrong_cols)}\""
+            errmsg = f"\"fake\" specified as the type and columns are provided as a list, but the following columns are not attributes of lynguine.util.fake.Generate: \"{', '.join(wrong_cols)}\""
             log.error(errmsg)
             raise ValueError(errmsg)
         
@@ -1074,13 +1074,13 @@ def read_fake(details):
             if callable(gen_func):
                 cols[col] = gen_func
             else:
-                errmsg = f"\"fake\" specified in config but \"{gen}\" is not a callable function attribute of linguine.util.fake.Generate."
+                errmsg = f"\"fake\" specified in config but \"{gen}\" is not a callable function attribute of lynguine.util.fake.Generate."
                 if list_convert:
                     errmsg += " This is likely because the \"cols\" were specified as a list and not a dictionary, meaning that in dictionary conversion I've created columns where the function attributes match the column title."
                 log.error(errmsg)
                 raise ValueError(errmsg)
         else:
-            errmsg = f"\"{gen}\" specified as column's fake function, \"{gen}\" is not an attribute of linguine.util.fake.Generate."
+            errmsg = f"\"{gen}\" specified as column's fake function, \"{gen}\" is not an attribute of lynguine.util.fake.Generate."
             log.error(errmsg)
             raise ValueError(errmsg)
 
@@ -1164,7 +1164,7 @@ def write_excel(df, details):
     Write data to an excel spreadsheet.
 
     :param df: The data to be written.
-    :type df: pandas.DataFrame or linguine.data.CustomDataFrame
+    :type df: pandas.DataFrame or lynguine.data.CustomDataFrame
     :param details: The details of the file to be written.
     :type details: dict
     """
@@ -1196,7 +1196,7 @@ def write_csv(df, details):
     Write data to an csv spreadsheet.
 
     :param df: The data to be written.
-    :type df: pandas.DataFrame or linguine.data.CustomDataFrame
+    :type df: pandas.DataFrame or lynguine.data.CustomDataFrame
     :param details: The details of the file to be written.
     :type details: dict
     """
@@ -1418,7 +1418,7 @@ def gdwf_(filewriter, name="", docstr=""):
         Return a function for writing the directory.
 
         :param df: The data to be written.
-        :type df: pandas.DataFrame or linguine.data.CustomDataFrame
+        :type df: pandas.DataFrame or lynguine.data.CustomDataFrame
         :param details: The details of the directory to be written.
         :type details: dict
         :return: The directory writer function
@@ -1477,11 +1477,11 @@ def finalize_data(df, details):
     Finalize the data frame by augmenting with any columns.
 
     :param df: The data frame to be finalized.
-    :type df: pandas.DataFrame or linguine.data.CustomDataFrame
+    :type df: pandas.DataFrame or lynguine.data.CustomDataFrame
     :param details: The details of the data frame.
     :type details: dict
     :return: The finalized data frame.
-    :rtype: pandas.DataFrame or linguine.data.CustomDataFrame
+    :rtype: pandas.DataFrame or lynguine.data.CustomDataFrame
     """
 
     # Eventually this should do any augmentation that isn't required
@@ -1816,7 +1816,7 @@ def write_data(df, details):
     Write the data using the details given in configuration.
 
     :param df: The data to be written.
-    :type df: pandas.DataFrame or linguine.data.CustomDataFrame
+    :type df: pandas.DataFrame or lynguine.data.CustomDataFrame
     :param details: The details of the data to be written.
     :type details: dict
     """
@@ -1857,7 +1857,7 @@ def write_globals(df, config):
     Write the globals to a file.
 
     :param df: The data to be written.
-    :type df: pandas.DataFrame or linguine.data.CustomDataFrame
+    :type df: pandas.DataFrame or lynguine.data.CustomDataFrame
     :param config: The configuration to be used.
     :type config: dict
     """
@@ -1872,7 +1872,7 @@ def write_cache(df, config):
     Write the cache to a file.
 
     :param df: The data to be written.
-    :type df: pandas.DataFrame or linguine.data.CustomDataFrame
+    :type df: pandas.DataFrame or lynguine.data.CustomDataFrame
     :param config: The configuration to be used.
     :type config: dict
     """
@@ -1887,7 +1887,7 @@ def write_scores(df, config):
     Write the scoring data frame to a file.
 
     :param df: The data to be written.
-    :type df: pandas.DataFrame or linguine.data.CustomDataFrame
+    :type df: pandas.DataFrame or lynguine.data.CustomDataFrame
     :param config: The configuration to be used.
     :type config: dict
     """
@@ -1902,7 +1902,7 @@ def write_series(df, config):
     Load in the series data to a file.
 
     :param df: The data to be written.
-    :type df: pandas.DataFrame or linguine.data.CustomDataFrame
+    :type df: pandas.DataFrame or lynguine.data.CustomDataFrame
     :param config: The configuration to be used.
     :type config: dict
     """
