@@ -768,7 +768,7 @@ class DataObject:
         Construct a CustomDataFrame from a interface object.
 
         :param interface: Interface object.
-        :type interface: linguine.config.interface.Interface or dict.
+        :type interface: lynguine.config.interface.Interface or dict.
         :return: A CustomDataFrame object.
         """
 
@@ -1743,7 +1743,7 @@ class DataObject:
         Extract the compute object.
 
         :param interface: The interface to the compute object.
-        :type interface: linguine.config.interface.Interface or dict
+        :type interface: lynguine.config.interface.Interface or dict
         :returns: The compute object.
         """
         raise NotImplementedError("This is a base class")
@@ -2355,7 +2355,7 @@ class CustomDataFrame(DataObject):
         Extract the compute object.
 
         :param interface: The interface to the compute object.
-        :type interface: linguine.config.interface.Interface or dict
+        :type interface: lynguine.config.interface.Interface or dict
         :returns: The compute object.
         """
         return Compute.from_flow(interface).computes

@@ -2,8 +2,8 @@ import os
 from datetime import date
 import warnings
 
-import linguine.util.tex as latex
-import linguine.util.yaml as ny
+import lynguine.util.tex as latex
+import lynguine.util.yaml as ny
 
 today = date.today()    
 

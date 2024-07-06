@@ -2,7 +2,7 @@ import pytest
 import os
 
 from datetime import datetime
-from linguine.util.misc import (
+from lynguine.util.misc import (
     reorder_dictionary,
     extract_full_filename,  extract_root_directory, extract_file_type, extract_abs_filename, camel_capitalize,
     remove_nan, is_valid_var, to_valid_var, to_camel_case, sub_path_environment, get_path_env,
