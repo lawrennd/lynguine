@@ -73,10 +73,10 @@ yaml_text = """input:
   compute:  # compute is used for preprocessing as data is loaded
   - field: fullName # the field fullName is created from this compute command
     function: render_liquid
-    args:
-      template: '{{familyName | replace: " ", "-"}}_{{givenName | replace: " ", "-"}}'
-    row_args:
-      givenName: givenName
+    args: # keyword arguments to pass to the function
+      template: '{{familyName | replace: " ", "-"}}_{{givenName | replace: " ", "-"}}' # The liquid template allows us to combine the names
+    row_args: # arguments are taken from the same row
+      givenName: givenName 
       familyName: familyName
   - field: accessDate
     function: today"""
