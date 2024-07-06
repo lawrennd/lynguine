@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "lynguine"
-version = "0.1.0"
+version = "0.1.1"
 description = "Package for lynguine data oriented architecture interfaces."
 authors = ["Neil D. Lawrence <lawrennd@gmail.com>"]
 license = "MIT"
