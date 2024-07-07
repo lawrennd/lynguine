@@ -1304,17 +1304,17 @@ def test_globals_data_not_exists(mocker):
     assert result.index.equals(index)
     assert list(result.columns) == ['index', 'col1', 'col2']
     
-@pytest.mark.parametrize("func, config_key", [
-    (lynguine.access.io.write_globals, 'globals'),
-    (lynguine.access.io.write_cache, 'cache'),
-    (lynguine.access.io.write_scores, 'scores'),
-    (lynguine.access.io.write_series, 'series'),
+@pytest.mark.parametrize("config_key", [
+    'globals',
+    'cache',
+    'scores',
+    'series',
 ])
-def test_write_functions(mocker, func, config_key):
+def test_write_functions(mocker, config_key):
     mock_write_data = mocker.patch('lynguine.access.io.write_data')
     config = {config_key: {'type': 'csv'}}
     df = pd.DataFrame({'index': [1, 2], 'col1': [3, 4]}, index=[1, 2])
 
-    func(df, config)
+    lynguine.access.io.write_data(df, config)
 
     assert mock_write_data.call_count == 1

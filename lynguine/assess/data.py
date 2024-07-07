@@ -898,8 +898,12 @@ class DataObject:
         """
         for typ in self.types["output"]:
             if typ in self._d:
+                df = self._d[typ]
+                write_df = pd.concat(
+                    [pd.Series(list(df.index), index=df.index, name=df.index.name), df], axis=1
+                )
                 log.info(f"Saving data for flow type '{typ}'")
-                access.io.write_data(self._d[typ], self.interface[typ])
+                access.io.write_data(write_df, self.interface[typ])
     
     def sort_values(self, *args, inplace=False, **kwargs):
         """
