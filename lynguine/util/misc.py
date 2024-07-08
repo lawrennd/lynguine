@@ -178,12 +178,19 @@ def remove_nan(dictionary : dict) -> dict:
         if type(entry) is dict:
             dictionary2[key] = remove_nan(entry)
         else:
-            isna = entry is None or (
-                type(entry) is float and math.isnan(entry)
-            )  # Switched from pd.isna
-            if type(isna) is bool and isna:
+            if isna(entry):
                 del dictionary2[key]
     return dictionary2
+
+def isna(entry) -> bool:
+    """
+    Check if an entry is missing.
+
+    :param entry: The entry to be checked.
+    :return: True if the entry is missing, False otherwise.
+    :rtype: bool
+    """
+    return entry is None or (type(entry) is float and math.isnan(entry))
 
 def is_valid_var(variable) -> bool:
     """
