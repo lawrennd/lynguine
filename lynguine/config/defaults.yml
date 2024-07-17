@@ -1,31 +1,3 @@
-slidesdir: ../slides/
-diagramsdir: ./slides/diagrams/
-scriptsdir: ../scripts/
-writediagramsdir: .
-url: https://inverseprobability.com/
-baseurl: talks/
-notesdir: _notes/
-notebooksdir: ../_notebooks/
-postsdir: ../_posts/
-talkcss: https://inverseprobability.com/assets/css/talks.css
-talktheme: black
-revealjs_url: https://unpkg.com/reveal.js@3.9.2
-slidesheader: slides-header.html
-postsheader: posts-header.html
-notation: talk-notation.tex
-bibinputs: $BIBINPUTS
-texinputs: $TEXINPUTS
-week: 0
-categories:
-  - notes
-ipynb: False
-pptx: False
-docx: False
-pdf: False
-posts: True
-reveal: True
-assignment: False
-slidesipynb: False
-notespdf: False
-potx: ../_includes/custom-reference.potx 
-dotx: ../_includes/custom-reference.dotx
+logging:
+  level: 10
+  filename: lynguine.log

@@ -115,7 +115,10 @@ class DataObject:
             log.debug(f"Setting index to {index}.")
             self._index = index
         else:
-            raise KeyError("Invalid index set.")
+            errmsg = f"Index \"{value}\" not found in data"
+            log.error(errmsg)
+            raise KeyError(errmsg)
+ 
 
     def get_column(self):
         """
