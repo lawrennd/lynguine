@@ -68,8 +68,7 @@ def local_name_inputs():
       givenName: givenName
       familyName: familyName"""
     # Read in dictionaary from yaml text
-    input_dict = yaml.safe_load(input_yaml_text)
-    return lynguine.config.interface.Interface(input_dict)
+    return lynguine.config.interface.Interface.from_yaml(input_yaml_text)
 
 # test from_flow with a valid setting that specifies local data.
 def test_from_flow_with_compute(valid_local_data):

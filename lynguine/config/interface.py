@@ -1,6 +1,8 @@
 import os
 import numpy as np
 
+import yaml
+
 from . import context
 from ..log import Logger
 
@@ -465,3 +467,23 @@ c        Expand the environment variables in the configuration.
         return interface
 
         
+    @classmethod
+    def from_yaml(cls, text : str) -> "Interface":
+        """
+        Read an interface from yaml text.
+
+        :param text: yaml text of interface.
+        :type text: str
+        :return: A lynguine.config.interface.Interface object.
+        """
+        input_dict = yaml.safe_load(text)
+        return cls(input_dict)
+
+    def to_yaml(self) -> str:
+        """
+        Write the interface to yaml text.
+
+        :return: yaml text of interface.
+        :rtype: str
+        """
+        return yaml.dump(self._data)

@@ -34,9 +34,11 @@ class DataObject:
     def __init__(
             self, data=None, colspecs=None, index=None, column=None, selector=None, subindex=None
     ):
+        
         self.at = self._AtAccessor(self)
         self.iloc = self._IlocAccessor(self)
         self.loc = self._locAccessor(self)
+        log.debug(f"lynguine.assess.data.DataObject initialiser called.")
 
     class _AtAccessor(Accessor):
         def __init__(self, data):
@@ -99,7 +101,10 @@ class DataObject:
 
         :return: The index that is the focus for the DataFrame.
         """
-        return self._index
+        if hasattr(self, "_index"):
+            return self._index
+        else:
+            return None
 
     def set_index(self, index : int) -> None:
         """
@@ -115,7 +120,10 @@ class DataObject:
             log.debug(f"Setting index to {index}.")
             self._index = index
         else:
-            raise KeyError("Invalid index set.")
+            errmsg = f"Index \"{value}\" not found in data"
+            log.error(errmsg)
+            raise KeyError(errmsg)
+ 
 
     def get_column(self):
         """
@@ -315,9 +323,6 @@ class DataObject:
             return True
         else:
             return False
-        
-
-        
         
     def get_selector(self):
         """
@@ -1805,6 +1810,8 @@ class CustomDataFrame(DataObject):
     def __init__(
             self, data, colspecs=None, index=None, column=None, selector=None, subindex=None, compute=None
     ):
+
+
         if data is None:
             data = {}
 
@@ -1872,6 +1879,7 @@ class CustomDataFrame(DataObject):
                 colspecs["cache"] = []
             colspecs["cache"] += cache
 
+        # Set up the data
         self._colspecs = colspecs
         self._d = {}
         self._distribute_data(data)
@@ -1882,39 +1890,53 @@ class CustomDataFrame(DataObject):
         # Set index if not specified
         if index is None:
             indices = self.index
-            if len(indices) > 0:
+            if len(indices) > 0:                 
                 index = indices[0]
-        self.set_index(index)
+                log.debug(f"Index is not specified in initialisation, setting to \"{index}\" which is first entry in indices.")
+        elif index not in self.index:
+            errmsg = f"Provided index \"{index}\" is not in index list of CustomDataFrame"
+            log.error(errmsg)
+            raise KeyError(errmsg)
+        self._index = index
 
         # Set column if not specified
         if column is None:
             columns = self.columns
             if len(columns) > 0:
                 column = self.columns[0]       
-        self.set_column(column)
+                log.debug(f"Column is not specified in initialisation, setting to \"{column}\" which is first entry in columns.")
+        elif column not in self.columns:
+            errmsg = f"Provided column \"{column}\" is not in list of CustomDataFrame columns."
+            log.error(errmsg)
+            raise KeyError(errmsg)
+        self._column = column
 
         self._selector = selector
         # Set selector if not specified
-        if self._selector is None:
+        if selector is None:
             selectors = self.get_selectors()
             if len(selectors) > 0:
-                self._selector = selectors[0]
+                selector = selectors[0]
+                log.debug(f"Selector is not specified in initialisation, setting to \"{selector}\" which is first entry in valid selectors.")
         elif selector not in self.get_selectors():
-            raise ValueError(
-                f"Provided selector '{selector}' not found in CustomDataFrame."
-            )
+            errmsg = f"Provided selector '{selector}' not found in valid selectors of CustomDataFrame."
+            log.error(errmsg)
+            raise KeyError(errmsg)
+        self._selector = selector
+            
 
-        self._subindex = subindex
         # Set subindex if not specified
-        if self._subindex is None:
+        if subindex is None:
             subindices = self.get_subindices()
             if len(subindices) > 0:
-                self._subindex = subindices[0]
+                subindex = subindices[0]
+                log.debug(f"Subindex is not specified in initialisation, setting to \"{subindex}\" which is first entry in selector's subindices.")
         elif subindex not in self.get_subindices():
-            raise ValueError(
-                f"Provided subindex '{subindex}' not found in CustomDataFrame."
-            )
-        
+            errmsg = f"Provided subindex '{subindex}' not found in \"{self.get_selector()}\" column of CustomDataFrame for given index \"{self.get_index()}\"."
+            log.error(errmsg)
+            raise KeyError(errmsg)
+        self._subindex = subindex
+
         self.at = self._AtAccessor(self)
         self.loc = self._LocAccessor(self)
         self.iloc = self._ILocAccessor(self)
