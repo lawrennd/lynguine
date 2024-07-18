@@ -1,4 +1,5 @@
 import os
+import yaml
 import pytest
 from io import StringIO
 from lynguine.config.interface import Interface, _HConfig  # Adjust the import as per your project structure
@@ -201,6 +202,42 @@ def test_interface_update(mock_interface):
     mock_interface.update({'new_key': 'new_value'})
     assert mock_interface['new_key'] == 'new_value'
 
+@pytest.fixture
+def local_name_inputs():
+    input_yaml_text="""input:
+  type: local
+  index: fullName
+  data:
+  - familyName: Xing
+    givenName: Pei
+  - familyName: Venkatasubramanian
+    givenName: Siva
+  - familyName: Paz Luiz
+    givenName: Miguel
+"""
+    # Read into dictionary via yaml and write out to string
+    # This should mean it should match whatever is dumped by interface
+    dict_version = yaml.safe_load(input_yaml_text)
+    input_yaml_text = yaml.dump(dict_version)
+    return input_yaml_text
+
+# Test the from_yaml method
+def test_from_yaml_capability(local_name_inputs):
+    interface = Interface.from_yaml(local_name_inputs)
+    assert interface['input']['type'] == 'local'
+    assert interface['input']['index'] == 'fullName'
+    assert interface['input']['data'] == [
+        {'familyName': 'Xing', 'givenName': 'Pei'},
+        {'familyName': 'Venkatasubramanian', 'givenName': 'Siva'},
+        {'familyName': 'Paz Luiz', 'givenName': 'Miguel'}
+    ]
+
+# Test the to_yaml method
+def test_to_yaml_capability(local_name_inputs):
+    interface = Interface.from_yaml(local_name_inputs)
+    assert interface.to_yaml() == local_name_inputs
+
+    
 # Fixture for the class instance
 @pytest.fixture
 def instance():
