@@ -282,6 +282,22 @@ p        :return: None
                 else:
                     compute_prep["function"](data, **fargs)
 
+    def run_onchange(self, data : "CustomDataFrame", index : object, column : str) -> None:
+        """
+        Run any computations that are triggered by a change in the data.
+
+        :param data: The data to be updated.
+        :type data: lynguine.assess.data.CustomDataFrame
+        :param index: The index to be used.
+        :type index: object
+        :param column: The column to be used.
+        :type column: str
+        :return: None
+        """
+
+        log.debug(f"Running onchange for {column} at index {index} (not yet implemented).")
+
+        
     def run_all(self, data : "CustomDataFrame", df=None, index=None, pre=False, post=False):
         """
         Run any computation elements on the data frame.
