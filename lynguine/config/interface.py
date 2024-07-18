@@ -6,7 +6,6 @@ import yaml
 from . import context
 from ..log import Logger
 
-from lynguine.access.io import read_yaml_file
 
 ctxt = context.Context()
 log = Logger(
@@ -449,7 +448,13 @@ c        Expand the environment variables in the configuration.
         fname = os.path.join(os.path.expandvars(directory), ufile)
         data = {}
         if os.path.exists(fname):
-            data = read_yaml_file(fname)
+            with open(fname, "r") as stream:
+                try:
+                    log.debug(f'Reading yaml file "{fname}"')
+                    data = yaml.safe_load(stream)
+                except yaml.YAMLError as exc:
+                    log.warning(exc)
+                    data = {}
             if field is not None:
                 if field in data:
                     data = data[field]

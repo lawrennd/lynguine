@@ -27,10 +27,12 @@ from ..util.misc import (
     prompt_stdin,
 )
 from ..util.fake import Generate
-
+from ..assess.compute import Compute
 from ..config.context import Context
 from ..util.dataframe import reorder_dataframe
 from ..log import Logger
+
+from ..config.interface import Interface
 
 GSPREAD_AVAILABLE = True
 try:
@@ -1472,14 +1474,14 @@ populate_directory_readers(directory_readers)
 populate_directory_writers(directory_writers)
 
 
-def finalize_data(df, details):
+def finalize_data(df : pd.DataFrame, interface : Interface) -> tuple[pd.DataFrame, Interface]:
     """
     Finalize the data frame by augmenting with any columns.
 
     :param df: The data frame to be finalized.
     :type df: pandas.DataFrame or lynguine.data.CustomDataFrame
-    :param details: The details of the data frame.
-    :type details: dict
+    :param interface: The interface of the data frame.
+    :type interface: lynguine.config.interface.Interface
     :return: The finalized data frame.
     :rtype: pandas.DataFrame or lynguine.data.CustomDataFrame
     """
@@ -1490,35 +1492,50 @@ def finalize_data(df, details):
     # to be pulled out and not so dependent on the data structure.
 
     if df.index.name is None:
-        if "index" in details:
-            index = details["index"]
+        if "index" in interface:
+            index = interface["index"]
             if type(index) is dict:
                 df.index.name = index["name"]
             elif type(index) is str:
                 df.index.name = index
             else:
                 self._log.warning(
-                    f'Index "{index}" present in details but no valid name found.'
+                    f'Index "{index}" present in interface but no valid name found.'
                 )
 
-    if "rename_columns" in details:
-        for col in details["rename_columns"]:
+    if "rename_columns" in interface:
+        for col in interface["rename_columns"]:
             cols = df.columns
             if col not in cols:
                 raise ValueError(
                     f'rename_columns contains key "{col}" which is not a column in the loaded DataFrame. Columns are "{cols}"'
                 )
-        df.rename(columns=details["rename_columns"], inplace=True)
+        df.rename(columns=interface["rename_columns"], inplace=True)
 
-    if "ignore_columns" in details:
-        for col in details["ignore_columns"]:
+    if "ignore_columns" in interface:
+        for col in interface["ignore_columns"]:
             cols = df.columns
             if col not in cols:
                 raise ValueError(
                     f'ignore_columns contains key "{col}" which is not a column in the loaded DataFrame. Columns are "{cols}"'
                 )
-        df.drop(columns=details["ignore_columns"], inplace=True)
-    return df, details
+        df.drop(columns=interface["ignore_columns"], inplace=True)
+
+    if "compute" in interface:
+            compute = Compute.from_flow(interface)
+            for comp in compute.computes:
+                compute_prep = compute.prep(comp, df)
+                fargs = compute_prep["args"]
+                if "field" in comp: # if field is in compute, then we are computing or updating a new field
+                    for ind in df.index:
+                        df.loc[ind, comp["field"]] = compute_prep["function"](df.loc[ind], **fargs)
+
+                else:
+                    errmsg = f"Compute object in interface file is missing field key."
+                    log.error(errmsg)
+                    raise ValueError(errmsg)
+        
+    return df, interface
 
 
 def read_hstack(details):

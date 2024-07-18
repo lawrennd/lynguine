@@ -83,14 +83,14 @@ p        :return: None
         return self._computes["postcompute"]
     
         
-    def prep(self, settings : dict, data : "CustomDataFrame" ) -> dict:
+    def prep(self, settings : dict, data : "CustomDataFrame" or pd.DataFrame) -> dict:
         """
         Prepare a compute entry for use.
 
         :param settings: The settings to be used.
         :type settings: dict
         :param data: The data to be used.
-        :type data: lynguine.assess.data.CustomDataFrame
+        :type data: lynguine.assess.data.CustomDataFrame or pandas.DataFrame
         :return: The prepared compute entry.
         :rtype: dict
 

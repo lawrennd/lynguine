@@ -2437,19 +2437,6 @@ class CustomDataFrame(DataObject):
                         errmsg = f"DataFrame contains column: \"{column}\" which is not in the columns list of the specification and strict_columns is set to True."
                         log.error(errmsg)
                         raise ValueError(errmsg)
-        if "compute" in interface:
-            compute = Compute.from_flow(interface)
-            for comp in compute.computes:
-                compute_prep = compute.prep(comp, self)
-                fargs = compute_prep["args"]
-                if "field" in comp: # if field is in compute, then we are computing or updating a new field
-                    for ind in df.index:
-                        df.loc[ind, comp["field"]] = compute_prep["function"](df.loc[ind], **fargs)
-
-                else:
-                    errmsg = f"Compute object in interface file is missing field key."
-                    log.error(errmsg)
-                    raise ValueError(errmsg)
             
         if index_column_name in df.columns:
             index = pd.Index(df[index_column_name], name=index_column_name)
