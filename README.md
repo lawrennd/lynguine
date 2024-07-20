@@ -62,32 +62,43 @@ from lynguine.assess.data import CustomDataFrame
 # Let's assume this is the text stored in the interface file
 yaml_text = """input:
   type: local
-  index: fullName
+  index: name
+  add_columns:  # These columns are added if they aren't present.
+  - prefix
+  - suffix
+  ignore_columns: # These columns are ignored even if they're present
+  - email
+  rename_columns:
+    family: familyName
+    given: givenName
   data:
-  - familyName: Xing
-    givenName: Pei
-  - familyName: Venkatasubramanian
-    givenName: Siva
-  - familyName: Paz Luiz
-    givenName: Miguel
+  - family: Xing
+    given: Pei
+    email: pei@uni-got.ac.de
+  - family: Venkatasubramanian
+    given: Siva
+    email: siva@microserve.com
+  - family: Paz Luiz
+    given: Miguel
+    email: miguel@birkingham.ac.uk
   compute:  # compute is used for preprocessing as data is loaded
-  - field: fullName # the field fullName is created from this compute command
+  - field: name # the field name is created from this compute command
     function: render_liquid
     args: # keyword arguments to pass to the function
-      template: '{{familyName | replace: " ", "-"}}_{{givenName | replace: " ", "-"}}' # The liquid template allows us to combine the names
+      template: "{% capture index %}{% if prefix %}{{ prefix }} {%endif%}{%if familyName %}{{ familyName }} {%endif%}{% if suffix %}{{ suffix }} {%endif%}{%if givenName %}{{ givenName }}{%endif%}{% endcapture %}{{ index | replace: ' ', '_' | replace: '.', '' }}" # This is a liquid template to create an index from the name
     row_args: # arguments are taken from the same row
       givenName: givenName 
       familyName: familyName
   - field: accessDate
     function: today"""
 
-interface = Interface(yaml.safe_load(yaml_text))
+interface = Interface.from_yaml(yaml_text)
 
 data = CustomDataFrame.from_flow(interface)
 print(data)
 ```
 
-would create a new field fullname which is then used as the index.
+would create a new field `name` which is then used as the index.
 
 ### Access
 

@@ -2404,11 +2404,9 @@ class CustomDataFrame(DataObject):
             for name, column in interface["mapping"].items():
                 self.update_name_column_map(column=column, name=name)
 
-               
+        # Add column names to the column name map.
         self._augment_column_names(df)
 
-
-        
         if "index" not in interface:
             errmsg = f"Missing index field in data frame specification in interface file"
             log.error(errmsg)
@@ -2437,7 +2435,8 @@ class CustomDataFrame(DataObject):
                         errmsg = f"DataFrame contains column: \"{column}\" which is not in the columns list of the specification and strict_columns is set to True."
                         log.error(errmsg)
                         raise ValueError(errmsg)
-            
+
+        # Set the index column
         if index_column_name in df.columns:
             index = pd.Index(df[index_column_name], name=index_column_name)
             df.set_index(index, inplace=True)
@@ -2445,9 +2444,13 @@ class CustomDataFrame(DataObject):
                     
         return df
 
-    def _augment_column_names(self, data):
+    def _augment_column_names(self, data : pd.DataFrame or pd.Series) -> None:
         """
         Add each column name to the column name map if not already there.
+
+        :param data: data whose columns (or index if its a series) need to be added to the map.
+        :type data: pd.DataFrame or pd.Series
+        :return: None
         """
         if isinstance(data, pd.Series): # if data is a series, likely its a parameter and its index is equivalent to columns
             columns = data.index 
@@ -2473,7 +2476,7 @@ class CustomDataFrame(DataObject):
                         raise ValueError(errmsg)
     
     
-    def update_name_column_map(self, name, column):
+    def update_name_column_map(self, name : str, column : str) -> None:
         """
         Update the map from valid variable names to columns in the data frame. Valid variable names are needed e.g. for Liquid filters.
 

@@ -294,8 +294,7 @@ p        :return: None
         :type column: str
         :return: None
         """
-
-        log.debug(f"Running onchange for {column} at index {index} (not yet implemented).")
+        self.logger.debug(f"Running onchange for {column} at index {index} (not yet implemented).")
 
         
     def run_all(self, data : "CustomDataFrame", df=None, index=None, pre=False, post=False):

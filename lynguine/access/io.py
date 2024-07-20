@@ -1502,7 +1502,13 @@ def finalize_data(df : pd.DataFrame, interface : Interface) -> tuple[pd.DataFram
                 self._log.warning(
                     f'Index "{index}" present in interface but no valid name found.'
                 )
+    # Add these columns if they are not present.          
+    if "add_columns" in interface:
+        for col in interface["add_columns"]:
+            if col not in df.columns:
+                df[col] = None
 
+    # rename these columns            
     if "rename_columns" in interface:
         for col in interface["rename_columns"]:
             cols = df.columns
@@ -1512,6 +1518,7 @@ def finalize_data(df : pd.DataFrame, interface : Interface) -> tuple[pd.DataFram
                 )
         df.rename(columns=interface["rename_columns"], inplace=True)
 
+    # drop these columns
     if "ignore_columns" in interface:
         for col in interface["ignore_columns"]:
             cols = df.columns
@@ -1601,6 +1608,7 @@ def read_vstack(details):
     if details.get('type') != 'vstack':
         raise ValueError('Expected details type to be "vstack".')
 
+    # 'specifications' provides the file details for the data sources to be stacked (list of dicts)
     if 'specifications' not in details:
         raise ValueError('Details must include "specifications".')
 
