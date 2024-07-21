@@ -417,6 +417,44 @@ c        Expand the environment variables in the configuration.
         for key in delete_keys:
             del self._parent._data[key]
 
+    def _extract_review_write_fields(self):
+        """
+        Extract fields from the "review" entry that need to be written to in the output file.
+
+        :return: The fields that need to be written to in the output file.
+        :rtype: list
+
+        """
+        if "review" in self._data:
+            return self._extract_fields(self._data["review"])
+        else:
+            return []
+
+
+    def _extract_fields(self, entries):
+        """
+        Extract fields from the entries.
+
+        :param entries: The entries to extract fields from.
+        :type entries: list
+        :return: The fields.
+        :rtype: list
+        """
+        fields = []
+        if not isinstance(entries, list):
+            entries = [entries]
+        for rev in entries:
+            if "field" in rev:
+                field = rev["field"]
+                if field not in fields:
+                    fields.append(field)
+            elif "entries" in rev:                
+                new_fields = self._extract_fields(rev["entries"])
+                for field in new_fields:
+                    if field not in fields:
+                        fields.append(field)
+        return fields
+
     @classmethod
     def default_config_file(cls):
         """
