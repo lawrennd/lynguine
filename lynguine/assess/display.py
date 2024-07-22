@@ -217,6 +217,8 @@ class DisplaySystem:
             # Widget isn't created yet so set index in data only.
             self._data.set_index(index)
 
+        
+
     @property
     def index(self):
         """
@@ -285,9 +287,11 @@ class DisplaySystem:
         if self._data is not None:
             old_value = self.get_value_by_element(element)
             if value != old_value:
-                self._data.set_value_by_element(value, element)
+                self._data.set_value_by_element(value, element)                    
                 if trigger_update:
                     self.value_updated()
+        else:
+            log.warning("Data is not set and attempt to set_value is received.")
 
     def set_value(self, value, trigger_update=True):
         """
@@ -304,7 +308,9 @@ class DisplaySystem:
                 self._data.set_value(value)
                 if trigger_update:
                     self.value_updated()
-
+        else:
+            log.warning("Data is not set and attempt to set_value is received.")
+            
     def get_column(self) -> str:
         """
         Get the current column of the data.

@@ -417,7 +417,7 @@ c        Expand the environment variables in the configuration.
         for key in delete_keys:
             del self._parent._data[key]
 
-    def _extract_review_write_fields(self):
+    def _extract_review_write_fields(self, data=None):
         """
         Extract fields from the "review" entry that need to be written to in the output file.
 
@@ -425,8 +425,15 @@ c        Expand the environment variables in the configuration.
         :rtype: list
 
         """
-        if "review" in self._data:
-            return self._extract_fields(self._data["review"])
+        if data is None:
+            if self._data is not None:
+                data = self._data
+            else:
+                errmsg = "No data provided to extract fields from."
+                log.error(errmsg)
+                raise ValueError(errmsg)
+        if "review" in data:
+            return self._extract_fields(data["review"])
         else:
             return []
 
