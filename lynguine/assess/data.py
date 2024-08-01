@@ -402,16 +402,26 @@ class DataObject:
         # Check whether the column is a series column.
 
         col = self.get_column()
+        index = self.get_index()
         if col == self.index.name:
-            return self.get_index()
-        val = self.at[self.get_index(), col]
+            return index
+        log.debug(f"Getting value for index \"{index}\" and column \"{col}\"")
+        val = self.at[index, col]
+        log.debug(f"Value is \"{val}\"")
         if self.isseries(col):
             # If it is a series column, return the element of val where the self._selector column equals the self._subindex value.
             if self._selector is None:
-                raise KeyError("Selector not set.")
+                errmsg = "Selector not set."
+                log.error(errmsg)
+                raise KeyError(errmsg)
             if self._subindex is None:
-                raise KeyError("Subindex not set.")
-            return val[val[self._selector] == self._subindex]
+                errmsg = "Subindex not set."
+                log.error(errmsg)
+                raise KeyError(errmsg)
+            selection = val[self.at[self.get_index(), self._selector] == self._subindex]
+            if len(selection) > 1:
+                log.warning(f"Multiple values found for selector {self._selector} and subindex {self._subindex}. returning the first.")
+            return selection.iloc[0]
         return val
             
             
@@ -422,7 +432,11 @@ class DataObject:
 
         :param value: The value to set.
         """
-        self.at[self.get_index(), self.get_column()] = value
+        col = self.get_column()
+        if not self.isseries(col):
+            self.at[self.get_index(), col] = value
+        else:
+            raise NotImplementedError("Setting values in series columns is not yet implemented.")
 
     def head(self, n=5):
         """
@@ -784,10 +798,15 @@ class DataObject:
         if not isinstance(interface, (dict, Interface)):
             raise ValueError("Interface must be a dictionary or of type Interface.")
         default_joins = "outer"
+        selector = None
+        if "series" in interface:
+            if "selector" in interface["series"]:
+                selector = interface["series"]["selector"]
+
         # Initialize compute from the interface so it can be used below.
         compute = Compute.from_flow(interface)
         cdf = cls({}, compute=compute)
-        
+
         found_data = False
         for key, item in interface.items():
             # Check if the interface key is a valid data key
@@ -871,7 +890,7 @@ class DataObject:
                     #                 cdf._colspecs[key] = list(cdf._d[key].index)
                 if cdf.empty:
                     compute = cdf.compute
-                    cdf = cls(data=newdf, colspecs={key: list(newdf.columns)})
+                    cdf = cls(data=newdf, colspecs={key: list(newdf.columns)}, selector=selector)
                     cdf.compute = compute
                 else:
                     cdf._d[key] = newdf
@@ -1777,6 +1796,7 @@ class CustomDataFrame(DataObject):
         # CustomDataFrame are complete.
         "output": [
             "output",
+            "series",
             "writedata",
             "writeseries",
             "parameters",
@@ -1810,7 +1830,7 @@ class CustomDataFrame(DataObject):
     def __init__(
             self, data, colspecs=None, index=None, column=None, selector=None, subindex=None, compute=None
     ):
-
+        
 
         if data is None:
             data = {}
@@ -1919,7 +1939,7 @@ class CustomDataFrame(DataObject):
                 selector = selectors[0]
                 log.debug(f"Selector is not specified in initialisation, setting to \"{selector}\" which is first entry in valid selectors.")
         elif selector not in self.get_selectors():
-            errmsg = f"Provided selector '{selector}' not found in valid selectors of CustomDataFrame."
+            errmsg = f"Provided selector '{selector}' not found in valid selectors of CustomDataFrame. Valid selectors are \"{', '.join(self.get_selectors())}\"."
             log.error(errmsg)
             raise KeyError(errmsg)
         self._selector = selector
@@ -1990,13 +2010,18 @@ class CustomDataFrame(DataObject):
 
             # Logic to handle different data types within the custom DataFrame
             for typ, data in self._data_object._d.items():
-                if row_label in data.index and col_label in data.columns:
-                    return data.at[row_label, col_label]
+                if col_label in data.columns:
+                    if row_label in data.index:
+                        return data.at[row_label, col_label]
+                    else:
+                        log.debug(f"Row \"{row_label}\" not found in column \"{col_label}\" returning \"None\".")
+                        return None
                 elif typ in self._data_object.types["parameters"]:
                     if col_label in data.index:
                         return data.at[col_label]
-
-            raise KeyError(f"Key {key} not found in the CustomDataFrame")
+            errmsg = f"Key row \"{row_label}\" column \"{col_label}\" not found in the CustomDataFrame"
+            log.error(errmsg)
+            raise KeyError(errmsg)
 
         def __setitem__(self, key, value):
             """
@@ -2299,42 +2324,46 @@ class CustomDataFrame(DataObject):
 
     def _distribute_data(self, data):
         """
-        Distribute input data according to the colspec.
+        Distribute data according to the colspec.
 
         :param data: The input data to be distributed.
         :raises ValueError: If the data passed isn't pandas or custom DataFrame
         :raises ValueError: If a parameter column doesn't contain the same values.
         """
         # Distribute data across names columns
-        if not isinstance(data, (pd.DataFrame, self.__class__)):
-            raise ValueError("Data must be a pandas DataFrame or a custom data frame.")
+        if not isinstance(data, list):
+            data = [data]
 
-        for typ, cols in self._colspecs.items():
-            if typ in self.types["parameters"]:
-                self._d[typ] = pd.Series(index=cols, data=None).astype(object)
-                for col in cols:
-                    if all(data[col] == data[col].iloc[0]):
-                        self._d[typ][col] = data[col].iloc[0]
-                    # Check if the column is all NaN/None and the value is NaN.
-                    elif all(data[col].isna()) and np.isnan(data[col].iloc[0]):
-                        self._d[typ][col] = data[col].iloc[0]
-                    else:
-                        raise ValueError(
-                            f'Column "{col}" is specified as a parameter column and yet the values of the column are not all the same.'
-                        )
-            else:
-                d = data[cols]
-                if typ in self.types["series"]:
-                    self._d[typ] = d
+        for df in data:
+            if not isinstance(df, (pd.DataFrame, self.__class__)):
+                raise ValueError("Data must be a pandas DataFrame or a custom data frame.")
+
+            for typ, cols in self._colspecs.items():
+                if typ in self.types["parameters"]:
+                    self._d[typ] = pd.Series(index=cols, data=None).astype(object)
+                    for col in cols:
+                        if all(df[col] == df[col].iloc[0]):
+                            self._d[typ][col] = df[col].iloc[0]
+                        # Check if the column is all NaN/None and the value is NaN.
+                        elif all(df[col].isna()) and np.isnan(df[col].iloc[0]):
+                            self._d[typ][col] = df[col].iloc[0]
+                        else:
+                            raise ValueError(
+                                f'Column "{col}" is specified as a parameter column and yet the values of the column are not all the same.'
+                            )
                 else:
-                    # If it's not a series type make sure it's deduplicated.
-                    if d.index.has_duplicates:
-                        log.debug(
-                            'Removing duplicated elements from "{typ}" loaded data.'
-                        )
-                        self._d[typ] = d[~d.index.duplicated(keep="first")]
-                    else:
+                    d = df[cols]
+                    if typ in self.types["series"]:
                         self._d[typ] = d
+                    else:
+                        # If it's not a series type make sure it's deduplicated.
+                        if d.index.has_duplicates:
+                            log.debug(
+                                'Removing duplicated elements from "{typ}" loaded data.'
+                            )
+                            self._d[typ] = d[~d.index.duplicated(keep="first")]
+                        else:
+                            self._d[typ] = d
 
     def to_pandas(self):
         """
@@ -2513,20 +2542,38 @@ class CustomDataFrame(DataObject):
         """
         
         if mapping is None:
+            log.debug(f"Creating new mapping as mapping is None.")
             if series is None: # remove any columns not in self.columns
                 mapping = {name: column for name, column in self._default_mapping().items() if column in self.columns or column==self.index.name}
+                log.debug(f"Mapping is \"{', '.join(mapping.keys())}\"")
             else: # remove any columns not in provided series
                 mapping = {name: column for name, column in self._default_mapping().items() if column in series.index}
 
-        format = {}
+        form = {}
         for name, column in mapping.items():
             if series is None:
-                self.set_column(column)
-                format[name] = self.get_value()
+                if column in self.columns or column == self.index.name:
+                    log.debug(f"Setting column to \"{column}\" to extract mapping.")
+                    self.set_column(column)
+                    try:
+                        value = self.get_value()
+                    except ValueError as e:
+                        log.error(e)
+                        value = None
+                    
+                    log.debug(f"Setting \"{name}\" column of format to \"{value}\".")
+                    form[name] = value
+                    
+                else:
+                    errmsg = f"Column \"{column}\" in mapping is not in columns \"{', '.join(self.columns)}\"."
+                    log.error(errmsg)
+                    raise KeyError(errmsg)
             else:
                 if column in series:
-                    format[name] = series[column]
-        return remove_nan(format)
+                    form[name] = series[column]
+        mapping = remove_nan(form)        
+        log.debug(f"Mapping now has the following keys \"{', '.join(mapping)}\"")        
+        return remove_nan(form)
 
     def viewer_to_value(self, viewer, kwargs=None):
         """
@@ -2542,6 +2589,7 @@ class CustomDataFrame(DataObject):
         if type(viewer) is not list:
             viewer = [viewer]
         for view in viewer:
+            log.debug(f"viewer_to_value: Converting \"{view}\".")
             value += self.view_to_value(view, kwargs)
             if value != "":
                 value += "\n\n"
@@ -2558,6 +2606,11 @@ class CustomDataFrame(DataObject):
         :returns: The text of the view.
         """
         # Ensure view is a dictionary or an Interface
+        log.debug(f"Entering view to value")
+        if kwargs is None:
+            log.debug(f"Creating mapping as kwargs not present.")
+            kwargs = self.mapping()
+            log.debug(f"kwargs are now \"{', '.join(kwargs)}\"")
         if isinstance(view, Interface):
             view = view.to_dict()
         elif not isinstance(view, dict):
@@ -2585,6 +2638,7 @@ class CustomDataFrame(DataObject):
             if "compute" in view:
                 return self.compute_to_value(view["compute"])
             if "liquid" in view:
+                log.debug(f"Calling liquid_to_view with view \"{view['liquid']}\".")
                 return self.liquid_to_value(view["liquid"], kwargs, local)
             if "tally" in view:
                 return self.tally_to_value(view["tally"], kwargs, local)
@@ -2821,18 +2875,23 @@ class CustomDataFrame(DataObject):
         :param local: Local overrides to use on top of the kwargs for substitution in the liquid template, defaults to {}
         :type local: dict, optional
         """
+        log.debug(f"Calling liquid_to_value with display argument \"{display}\".")
         if self.compute is None:
             errmsg = f"Compute needs to be initialised before liquid_to_value is called."
             log.error(errmsg)
             raise ValueError(errmsg)
 
+        
         if kwargs is None or kwargs=={}:
             kwargs = self.mapping()
         kwargs.update(local)
+        log.debug(f"Kwargs is \"{kwargs}\".")
         try:
             return self.compute._liquid_env.from_string(display).render(**remove_nan(kwargs))
         except Exception as err:
-            raise Exception(f"In {display}\n\n {err}") from err
+            errmsg = f"In {display}\n\n {err}"
+            log.error(errmsg)
+            raise Exception(errmsg) from err
 
     def tally_to_tmpname(self, tally):
         """Convert a tally to a temporary name"""

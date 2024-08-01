@@ -258,9 +258,11 @@ class Interface(_HConfig):
                 if "filename" not in self._data["inherit"]:
                     # assume default file name
                     filename = self.__class__.default_config_file()
+                    log.debug(f"No filename specified in inherit section of interface file. Using default file name \"{filename}\"")
+       
                 else:
                     filename = self._data["inherit"]["filename"]
-                self._parent = Interface.from_file(user_file=filename, directory=directory)
+                self._parent = self.__class__.from_file(user_file=filename, directory=directory)
                 self._parent._writable = False
                 if "writable" in self._data and self._data["inherit"]["writable"]:
                     self._parent._writable = True
