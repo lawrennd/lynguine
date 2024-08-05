@@ -32,7 +32,9 @@ def sample_settings(tmpdir):
         data={
             "default_cache_path" : tmpdir,
             "overide_manual_authorize" : False,
-        }
+        },
+        directory=".",
+        user_file="_linguine.yml",
     )
 
 @pytest.fixture

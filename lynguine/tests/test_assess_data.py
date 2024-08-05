@@ -139,45 +139,53 @@ def test_to_flow_error_in_write_data(mocker):
 @pytest.fixture
 def valid_local_settings():
     # Return a sample interface object that is valid
-    return lynguine.config.interface.Interface({
-        "input":
+    return lynguine.config.interface.Interface(
         {
-            "type" : "local",
-            "index" : "index",
-            "data" : [
+            "input":
             {
-                'index': 'indexValue',
-                'key1': 'value1',
-                'key2': 'value2',
-                'key3': 'value3',
-            }],
-            "select" : 'indexValue'
-        }
-    })
+                "type" : "local",
+                "index" : "index",
+                "data" : [
+                    {
+                        'index': 'indexValue',
+                        'key1': 'value1',
+                        'key2': 'value2',
+                        'key3': 'value3',
+                    }],
+                "select" : 'indexValue'
+            }
+        },
+        user_file="test.yml",
+        directory=".",
+    )
 @pytest.fixture
 def valid_local_select_settings():
     # Return a sample interface object that is valid
-    return lynguine.config.interface.Interface({
-        "parameters":
+    return lynguine.config.interface.Interface(
         {
-            "type" : "local",
-            "index" : "index",
-            "select" : "indexValue2",
-            "data" : [
+            "parameters":
             {
-                'index': 'indexValue',
-                'key1': 'value1',
-                'key2': 'value2',
-                'key3': 'value3',
-            },
-            {
-                'index': 'indexValue2',
-                'key1': 'value1row2',
-                'key2': 'value2row2',
-                'key3': 'value3row2',
-            }],
-        }
-    })
+                "type" : "local",
+                "index" : "index",
+                "select" : "indexValue2",
+                "data" : [
+                    {
+                        'index': 'indexValue',
+                        'key1': 'value1',
+                        'key2': 'value2',
+                        'key3': 'value3',
+                    },
+                    {
+                        'index': 'indexValue2',
+                        'key1': 'value1row2',
+                        'key2': 'value2row2',
+                        'key3': 'value3row2',
+                    }],
+            }
+        },
+        user_file="test.yml",
+        directory=".",
+    )
 
 # test from_flow with a valid setting that specifies local data.
 def test_from_flow_with_valid_settings(valid_local_settings):
@@ -198,18 +206,30 @@ def test_from_flow_with_invalid_type():
         lynguine.assess.data.CustomDataFrame.from_flow("not-a-dictionary")
 
 def test_from_flow_with_missing_keys():
-    incomplete_settings = lynguine.config.interface.Interface({
-        # Settings with missing keys
-        "key1": "value1",
-    })
+    incomplete_settings = lynguine.config.interface.Interface(
+        {
+            # Settings with missing keys
+            "key1": "value1",
+        },
+        user_file="test.yml",
+        directory="."
+    )
     with pytest.raises(ValueError):
         lynguine.assess.data.CustomDataFrame.from_flow(incomplete_settings)
 
 def test_from_flow_with_empty_settings():
-    cdf = lynguine.assess.data.CustomDataFrame.from_flow(lynguine.config.interface.Interface({"globals":
-                                                           {"type" : "local",
-                                                            "data" : {},
-                                                            "index" : "index"}}))
+    cdf = lynguine.assess.data.CustomDataFrame.from_flow(
+        lynguine.config.interface.Interface(
+            {
+                "globals":
+                {"type" : "local",
+                 "data" : {},
+                 "index" : "index"}},
+            user_file="test.yml",
+            directory="."
+        )
+    )
+    
     # Assert the result is as expected (empty dataframe, etc.)
     assert isinstance(cdf, lynguine.assess.data.CustomDataFrame)
     assert cdf.empty

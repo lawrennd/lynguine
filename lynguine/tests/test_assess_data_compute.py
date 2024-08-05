@@ -16,35 +16,39 @@ from deepdiff import DeepDiff
 @pytest.fixture
 def valid_local_data():
     # Return a sample interface object that is valid
-    return lynguine.config.interface.Interface({
-        "input":
+    return lynguine.config.interface.Interface(
         {
-            "type" : "local",
-            "index" : "index",
-            "select" : "indexValue2",
-            "data" : [
+            "input":
             {
-                'index': 'indexValue',
-                'key1': 'value1',
-                'key2': 'value2',
-                'key3': 'value3',
-            },
-            {
-                'index': 'indexValue2',
-                'key1': 'value1row2',
-                'key2': 'value2row2',
-                'key3': 'value3row2',
-            }],
-            "compute" : {
-                "field" : "today",
-                "function" : "today",
-                "args" : {
-                    "format" : "%d %B %Y",
+                "type" : "local",
+                "index" : "index",
+                "select" : "indexValue2",
+                "data" : [
+                    {
+                        'index': 'indexValue',
+                        'key1': 'value1',
+                        'key2': 'value2',
+                        'key3': 'value3',
+                    },
+                    {
+                        'index': 'indexValue2',
+                        'key1': 'value1row2',
+                        'key2': 'value2row2',
+                        'key3': 'value3row2',
+                    }
+                ],
+                "compute" : {
+                    "field" : "today",
+                    "function" : "today",
+                    "args" : {
+                        "format" : "%d %B %Y",
                     }
                 }
-        }
-            
-    })
+            }
+        },
+        directory = ".",
+        user_file = "test.yml"
+    )
 
 @pytest.fixture
 def local_name_inputs():

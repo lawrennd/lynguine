@@ -1567,7 +1567,7 @@ def read_hstack(details):
     # Iterate over each data source in the details
     for specs in details['specifications']:
         # Read each DataFrame using the read_data function
-        df, _ = read_data(specs)
+        df, _ = read_data(specs)        
         dfs.append(df)
 
         # Set default values if not provided in specs
@@ -1588,7 +1588,17 @@ def read_hstack(details):
             final_df = df
         else:
             if specs['on'] == 'index':
+                # Make the column specifided in the specs "index" field the index of the frame.
+                if "index" in specs:
+                    df.set_index(specs['index'], inplace=True)
+                if "index" in details:
+                    final_df.set_index(details['index'], inplace=True)                  
                 final_df = final_df.join(df, how=specs['how'], lsuffix=specs['lsuffix'], rsuffix=specs['rsuffix'])
+                # Remove the index column again
+                if "index" in details:
+                    final_df[details['index']] = final_df.index
+                    final_df.reset_index(drop=True, inplace=True)
+                
             else:
                 final_df = pd.merge(final_df, df, on=specs['on'], how=specs['how'], suffixes=(specs['lsuffix'], specs['rsuffix']))
 

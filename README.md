@@ -31,12 +31,24 @@ import lynguine as ln
 ctxt = ln.config.context.Context()
 ```
 
+### Interface
+
 The `interface` module contains the key structure of `lynguine`. It specifies incoming and outgoing flows, as well as computational operations. Each flow is specified in the following form.
 
 ```yaml
 input:
   source:
-```  
+```
+
+There are different forms of flow that can be considered. The `input` flow will not be modified and has a different entry for each unique `index` value. The `constants` flow also cannot be modified, but has a single value that is returned regardless of index. 
+
+Modifiable flows include `output` which has a uniquely indexed value for each column of the output. `parameters` which has a single value returned regardless of index and `series` which has a series of values (in the sense of `pd.Series`) for each unique index. The series has an additional `selector` that must be specified to return a unique entry from the series. 
+
+#### `series`
+
+What's the point in having a series? It can be useful if there's e.g. a time series or another set of values associated with the index.
+
+#### Preprocessing
 
 Preprocessing can be done with a compute field.
 
@@ -99,6 +111,8 @@ print(data)
 ```
 
 would create a new field `name` which is then used as the index.
+
+
 
 ### Access
 

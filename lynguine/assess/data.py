@@ -802,15 +802,17 @@ class DataObject:
         if "series" in interface:
             if "selector" in interface["series"]:
                 selector = interface["series"]["selector"]
+                log.debug(f"Setting selector to \"{selector}\" for series type.")
 
         # Initialize compute from the interface so it can be used below.
         compute = Compute.from_flow(interface)
-        cdf = cls({}, compute=compute)
+        cdf = cls({}, compute=compute, interface=interface)
 
         found_data = False
         for key, item in interface.items():
             # Check if the interface key is a valid data key
             if key in cls.valid_data_types: # input, output, cache, parameters
+                log.debug(f"Adding data key \"{key}\" to the CustomDataFrame.")
                 if "mapping" in item:
                     mapping = item["mapping"]
                 else:
@@ -844,60 +846,32 @@ class DataObject:
                             f"Item data descriptions must be in the form of a dictionary unless they are of type \"input\", when a list is valid and implies an \"hstack\" type is needed. The type of item you have provided for the key \"{key}\" is \"{type(item)}\"."
                         )
                 else:
-                    # if isinstance(item, list):
-                    #     # If there's a list, the an hstack is implied.
-                    #     log.info(f"Converting input \"{key}\" into an hstack as it's provided as a list.")
-                    #     details = {}
-                    #     details[key] = {"type" : "hstack", "descriptions" : item}
-                    newdf = cdf._finalize_df(*access.io.read_data(item))
-                    # elif isinstance(item, dict):
-                    #     print(cdf.compute)
-                    #     newdf = cdf._finalize_df(*access.io.read_data(item))
-                    # print(type(item))
+                    newdf = cdf._finalize_df(*access.io.read_data(item), strict_columns=False)
 
                 if key in cls.types["parameters"]:
+                    log.debug(f"Adding parameter type with key \"{key}\".")
                     # If select is listed choose only the row of the data frame.
                     if "select" in item:
                         # Select the data from the dataframe.
+                        log.debug(f"Selecting item with index \"{item['select']}\" for the parameter type \"{key}\".")
                         newds = newdf.loc[item["select"]]
                         newdf = newds.to_frame().T
                         
-#                        items = [items]
-                    # # Iterate through adding the entries.
-                    # for item in items:
-                    #     newdf = cdf._finalize_df(*access.io.read_data(item))
-                    #     # Use join from the item if it's there.
-                    #     join = item["how"] if "how" in item else default_joins
-                    #     if key in cls.types["parameters"]:
-                    #         # If select is listed choose only the row of the data frame.
-                    #         if "select" in item:
-                    #             # Select the data from the dataframe.
-                    #             newds = newdf.loc[item["select"]]
-                    #             newdf = newds.to_frame().T
-                    #         if key not in cdf._d:
-                    #             # Set the series to the new data.
-                    #             if cdf.empty:
-                    #                 cdf = cls(data=newdf, colspecs={key: list(newdf.columns)})
-                    #             else:
-                    #                 cdf._d[key] = newdf.iloc[0]
-                    #                 cdf._colspecs[key] = list(cdf._d[key].index)
-                    #         else:
-                    #             # Add augment the series with the new data.
-                    #             if cdf.empty:
-                    #                 cdf = cls(data=newdf, colspecs={key: list(newdf.columns)})
-                    #             else:
-                    #                 cdf._d[key] = pd.concat([cdf._d[key], newdf.iloc[0]])
-                    #                 cdf._colspecs[key] = list(cdf._d[key].index)
                 if cdf.empty:
+                    log.debug(f"Creating new CustomDataFrame in from_flow from key \"{key}\".")
                     compute = cdf.compute
-                    cdf = cls(data=newdf, colspecs={key: list(newdf.columns)}, selector=selector)
+                    cdf = cls(
+                        data=newdf,
+                        colspecs={key: list(newdf.columns)},
+                        selector=selector,
+                        interface=interface
+                    )
                     cdf.compute = compute
                 else:
+                    log.debug(f"Adding key \"{key}\" to CustomDataFrame.")
                     cdf._d[key] = newdf
                     cdf._colspecs[key] = list(cdf._d[key].columns)
-                            # else:
-                            #     cdf._d[key] = cdf._d[key].join(newdf, how=join)
-                            #     cdf._colspecs[key] = list(cdf._d[key].index)
+                    
                 if isinstance(mapping, dict):
                     mapping = [mapping]
                                
@@ -1828,7 +1802,7 @@ class CustomDataFrame(DataObject):
         ],
     }
     def __init__(
-            self, data, colspecs=None, index=None, column=None, selector=None, subindex=None, compute=None
+            self, data, colspecs=None, index=None, column=None, selector=None, subindex=None, compute=None, interface=None
     ):
         
 
@@ -1904,9 +1878,11 @@ class CustomDataFrame(DataObject):
         self._d = {}
         self._distribute_data(data)
 
-        self.autocache = True        
-        self.interface = Interface({})
-
+        self.autocache = True
+        if interface is None:
+            self._interface = None
+        else:
+            self.interface = interface
         # Set index if not specified
         if index is None:
             indices = self.index
@@ -2461,7 +2437,7 @@ class CustomDataFrame(DataObject):
                 
                 for column in df.columns:
                     if column not in interface["columns"] and column!=index_column_name:
-                        errmsg = f"DataFrame contains column: \"{column}\" which is not in the columns list of the specification and strict_columns is set to True."
+                        errmsg = f"DataFrame contains column: \"{column}\" which is not in the columns list of the specification and strict_columns is set to \"True\"."
                         log.error(errmsg)
                         raise ValueError(errmsg)
 
@@ -2638,7 +2614,6 @@ class CustomDataFrame(DataObject):
             if "compute" in view:
                 return self.compute_to_value(view["compute"])
             if "liquid" in view:
-                log.debug(f"Calling liquid_to_view with view \"{view['liquid']}\".")
                 return self.liquid_to_value(view["liquid"], kwargs, local)
             if "tally" in view:
                 return self.tally_to_value(view["tally"], kwargs, local)

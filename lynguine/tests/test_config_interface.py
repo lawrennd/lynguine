@@ -73,6 +73,11 @@ def mock_yaml_open(monkeypatch, file_content_map):
 
     monkeypatch.setattr("builtins.open", mock_open)
 
+    def mock_file_exists(filename):
+        return filename in file_content_map
+
+    monkeypatch.setattr("os.path.exists", mock_file_exists)
+    
     # Mocking os.path.exists to simulate file presence
     def mock_exists(path):
         return path in file_content_map
@@ -88,7 +93,8 @@ def test_basic_interface(monkeypatch):
 def test_inherited_interface(monkeypatch):
     file_content_map = {
         "./user_settings.yml": user_yaml_content_inherit,
-        "./parent_settings.yml": parent_yaml_content
+        "parent_settings.yml": parent_yaml_content,
+        "././parent_settings.yml": parent_yaml_content
     }
     mock_yaml_open(monkeypatch, file_content_map)
     interface = Interface.from_file(user_file="user_settings.yml", directory=".")
@@ -123,7 +129,7 @@ def mock_config():
 
 @pytest.fixture
 def mock_interface(mocker):
-    return Interface(data={'key3': 'value3'})
+    return Interface(data={'key3': 'value3'}, user_file="test.yml", directory=".")
 
 @pytest.fixture
 def mock_interface2(monkeypatch):
@@ -241,8 +247,7 @@ def test_to_yaml_capability(local_name_inputs):
 # Fixture for the class instance
 @pytest.fixture
 def instance():
-    interf = Interface()
-    interf._user_file = "test.yml"
+    interf = Interface(directory=".", user_file="test.yml")
     return interf
 
 def test_get_output_columns_with_output(instance):

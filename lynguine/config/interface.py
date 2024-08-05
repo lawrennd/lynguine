@@ -227,26 +227,52 @@ class Interface(_HConfig):
 
     The interface can be hierarchical in that one interface can
     inherit from another interface where typically outputs from that
-    interface are used as inputs to the current interface. The
+    interface are used as input to the current interface. The
     interface can also append to the parent interface values.
     """
+    @classmethod
+    def default_config_file(cls):
+        """
+        Return the default configuration file name
+        """
+        return "_linguine.yml"
 
-    def __init__(self, data=None):
+    def __init__(self, data : dict=None, directory : str=None, user_file : str=None) -> None:
         """
         Initialise the interface object.
 
-        :param data: 
+        :param data: dictionary containing the information for the flows
+        :type data: dict
+        :param directory: directory where the flow infomration was loaded from
+        :type directory: str
+        :param user_file: file name of the user file.
+        :type user_file: str
         :return: None
         """
+        log.debug(f"Initialising lynguine.assess.Interface object.")
         if data is None:
             data = {}
-
         self._data = data
+
+        if directory is None:
+            errmsg = f"A directory must be provided when initialising an Interface object."
+            log.error(errmsg)
+            raise ValueError(errmsg)
+
+        if user_file is None:
+            errmsg = f"A user_file must be provided when initialising an Interface object."
+            log.error(errmsg)
+            raise ValueError(errmsg)
+
+        self._directory = directory
+        self._user_file = user_file
+        
         self._parent = None
-        self._inputs = []
+        self._input = []
         self._output = []
         self._parameters = []
         self._writable = True
+        self._inherited = False
 
         if "inherit" in self._data:
             if "directory" not in self._data["inherit"]:
@@ -254,7 +280,10 @@ class Interface(_HConfig):
                     f"Inherit specified in interface file {self._user_file} in directory {directory} but no directory to inherit from is specified."
                 )
             else:
-                directory = self._data["inherit"]["directory"]
+                log.debug(f"Inheriting another Interface.")
+                inherit_directory = os.path.expandvars(self._data["inherit"]["directory"])
+                if not os.path.isabs(inherit_directory):
+                    inherit_directory = os.path.join(self._directory, inherit_directory)
                 if "filename" not in self._data["inherit"]:
                     # assume default file name
                     filename = self.__class__.default_config_file()
@@ -262,7 +291,10 @@ class Interface(_HConfig):
        
                 else:
                     filename = self._data["inherit"]["filename"]
-                self._parent = self.__class__.from_file(user_file=filename, directory=directory)
+                log.debug(f"Inheriting parent Interface \"{filename}\" from directory \"{inherit_directory}\".")
+
+                # Establish if path is relative from curent directory.
+                self._parent = self.__class__.from_file(user_file=filename, directory=inherit_directory)
                 self._parent._writable = False
                 if "writable" in self._data and self._data["inherit"]["writable"]:
                     self._parent._writable = True
@@ -272,10 +304,18 @@ class Interface(_HConfig):
                     self._data["inherit"]["append"] = []
         
         self._expand_vars()
-        self._restructure()
+        #self._restructure()
         if self._parent is not None:
+            log.debug(f"Processing parent.")
+            if "output" in self._parent:
+                log.debug(f"Output is there.")
+            if "input" not in self._parent:
+                log.debug(f"Input is not there.")
             self._process_parent()
-        
+            if "output" not in self._parent:
+                log.debug(f"Output is not there.")
+            if "input" in self._parent:
+                log.debug(f"Input is there")
 
     def __getitem__(self, key):
         """
@@ -299,9 +339,46 @@ class Interface(_HConfig):
                     f"Key {key} not found in Interface object. Available keys are \"{', '.join(self._data.keys())}\""
                 )
         else:
+            if key == "input":
+                if "input" not in self._parent:
+                    return self._data["input"]
+                elif "input" not in self._data:
+                    return self._parent["input"]
+                
+                log.debug(f"Appending contents of parent input to input.")
+                # stack the input horizontally.
+                if self._parent["input"]["type"] == "hstack" and self._data["input"]["type"] == "hstack":
+                    return {
+                        "type" : "hstack",
+                        "index" : self._parent["input"]["index"],
+                        "specifications" : self._parent["input"]["specifications"] + self._data["input"]["specifications"]
+                    }
+                elif self._parent["input"]["type"] == "hstack":
+                    return {
+                        "type" : "hstack",
+                        "index" : self._parent["input"]["index"],
+                        "specifications" : self._parent["input"]["specifications"] + [self._data["input"]]
+                    }
+                elif self._data["input"]["type"] == "hstack":
+                    return {
+                        "type" : "hstack",
+                        "index" : self._parent["input"]["index"],
+                        "specifications" : [self._parent["input"]] + self._data["input"]["specifications"]
+                    }
+                else:
+                    return {
+                        "type" : "hstack",
+                        "index" : self._parent["input"]["index"],
+                        "specifications" : [
+                            self._parent["input"],
+                            self._data["input"],
+                        ]
+                    }
+                    
             if key in self._data:
                 # Check if key is also in parent and is listed as an append key.
                 if key in self._parent and key in self._data["inherit"]["append"]:
+                    log.debug(f"Appending contents of parent key \"{key}\" to child.")
                     # Key should be appended to parent values
                     val = self._data[key]
                     par_val = self._parent[key]
@@ -312,18 +389,23 @@ class Interface(_HConfig):
                     elif isinstance(par_val, list):
                         return par_val + val
                     else:
-                        raise ValueError(
-                            f"Key {key} specified in inherit append list, but entry is not of type \"dict\" or type \"list\" so appending doesn't make sense. Type of entry is \"{type(val)}\"."
-                        )
+                        errmsg = f"Key {key} specified in inherit:append list, but entry is not of type \"dict\" or type \"list\" so appending doesn't make sense. Type of entry is \"{type(val)}\"."
+                        log.error(errmsg)
+                        raise ValueError(errmsg)
                 else:
                     return self._data[key]
             elif key in self._parent: # key not in data, but is in parent.
-                return self._parent[key]
+                if key in self._data["inherit"]["ignore"]:
+                    errmsg = f"Key \"{key}\" is not in current data and is specified in the inherit:ignore list."
+                    log.error(errmsg)
+                    raise KeyError(errmsg)
+                else:
+                    return self._parent[key]
             else:
                 # Key is not in parent or data.
-                raise ValueError(
-                    f"Key {key} is not found in the Interface or its parents. Available keys are \"{', '.join(self.keys())}. The following keys are explicitly ignored in inherited Interfaces \"{', '.join(self._data['inherit']['ignore'])}\"."
-                    )
+                errmsg = f"Key {key} is not found in the Interface or its parents. Available keys are \"{', '.join(self.keys())}. The following keys are explicitly ignored in inherited Interfaces \"{', '.join(self._data['inherit']['ignore'])}\"."
+                log.error(errmsg)
+                raise KeyError(errmsg)       
 
     def get_output_columns(self):
         """
@@ -387,25 +469,25 @@ c        Expand the environment variables in the configuration.
             if isinstance(item, str):
                 self._data[key] = os.path.expandvars(item)
 
-    def _restructure(self):
-        """
-        Restructure the data to be in the correct format.
+    # def _restructure(self):
+    #     """
+    #     Restructure the data to be in the correct format.
 
-        For backwards compatability, move inputs, outputs and paremeters to correct place.
-        """
-        for key, item in self._data.items():
-            if key in self._inputs:
-                if "inputs" not in self._data:
-                    self._data["inputs"] = {}
-                self._data["inputs"][key] = item
-            if key in self._output:
-                if "output" not in self._data:
-                    self._data["output"] = {}
-                self._data["output"][key] = item
-            if key in self._parameters:
-                if "parameters" not in self._data:
-                    self._data["parameters"] = {}
-                self._data["parameters"][key] = item
+    #     For backwards compatability, move input, output and paremeters to correct place.
+    #     """
+    #     for key, item in self._data.items():
+    #         if key in self._input:
+    #             if "input" not in self._data:
+    #                 self._data["input"] = {}
+    #             self._data["input"][key] = item
+    #         if key in self._output:
+    #             if "output" not in self._data:
+    #                 self._data["output"] = {}
+    #             self._data["output"][key] = item
+    #         if key in self._parameters:
+    #             if "parameters" not in self._data:
+    #                 self._data["parameters"] = {}
+    #             self._data["parameters"][key] = item
 
     def _process_parent(self):
         """
@@ -414,8 +496,23 @@ c        Expand the environment variables in the configuration.
         delete_keys = []
         if self._parent is not None:
             for key in self._data["inherit"]["ignore"]:
-                if key in self._parent._data.keys():
+                if key in self._parent:
                     delete_keys.append(key)
+            if "output" in self._parent:
+                # Inherited outputs become input.
+                log.debug(f"Inheriting parent output as input.")
+                if "input" not in self._parent:
+                    self._parent["input"] = self._parent["output"]
+                elif self._parent["input"]["type"] == "hstack":
+                    self._parent["input"]["specifications"].append(self._parent["output"])
+                else:
+                    self._parent["input"] = {
+                        "type" : "hstack",
+                        "index" : self._parent["input"]["index"],
+                        "specifications" : [self._parent["input"], self._parent["output"]]
+                    }                    
+                delete_keys.append("output")
+                
         for key in delete_keys:
             del self._parent._data[key]
 
@@ -484,16 +581,19 @@ c        Expand the environment variables in the configuration.
         :type field: str
         
         """
+        
         if user_file is None:
             ufile = cls.default_config_file()
         else:
             ufile = user_file
+            
         if type(user_file) is list:
             for ufile in user_file:
                 if os.path.exists(os.path.join(os.path.expandvars(directory), ufile)):
                     break
         fname = os.path.join(os.path.expandvars(directory), ufile)
         data = {}
+        log.debug(f"Attempting to open file \"{fname}\".")
         if os.path.exists(fname):
             with open(fname, "r") as stream:
                 try:
@@ -510,11 +610,9 @@ c        Expand the environment variables in the configuration.
                         f'Field "{field}" specified but not found in file "{fname}"'
                     )
         if data == {}:
-            log.warning(f'No configuration file found at "{user_file}".')
+            log.warning(f'No configuration file found at "{fname}".')
 
-        interface = cls(data)
-        interface._directory = directory
-        interface._user_file = user_file
+        interface = cls(data, directory=directory, user_file=ufile)
         
         return interface
 
@@ -529,7 +627,7 @@ c        Expand the environment variables in the configuration.
         :return: A lynguine.config.interface.Interface object.
         """
         input_dict = yaml.safe_load(text)
-        return cls(input_dict)
+        return cls(input_dict, directory=".", user_file=cls.default_config_file())
 
     def to_yaml(self) -> str:
         """
