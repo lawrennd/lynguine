@@ -264,8 +264,8 @@ class DataObject:
         :param value: The interface object.
         :return: None
         """
-        if not isinstance(value, Interface):
-            raise TypeError("interface must be of type Interface.")
+        if not isinstance(value, (Interface, dict)):
+            raise TypeError(f"Interface must be of type Interface or dict. Type provided is \"{type(value)}\"..")
         else:
             self._interface = value
         
