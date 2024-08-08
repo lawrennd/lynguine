@@ -264,8 +264,8 @@ class Interface(_HConfig):
             log.error(errmsg)
             raise ValueError(errmsg)
 
-        self._directory = directory
-        self._user_file = user_file
+        self.directory = directory
+        self.user_file = user_file
         
         self._parent = None
         self._input = []
@@ -283,7 +283,7 @@ class Interface(_HConfig):
                 log.debug(f"Inheriting another Interface.")
                 inherit_directory = os.path.expandvars(self._data["inherit"]["directory"])
                 if not os.path.isabs(inherit_directory):
-                    inherit_directory = os.path.join(self._directory, inherit_directory)
+                    inherit_directory = os.path.join(self.directory, inherit_directory)
                 if "filename" not in self._data["inherit"]:
                     # assume default file name
                     filename = self.__class__.default_config_file()
@@ -374,7 +374,39 @@ class Interface(_HConfig):
                             self._data["input"],
                         ]
                     }
-                    
+
+            elif key == "constants":
+                if "constants" not in self._parent:
+                    return self._data["constants"]
+                elif "constants" not in self._data:
+                    return self._parent["constants"]
+                
+                log.debug(f"Appending contents of parent constants to constants.")
+                # stack the constants horizontally.
+                if self._parent["constants"]["type"] == "hstack" and self._data["constants"]["type"] == "hstack":
+                    return {
+                        "type" : "hstack",
+                        "specifications" : self._parent["constants"]["specifications"] + self._data["constants"]["specifications"]
+                    }
+                elif self._parent["constants"]["type"] == "hstack":
+                    return {
+                        "type" : "hstack",
+                        "specifications" : self._parent["constants"]["specifications"] + [self._data["constants"]]
+                    }
+                elif self._data["constants"]["type"] == "hstack":
+                    return {
+                        "type" : "hstack",
+                        "specifications" : [self._parent["constants"]] + self._data["constants"]["specifications"]
+                    }
+                else:
+                    return {
+                        "type" : "hstack",
+                        "specifications" : [
+                            self._parent["constants"],
+                            self._data["constants"],
+                        ]
+                    }
+                
             if key in self._data:
                 # Check if key is also in parent and is listed as an append key.
                 if key in self._parent and key in self._data["inherit"]["append"]:
@@ -407,6 +439,48 @@ class Interface(_HConfig):
                 log.error(errmsg)
                 raise KeyError(errmsg)       
 
+    @property
+    def user_file(self):
+        """
+        Return the user file.
+
+        :return: The user file.
+        :rtype: str
+        """
+        return self._user_file
+
+    @user_file.setter
+    def user_file(self, value):
+        """
+        Set the user file.
+
+        :param value: The user file.
+        :type value: str
+        :return: None
+        """
+        self._user_file = value
+
+    @property
+    def directory(self):
+        """
+        Return the directory.
+
+        :return: The directory.
+        :rtype: str
+        """
+        return self._directory
+
+    @directory.setter
+    def directory(self, value):
+        """
+        Set the directory.
+
+        :param value: The directory.
+        :type value: str
+        :return: None
+        """
+        self._directory = value
+        
     def get_output_columns(self):
         """
         Return the output columns.
@@ -498,6 +572,8 @@ c        Expand the environment variables in the configuration.
             for key in self._data["inherit"]["ignore"]:
                 if key in self._parent:
                     delete_keys.append(key)
+
+            # Output from parents shouldn't be modified, they become parts of the input.      
             if "output" in self._parent:
                 # Inherited outputs become input.
                 log.debug(f"Inheriting parent output as input.")
@@ -512,6 +588,20 @@ c        Expand the environment variables in the configuration.
                         "specifications" : [self._parent["input"], self._parent["output"]]
                     }                    
                 delete_keys.append("output")
+
+            # Parameters from parents shouldn't be modifled, they become constants.
+            if "parameters" in self._parent:
+                log.debug(f"Inheriting parent parameters as constants.")
+                if "constants" not in self._data:
+                    self._parent["constants"] = self._parent["parameters"]
+                elif self._parent["constants"]["type"] == "hstack":
+                    self._parent["constants"]["specifications"].append(self._parent["parameters"])
+                else:
+                    self._parent["constants"] = {
+                        "type" : "hstack",
+                        "specifications" : [self._parent["constants"], self._parent["parameters"]]
+                    }
+                delete_keys.append("parameters")
                 
         for key in delete_keys:
             del self._parent._data[key]

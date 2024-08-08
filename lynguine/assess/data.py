@@ -855,22 +855,38 @@ class DataObject:
                         # Select the data from the dataframe.
                         log.debug(f"Selecting item with index \"{item['select']}\" for the parameter type \"{key}\".")
                         newds = newdf.loc[item["select"]]
-                        newdf = newds.to_frame().T
+                        newdf = newds #.to_frame().T
                         
                 if cdf.empty:
                     log.debug(f"Creating new CustomDataFrame in from_flow from key \"{key}\".")
                     compute = cdf.compute
-                    cdf = cls(
-                        data=newdf,
-                        colspecs={key: list(newdf.columns)},
-                        selector=selector,
-                        interface=interface
-                    )
+                    if isinstance(newdf, pd.DataFrame):
+                        cdf = cls(
+                            data=newdf,
+                            colspecs={key: list(newdf.columns)},
+                            selector=selector,
+                            interface=interface
+                        )
+                    elif isinstance(newdf, pd.Series):
+                        cdf = cls(
+                            data=newdf,
+                            colspecs={key: list(newdf.index)},
+                            selector=selector,
+                            interface=interface
+                        )
+                    else:
+                        errmsg = f"Something has gone wrong, the data type of the new data frame is \"{type(newdf)} whereas we expect either pd.DataFrame or pd.Series\"."
+                        log.error(errmsg)
+                        raise ValueError(errmsg)
+                    
                     cdf.compute = compute
                 else:
                     log.debug(f"Adding key \"{key}\" to CustomDataFrame.")
                     cdf._d[key] = newdf
-                    cdf._colspecs[key] = list(cdf._d[key].columns)
+                    if isinstance(newdf, pd.DataFrame):
+                        cdf._colspecs[key] = list(newdf.columns)
+                    elif isinstance(newdf, pd.Series):
+                        cdf._colspecs[key] = list(newdf.index)
                     
                 if isinstance(mapping, dict):
                     mapping = [mapping]
@@ -1874,7 +1890,7 @@ class CustomDataFrame(DataObject):
             colspecs["cache"] += cache
 
         # Set up the data
-        self._colspecs = colspecs
+        self.colspecs = colspecs
         self._d = {}
         self._distribute_data(data)
 
@@ -1937,7 +1953,36 @@ class CustomDataFrame(DataObject):
         self.loc = self._LocAccessor(self)
         self.iloc = self._ILocAccessor(self)
 
+    @property
+    def colspecs(self):
+        """
+        Return the column specifications.
 
+        :return: Column specifications.
+        """
+        return self._colspecs
+
+    @colspecs.setter
+    def colspecs(self, value):
+        """
+        Set the column specifications.
+
+        :param value: New column specifications.
+        """
+        self._colspecs = value
+
+    def coltype(self, col):
+        """
+        Return the type of the column.
+
+        :param col: The column name.
+        :return: The type of the column.
+        """
+        for typ, cols in self.colspecs.items():
+            if col in cols:
+                return typ
+        return None
+        
     @property
     def compute(self):
         """
@@ -1984,20 +2029,25 @@ class CustomDataFrame(DataObject):
 
             row_label, col_label = key
 
-            # Logic to handle different data types within the custom DataFrame
-            for typ, data in self._data_object._d.items():
-                if col_label in data.columns:
+            if col_label in self._data_object.columns:
+                # Check for 'parameters' type columns
+                typ = self._data_object.coltype(col_label)
+                data = self._data_object._d[typ] 
+                log.debug(f"Column \"{col_label}\" is of type \"{typ}\".")
+                if typ in self._data_object.types["parameters"]:
+                    log.debug(f"Column \"{col_label}\" is of type \"{typ}\". Returning global value.")
+                    return data.at[col_label]
+                else:
                     if row_label in data.index:
                         return data.at[row_label, col_label]
                     else:
                         log.debug(f"Row \"{row_label}\" not found in column \"{col_label}\" returning \"None\".")
                         return None
-                elif typ in self._data_object.types["parameters"]:
-                    if col_label in data.index:
-                        return data.at[col_label]
-            errmsg = f"Key row \"{row_label}\" column \"{col_label}\" not found in the CustomDataFrame"
-            log.error(errmsg)
-            raise KeyError(errmsg)
+
+            else:        
+                errmsg = f"Key column \"{col_label}\" not found in the CustomDataFrame"
+                log.error(errmsg)
+                raise KeyError(errmsg)
 
         def __setitem__(self, key, value):
             """
