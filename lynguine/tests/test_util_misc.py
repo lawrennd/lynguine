@@ -1,12 +1,15 @@
 import pytest
 import os
 
+import numpy as np
+import pandas as pd
+
 from datetime import datetime
 from lynguine.util.misc import (
     reorder_dictionary,
     extract_full_filename,  extract_root_directory, extract_file_type, extract_abs_filename, camel_capitalize,
     remove_nan, is_valid_var, to_valid_var, to_camel_case, sub_path_environment, get_path_env,
-    get_url_file, markdown2html, html2markdown
+    get_url_file, markdown2html, html2markdown, isna
 )
 
 # Sample data for testing
@@ -251,3 +254,18 @@ def test_get_path_env():
     current_path = os.getcwd()
     expected = sub_path_environment(current_path)
     assert get_path_env() == expected
+
+def test_isna() -> None:
+    # Test isna works across different types of missing values.
+    # Test None
+    assert isna(None)
+    # Test np.nan
+    assert isna(np.nan)
+    # test type float nan
+    assert isna(float('nan'))
+    # test type np.float64 nan
+    assert isna(np.float64('nan'))
+    # test type np.float32 nan
+    assert isna(np.float32('nan'))
+    # test type np.float16 nan
+    assert isna(np.float16('nan'))

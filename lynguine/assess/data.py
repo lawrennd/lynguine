@@ -120,7 +120,7 @@ class DataObject:
             log.debug(f"Setting index to {index}.")
             self._index = index
         else:
-            errmsg = f"Index \"{value}\" not found in data"
+            errmsg = f"Index \"{index}\" not found in data"
             log.error(errmsg)
             raise KeyError(errmsg)
  

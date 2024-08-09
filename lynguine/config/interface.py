@@ -690,7 +690,10 @@ c        Expand the environment variables in the configuration.
                     log.debug(f'Reading yaml file "{fname}"')
                     data = yaml.safe_load(stream)
                 except yaml.YAMLError as exc:
-                    log.warning(exc)
+                    errmsg = f'Error reading yaml file "{fname}", error: {exc}'
+                    log.error(errmsg)
+                    raise ValueError(errmsg)
+                    
                     data = {}
             if field is not None:
                 if field in data:
