@@ -708,7 +708,7 @@ def sample_df():
         'series': ['D'],
     }
 
-    return CustomDataFrame(data, colspecs=colspecs)
+    return lynguine.assess.data.CustomDataFrame(data, colspecs=colspecs)
 
 def test_getitem_respects_colspecs(sample_df):
     assert isinstance(sample_df['D'], pd.Series)
@@ -721,8 +721,8 @@ def test_setitem_updates_colspecs(sample_df):
     assert 'F' in sample_df._colspecs['cache']
     
 def test_merge_preserves_colspecs():
-    df1 = CustomDataFrame({'A': [1, 2], 'B': [3, 4]}, colspecs={'input': ['A'], 'output': ['B']})
-    df2 = CustomDataFrame({'B': [3, 4], 'C': [5, 6]}, colspecs={'input': ['B'], 'output': ['C']})
+    df1 = lynguine.assess.data.CustomDataFrame({'A': [1, 2], 'B': [3, 4]}, colspecs={'input': ['A'], 'output': ['B']})
+    df2 = lynguine.assess.data.CustomDataFrame({'B': [3, 4], 'C': [5, 6]}, colspecs={'input': ['B'], 'output': ['C']})
     merged = df1.merge(df2, on='B')
     assert set(merged._colspecs['input']) == {'A'}
     assert set(merged._colspecs['output']) == {'B', 'C'}

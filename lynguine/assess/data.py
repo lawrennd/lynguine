@@ -2084,7 +2084,7 @@ class CustomDataFrame(DataObject):
         self.loc = self._LocAccessor(self)
         self.iloc = self._ILocAccessor(self)
 
-    def get_columns_type(self, col_type):
+    def get_type_columns(self, col_type):
         """
         Return the columns in the CustomDataFrame that are of a specified type.
 
@@ -2102,7 +2102,7 @@ class CustomDataFrame(DataObject):
 
         :return: A list of immutable (input) columns.
         """
-        return self.get_columns_type("input")
+        return self.get_type_columns("input")
 
     def get_series_columns(self):
         """
@@ -2110,7 +2110,7 @@ class CustomDataFrame(DataObject):
 
         :return: A list of series columns.
         """
-        return self.get_columns_type("series")
+        return self.get_type_columns("series")
 
     def get_parameters_columns(self):
         """
@@ -2118,7 +2118,7 @@ class CustomDataFrame(DataObject):
 
         :return: A list of parameters columns.
         """
-        return self.get_columns_type("parameters")
+        return self.get_type_columns("parameters")
 
     def get_output_columns(self):
         """
@@ -2126,7 +2126,22 @@ class CustomDataFrame(DataObject):
 
         :return: A list of output columns.
         """
-        return self.get_columns_type("output")
+        return self.get_type_columns("output")
+
+    def get_column_type(self, col):
+        """
+        Return the type of a given column.
+
+        :return: Column type
+        """
+        for typ in self._d:
+            if isinstance(self._d[typ], pd.Series):
+                columns = self._d[typ].index
+            else:
+                columns = self._d[typ].columns
+            if col in columns:
+                return typ
+        return None
     
     @property
     def colspecs(self):
