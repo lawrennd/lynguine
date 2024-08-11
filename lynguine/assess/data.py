@@ -1881,6 +1881,10 @@ class CustomDataFrame(DataObject):
 
         # If the colspecs isn't specified assume it's of "cache" type.
         if colspecs is None:
+            # Check if index has duplicates
+            if data.index.duplicated().any():
+                raise ValueError("Index has duplicates, please specify \"colspecs\" to share which columns are to be treated as \"series\" types..")
+            # Otherwise assume everything is cache.
             colspecs = {"cache": list(data.columns)}
         elif isinstance(colspecs, str):
             # Check if colspecs is in any of the types dictionary's entries.
@@ -1966,6 +1970,50 @@ class CustomDataFrame(DataObject):
         self.loc = self._LocAccessor(self)
         self.iloc = self._ILocAccessor(self)
 
+    def get_columns_type(self, col_type):
+        """
+        Return the columns in the CustomDataFrame that are of a specified type.
+
+        :param col_type: The type of columns to return.
+        :return: A list of columns of the specified type.
+        """
+        return [
+            col
+            for typ in self.types[col_type]
+            for col in self.colspecs.get(typ, [])
+        ]
+    def get_input_columns(self):
+        """
+        Return the columns in the CustomDataFrame that are immutable.
+
+        :return: A list of immutable (input) columns.
+        """
+        return self.get_columns_type("input")
+
+    def get_series_columns(self):
+        """
+        Return the columns in the CustomDataFrame that are of type "series".
+
+        :return: A list of series columns.
+        """
+        return self.get_columns_type("series")
+
+    def get_parameters_columns(self):
+        """
+        Return the columns in the CustomDataFrame that are of type "parameters".
+
+        :return: A list of parameters columns.
+        """
+        return self.get_columns_type("parameters")
+
+    def get_output_columns(self):
+        """
+        Return the columns in the CustomDataFrame that are of type "output".
+
+        :return: A list of output columns.
+        """
+        return self.get_columns_type("output")
+    
     @property
     def colspecs(self):
         """
@@ -2080,14 +2128,10 @@ class CustomDataFrame(DataObject):
             row_label, col_label = key
 
             # Check for immutable 'input' type columns
-            immutable_columns = [
-                col
-                for typ in self._data_object.types["input"]
-                for col in self._data_object.colspecs.get(typ, [])
-            ]
+            immutable_columns = self._data_object.get_input_columns()
             if col_label in immutable_columns:
                 raise KeyError(
-                    f"Column '{col_label}' is immutable and cannot be modified."
+                    f"Column \"{col_label}\" is immutable and cannot be modified."
                 )
 
             # Setting the value
@@ -2221,12 +2265,7 @@ class CustomDataFrame(DataObject):
                 col_key = slice(None)  # Equivalent to selecting all columns
 
             # Extract the list of immutable columns from colspecs based on types["input"]
-            immutable_types = self._data_object.types["input"]
-            immutable_columns = [
-                col
-                for typ in immutable_types
-                for col in self._data_object.colspecs.get(typ, [])
-            ]
+            immutable_columns = self._data_object.get_input_columns()
 
             # Check if any of the columns being modified are immutable
             if isinstance(col_key, (list, tuple, pd.Index)):
@@ -2397,9 +2436,16 @@ class CustomDataFrame(DataObject):
                     else:
                         # If it's not a series type make sure it's deduplicated.
                         if d.index.has_duplicates:
-                            log.debug(
-                                'Removing duplicated elements from "{typ}" loaded data.'
-                            )
+                            log.debug(f"Removing duplicated elements from \"{typ}\" loaded data.")
+                            # Find the duplicated indices
+                            duplicated_indices = d.index[d.index.duplicated(keep=False)]
+                            # Check for each duplicated index all elements are equal
+                            for idx in duplicated_indices:
+                                duplicates = df.loc[idx]
+                                if not duplicates.eq(duplicates.iloc[0]).all().all():
+                                    log.warning(f"Duplicated index \"{idx}\" has different values in columns that are specified as \"{typ}\" which is not a \"series\" type.")
+                            
+                            # Remove the duplicated indices
                             self._d[typ] = d[~d.index.duplicated(keep="first")]
                         else:
                             self._d[typ] = d

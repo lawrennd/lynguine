@@ -652,3 +652,25 @@ def test_convert_numpy_array_depth_mismatch(sample_custom_dataframe):
     array = np.array([[10], [11]])
     with pytest.raises(ValueError, match="NumPy array depth doesn't match CustomDataFrame array depth."):
         sample_custom_dataframe._convert_numpy_array(array)
+
+def test_get_input_columns(sample_custom_dataframe):
+    assert sample_custom_dataframe.get_input_columns() == []
+    df = lynguine.assess.data.CustomDataFrame({'A': [1, 1, 2], 'B': [3, 3, 4]}, colspecs={"input": ["A"], "output": ["B"]})
+    assert df.get_input_columns() == ["A"]
+    df = lynguine.assess.data.CustomDataFrame({'A': [1, 1, 2], 'B': [3, 3, 4], 'C' : [5, 5, 6]}, colspecs={"input": ["A", "C"], "output": ["B"]})
+    assert df.get_input_columns() == ["A", "C"]
+
+def test_get_column_type():
+    types = lynguine.assess.data.CustomDataFrame.types.keys()
+    for col_type in types:
+        for typ in lynguine.assess.data.CustomDataFrame.types[col_type]:
+            other_type = "output"
+            if col_type == "output":
+                other_type = "input"
+            if typ in  lynguine.assess.data.CustomDataFrame.types["parameters"]:
+                df = lynguine.assess.data.CustomDataFrame({'A': [1, 1, 1], 'B': [3, 3, 4], 'C' : [5, 5, 5]}, colspecs={typ: ["A", "C"], other_type: ["B"]})
+            else:
+                df = lynguine.assess.data.CustomDataFrame({'A': [1, 1, 2], 'B': [3, 3, 4], 'C' : [5, 5, 6]}, colspecs={typ: ["A", "C"], other_type: ["B"]})
+            
+            assert df.get_columns_type(col_type) == ["A", "C"]
+
