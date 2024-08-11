@@ -192,7 +192,7 @@ def isna(entry) -> bool:
     :return: True if the entry is missing, False otherwise.
     :rtype: bool
     """
-    return entry is None or (isinstance(entry, float) and math.isnan(entry) or (isinstance(entry, np.float64) and np.isnan(entry)) or (isinstance(entry, np.float32) and np.isnan(entry)) or (isinstance(entry, np.float16) and np.isnan(entry)))
+    return entry is None or (isinstance(entry, str) and entry=="") or (isinstance(entry, float) and math.isnan(entry) or (isinstance(entry, np.float64) and np.isnan(entry)) or (isinstance(entry, np.float32) and np.isnan(entry)) or (isinstance(entry, np.float16) and np.isnan(entry)))
 
 def is_valid_var(variable) -> bool:
     """

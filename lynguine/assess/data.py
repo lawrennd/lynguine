@@ -780,7 +780,20 @@ class DataObject:
                     log.warning(f"No data found for type '{typ}' to write.")
         if not data_written:
             log.warning(f"No data written, implying no data of type \"output\" found, data in CustomDataFrame are \"{', '.join(self._d)}\".")
-        
+
+    @classmethod
+    def compute_from_flow(cls, interface) -> Compute:
+        """
+        Construct a compute object from an interface object.
+
+        :param interface: Interface object.
+        :type interface: lynguine.config.interface.Interface or dict.
+        :return: A compute object.
+        """
+        if not isinstance(interface, (dict, Interface)):
+            raise ValueError("Interface must be a dictionary or of type Interface.")
+        return Compute.from_flow(interface)
+
     @classmethod
     def from_flow(cls, interface):
         """
@@ -803,9 +816,9 @@ class DataObject:
             if "selector" in interface["series"]:
                 selector = interface["series"]["selector"]
                 log.debug(f"Setting selector to \"{selector}\" for series type.")
-
+                
         # Initialize compute from the interface so it can be used below.
-        compute = Compute.from_flow(interface)
+        compute = cls.compute_from_flow(interface)
         cdf = cls({}, compute=compute, interface=interface)
 
         found_data = False

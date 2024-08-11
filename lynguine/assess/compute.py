@@ -241,22 +241,94 @@ p        :return: None
         :type interface: lynguine.config.interface.Interface
         :return: None
         """
+
         if "compute" not in interface:
             msg = f"Interface does not contain a compute section."
             self.logger.info(msg)
             return
-        
+
         computes = interface["compute"]
         if not isinstance(computes, list):
             computes = [computes]
+
+        index = data.get_index()
         
         for compute in computes:
-            compute_prep = self.prep(compute)
-            fargs = compute_prep["args"]
-            if "field" in compute: # if field is in compute, then we are computing or updating a new field
-                data[compute["field"]] = compute_prep["function"](data, **fargs)
+            # Some computes return multiple outputs, in which case field is a list of columns
+            multi_output = False 
+            
+            if "field" in compute:
+                columns = compute["field"]
+                if isinstance(columns, list):
+                    multi_output = True
+                else:
+                    columns = [columns]
             else:
+                columns = None
+
+            # Check if we need to refresh the data    
+            if "refresh" in compute:
+                refresh = compute["refresh"]
+            else:
+                refresh = False
+                
+            compute_prep = self.prep(compute, data)
+            fname = compute_prep["function"].__name__
+            fargs = compute_prep["args"]
+            if columns is None: # No fields to update, just run the compute
+                self.logger.debug(f"Running compute function \"{fname}\" with no field(s) stored for index=\"{index}\" with refresh=\"{refresh}\" and arguments \"{fargs}\".")
                 compute_prep["function"](data, **fargs)
+                continue
+
+            # If columns is present 
+            #if "field" in compute: # if field is in compute, then we are computing or updating a new field
+            #    data[compute["field"]] = compute_prep["function"](data, **fargs)
+            #else:
+            #    compute_prep["function"](data, **fargs)
+            
+            # If we're not refreshing, need to determine which columns aren't set so they can be refreshed.
+            if not refresh:
+                missing_vals = []
+                for column in columns:
+                    if column not in data.columns:
+                        missing_vals.append(True)
+                        continue
+                    if column == "_": # If the column is called "_" then ignore that argument
+                        missing_vals.append(False)
+                        continue
+                    val = data.get_value_column(column)
+                    if not isinstance(val, list) and pd.isna(val): 
+                        missing_vals.append(True) # The value is missing.
+                    else:
+                        missing_vals.append(False)
+
+            if refresh or any(missing_vals):
+                # Compute the function and get the new values  
+                self.logger.debug(f"Running compute function \"{fname}\" storing in field(s) \"{columns}\" with index=\"{index}\" with refresh=\"{refresh}\" and arguments \"{fargs}\".")
+                    
+                new_vals = compute_prep["function"](data, **fargs)
+            else:
+                continue
+                   
+            if multi_output:
+                if not isinstance(new_vals, tuple):
+                    errmsg = f"Multiple columns provided for return values of \"{fname}\" but return value given is not a tuple."
+                    log.error(errmsg)
+                    raise ValueError(errmsg)
+            
+                new_vals = [*new_vals]
+            else:
+                new_vals = [new_vals]
+
+            # Distribute the updated values to the columns
+            for column, new_val, missing_val in zip(columns, new_vals, missing_vals):
+                if column == "_":
+                    continue
+                if refresh or missing_val and data.ismutable(column):
+                    self.logger.debug(f"Setting column \"{column}\" in data structure to value \"{new_val}\" from compute.")
+                    data.set_value_column(new_val, column)
+
+        
 
     def preprocess(self, data : "CustomDataFrame", interface : Interface) -> None:
         """
@@ -275,7 +347,7 @@ p        :return: None
         else:
             computes = interface["compute"]
             for compute in computes:
-                compute_prep = self.prep(compute)
+                compute_prep = self.prep(compute, data)
                 fargs = compute_prep["args"]
                 if "field" in compute:
                     data[compute["field"]] = compute_prep["function"](data, **fargs)

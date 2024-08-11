@@ -139,6 +139,17 @@ Assess is about taking the raw data and processing it. Under `assess` `lynguine`
 import lynguine
 ```
 
+### `compute`
+
+The compute capability allows the user to specify computations that should take place on the data. The format is as follows.
+
+```yaml
+compute:
+- field: OutputColumnName
+  function: 
+```
+
+
 ### Util
 
 The `util` module provides various utilities for working with data. They include 
