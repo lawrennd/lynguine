@@ -1110,8 +1110,12 @@ class DataObject:
 
     def add(self, other):
         other = self.convert(other)
+        if isinstance(other, self.__class__):
+            data=self.to_pandas().add(other.to_pandas())
+        else:
+            data=self.to_pandas().add(other)
         return self.__class__(
-            data=self.to_pandas().add(other.to_pandas()),
+            data=data,
             colspecs=self._colspecs,
             index=self.get_index(),
             column=self.get_column(),
@@ -1120,8 +1124,12 @@ class DataObject:
 
     def subtract(self, other):
         other = self.convert(other)
+        if isinstance(other, self.__class__):
+            data=self.to_pandas().subtract(other.to_pandas())
+        else:
+            data=self.to_pandas().subtract(other)
         return self.__class__(
-            data=self.to_pandas().subtract(other.to_pandas()),
+            data=data,
             colspecs=self._colspecs,
             index=self.get_index(),
             column=self.get_column(),
@@ -1130,8 +1138,12 @@ class DataObject:
 
     def multiply(self, other):
         other = self.convert(other)
+        if isinstance(other, self.__class__):
+            data=self.to_pandas().multiply(other.to_pandas())
+        else:
+            data=self.to_pandas().multiply(other)
         return self.__class__(
-            data=self.to_pandas().multiply(pd.DataFrame(other.to_pandas())),
+            data=self.to_pandas().multiply(other.to_pandas()),
             colspecs=self._colspecs,
             index=self.get_index(),
             column=self.get_column(),
@@ -1602,14 +1614,59 @@ class DataObject:
         if isinstance(df, pd.Series):
             return df
         else:
-            colspecs = {"cache": df.columns}
+            colspecs = {}
+            for col in df.columns:
+                for spec in self._colspecs:
+                    if col in self._colspecs[spec]:
+                        if spec in colspecs:
+                            colspecs[spec].append(col)
+                        else:
+                            colspecs[spec] = [col]
+            colspecs = {"cache": list(df.columns)}
             return self.__class__(
                 data=df,
                 colspecs=colspecs,
             )
 
-    def __setitem__(self, key, value):
-        raise NotImplementedError("This is a base class")
+    def __setitem__(self, key, value) -> None:
+        """
+        Set item in the CustomDataFrame.
+
+        :param key: The key or slice to access elements of the DataFrame.
+        :param value: The value to assign to the DataFrame.
+        """
+        if isinstance(key, list):
+            for k in key:
+                if hasattr(value, "__getitem__") and k in value:
+                    self.__setitem__(k, value[k])
+                else:
+                    self.__setitem__(k, value)
+        else:
+            # Check if key refers to a single column or more than one
+            if key in self.columns:
+                if key not in self.get_series_columns() and isinstance(value, pd.Series) and not value.index.is_unique:
+                    errmsg = f"Error: Index is not unique for value assigned to column \"{key}\" and \"{key}\" is not a \"series\" type."
+                    log.error(errmsg)
+                    raise ValueError(errmsg)
+                else:
+                    self._d[self.get_column_type(key)][key] = value
+            else:
+                if isinstance(value, pd.Series) and not value.index.is_unique:
+                    if "cacheseries" not in self._colspecs:
+                        self._colspecs["cacheseries"] = []
+                        self._d["cacheseries"] = value.to_frame().T
+                    else:
+                        self._d["cacheseries"][key] = value                    
+                        
+                    self._colspecs["cacheseries"].append(key)
+                else:
+                    if "cache" not in self._colspecs:
+                        self._colspecs["cache"] = []
+                        self._d["cache"] = pd.DataFrame(index=self.index)
+
+                    self._colspecs["cache"].append(key)
+                    self._d["cache"][key] = value
+                
 
     def __iter__(self):
         for column in self.columns:
@@ -1679,6 +1736,63 @@ class DataObject:
             ]
 
         return updated_colspecs
+
+    def apply(self, func, axis=0, raw=False, result_type=None, args=(), **kwargs):
+        """
+        Apply a function along an axis of the DataFrame.
+
+        :param func: Function to apply to each column or row.
+        :param axis: Axis along which the function is applied.
+                     0 or 'index': apply function to each column.
+                     1 or 'columns': apply function to each row.
+        :param raw: Determines if row/column labels are passed to the function.
+        :param result_type: Type of the return value. Can be 'expand', 'reduce', or None.
+        :param args: Additional positional arguments to pass to func.
+        :param kwargs: Additional keyword arguments to pass to func.
+        :return: A new CustomDataFrame with the results of the applied function.
+        """
+        # Convert to pandas DataFrame
+        df = self.to_pandas()
+
+        # Apply the function
+        result = df.apply(func, axis=axis, raw=raw, result_type=result_type, args=args, **kwargs)
+
+        # If the result is a Series, convert it to a DataFrame
+        if isinstance(result, pd.Series):
+            result = result.to_frame().T
+
+        # Create a new CustomDataFrame from the result
+        new_colspecs = self._update_colspecs_after_apply(result)
+        return self.__class__(
+            data=result,
+            colspecs=new_colspecs,
+            index=self.get_index(),
+            column=self.get_column(),
+            selector=self.get_selector(),
+        )
+
+    def _update_colspecs_after_apply(self, result):
+        """
+        Update colspecs after applying a function.
+
+        :param result: The DataFrame resulting from the apply operation.
+        :return: Updated colspecs dictionary.
+        """
+        new_colspecs = {}
+        for typ, cols in self.colspecs.items():
+            new_cols = [col for col in cols if col in result.columns]
+            if new_cols:
+                new_colspecs[typ] = new_cols
+
+        # Add any new columns to 'cache' type
+        new_columns = set(result.columns) - set(self.columns)
+        if new_columns:
+            if 'cache' in new_colspecs:
+                new_colspecs['cache'].extend(list(new_columns))
+            else:
+                new_colspecs['cache'] = list(new_columns)
+
+        return new_colspecs
 
     def merge(
         self,
