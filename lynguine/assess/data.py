@@ -918,7 +918,71 @@ class DataObject:
             cdf.interface = interface
 
         return cdf
-    
+
+    def augment_with_df(self, df : pd.DataFrame, colspecs : dict) -> None:
+        """
+        This method is used to augment the CustomDataFrame with a new DataFrame.
+
+        :param df: The DataFrame to augment with.
+        :param colspecs: The colspecs to use.
+        :return: None
+        """
+        
+        # Ensure none of these columns are present already.
+        for typ, cols in colspecs.items():
+            for col in cols:
+                if col in self.columns:
+                    errmsg = f"Column \"{col}\" was provided to augment the CustomDataFrame but already exists in the CustomDataFrame."
+                    log.error(errmsg)
+                    raise ValueError(errmsg)
+                
+        for typ, cols in colspecs.items():
+            if typ in self.types["parameters"]:
+                # Check each element in each column is identical
+                for col in cols:
+                    if not all(df[col].iloc[0] == df[col].iloc[1:]):
+                        errmsg = f"Column \"{col}\" in \"{key}\" is specified as a parameters type but the rows of the the column are not identical."
+                        log.error(errmsg)
+                        raise ValueError(errmsg)
+                    
+            if typ not in self._d:
+                if typ in self.types["parameters"]:
+                    self._d[typ] = pd.Series(index=pd.Index(cols), data=df[cols].iloc[0])    
+                else: 
+                    self._d[typ] = df[cols]
+                self._colspecs[typ] = cols
+            else:   
+                if typ in self.types["parameters"]:
+                    if not isinstance(self._d[typ], pd.Series): # parameters type
+                        errmsg = f"The data type of the \"{typ}\" portion of the data frame is \"{type(self._d[typ])}\" whereas we expect a pd.Series. as it's representing parameters."
+                        log.error(errmsg)
+                        raise ValueError(errmsg)
+                    sds = pd.Series(index=pd.Index(cols), data=df[cols].iloc[0])
+                    # Concatenate the series
+                    self._d[typ] = pd.concat([self._d[typ], sds], axis=0)
+                elif typ in self.types["series"]:
+                    sdf = df[cols]
+                    self._d[typ] = pd.concat([self._d[typ], sdf], axis=1)
+                else:
+                    sdf = df[cols]
+                    if sdf.index.is_unique:
+                        self._d[typ] = pd.concat([self._d[typ], sdf], axis=1)
+                    else: 
+                        # Check if elements with the same index are identical
+                        for index, row in sdf.iterrows():
+                            if not all(row == sdf.loc[index]):
+                                errmsg = f"Column \"{col}\" in \"{key}\" is specified as a parameters type but the rows of the the column are not identical."
+                                log.error(errmsg)
+                                raise ValueError(errmsg)
+                        # Resolve duplicates
+                        sdf = sdf[~sdf.index.duplicated(keep="first")]
+                        self._d[typ] = pd.concat([self._d[typ], sdf], axis=1)
+                
+                    
+                # Update the current list of columns with cols.
+                self._colspecs[typ] += cols
+
+        
     def save_flows(self):
         """
         Save the output flows.
@@ -2531,7 +2595,7 @@ class CustomDataFrame(DataObject):
 
     def _distribute_data(self, data):
         """
-        Distribute data according to the colspec.
+        Distribute data according to the colspecs
 
         :param data: The input data to be distributed.
         :raises ValueError: If the data passed isn't pandas or custom DataFrame

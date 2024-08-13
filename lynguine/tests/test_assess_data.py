@@ -744,3 +744,69 @@ def test_apply_respects_colspecs(sample_df):
     assert len(result['D']) == 4
 
             
+import pytest
+import pandas as pd
+import numpy as np
+from lynguine.assess.data import CustomDataFrame
+
+def test_augment_with_df():
+    # Create an initial CustomDataFrame
+    initial_data = pd.DataFrame({
+        'A': [1, 2, 3],
+        'B': [4, 5, 6],
+    })
+    initial_colspecs = {'cache': ['A', 'B']}
+    cdf = lynguine.assess.data.CustomDataFrame(initial_data, colspecs=initial_colspecs)
+
+    # Test case 1: Augment with new columns
+    new_data1 = pd.DataFrame({
+        'C': [7, 8, 9],
+        'D': [10, 11, 12],
+    })
+    new_colspecs1 = {'cache': ['C', 'D']}
+    cdf.augment_with_df(new_data1, new_colspecs1)
+    
+    assert list(cdf.columns) == ['A', 'B', 'C', 'D']
+    assert cdf.colspecs == {'cache': ['A', 'B', 'C', 'D']}
+    np.testing.assert_array_equal(cdf['C'].values, [7, 8, 9])
+
+    # Test case 2: Augment with a parameter column
+    new_data2 = pd.DataFrame({
+        'E': [13, 13, 13],
+    })
+    new_colspecs2 = {'parameters': ['E']}
+    cdf.augment_with_df(new_data2, new_colspecs2)
+    
+    assert 'E' in cdf.columns
+    assert cdf.colspecs['parameters'] == ['E']
+    assert cdf['E'].unique() == [13]
+
+    # Test case 3: Augment with a series column
+    new_data3 = pd.DataFrame({
+        'F': [14, 15, 16, 17],
+    }, index=[0, 1, 2, 0])  # Note the repeated index
+    new_colspecs3 = {'series': ['F']}
+    cdf.augment_with_df(new_data3, new_colspecs3)
+    
+    assert 'F' in cdf.columns
+    assert cdf.colspecs['series'] == ['F']
+    assert len(cdf['F']) == 4
+
+    # TK: Undecided about how to deal with this whether error or absorb with NaNs
+    # Test case 4: Attempt to augment with non-matching data (should raise an error)
+    #new_data4 = pd.DataFrame({
+    #    'G': [18, 19],  # Note: only 2 rows
+    #})
+    #new_colspecs4 = {'cache': ['G']}
+    #with pytest.raises(ValueError):
+    #    cdf.augment_with_df(new_data4, new_colspecs4)
+
+    # Test case 5: Augment with a column that already exists (should update the values)
+    new_data5 = pd.DataFrame({
+        'A': [100, 200, 300],
+    })
+    new_colspecs5 = {'cache': ['A']}
+    with pytest.raises(ValueError):
+        cdf.augment_with_df(new_data5, new_colspecs5)
+    
+
