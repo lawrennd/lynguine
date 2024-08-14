@@ -69,8 +69,10 @@ class DataObject:
         # Extract DataFrames from that class and merge them.
         series = None
         for typ in self.types["series"]:
+            data = pd.DataFrame()            
             if typ in self.colspecs:
-                data = self[self.colspecs[typ]]
+                for col in self.colspecs[typ]:
+                    data[col] = self._d[typ][col]
                 if series is None:
                     series = data
                 else:
@@ -370,7 +372,7 @@ class DataObject:
         """
         if index is None:
             self._subindex = None
-        elif index in self.index:
+        elif index in self.get_subindices():
             self._subindex = index
         else:
             raise KeyError("Invalid subindex set.")
@@ -424,8 +426,6 @@ class DataObject:
             return selection.iloc[0]
         return val
             
-            
-
     def set_value(self, value):
         """
         Set the value that is in the cell defined as focus for the DataFrame.
@@ -433,11 +433,39 @@ class DataObject:
         :param value: The value to set.
         """
         col = self.get_column()
+        index = self.get_index()
+        
         if not self.isseries(col):
-            self.at[self.get_index(), col] = value
+            self.at[index, col] = value
         else:
-            raise NotImplementedError("Setting values in series columns is not yet implemented.")
+            if self._selector is None:
+                raise ValueError("A set_value() attempted when selector not set for a series column.")
+            if self._subindex is None:
+                raise ValueError("A set_value() was attempted when subindex was not set for series column.")
+            
+            typ = self.get_column_type(col)
+            series_df = self._d[typ]
+            
+            # Find the row(s) that match both the index and subindex
+            mask = (series_df.index == index) & (series_df[self._selector] == self._subindex)
+            
+            if mask.sum() == 0:
+                # If no matching row, create a new one
+                new_row = pd.DataFrame({self._selector: [self._subindex], col: [value]}, index=[index])
+                self._d[typ] = pd.concat([series_df, new_row])
+            elif mask.sum() == 1:
+                # If one matching row, update it
+                series_df.loc[mask, col] = value
+            else:
+                # If multiple matching rows, update the first and warn
+                series_df.loc[mask, col].iloc[0] = value
+                log.warning(f"Multiple rows found for index {index} and subindex {self._subindex}. Updating only the first occurrence.")
 
+            # Update the data object with the modified data
+            self._d[typ] = series_df
+
+        log.debug(f"Set value {value} for index {index}, column {col}, selector {self._selector}, subindex {self._subindex}")
+    
     def head(self, n=5):
         """
         Return the first `n` rows of the DataFrame.
@@ -733,6 +761,20 @@ class DataObject:
     def valid_data_types(cls):
         return set([item for key in cls.types for item in cls.types[key]])
 
+    @classmethod
+    def from_pandas(cls, df : pd.DataFrame, colspecs : dict) -> "CustomDataFrame":
+        """
+        Create a CustomDataFrame from a pandas DataFrame.
+
+        :param df: DataFrame to create from.
+        :param colspecs: dictionary of the column specifications.
+        :return: A CustomDataFrame object.
+        """
+        return cls(
+            df,
+            colspecs,
+        )
+    
     @classmethod
     def from_csv(cls, *args, **kwargs):
         """
@@ -2664,27 +2706,25 @@ class CustomDataFrame(DataObject):
                     df1 = df1.join(data, how="outer")
         return df1
 
-    def from_pandas(self, df, inplace=False):
+    def update_from_pandas(self, df : pd.DataFrame, colspecs : dict=None) -> None:
         """
         Convert from a pandas data frame to a CustomDataFrame.
 
-        :param df: A pandas DataFrame to convert to a CustomDataFrame.
-        :param inplace: Whether to perform the conversion in-place or return a new CustomDataFrame.
-        :return: A new CustomDataFrame if inplace is False, otherwise None.
+        :param df: A pandas DataFrame to update an existing data frame with.
+        :param colspecs: The column specifications to use.
+        :return: None
         """
         if inplace:
+            if colspecs is not None:
+                self._colspecs = colspecs
             self._distribute_data(df)
-        else:
-            return self.__class__(
-                df,
-                self._colspecs,
-                self.get_selector(),
-                self.get_index(),
-                self.get_column(),
-            )
+
 
     def filter(self, *args, **kwargs):
-        return self.from_pandas(self.to_pandas().filter(*args, **kwargs))
+        """
+        
+        """
+        return self.update_from_pandas(self.to_pandas().filter(*args, **kwargs))
 
     def _extract_compute(self, interface : Interface) -> Compute:
         """
