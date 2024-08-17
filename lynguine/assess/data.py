@@ -468,27 +468,60 @@ class DataObject:
 
         log.debug(f"Set value {value} for index {index}, column {col}, selector {self._selector}, subindex {self._subindex}")
 
-    def _append_row(self, df, index):
-        row = pd.DataFrame(columns=df.columns, index=pd.Index([index], name=df.index.name))
-        # Handle the fact that the index is stored as a column also
-        if df.index.name in row:
-            row[df.index.name] = index
-        if self.mutable:
-            # Only precompute if something to write to
-            self.compute_append(index=index, row=row)
-        # was return df.append(row) before append deprecation
-        return pd.concat([df, row])
-        
-    def add_series_row(self, index=None):
+    def add_row(self, index, values=None):
         """
-        Add a row to the series.
+        Add a new row to the CustomDataFrame for the current column in focus.
+
+        :param index: The index of the new row to be added.
+        :param values: A dictionary of column:value pairs for the new row. If None, adds NaN values.
+        :raises ValueError: If the index already exists or if it's not possible to add the row.
         """
-        
-        if index is None:
-            index = self.get_index()
-        self._writeseries = self._append_row(self._writeseries, index)
-        log.info(f"\"{index}\" added subseries row in Data._writeseries.")
-        
+        current_column = self.get_column()
+        current_type = self.get_column_type(current_column)
+
+        if current_type is None:
+            errmsg = f"Current column \"{current_column}\" not found in any dataframe."
+            log.error(errmsg)
+            raise ValueError(errmsg)
+
+        if current_type in self.types["input"]:
+            errmsg = f"Cannot add row to input type \"{current_type}\"."
+            log.error(errmsg)
+            raise ValueError(errmsg)
+
+        df = self._d[current_type]
+
+        # Don't allow adding a row if the type is parameters
+        if current_type in self.types["parameters"]:
+            errmsg = "Cannot add row to parameters type. Use set_value() to modify parameters."
+            log.error(errmsg)
+            raise ValueError(errmsg)
+
+        # Don't allow adding a row if the index already exists and the type is not a series
+        if index in df.index and current_type not in self.types["series"]:
+            errmsg = f"Index \"{index}\" already exists in \"{current_type}\"."
+            log.error(errmsg)
+            raise ValueError(errmsg)
+
+        if current_type in self.types["series"]:
+            # For series, we allow multiple rows with the same index
+            new_row = pd.DataFrame(index=[index])
+            for col in df.columns:
+                new_row[col] = values.get(col) if values else None
+        else:
+            # For non-series types
+            new_row = pd.DataFrame(index=[index], columns=df.columns)
+            if values:
+                for col, val in values.items():
+                    if col in new_row.columns:
+                        new_row.at[index, col] = val
+            
+        self._d[current_type] = pd.concat([df, new_row])
+
+
+        log.debug(f"Added new row with index \"{index}\" to \"{current_type}\" dataframe for column '{current_column}'.")
+
+    
     def head(self, n=5):
         """
         Return the first `n` rows of the DataFrame.
@@ -2415,6 +2448,11 @@ class CustomDataFrame(DataObject):
                     data.at[row_label, col_label] = value
                     data_modified = True
                     break
+                if row_label not in data.index and typ not in self._data_object.types["parameters"]:
+                    # Add row indexed by row_label to pd.DataFrame data
+                    data.at[row_label, col_label] = value
+                    data_modified = True
+                    break
                 elif typ in self._data_object.types["parameters"]:
                     if col_label in data.index:
                         raise KeyError(
@@ -2997,8 +3035,7 @@ class CustomDataFrame(DataObject):
             if "liquid" in view:
                 return self.liquid_to_value(view["liquid"], kwargs, local)
             if "tally" in view:
-                # Don't pass kwargs to tally_to_view as they need to be refreshed for subseries elements.
-                return self.tally_to_value(view["tally"], kwargs=None, local=local)
+                return self.tally_to_value(view["tally"], kwargs, local)
             if "display" in view:
                 return self.display_to_value(view["display"], kwargs, local)
             raise KeyError("View needs to contain a key which is one of \"list\", \"field\", \"join\", \"compute\", \"liquid\", \"tally\", or \"display\".")
@@ -3280,17 +3317,12 @@ class CustomDataFrame(DataObject):
                 value += "\n\n"
         orig_subindex = self.get_subindex()
         subindices = self.tally_series(tally)
-        log.debug(f"Tally subseries has subindices: \"{subindices}\".")
         for subindex in subindices:
-            log.debug(f"Setting subindex to \"{subindex}\".")
             self.set_subindex(subindex)
             value += self.view_to_value(tally, kwargs, local)
             if value != "":
                 value += "\n\n"
-            log.debug(f"Adding \"{value}\" to view.")
         self.set_subindex(orig_subindex)
-        log.debug(f"Setting subindex to original value of \"{orig_subindex}\".")
-
         if "end" in tally:
             value += tally["end"]
             if value != "":
@@ -3310,9 +3342,7 @@ class CustomDataFrame(DataObject):
         orig_subindex = self.get_subindex()
         subindices = self.get_subindices()
         if subindices is None:
-            return []
-        if len(subindices) == 0:
-            return []
+            return None
         if orig_subindex in subindices:
             cur_loc = subindices.get_loc(orig_subindex)
         else:
