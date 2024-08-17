@@ -410,6 +410,8 @@ class DataObject:
         log.debug(f"Getting value for index \"{index}\" and column \"{col}\"")
         val = self.at[index, col]
         log.debug(f"Value is \"{val}\"")
+        if val is None:
+            return None
         if self.isseries(col):
             # If it is a series column, return the element of val where the self._selector column equals the self._subindex value.
             if self._selector is None:
@@ -465,7 +467,28 @@ class DataObject:
             self._d[typ] = series_df
 
         log.debug(f"Set value {value} for index {index}, column {col}, selector {self._selector}, subindex {self._subindex}")
-    
+
+    def _append_row(self, df, index):
+        row = pd.DataFrame(columns=df.columns, index=pd.Index([index], name=df.index.name))
+        # Handle the fact that the index is stored as a column also
+        if df.index.name in row:
+            row[df.index.name] = index
+        if self.mutable:
+            # Only precompute if something to write to
+            self.compute_append(index=index, row=row)
+        # was return df.append(row) before append deprecation
+        return pd.concat([df, row])
+        
+    def add_series_row(self, index=None):
+        """
+        Add a row to the series.
+        """
+        
+        if index is None:
+            index = self.get_index()
+        self._writeseries = self._append_row(self._writeseries, index)
+        log.info(f"\"{index}\" added subseries row in Data._writeseries.")
+        
     def head(self, n=5):
         """
         Return the first `n` rows of the DataFrame.
@@ -1459,19 +1482,35 @@ class DataObject:
 
         :return: Index object containing the row labels.
         """
+
         # Take index from first entry in _d that is not a "parameters" entry
         # Note that if first entry is a "series" entry, then index will likely be duplicated
         parameters = False
         for typ, data in self._d.items():
-            if typ not in self.types["parameters"]:
+            if typ in self.types["input"]:
                 return data.index
-            else:
-                parameters = True
-        # If all entries are "parameters" entries, then return single index
-        if parameters:
-            return pd.Index([0])
-        else:
-            return pd.Index([])
+
+        for typ, data in self._d.items():
+            if typ in self.types["output"] and typ not in self.types["parameters"] and typ not in self.types["series"]:
+                return data.index
+
+        for typ, data in self._d.items():
+            if typ in self.types["cache"] and typ not in self.types["parameters"] and typ not in self.types["series"]:
+                return data.index
+
+        for typ, data in self._d.items():
+            if typ in self.types["output"] and typ in self.types["series"]:
+                return pd.Index(set(list(data.index)), name=data.index.name)
+
+        for typ, data in self._d.items():
+            if typ in self.types["cache"] and typ in self.types["series"]:
+                return pd.Index(set(list(data.index)), name=data.index.name)
+
+        for typ, data in self._d.items():
+            if self.types["parameters"]:
+                return pd.Index([0])
+
+        return pd.Index([])
 
     @property
     def empty(self):
@@ -2958,7 +2997,8 @@ class CustomDataFrame(DataObject):
             if "liquid" in view:
                 return self.liquid_to_value(view["liquid"], kwargs, local)
             if "tally" in view:
-                return self.tally_to_value(view["tally"], kwargs, local)
+                # Don't pass kwargs to tally_to_view as they need to be refreshed for subseries elements.
+                return self.tally_to_value(view["tally"], kwargs=None, local=local)
             if "display" in view:
                 return self.display_to_value(view["display"], kwargs, local)
             raise KeyError("View needs to contain a key which is one of \"list\", \"field\", \"join\", \"compute\", \"liquid\", \"tally\", or \"display\".")
@@ -3240,12 +3280,17 @@ class CustomDataFrame(DataObject):
                 value += "\n\n"
         orig_subindex = self.get_subindex()
         subindices = self.tally_series(tally)
+        log.debug(f"Tally subseries has subindices: \"{subindices}\".")
         for subindex in subindices:
+            log.debug(f"Setting subindex to \"{subindex}\".")
             self.set_subindex(subindex)
             value += self.view_to_value(tally, kwargs, local)
             if value != "":
                 value += "\n\n"
+            log.debug(f"Adding \"{value}\" to view.")
         self.set_subindex(orig_subindex)
+        log.debug(f"Setting subindex to original value of \"{orig_subindex}\".")
+
         if "end" in tally:
             value += tally["end"]
             if value != "":
@@ -3265,7 +3310,9 @@ class CustomDataFrame(DataObject):
         orig_subindex = self.get_subindex()
         subindices = self.get_subindices()
         if subindices is None:
-            return None
+            return []
+        if len(subindices) == 0:
+            return []
         if orig_subindex in subindices:
             cur_loc = subindices.get_loc(orig_subindex)
         else:
