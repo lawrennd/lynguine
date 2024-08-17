@@ -3035,7 +3035,8 @@ class CustomDataFrame(DataObject):
             if "liquid" in view:
                 return self.liquid_to_value(view["liquid"], kwargs, local)
             if "tally" in view:
-                return self.tally_to_value(view["tally"], kwargs, local)
+                # Don't pass kwargs to tally_to_view as they need to be refreshed for subseries elements.
+                return self.tally_to_value(view["tally"], kwargs=None, local=local)
             if "display" in view:
                 return self.display_to_value(view["display"], kwargs, local)
             raise KeyError("View needs to contain a key which is one of \"list\", \"field\", \"join\", \"compute\", \"liquid\", \"tally\", or \"display\".")
