@@ -145,9 +145,9 @@ def test_invalid_subindex(series_dataframe):
         series_dataframe.set_subindex('C')  # 'C' is not a valid subindex
 
 def test_non_series_column_access(series_dataframe):
-    series_dataframe.set_selector('day')
     with pytest.raises(KeyError):
-        series_dataframe.set_subindex('A')  # 'day' is not a series column
+        series_dataframe.set_selector('day') # 'day' is not a series column
+
 
 def test_from_pandas_sets_colspecs():
     pd_df = pd.DataFrame(

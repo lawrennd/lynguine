@@ -97,6 +97,27 @@ class DataObject:
         except KeyError as err:
             raise KeyError(f"Could not find index \"{err}\" in the subseries when using it as a selector.")
 
+    def get_subseries_values(self):
+        """
+        Return a pd.Series containing all the values in a column.
+        """
+        column = self.get_column()
+        if column == None:
+            return None
+        index = self.get_index()
+
+        typ = self._col_source(column)
+        if self.isseries(column):
+            indexer = self._d[typ].index.isin([index])
+            if indexer.sum()>0:
+                return self._d[typ].loc[indexer, column]
+            else:
+                log.warning(f"No data available with index \"{index}\" returning None.")
+                return None
+        else:
+            log.warning(f"\"{column}\" is not a series column, type is \"{typ}\" returning \"None\"")
+            return None
+        
     def get_index(self) -> int:
         """
         Get the index that is the focus for the DataFrame.
@@ -119,8 +140,9 @@ class DataObject:
             log.debug("Setting index to None.")
             self._index = None
         elif index in self.index:
-            log.debug(f"Setting index to {index}.")
+            log.debug(f"Setting index to \"{index}\".")            
             self._index = index
+                
         else:
             errmsg = f"Index \"{index}\" not found in data"
             log.error(errmsg)
@@ -337,6 +359,7 @@ class DataObject:
         """
         return self._selector
 
+    
     def set_selector(self, column):
         """
         Set the selector that is the focus for the DataFrame.
@@ -347,9 +370,20 @@ class DataObject:
         :raise KeyError: If the column is not in the DataFrame.
         """
         if column is None:
+            log.warning(f"No column selected for selector, setting to \"None\".")
             self._selector = None
         elif column in self.columns:
-            self._selector = column
+            if self.isseries(column):
+                self._selector = column
+                log.debug(f"Column \"{column}\" of CustomDataFrame selected for selection.")
+                if self.get_subindex() not in self[column]:
+                    log.warning(f"Subindex \"{self.get_subindex()}\" not found in column \"{column}\", resetting to None.")
+                    self.set_subindex(None)
+                
+            else:
+                errmsg = f"Column \"{column}\" is not a series column."
+                log.error(errmsg)
+                raise KeyError(errmsg)
         else:
             raise KeyError("Invalid selector set.")
 
@@ -412,22 +446,26 @@ class DataObject:
         log.debug(f"Value is \"{val}\"")
         if val is None:
             return None
+        if not isinstance(val, pd.Series):
+            return val
         if self.isseries(col):
             # If it is a series column, return the element of val where the self._selector column equals the self._subindex value.
             if self._selector is None:
                 errmsg = "Selector not set."
                 log.error(errmsg)
                 raise KeyError(errmsg)
-            if self._subindex is None:
-                errmsg = "Subindex not set."
-                log.error(errmsg)
-                raise KeyError(errmsg)
+            if self.get_subindex() is None:
+                log.debug(f"Subindex not set, setting to first subindex.")
+                self.set_subindex(self.get_subindices()[0])
             selection = val[self.at[self.get_index(), self._selector] == self._subindex]
             if len(selection) > 1:
-                log.warning(f"Multiple values found for selector {self._selector} and subindex {self._subindex}. returning the first.")
+                log.warning(f"Multiple values found for selector \"{self._selector}\" and subindex \"{self._subindex}\". returning the first.")
             return selection.iloc[0]
-        return val
-            
+        else:
+            errmsg = f"Column \"{col}\" is not a series column and yet the return value from it was a series.."
+            log.error(errmsg)
+            raise KeyError(errmsg)
+        
     def set_value(self, value):
         """
         Set the value that is in the cell defined as focus for the DataFrame.
@@ -453,57 +491,77 @@ class DataObject:
             
             if mask.sum() == 0:
                 # If no matching row, create a new one
+                log.debug(f"No matching rows found for index \"{index}\" and subindex \"{self._subindex}\" in selector column \"{self._selector}\". Creating a new row.")
                 new_row = pd.DataFrame({self._selector: [self._subindex], col: [value]}, index=[index])
-                self._d[typ] = pd.concat([series_df, new_row])
+                series_df = pd.concat([series_df, new_row])
             elif mask.sum() == 1:
                 # If one matching row, update it
+                log.debug(f"One matching row found for index \"{index}\" and subindex \"{self._subindex}\" in selector column \"{self._selector}\". Updating it.")
                 series_df.loc[mask, col] = value
             else:
                 # If multiple matching rows, update the first and warn
                 series_df.loc[mask, col].iloc[0] = value
-                log.warning(f"Multiple rows found for index {index} and subindex {self._subindex}. Updating only the first occurrence.")
+                log.warning(f"Multiple rows found for index \"{index}\" and subindex \"{self._subindex}\" in selector column \"{self._selector}\". Updating only the first occurrence.")
 
             # Update the data object with the modified data
             self._d[typ] = series_df
 
-        log.debug(f"Set value {value} for index {index}, column {col}, selector {self._selector}, subindex {self._subindex}")
+        log.debug(f"Set value {value} for index \"{index}\", column \"{col}\", selector \"{self._selector}\", subindex \"{self._subindex}\"")
 
-    def add_row(self, index, values=None):
+    def add_series_row(self, index=None, values=None):
+        """
+        Add a row to the series.
+
+        :param index: The index of the row to add.
+        :param values: The values to add to the row.
+        
+        """
+        if index is None:
+            index = self.get_index()
+        for typ in self.types["series"]:
+            if typ in self._d:
+                new_row = pd.DataFrame(index=[index])
+                for col in self._d[typ].columns:
+                    new_row[col] = values.get(col) if values else None
+                self._d[current_type] = pd.concat([df, new_row])
+    
+    def add_row(self, index, typ=None, values=None):
         """
         Add a new row to the CustomDataFrame for the current column in focus.
 
         :param index: The index of the new row to be added.
+        :param typ: The type of row being added.
         :param values: A dictionary of column:value pairs for the new row. If None, adds NaN values.
         :raises ValueError: If the index already exists or if it's not possible to add the row.
         """
-        current_column = self.get_column()
-        current_type = self.get_column_type(current_column)
+        if typ is None:
+            current_column = self.get_column()
+            typ = self.get_column_type(current_column)
+            if typ is None:
+                errmsg = f"Current column \"{current_column}\" not found in any dataframe."
+                log.error(errmsg)
+                raise ValueError(errmsg)
 
-        if current_type is None:
-            errmsg = f"Current column \"{current_column}\" not found in any dataframe."
+        if typ in self.types["input"]:
+            errmsg = f"Cannot add row to input type \"{typ}\"."
             log.error(errmsg)
             raise ValueError(errmsg)
 
-        if current_type in self.types["input"]:
-            errmsg = f"Cannot add row to input type \"{current_type}\"."
-            log.error(errmsg)
-            raise ValueError(errmsg)
-
-        df = self._d[current_type]
+        df = self._d[typ]
 
         # Don't allow adding a row if the type is parameters
-        if current_type in self.types["parameters"]:
+        if typ in self.types["parameters"]:
             errmsg = "Cannot add row to parameters type. Use set_value() to modify parameters."
             log.error(errmsg)
             raise ValueError(errmsg)
 
         # Don't allow adding a row if the index already exists and the type is not a series
-        if index in df.index and current_type not in self.types["series"]:
-            errmsg = f"Index \"{index}\" already exists in \"{current_type}\"."
+        if index in df.index and typ not in self.types["series"]:
+            errmsg = f"Index \"{index}\" already exists in \"{typ}\"."
             log.error(errmsg)
             raise ValueError(errmsg)
 
-        if current_type in self.types["series"]:
+        if typ in self.types["series"]:
             # For series, we allow multiple rows with the same index
             new_row = pd.DataFrame(index=[index])
             for col in df.columns:
@@ -516,10 +574,10 @@ class DataObject:
                     if col in new_row.columns:
                         new_row.at[index, col] = val
             
-        self._d[current_type] = pd.concat([df, new_row])
+        self._d[typ] = pd.concat([df, new_row])
 
 
-        log.debug(f"Added new row with index \"{index}\" to \"{current_type}\" dataframe for column '{current_column}'.")
+        log.debug(f"Added new row with index \"{index}\" to \"{typ}\" dataframe.")
 
     
     def head(self, n=5):
@@ -2406,8 +2464,10 @@ class CustomDataFrame(DataObject):
                     log.debug(f"Column \"{col_label}\" is of type \"{typ}\". Returning global value.")
                     return data.at[col_label]
                 else:
+                    # Is row already present in relevant _d
                     if row_label in data.index:
                         return data.at[row_label, col_label]
+                    # Is row present in overall dataframe, but not in a mutable _d.                    
                     else:
                         log.debug(f"Row \"{row_label}\" not found in column \"{col_label}\" returning \"None\".")
                         return None
@@ -3232,8 +3292,7 @@ class CustomDataFrame(DataObject):
         :type compute: dict or Interface
         :returns: The value extracted from the computation.
         """
-        compute_prep = self.compute.prep(compute)
-        return self.compute.run(compute_prep)
+        return self.compute.run(self, compute)
     
     def compute_to_tmpname(self, compute) -> str:
         """
@@ -3344,6 +3403,8 @@ class CustomDataFrame(DataObject):
         subindices = self.get_subindices()
         if subindices is None:
             return None
+        if len(subindices) == 0:
+            return []
         if orig_subindex in subindices:
             cur_loc = subindices.get_loc(orig_subindex)
         else:

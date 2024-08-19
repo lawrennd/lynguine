@@ -95,6 +95,7 @@ p        :return: None
         :rtype: dict
 
         """
+        self.logger.debug(f"Preparing compute entry with settings \"{settings}\".")
         compute_prep = {
             "function": self.gcf_(function=settings["function"], data=data),
             "args" : self.gca_(**settings),
@@ -383,7 +384,26 @@ p        :return: None
         :type post: bool
         :return: None
         """
-        pass
+
+        if pre:
+            for compute in self.precomputes:
+                compute_prep = self.prep(compute, data)
+                fargs = compute_prep["args"]
+                compute_prep["function"](data, **fargs)
+
+        if df is not None:
+            data = df
+
+        for compute in self.computes:
+            compute_prep = self.prep(compute, data)
+            fargs = compute_prep["args"]
+            compute_prep["function"](data, **fargs)
+
+        if post:
+            for compute in self.postcomputes:
+                compute_prep = self.prep(compute, data)
+                fargs = compute_prep["args"]
+                compute_prep["function"](data, **fargs)
 
     def _compute_functions_list(self) -> list[dict]:
         """
