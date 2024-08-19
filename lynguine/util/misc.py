@@ -6,6 +6,7 @@ import sys
 import wget
 
 import numpy as np
+import pandas as pd
 
 import markdown
 import markdownify
@@ -192,7 +193,7 @@ def isna(entry) -> bool:
     :return: True if the entry is missing, False otherwise.
     :rtype: bool
     """
-    return entry is None or (isinstance(entry, str) and entry=="") or (isinstance(entry, float) and math.isnan(entry) or (isinstance(entry, np.float64) and np.isnan(entry)) or (isinstance(entry, np.float32) and np.isnan(entry)) or (isinstance(entry, np.float16) and np.isnan(entry)))
+    return entry is None or (isinstance(entry, str) and entry=="") or (isinstance(entry, float) and math.isnan(entry) or (isinstance(entry, np.float64) and np.isnan(entry)) or (isinstance(entry, np.float32) and np.isnan(entry)) or (isinstance(entry, np.float16) and np.isnan(entry))) or (isinstance(entry, np.datetime64) and np.isnat(entry)) or (pd.api.types.is_scalar(entry) and pd.isnull(entry))
 
 def is_valid_var(variable) -> bool:
     """

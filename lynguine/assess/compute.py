@@ -9,6 +9,7 @@ from ..log import Logger
 from ..config.interface import Interface
 
 from ..util.text import render_liquid
+from ..util.misc import isna
 
 from ..util.liquid import url_escape, markdownify, relative_url, absolute_url, to_i
 
@@ -280,12 +281,6 @@ p        :return: None
                 self.logger.debug(f"Running compute function \"{fname}\" with no field(s) stored for index=\"{index}\" with refresh=\"{refresh}\" and arguments \"{fargs}\".")
                 compute_prep["function"](data, **fargs)
                 continue
-
-            # If columns is present 
-            #if "field" in compute: # if field is in compute, then we are computing or updating a new field
-            #    data[compute["field"]] = compute_prep["function"](data, **fargs)
-            #else:
-            #    compute_prep["function"](data, **fargs)
             
             # If we're not refreshing, need to determine which columns aren't set so they can be refreshed.
             if not refresh:
@@ -298,7 +293,7 @@ p        :return: None
                         missing_vals.append(False)
                         continue
                     val = data.get_value_column(column)
-                    if not isinstance(val, list) and pd.isna(val): 
+                    if not isinstance(val, list) and isna(val): 
                         missing_vals.append(True) # The value is missing.
                     else:
                         missing_vals.append(False)

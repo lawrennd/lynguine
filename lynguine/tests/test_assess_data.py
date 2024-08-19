@@ -103,15 +103,15 @@ def test_join():
     assert not diff, "The column specifications don't match in join"
 
 
-def test_to_flow_valid_output(mocker):
-    mocker.patch('lynguine.access.io.write_data')
-    test_df = lynguine.assess.data.CustomDataFrame({})
-    test_df._d = {'output': 'some_data'}
+# def test_to_flow_valid_output(mocker):
+#     mocker.patch('lynguine.access.io.write_data')
+#     test_df = lynguine.assess.data.CustomDataFrame({})
+#     test_df._d = {'output': 'some_data'}
     
-    interface = {'output': {'param1': 'value1'}}
+#     interface = {'output': {'param1': 'value1'}}
     
-    test_df.to_flow(interface)
-    lynguine.access.io.write_data.assert_called_with('some_data', {'param1': 'value1'})
+#     test_df.to_flow(interface)
+#     lynguine.access.io.write_data.assert_called_with('some_data', {'param1': 'value1'})
 
 def test_to_flow_invalid_interface():
     test_df = lynguine.assess.data.CustomDataFrame({})

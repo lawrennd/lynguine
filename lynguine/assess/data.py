@@ -395,17 +395,26 @@ class DataObject:
 
         :return: The subindex that is the focus for the DataFrame.
         """
+        if self._subindex is None:
+            log.debug(f"Subindex is None. Attempt to extract subindex from last row.")
+            if self.get_subindices()[-1] is not None:
+                self._subindex = self.get_subindices()[-1]
+                log.debug(f"Subindex set to \"{self._subindex}\".")
         return self._subindex
 
     def set_subindex(self, index : int):
         """
         Set the subindex that is the focus for the DataFrame.
 
+        If the subindex is set to None, the last row of the subseries
+        is returned. The last row is assumed to be the most recent.
+
         :param index: The index to set the subindex to.
         :raise KeyError: If the index is not in the DataFrame.
+
         """
         if index is None:
-            self._subindex = None
+            self._subindex = None # Will select the last row.
         elif index in self.get_subindices():
             self._subindex = index
         else:
@@ -455,12 +464,13 @@ class DataObject:
                 log.error(errmsg)
                 raise KeyError(errmsg)
             if self.get_subindex() is None:
-                log.debug(f"Subindex not set, setting to first subindex.")
-                self.set_subindex(self.get_subindices()[0])
-            selection = val[self.at[self.get_index(), self._selector] == self._subindex]
+                log.debug(f"Subindex not set, will default to last row.")
+                selection = val
+            else:
+                selection = val[self.at[index, self._selector] == self._subindex]
             if len(selection) > 1:
-                log.warning(f"Multiple values found for selector \"{self._selector}\" and subindex \"{self._subindex}\". returning the first.")
-            return selection.iloc[0]
+                log.warning(f"Multiple values found for selector \"{self._selector}\" and subindex \"{self._subindex}\". returning the last.")
+            return selection.iloc[-1]
         else:
             errmsg = f"Column \"{col}\" is not a series column and yet the return value from it was a series.."
             log.error(errmsg)
@@ -480,14 +490,15 @@ class DataObject:
         else:
             if self._selector is None:
                 raise ValueError("A set_value() attempted when selector not set for a series column.")
-            if self._subindex is None:
-                raise ValueError("A set_value() was attempted when subindex was not set for series column.")
             
             typ = self.get_column_type(col)
             series_df = self._d[typ]
-            
-            # Find the row(s) that match both the index and subindex
-            mask = (series_df.index == index) & (series_df[self._selector] == self._subindex)
+
+            mask = (series_df.index == index)
+            if self._subindex is not None:
+                # Find the row(s) that match both the index and subindex
+                mask = mask & (series_df[self._selector] == self._subindex)
+                
             
             if mask.sum() == 0:
                 # If no matching row, create a new one
@@ -499,31 +510,20 @@ class DataObject:
                 log.debug(f"One matching row found for index \"{index}\" and subindex \"{self._subindex}\" in selector column \"{self._selector}\". Updating it.")
                 series_df.loc[mask, col] = value
             else:
-                # If multiple matching rows, update the first and warn
-                series_df.loc[mask, col].iloc[0] = value
-                log.warning(f"Multiple rows found for index \"{index}\" and subindex \"{self._subindex}\" in selector column \"{self._selector}\". Updating only the first occurrence.")
+                # If multiple matching rows, update the last row and warn
+                # This is a chained assignment
+                #series_df.loc[mask, col].iloc[-1] = value
+                # This code attempts to get around that.
+                index_last_val = pd.Series(range(0, len(mask)))[mask].iloc[-1]
+                log.debug(f"Last position is \"{index_last_val}\".")
+                series_df.iloc[index_last_val, series_df.columns.get_loc(col)] = value
+                log.warning(f"Multiple rows found for index \"{index}\" and subindex \"{self._subindex}\" in selector column \"{self._selector}\". Updating only the last occurrence.")
 
             # Update the data object with the modified data
             self._d[typ] = series_df
 
         log.debug(f"Set value {value} for index \"{index}\", column \"{col}\", selector \"{self._selector}\", subindex \"{self._subindex}\"")
 
-    def add_series_row(self, index=None, values=None):
-        """
-        Add a row to the series.
-
-        :param index: The index of the row to add.
-        :param values: The values to add to the row.
-        
-        """
-        if index is None:
-            index = self.get_index()
-        for typ in self.types["series"]:
-            if typ in self._d:
-                new_row = pd.DataFrame(index=[index])
-                for col in self._d[typ].columns:
-                    new_row[col] = values.get(col) if values else None
-                self._d[current_type] = pd.concat([df, new_row])
     
     def add_row(self, index, typ=None, values=None):
         """
@@ -924,10 +924,14 @@ class DataObject:
         data_written = False
         for typ, details in interface.items():
             if typ in self.types["output"]:
-                data = self._d.get(typ)
-                if data is not None:
+                df = self._d.get(typ)
+                if df is not None:
                     try:
-                        access.io.write_data(data, details)
+                        write_df = pd.concat(
+                            [pd.Series(list(df.index), index=df.index, name=df.index.name), df], axis=1
+                        )
+                        
+                        access.io.write_data(write_df, details)
                         data_written = True
                         log.info(f"Data for type '{typ}' written successfully.")
                     except Exception as e:
