@@ -972,10 +972,6 @@ class DataObject:
             raise ValueError("Interface must be a dictionary or of type Interface.")
         default_joins = "outer"
         selector = None
-        if "series" in interface:
-            if "selector" in interface["series"]:
-                selector = interface["series"]["selector"]
-                log.debug(f"Setting selector to \"{selector}\" for series type.")
                 
         # Initialize compute from the interface so it can be used below.
         compute = cls.compute_from_flow(interface)
@@ -990,7 +986,7 @@ class DataObject:
                     mapping = item["mapping"]
                 else:
                     mapping = []
-                if key in cdf._d:
+                if key in cdf._d and not cdf._d[key].empty:
                     raise ValueError(
                         f"Attempting to set the \"{key}\" portion of the data frame from flow, but have found one already exists. Current keys are \"{', '.join(cdf._d.keys())}\"."
                     )
@@ -1028,7 +1024,16 @@ class DataObject:
                         # Select the data from the dataframe.
                         log.debug(f"Selecting item with index \"{item['select']}\" for the parameter type \"{key}\".")
                         newds = newdf.loc[item["select"]]
-                        newdf = newds #.to_frame().T
+                        newdf = newds 
+
+                if key not in cls.types["series"] and key not in cls.types["parameters"]:
+                    # Remove duplicates in newdf index
+                    if not newdf.index.is_unique:
+                        # Extract the names of duplicate rows.
+                        duplicates = newdf[newdf.index.duplicated(keep="first")]
+                        duplicate_names = duplicates.index.tolist()
+                        log.warning(f"Duplicate index values found in the data frame for key \"{key}\". Duplicates are \"{', '.join(duplicate_names)}\". Removing duplicates.")
+                        newdf = newdf[~newdf.index.duplicated(keep="first")]
                         
                 if cdf.empty:
                     log.debug(f"Creating new CustomDataFrame in from_flow from key \"{key}\".")
@@ -1077,6 +1082,10 @@ class DataObject:
         else:
             cdf.interface = interface
 
+        if "series" in interface:
+            if "selector" in interface["series"]:
+                cdf.set_selector(interface["series"]["selector"])
+                log.debug(f"Setting selector to \"{selector}\" for series type.")
         return cdf
 
     def augment_with_df(self, df : pd.DataFrame, colspecs : dict) -> None:
@@ -2135,7 +2144,9 @@ class DataObject:
                             
     def _finalize_df(self, data, interface):
         """
-        This function is used to attend to any modifications in the details dict to finalize the data frame. It fixes up the index, adds columns, sets the right data type etc."""
+        This function is used to attend to any modifications in the details dict to finalize the data frame. It fixes up the index, adds columns, sets the right data type etc.
+
+        """
 
         raise NotImplementedError("This is a base class")
     
@@ -2887,8 +2898,7 @@ class CustomDataFrame(DataObject):
         """
         
 
-        if "mapping" in interface:
-            
+        if "mapping" in interface:            
             for name, column in interface["mapping"].items():
                 self.update_name_column_map(column=column, name=name)
 
