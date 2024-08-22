@@ -1591,7 +1591,7 @@ class DataObject:
         # Note that if first entry is a "series" entry, then index will likely be duplicated
         parameters = False
         for typ, data in self._d.items():
-            if typ in self.types["input"]:
+            if typ in self.types["input"] and typ not in self.types["parameters"]:
                 return data.index
 
         for typ, data in self._d.items():
