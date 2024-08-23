@@ -347,28 +347,39 @@ class Interface(_HConfig):
                 
                 log.debug(f"Appending contents of parent input to input.")
                 # stack the input horizontally.
+                mapping = {}
+                if "mapping" in self._parent["input"]:
+                    mapping.update(self._parent["input"]["mapping"])
+                if "mapping" in self._data["input"]:
+                    mapping.update(self._data["input"]["mapping"])
                 if self._parent["input"]["type"] == "hstack" and self._data["input"]["type"] == "hstack":
+                    
+
                     return {
                         "type" : "hstack",
                         "index" : self._parent["input"]["index"],
+                        "mapping" : mapping,
                         "specifications" : self._parent["input"]["specifications"] + self._data["input"]["specifications"]
                     }
                 elif self._parent["input"]["type"] == "hstack":
                     return {
                         "type" : "hstack",
                         "index" : self._parent["input"]["index"],
+                        "mapping" : mapping,
                         "specifications" : self._parent["input"]["specifications"] + [self._data["input"]]
                     }
                 elif self._data["input"]["type"] == "hstack":
                     return {
                         "type" : "hstack",
                         "index" : self._parent["input"]["index"],
+                        "mapping" : mapping,
                         "specifications" : [self._parent["input"]] + self._data["input"]["specifications"]
                     }
                 else:
                     return {
                         "type" : "hstack",
                         "index" : self._parent["input"]["index"],
+                        "mapping" : mapping,
                         "specifications" : [
                             self._parent["input"],
                             self._data["input"],
@@ -543,25 +554,6 @@ c        Expand the environment variables in the configuration.
             if isinstance(item, str):
                 self._data[key] = os.path.expandvars(item)
 
-    # def _restructure(self):
-    #     """
-    #     Restructure the data to be in the correct format.
-
-    #     For backwards compatability, move input, output and paremeters to correct place.
-    #     """
-    #     for key, item in self._data.items():
-    #         if key in self._input:
-    #             if "input" not in self._data:
-    #                 self._data["input"] = {}
-    #             self._data["input"][key] = item
-    #         if key in self._output:
-    #             if "output" not in self._data:
-    #                 self._data["output"] = {}
-    #             self._data["output"][key] = item
-    #         if key in self._parameters:
-    #             if "parameters" not in self._data:
-    #                 self._data["parameters"] = {}
-    #             self._data["parameters"][key] = item
 
     def _process_parent(self):
         """
@@ -572,22 +564,53 @@ c        Expand the environment variables in the configuration.
             for key in self._data["inherit"]["ignore"]:
                 if key in self._parent:
                     delete_keys.append(key)
-
             # Output from parents shouldn't be modified, they become parts of the input.      
-            if "output" in self._parent:
+            if "output" in self._parent and "output" not in self._data["inherit"]["ignore"]:
                 # Inherited outputs become input.
                 log.debug(f"Inheriting parent output as input.")
                 if "input" not in self._parent:
                     self._parent["input"] = self._parent["output"]
+                else:
+                    if self._parent["input"]["type"] == "hstack":
+                        self._parent["input"]["specifications"].append(self._parent["output"])
+                    else:
+                        self._parent["input"] = {
+                            "type" : "hstack",
+                            "index" : self._parent["input"]["index"],
+                            "mapping" : {},
+                            "specifications" : [self._parent["input"], self._parent["output"]]
+                        }
+                    if "mapping" in self._parent["output"]:
+                        if "mapping" in self._parent["input"]:
+                            self._parent["input"]["mapping"].update(self._parent["output"]["mapping"])
+                        else:
+                            self._parent["input"]["mapping"] = self._parent["output"]["mapping"]
+                        
+                delete_keys.append("output")
+                
+            # Series from parents should be converted to type series and added to input.    
+            if "series" in self._parent and "series" not in self._data["inherit"]["ignore"]:
+                series = {"type" : "series", "specifications" : self._parent["series"]}
+                # Inherited series become input.
+                if "input" not in self._parent:
+                    self._parent["input"] = series
                 elif self._parent["input"]["type"] == "hstack":
-                    self._parent["input"]["specifications"].append(self._parent["output"])
+                    self._parent["input"]["specifications"].append(series)
                 else:
                     self._parent["input"] = {
                         "type" : "hstack",
                         "index" : self._parent["input"]["index"],
-                        "specifications" : [self._parent["input"], self._parent["output"]]
-                    }                    
-                delete_keys.append("output")
+                        "specifications" : [self._parent["input"], series]
+                    }
+                if "mapping" in series:
+                    if "mapping" in self._parent["input"]:
+                        self._parent["input"]["mapping"].update(series["mapping"])
+                    else:
+                        self._parent["input"]["mapping"] = series["mapping"]
+                    for entry in self._parent["input"]["specifications"]:
+                        if "mapping" in entry:
+                            del entry["mapping"]
+                delete_keys.append("series")
 
             # Parameters from parents shouldn't be modifled, they become constants.
             if "parameters" in self._parent:

@@ -1638,6 +1638,36 @@ def read_vstack(details):
     
     return stacked_df
 
+def read_series(details):
+    """
+    Read in the series data from the details given in configuration. A series type is a data frame where the indices aren't unique. If read in as a series, then each entry in each column of data frame is converted to a list, where the number of elements of the list are the number of non-unique elements from the index.
+
+    :param details: The details of the series data to be read.
+    :type details: dict
+    :return: The data read in.
+    :rtype: pandas.DataFrame
+    """
+    if "index" not in details:
+        raise ValueError('Field "index" missing in data source details for read_series.')
+    
+    df = read_data(details=details["specifications"])
+
+    df.set_index(details["index"], inplace=True)
+    unique_index = df.index.unique()
+    newdf = pd.DataFrame(index=unique_index)
+    for ind in unique_index:
+        # Compute how many times the index should be repeated.
+        ind_length = df.loc[ind].count()
+        newdf.loc[ind, details["index"]] = [ind] * ind_length
+        for col in df.columns:
+            if isinstance(df.loc[ind, col], pd.Series):
+                newdf.loc[ind, col] = df.loc[ind, col].to_list()
+            else:
+                newdf.loc[ind, col] = [df.loc[ind, col]]
+            
+    newdf.reset_index(drop=True, inplace=True)
+    return newdf
+
 def read_data(details):
     """
     Read in the data from the details given in configuration.
@@ -1656,6 +1686,8 @@ def read_data(details):
         df = read_hstack(details)
     elif ftype == "vstack":
         df = read_vstack(details)
+    elif ftype == "series":
+        df = read_series(details)
     elif ftype == "excel":
         df = read_excel(details)
     elif ftype == "gsheet":
