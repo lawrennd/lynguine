@@ -1650,20 +1650,20 @@ def read_series(details):
     if "index" not in details:
         raise ValueError('Field "index" missing in data source details for read_series.')
     
-    df = read_data(details=details["specifications"])
+    df, _ = read_data(details=details["specifications"])
 
     df.set_index(details["index"], inplace=True)
     unique_index = df.index.unique()
-    newdf = pd.DataFrame(index=unique_index)
+    newdf = pd.DataFrame(index=unique_index, columns=[details["index"]] + list(df.columns), dtype="object")
     for ind in unique_index:
         # Compute how many times the index should be repeated.
-        ind_length = df.loc[ind].count()
-        newdf.loc[ind, details["index"]] = [ind] * ind_length
+        ind_length = len(df.loc[ind].index)
+        newdf.at[ind, details["index"]] = ind
         for col in df.columns:
             if isinstance(df.loc[ind, col], pd.Series):
-                newdf.loc[ind, col] = df.loc[ind, col].to_list()
+                newdf.at[ind, col] = df.loc[ind, col].to_list()
             else:
-                newdf.loc[ind, col] = [df.loc[ind, col]]
+                newdf.at[ind, col] = [df.loc[ind, col]]
             
     newdf.reset_index(drop=True, inplace=True)
     return newdf

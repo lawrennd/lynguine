@@ -237,6 +237,27 @@ class Interface(_HConfig):
         """
         return "_linguine.yml"
 
+    @classmethod
+    def _extract_mapping_columns(self, data):
+        """
+        Extract mapping and columns from data.
+
+        :param data: The data to be processed.
+        :type data: dict
+        :return: The mapping and columns.
+        :rtype: tuple
+        """
+        mapping = {}
+        columns = []
+        if "mapping" in data:
+            mapping = data["mapping"].copy()
+            del data["mapping"]
+        if "columns" in data:
+            columns = data["columns"].copy()
+            del data["columns"]
+        return mapping, columns
+                
+    
     def __init__(self, data : dict=None, directory : str=None, user_file : str=None) -> None:
         """
         Initialise the interface object.
@@ -275,47 +296,45 @@ class Interface(_HConfig):
         self._inherited = False
 
         if "inherit" in self._data:
+            log.debug(f"Inheriting another Interface.")
             if "directory" not in self._data["inherit"]:
                 raise ValueError(
                     f"Inherit specified in interface file {self._user_file} in directory {directory} but no directory to inherit from is specified."
                 )
-            else:
-                log.debug(f"Inheriting another Interface.")
-                inherit_directory = os.path.expandvars(self._data["inherit"]["directory"])
-                if not os.path.isabs(inherit_directory):
-                    inherit_directory = os.path.join(self.directory, inherit_directory)
-                if "filename" not in self._data["inherit"]:
-                    # assume default file name
-                    filename = self.__class__.default_config_file()
-                    log.debug(f"No filename specified in inherit section of interface file. Using default file name \"{filename}\"")
-       
-                else:
-                    filename = self._data["inherit"]["filename"]
-                log.debug(f"Inheriting parent Interface \"{filename}\" from directory \"{inherit_directory}\".")
 
-                # Establish if path is relative from curent directory.
-                self._parent = self.__class__.from_file(user_file=filename, directory=inherit_directory)
-                self._parent._writable = False
-                if "writable" in self._data and self._data["inherit"]["writable"]:
-                    self._parent._writable = True
-                if "ignore" not in self._data["inherit"]:
-                    self._data["inherit"]["ignore"] = []
-                if "append" not in self._data["inherit"]:
-                    self._data["inherit"]["append"] = []
-        
-        self._expand_vars()
-        #self._restructure()
-        if self._parent is not None:
-            log.debug(f"Processing parent.")
-            if "output" in self._parent:
-                log.debug(f"Output is there.")
-            if "input" not in self._parent:
-                log.debug(f"Input is not there.")
+            inherit_directory = os.path.expandvars(self._data["inherit"]["directory"])
+            if not os.path.isabs(inherit_directory):
+                inherit_directory = os.path.join(self.directory, inherit_directory)
+
+            if "filename" not in self._data["inherit"]:
+                # assume default file name
+                filename = self.__class__.default_config_file()
+                log.debug(f"No filename specified in inherit section of interface file. Using default file name \"{filename}\"")
+
+            else:
+                filename = self._data["inherit"]["filename"]
+
+            log.debug(f"Inheriting parent Interface \"{filename}\" from directory \"{inherit_directory}\".")
+
+            # TK Establish if path is relative from curent directory and set it to relative location.
+            
+            # Load parent interface
+            self._parent = self.__class__.from_file(user_file=filename, directory=inherit_directory)
+            
+            # Set it not to be writable (convert output to input,
+            # series to input, parameters to constants))
+            self._parent._writable = False
+            if "writable" in self._data and self._data["inherit"]["writable"]:
+                self._parent._writable = True
+
+            
+            if "ignore" not in self._data["inherit"]:
+                self._data["inherit"]["ignore"] = []
+            if "append" not in self._data["inherit"]:
+                self._data["inherit"]["append"] = []
+
             self._process_parent()
-            if "output" not in self._parent:
-                log.debug(f"Output is not there.")
-            if "input" in self._parent:
-                log.debug(f"Input is there")
+        self._expand_vars()
 
     def __getitem__(self, key):
         """
@@ -558,74 +577,111 @@ c        Expand the environment variables in the configuration.
     def _process_parent(self):
         """
         Process the parent interface file.
-        """
-        delete_keys = []
-        if self._parent is not None:
-            for key in self._data["inherit"]["ignore"]:
-                if key in self._parent:
-                    delete_keys.append(key)
-            # Output from parents shouldn't be modified, they become parts of the input.      
-            if "output" in self._parent and "output" not in self._data["inherit"]["ignore"]:
-                # Inherited outputs become input.
-                log.debug(f"Inheriting parent output as input.")
-                if "input" not in self._parent:
-                    self._parent["input"] = self._parent["output"]
-                else:
-                    if self._parent["input"]["type"] == "hstack":
-                        self._parent["input"]["specifications"].append(self._parent["output"])
-                    else:
-                        self._parent["input"] = {
-                            "type" : "hstack",
-                            "index" : self._parent["input"]["index"],
-                            "mapping" : {},
-                            "specifications" : [self._parent["input"], self._parent["output"]]
-                        }
-                    if "mapping" in self._parent["output"]:
-                        if "mapping" in self._parent["input"]:
-                            self._parent["input"]["mapping"].update(self._parent["output"]["mapping"])
-                        else:
-                            self._parent["input"]["mapping"] = self._parent["output"]["mapping"]
-                        
-                delete_keys.append("output")
-                
-            # Series from parents should be converted to type series and added to input.    
-            if "series" in self._parent and "series" not in self._data["inherit"]["ignore"]:
-                series = {"type" : "series", "specifications" : self._parent["series"]}
-                # Inherited series become input.
-                if "input" not in self._parent:
-                    self._parent["input"] = series
-                elif self._parent["input"]["type"] == "hstack":
-                    self._parent["input"]["specifications"].append(series)
-                else:
-                    self._parent["input"] = {
-                        "type" : "hstack",
-                        "index" : self._parent["input"]["index"],
-                        "specifications" : [self._parent["input"], series]
-                    }
-                if "mapping" in series:
-                    if "mapping" in self._parent["input"]:
-                        self._parent["input"]["mapping"].update(series["mapping"])
-                    else:
-                        self._parent["input"]["mapping"] = series["mapping"]
-                    for entry in self._parent["input"]["specifications"]:
-                        if "mapping" in entry:
-                            del entry["mapping"]
-                delete_keys.append("series")
 
-            # Parameters from parents shouldn't be modifled, they become constants.
-            if "parameters" in self._parent:
-                log.debug(f"Inheriting parent parameters as constants.")
-                if "constants" not in self._data:
-                    self._parent["constants"] = self._parent["parameters"]
-                elif self._parent["constants"]["type"] == "hstack":
-                    self._parent["constants"]["specifications"].append(self._parent["parameters"])
+        If the interface inherits another interface file, this method is used to process the inherited interface, modifying for example output keys as input keys.
+        """
+
+        
+        delete_keys = [] # Keys to be removed from the parents
+        for key in self._data["inherit"]["ignore"]:
+            if key in self._parent:
+                delete_keys.append(key)
+
+
+        # TK: Big similarities for code for "output, "series", and "parameters", consider using a helper function for all three
+        
+        # Output from parents shouldn't be modified, they become
+        # parts of the input.
+        if not self._parent._writable and "output" in self._parent._data and "output" not in delete_keys:
+
+            mapping, columns = self._extract_mapping_columns(self._parent._data["output"])
+
+            # Inherited outputs become input.
+            log.debug(f"Inheriting parent output as input.")
+            if "input" not in self._parent._data:
+                self._parent._data["input"] = self._parent._data["output"]
+            else:
+                if self._parent._data["input"]["type"] == "hstack":
+                    self._parent._data["input"]["specifications"].append(self._parent._data["output"])
                 else:
-                    self._parent["constants"] = {
+                    self._parent._data["input"] = {
                         "type" : "hstack",
-                        "specifications" : [self._parent["constants"], self._parent["parameters"]]
+                        "index" : self._parent._data["input"]["index"],
+                        "specifications" : [self._parent._data["input"], self._parent._data["output"]]
                     }
-                delete_keys.append("parameters")
+            if "mapping" in self._parent._data["input"]:
+                self._parent._data["input"]["mapping"].update(mapping)
+            else:
+                self._parent._data["input"]["mapping"] = mapping
+
+            if "columns" in self._parent._data["input"]:
+                self._parent._data["input"]["columns"] += columns
+            else:
+                self._parent._data["input"]["columns"] = columns
+
+            delete_keys.append("output")
+
+        # Series from parents should be converted to type series
+        # and added to input.
+        if "series" in self._parent._data and "series" not in self._data["inherit"]["ignore"]:
+            mapping, columns = self._extract_mapping_columns(self._parent._data["series"])
+
+            series = {
+                "type" : "series",
+                "index" : self._parent._data["series"]["index"],
+                "specifications" : self._parent._data["series"]
+            }
+            # Inherited series become input.
+            if "input" not in self._parent._data:
+                self._parent._data["input"] = series
+            elif self._parent._data["input"]["type"] == "hstack":
+                self._parent._data["input"]["specifications"].append(series)
+            else:
+                self._parent._data["input"] = {
+                    "type" : "hstack",
+                    "index" : self._parent._data["input"]["index"],
+                    "specifications" : [self._parent._data["input"], series]
+                }
+            if "mapping" in self._parent._data["input"]:
+                self._parent._data["input"]["mapping"].update(mapping)
+            else:
+                self._parent._data["input"]["mapping"] = mapping
+
+            if "columns" in self._parent._data["input"]:
+                self._parent._data["input"]["columns"] += columns
+            else:
+                self._parent._data["input"]["columns"] = columns
+
+            delete_keys.append("series")
+
+        # Parameters from parents shouldn't be modifled, they become constants.
+        if "parameters" in self._parent:
+            mapping, columns = self._extract_mapping_columns(self._parent._data["parameters"])
+            
+            log.debug(f"Inheriting parent parameters as constants.")
+            if "constants" not in self._data:
+                self._parent._data["constants"] = self._parent._data["parameters"]
+            elif self._parent._data["constants"]["type"] == "hstack":
+                self._parent._data["constants"]["specifications"].append(self._parent._data["parameters"])
+            else:
+                self._parent._data["constants"] = {
+                    "type" : "hstack",
+                    "specifications" : [self._parent._data["constants"], self._parent._data["parameters"]]
+                }
+
+            if "mapping" in self._parent._data["constants"]:
+                self._parent._data["cosntants"]["mapping"].update(mapping)
+            else:
+                self._parent._data["constants"]["mapping"] = mapping
+
+            if "columns" in self._parent._data["constants"]:
+                self._parent._data["constants"]["columns"] += columns
+            else:
+                self._parent._data["constants"]["columns"] = columns
                 
+                
+            delete_keys.append("parameters")
+
         for key in delete_keys:
             del self._parent._data[key]
 
