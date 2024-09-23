@@ -978,7 +978,23 @@ class DataObject:
         cdf = cls({}, compute=compute, interface=interface)
 
         found_data = False
-        for key, item in interface.items():
+
+        # Create a function to determine the processing order
+        def key_order(item):
+            key, _ = item
+            if key in cls.types["input"] and key not in cls.types["parameters"]:
+                return 0  # Process first
+            elif key in cls.types["input"]:
+                return 1  # Process second
+            elif key in cls.types["output"] and key not in cls.types["parameters"]:
+                return 2  # Process third
+            else:
+                return 3  # Process last
+
+        # Sort the items based on the key_order function
+        sorted_items = sorted(interface.items(), key=key_order)
+
+        for key, item in sorted_items:       
             # Check if the interface key is a valid data key
             if key in cls.valid_data_types: # input, output, cache, parameters
                 log.debug(f"Adding data key \"{key}\" to the CustomDataFrame.")
@@ -1088,6 +1104,29 @@ class DataObject:
                 log.debug(f"Setting selector to \"{selector}\" for series type.")
         return cdf
 
+    def _create_new_data_frame(self, item : dict, key : str) -> pd.DataFrame:
+        """
+        Create a new data frame from an interface specification.
+
+        :param item: The interface to create the data frame from.
+        :type item:  lynguine.config.interface.Interface or dict.
+        :return: a pd.DataFrame object.
+        """
+
+        if "columns" in item:
+            columns = item["columns"]
+        else:
+            if key in self.types["cache"]:
+                columns = item.get_cache_columns()
+            # TK Need to deal with series here?
+            elif key in self.types["output"]:
+                columns = item.get_output_columns()
+            else:
+                raise ValueError(
+                    f"Unrecognised key type \"{key}\". Valid data types are \"{', '.join(cls.valid_data_types)}\"."
+                                    )
+        return pd.DataFrame(index=self.index, columns=columns)
+    
     def augment_with_df(self, df : pd.DataFrame, colspecs : dict) -> None:
         """
         This method is used to augment the CustomDataFrame with a new DataFrame.

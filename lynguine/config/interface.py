@@ -316,7 +316,7 @@ class Interface(_HConfig):
 
             log.debug(f"Inheriting parent Interface \"{filename}\" from directory \"{inherit_directory}\".")
 
-            # TK Establish if path is relative from curent directory and set it to relative location.
+            # TK Establish if path is relative from current directory and set it to relative location.
             
             # Load parent interface
             self._parent = self.__class__.from_file(user_file=filename, directory=inherit_directory)
@@ -607,7 +607,8 @@ c        Expand the environment variables in the configuration.
                     self._parent._data["input"] = {
                         "type" : "hstack",
                         "index" : self._parent._data["input"]["index"],
-                        "specifications" : [self._parent._data["input"], self._parent._data["output"]]
+                        "specifications" : [self._parent._data["input"], self._parent._data["output"]],
+                        "mapping" : self._parent._data["input"]["mapping"],
                     }
             if "mapping" in self._parent._data["input"]:
                 self._parent._data["input"]["mapping"].update(mapping)
@@ -738,7 +739,7 @@ c        Expand the environment variables in the configuration.
         return "_lynguine.yml"
     
     @classmethod
-    def from_file(cls, user_file=None, directory=".", field=None):
+    def from_file(cls, user_file=None, directory=".", field=None, raise_error_if_not_found=True):
         """
         Construct an Interface from the details in a file.
 
@@ -748,7 +749,8 @@ c        Expand the environment variables in the configuration.
         :type directory: str
         :param field: The field to be loaded in.
         :type field: str
-        
+        :param raise_error_if_not_found: Whether to raise an error if the file is not found.
+        :type raise_error_if_not_found: bool
         """
         
         if user_file is None:
@@ -781,8 +783,18 @@ c        Expand the environment variables in the configuration.
                     raise ValueError(
                         f'Field "{field}" specified but not found in file "{fname}"'
                     )
-        if data == {}:
-            log.warning(f'No configuration file found at "{fname}".')
+        else:
+            errmsg = f'No configuration file found at "{fname}".'
+            if raise_error_if_not_found:
+                log.error(errmsg)
+                raise ValueError(errmsg)
+            else:
+                log.info(f'{errmsg} creating empty interface.')
+        
+        if data == {} and raise_error_if_not_found:
+            errmsg = f'No data found in "{fname}".'
+            log.error(errmsg)
+            raise ValueError(errmsg)
 
         interface = cls(data, directory=directory, user_file=ufile)
         

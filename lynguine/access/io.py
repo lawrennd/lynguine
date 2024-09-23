@@ -1686,6 +1686,8 @@ def read_data(details):
         df = read_hstack(details)
     elif ftype == "vstack":
         df = read_vstack(details)
+    elif ftype == "stack":
+        df = read_vstack(details)
     elif ftype == "series":
         df = read_series(details)
     elif ftype == "excel":

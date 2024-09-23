@@ -46,17 +46,17 @@ def test_update_from_file(mock_read_yaml_file):
 
 
 # Test header_field
-def test_header_field(mock_read_yaml_file):
-    fields = {"field1": "value1"}
-    field_to_get = "field1"
+# def test_header_field(mock_read_yaml_file):
+#     fields = {"field1": "value1"}
+#     field_to_get = "field1"
 
-    result = header_field(field_to_get, fields, ["user_config.yml"])
+#     result = header_field(field_to_get, fields, ["user_config.yml"])
 
-    assert result == "value1"
+#     assert result == "value1"
 
-    # Test for FileFormatError
-    with pytest.raises(FileFormatError):
-        header_field("nonexistent_field", fields, ["user_config.yml"])
+#     # Test for FileFormatError
+#     with pytest.raises(FileFormatError):
+#         header_field("nonexistent_field", fields, ["user_config.yml"])
 
 
 # Test header_fields

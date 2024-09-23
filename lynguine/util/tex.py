@@ -3,7 +3,7 @@ import re
 
 from ..config.interface import Interface
 
-interface = Interface.from_file()
+interface = Interface.from_file(raise_error_if_not_found=False)
 
 # Using list comprehensions and set for avoiding duplicate directories.
 TEX_DIRECTORIES = list(set(["."] + interface.get("bibinputs", "").split(":") + interface.get("texinputs", "").split(":")))
