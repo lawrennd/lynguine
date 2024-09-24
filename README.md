@@ -6,7 +6,9 @@
 
 [![codecov](https://codecov.io/gh/lawrennd/lynguine/branch/main/graph/badge.svg?token=YOUR_CODECOV_TOKEN)](https://codecov.io/gh/lawrennd/lynguine)
 
-The `lynguine` library is a library based on DOA principles for managing data. It provides these capabilities to support other libraries like `lamd` and `referia`.
+The `lynguine` library is a python implementation of the [`linguine`](https://github.com/lawrennd/linguine) data oriented architecture principles for managing a data driven system software system. 
+
+It provides these capabilities to support other libraries like `lamd` and `referia`.
 
 To install use
 
