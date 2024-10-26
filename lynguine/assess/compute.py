@@ -365,41 +365,27 @@ p        :return: None
         self.logger.debug(f"Running onchange for {column} at index {index} (not yet implemented).")
 
         
-    def run_all(self, data : "CustomDataFrame", df=None, index=None, pre=False, post=False):
+    def run_all(self, data : "CustomDataFrame", interface : Interface) -> None:
         """
         Run any computation elements on the data frame.
 
-        :param df: The data frame to be used.
-        :type df: pandas.DataFrame or lynguine.assess.data.CustomDataFrame
-        :param index: The index to be used.
-        :type index: object
-        :param pre: Whether to run precomputes.
-        :type pre: bool
-        :param post: Whether to run postcomputes.
-        :type post: bool
+        :param data: The CustomDataFrame to be used.
+        :type data: lynguine.assess.data.CustomDataFrame
+        :param interface: The interface to be used.
+        :type interface: lynguine.config.interface.Interface
         :return: None
         """
 
-        if pre:
-            for compute in self.precomputes:
-                compute_prep = self.prep(compute, data)
-                fargs = compute_prep["args"]
-                compute_prep["function"](data, **fargs)
+        current_index = data.get_index()
+        self.logger.debug(f"Current index is {current_index}.")
+        for index in data.index:
+            self.logger.debug(f"Running all computations for index {index}.")
+            data.set_index(index)
+            self.run(data, interface)
 
-        if df is not None:
-            data = df
-
-        for compute in self.computes:
-            compute_prep = self.prep(compute, data)
-            fargs = compute_prep["args"]
-            compute_prep["function"](data, **fargs)
-
-        if post:
-            for compute in self.postcomputes:
-                compute_prep = self.prep(compute, data)
-                fargs = compute_prep["args"]
-                compute_prep["function"](data, **fargs)
-
+        self.logger.debug(f"Resetting index to {current_index}.")
+        data.set_index(current_index)
+        
     def _compute_functions_list(self) -> list[dict]:
         """
         Return a list of compute functions.

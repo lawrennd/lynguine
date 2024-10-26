@@ -16,6 +16,7 @@ mock_yaml_content = {
         "content": "This is the body content.",
     },
     "user_config.yml": {"field1": "value1", "field2": "value2"},
+    "nonexistent_file.yml": {},
 }
 
 
@@ -44,8 +45,17 @@ def test_update_from_file(mock_read_yaml_file):
 
     assert updated_dict == {"key1": "value1", "key2": "new_value2", "key3": "value3"}
 
+# TODO: Test update_from_file with non-existent file
+# def test_update_from_file_non_existent(mock_read_yaml_file):
+#     test_dict = {"key1": "value1"}
+#     filename = "nonexistent_file.yml"
 
-# Test header_field
+#    # If file is not found then a ValueError is raised
+#    with pytest.raises(ValueError):
+#        updated_dict = update_from_file(test_dict, filename)
+
+
+# TODO: Test header_field
 # def test_header_field(mock_read_yaml_file):
 #     fields = {"field1": "value1"}
 #     field_to_get = "field1"

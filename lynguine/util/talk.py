@@ -7,7 +7,7 @@ import lynguine.util.yaml as ny
 
 today = date.today()    
 
-def talk_field(field, filename):
+def talk_field(field, filename, user_file=["_config.yml"]):
     """
     Return one field from a talk.
 
@@ -17,7 +17,7 @@ def talk_field(field, filename):
     :type filename: str
     """
     fields = ny.header_fields(filename)
-    return ny.header_field(field, fields)    
+    return ny.header_field(field, fields, user_file)    
         
 def extract_bibinputs(filename):
     """

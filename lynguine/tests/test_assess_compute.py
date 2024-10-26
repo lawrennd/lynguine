@@ -173,11 +173,28 @@ def test_preprocess(compute_instance, mock_data, mock_interface, mocker):
     # Assert preprocess functionality
 
 # Test run_all method
-def test_run_all(compute_instance, mocker, mock_data):
+def test_run_all(mocker):
+    # Create a mock Compute instance
+    compute_instance = Compute(interface={})
+    
+    # Mock the run method
     mocker.patch.object(compute_instance, 'run', return_value=None)
-    mocker.patch.object(compute_instance, '_computes', {'precompute': [], 'compute': [], 'postcompute': []})
-    compute_instance.run_all(mock_data)
-    # Assert run_all functionality
+    
+    # Create mock data
+    mock_data = MagicMock()
+    mock_data.iterrows.return_value = [(0, 'row1'), (1, 'row2'), (2, 'row3')]
+    
+    # Create mock interface
+    mock_interface = MagicMock()
+    
+    # Call run_all with mock_data and mock_interface
+    compute_instance.run_all(mock_data, mock_interface)
+    
+    # Assert that run was called for each row in mock_data
+    assert compute_instance.run.call_count == len(mock_data.iterrows.return_value)
+    for call_args in compute_instance.run.call_args_list:
+        assert call_args[0] == (mock_data, mock_interface)
+
     
 # Test _compute_functions_list method
 def test_compute_functions_list(compute_instance):
