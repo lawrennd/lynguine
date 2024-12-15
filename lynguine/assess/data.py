@@ -2936,6 +2936,8 @@ class CustomDataFrame(DataObject):
         :return: The augmented data frame.
         """
         
+        if isinstance(data, pd.Series):
+            return self._finalize_ds(data, interface, strict_columns)
 
         if "mapping" in interface:            
             for name, column in interface["mapping"].items():
@@ -2980,6 +2982,17 @@ class CustomDataFrame(DataObject):
             del df[index_column_name]            
                     
         return df
+    
+    def _finalize_ds(self, ds : pd.Series, interface : Interface, strict_columns=False) -> "CustomDataFrame":
+        """
+        This function augments the raw data and sets the index of the data frame.
+        :param ds: The data series to be augmented.
+        :param interface: The details of the data frame.
+        :param strict_columns: Whether to enforce strict columns.
+        :return: The augmented data frame.
+        """
+        raise NotImplementedError("Not implemented")
+        return ds
 
     def _augment_column_names(self, data : pd.DataFrame or pd.Series) -> None:
         """
