@@ -1528,6 +1528,10 @@ def finalize_data(df : pd.DataFrame, interface : Interface) -> tuple[pd.DataFram
                 )
         df.drop(columns=interface["ignore_columns"], inplace=True)
 
+    if "select_columns" in interface:
+        df = df.loc[:, interface["select_columns"]]
+        del interface["select_columns"]
+
     if "compute" in interface:
             compute = Compute.from_flow(interface)
             for comp in compute.computes:
@@ -1541,7 +1545,8 @@ def finalize_data(df : pd.DataFrame, interface : Interface) -> tuple[pd.DataFram
                     errmsg = f"Compute object in interface file is missing field key."
                     log.error(errmsg)
                     raise ValueError(errmsg)
-        
+   
+
     return df, interface
 
 
@@ -1601,6 +1606,46 @@ def read_hstack(details):
                 
             else:
                 final_df = pd.merge(final_df, df, on=specs['on'], how=specs['how'], suffixes=(specs['lsuffix'], specs['rsuffix']))
+
+    return final_df
+
+def read_stack(details):
+    """
+    Read data from a horizontal stack of data series, where each source is a single-row DataFrame.
+    Returns a single-row DataFrame combining all sources.
+
+    :param details: The details of the data series to be read.
+    :type details: dict
+    :return: The data read from the file.
+    :rtype: pandas.DataFrame
+    """
+    
+    if details.get('type') != 'stack':
+        raise ValueError('Expected details type to be "stack".')
+
+    if 'specifications' not in details:
+        raise ValueError('Details must include "specifications".')
+
+    # Initialize final DataFrame with one row
+    final_df = pd.DataFrame(index=[0])
+
+    # Iterate over each data source in the details
+    for specs in details['specifications']:
+        # Read each DataFrame using the read_data function
+        df, _ = read_data(specs)
+        
+        # Verify we have a DataFrame with exactly one row
+        if not isinstance(df, pd.DataFrame):
+            raise ValueError('Each specification must result in a DataFrame')
+        if len(df.index) != 1:
+            raise ValueError(f'Each specification must result in a single row DataFrame. Got {len(df.index)} rows')
+            
+        # Add columns from this DataFrame to final_df
+        for col in df.columns:
+            final_df[col] = df[col].iloc[0]
+
+    if len(final_df.columns) == 0:
+        raise ValueError('No data sources provided for stack.')
 
     return final_df
     
@@ -1682,7 +1727,9 @@ def read_data(details):
     else:
         raise ValueError(f'Field "type" missing in data source details for read_data, details are given as "{", ".join(details)}".')
 
-    if ftype == "hstack":
+    if ftype == "stack":
+        df = read_stack(details)
+    elif ftype == "hstack":
         df = read_hstack(details)
     elif ftype == "vstack":
         df = read_vstack(details)

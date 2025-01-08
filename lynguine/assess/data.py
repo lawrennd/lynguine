@@ -2936,8 +2936,8 @@ class CustomDataFrame(DataObject):
         :return: The augmented data frame.
         """
         
-        if isinstance(data, pd.Series):
-            return self._finalize_ds(data, interface, strict_columns)
+        if isinstance(df, pd.Series):
+            return self._finalize_ds(df, interface, strict_columns)
 
         if "mapping" in interface:            
             for name, column in interface["mapping"].items():

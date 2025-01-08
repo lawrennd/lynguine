@@ -258,7 +258,7 @@ p        :return: None
         for compute in computes:
             # Some computes return multiple outputs, in which case field is a list of columns
             multi_output = False 
-            
+            column_output = False
             if "field" in compute:
                 columns = compute["field"]
                 if isinstance(columns, list):
