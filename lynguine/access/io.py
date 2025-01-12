@@ -323,6 +323,9 @@ def read_directory(
 
             if "directory" in source:
                 directory = os.path.expandvars(source["directory"])
+                # Make relative paths relative to base_directory if specified
+                if not os.path.isabs(directory) and "base_directory" in details:
+                    directory = os.path.join(details["base_directory"], directory)
             else:
                 directory = "."
             globname = os.path.join(
@@ -462,6 +465,10 @@ def write_directory(df, details, filewriter=None, filewriter_args={}):
                     row[directory_field],
                 )
             )
+            # Make relative paths relative to base_directory if specified
+            if not os.path.isabs(directoryname) and "base_directory" in details:
+                directoryname = os.path.join(details["base_directory"], directoryname)
+
             if not os.path.exists(directoryname):
                 os.makedirs(directoryname)
 

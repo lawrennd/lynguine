@@ -71,10 +71,13 @@ def extract_full_filename(details : dict) -> str:
             log.error(errmsg)
             raise ValueError(errmsg)
         return details["filename"]
-    return os.path.join(
-        os.path.expandvars(details["directory"]),
-        details["filename"],
-    )
+    
+    directory = os.path.expandvars(details["directory"])
+    # Make relative paths relative to base_directory if specified
+    if not os.path.isabs(directory) and "base_directory" in details:
+        directory = os.path.join(details["base_directory"], directory)
+        
+    return os.path.join(directory, details["filename"])
 
 
 def extract_root_directory(

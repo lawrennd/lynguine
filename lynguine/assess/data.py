@@ -997,15 +997,23 @@ class DataObject:
         for key, item in sorted_items:       
             # Check if the interface key is a valid data key
             if key in cls.valid_data_types: # input, output, cache, parameters
+                # Augment the item with base_directory if it's not already present
+                if "base_directory" not in item:
+                    if "base_directory" in interface:
+                        item["base_directory"] = interface["base_directory"]
+                    else:   
+                        errmsg = "Base directory not found in interface or item."
+                        log.error(errmsg)
+                        raise ValueError(errmsg)
                 log.debug(f"Adding data key \"{key}\" to the CustomDataFrame.")
                 if "mapping" in item:
                     mapping = item["mapping"]
                 else:
                     mapping = []
                 if key in cdf._d and not cdf._d[key].empty:
-                    raise ValueError(
-                        f"Attempting to set the \"{key}\" portion of the data frame from flow, but have found one already exists. Current keys are \"{', '.join(cdf._d.keys())}\"."
-                    )
+                    errmsg = f"Attempting to set the \"{key}\" portion of the data frame from flow, but have found one already exists. Current keys are \"{', '.join(cdf._d.keys())}\"."
+                    log.error(errmsg)
+                    raise ValueError(errmsg)
                 found_data = True
                 if key not in cls.types["input"]: # allow creation of non-inputs if they don't exist
                     if isinstance(item, dict):

@@ -270,6 +270,15 @@ class Interface(_HConfig):
         :type user_file: str
         :return: None
         """
+
+        # Add base_directory and user_file to data if not already present.
+        if directory is not None:
+            if "base_directory" not in data:
+                data["base_directory"] = directory
+        if user_file is not None:
+            if "user_file" not in data:
+                data["user_file"] = user_file
+
         log.debug(f"Initialising lynguine.assess.Interface object.")
         if data is None:
             data = {}
@@ -758,11 +767,13 @@ c        Expand the environment variables in the configuration.
         else:
             ufile = user_file
             
+        expanded_directory = os.path.expandvars(directory)
+        # If the user_file is a list, check existence of each file in order.
         if type(user_file) is list:
             for ufile in user_file:
-                if os.path.exists(os.path.join(os.path.expandvars(directory), ufile)):
+                if os.path.exists(os.path.join(expanded_directory, ufile)):
                     break
-        fname = os.path.join(os.path.expandvars(directory), ufile)
+        fname = os.path.join(expanded_directory, ufile)
         data = {}
         log.debug(f"Attempting to open file \"{fname}\".")
         if os.path.exists(fname):
@@ -795,8 +806,9 @@ c        Expand the environment variables in the configuration.
             errmsg = f'No data found in "{fname}".'
             log.error(errmsg)
             raise ValueError(errmsg)
-
-        interface = cls(data, directory=directory, user_file=ufile)
+        
+        
+        interface = cls(data, directory=expanded_directory, user_file=ufile)
         
         return interface
 
