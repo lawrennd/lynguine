@@ -1,6 +1,8 @@
 import pandas as pd
 import numpy as np
 
+from keyword import iskeyword
+
 from .. import access
 from ..log import Logger
 from ..config.context import Context
@@ -3021,6 +3023,11 @@ class CustomDataFrame(DataObject):
                     self.update_name_column_map(name=column, column=column)
                 else:
                     name = to_camel_case(column)
+
+                    # If the name is a keyword, append "Field" to it
+                    if iskeyword(name):
+                        name = column + "Field"
+                        
                     # Keep variable names as private
                     if name == "_":
                         name = "_" + name

@@ -1734,7 +1734,10 @@ def read_data(details):
     else:
         raise ValueError(f'Field "type" missing in data source details for read_data, details are given as "{", ".join(details)}".')
 
-    if ftype == "stack":
+    print(details)
+    if ftype == "auto":
+        df = read_auto(details)
+    elif ftype == "stack":
         df = read_stack(details)
     elif ftype == "hstack":
         df = read_hstack(details)
@@ -1784,6 +1787,34 @@ def read_data(details):
         raise ValueError(errmsg)
     return finalize_data(df, details)
 
+def read_auto(details):
+    """
+    Read in the data from the details given in configuration. Use the file extension to determine the type of data to read.
+
+    :param details: The details of the data to be read.
+    :type details: dict
+    :return: The data read in.
+    :rtype: pandas.DataFrame
+    """
+    if "filename" in details:
+        filename = details["filename"]
+        ext = os.path.splitext(filename)[1]
+        if ext == ".yaml" or ext == ".yml":
+            return read_yaml(details)
+        elif ext == ".json":
+            return read_json(details)
+        elif ext == ".csv":
+            return read_csv(details)
+        elif ext == ".bib" or ext == ".bibtex":
+            return read_bibtex(details)
+        elif ext == ".md" or ext == ".markdown":
+            return read_markdown(details)
+        elif ext == ".xls" or ext == ".xlsx":
+            return read_excel(details)
+        elif ext == ".docx":
+            return read_docx(details)
+    else:
+        raise ValueError('Field "filename" missing in data source details for read_auto.')
 
 def convert_data(read_details, write_details):
     """
