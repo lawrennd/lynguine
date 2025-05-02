@@ -11,7 +11,7 @@ def test_talk_field(mocker):
     result = talk.talk_field('title', 'sample_talk.md')
 
     mock_header_fields.assert_called_once_with('sample_talk.md')
-    mock_header_field.assert_called_once_with('title', {'title': 'Sample Talk'})
+    mock_header_field.assert_called_once_with('title', {'title': 'Sample Talk'}, ['_config.yml'])
     assert result == 'Sample Talk'
 
 # Test for extract_all function

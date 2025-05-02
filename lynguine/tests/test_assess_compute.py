@@ -177,25 +177,34 @@ def test_run_all(mocker):
     # Create a mock Compute instance
     compute_instance = Compute(interface={})
     
-    # Mock the run method
-    mocker.patch.object(compute_instance, 'run', return_value=None)
+    # Mock the methods that run_all calls
+    run_mock = mocker.patch.object(compute_instance, 'run')
     
-    # Create mock data
+    # Create mock data structure with proper index
     mock_data = MagicMock()
-    mock_data.iterrows.return_value = [(0, 'row1'), (1, 'row2'), (2, 'row3')]
+    mock_data.index = ['index1', 'index2', 'index3']
+    mock_data.get_index.return_value = 'current_index'
     
-    # Create mock interface
-    mock_interface = MagicMock()
+    # Mock interface
+    mock_interface = {'compute': {'function': 'test_function'}}
     
-    # Call run_all with mock_data and mock_interface
+    # Call run_all
     compute_instance.run_all(mock_data, mock_interface)
     
-    # Assert that run was called for each row in mock_data
-    assert compute_instance.run.call_count == len(mock_data.iterrows.return_value)
-    for call_args in compute_instance.run.call_args_list:
-        assert call_args[0] == (mock_data, mock_interface)
-
+    # Check that set_index was called for each index and run method was called
+    assert mock_data.set_index.call_count >= len(mock_data.index)
+    assert run_mock.call_count == len(mock_data.index)
     
+    # Verify the run was called with the right arguments
+    for i, call in enumerate(run_mock.call_args_list):
+        args, kwargs = call
+        assert len(args) == 2
+        assert args[0] == mock_data
+        assert args[1] == mock_interface
+    
+    # Verify index was reset at the end
+    mock_data.set_index.assert_called_with('current_index')
+
 # Test _compute_functions_list method
 def test_compute_functions_list(compute_instance):
     functions_list = compute_instance._compute_functions_list()
