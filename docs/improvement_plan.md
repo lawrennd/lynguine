@@ -52,7 +52,7 @@
 
 ## Progress Tracking
 
-### 2024-11-01
+### 2025-05-02
 - Added Sphinx and related dependencies to poetry dev-dependencies
 - Updated conf.py to use Read the Docs theme and fix project identification
 - Created appropriate module documentation files for lynguine.access, lynguine.assess, lynguine.config, and lynguine.util
@@ -60,7 +60,7 @@
 - Successfully built documentation using sphinx-build
 - Created GitHub Actions workflow for documentation and test coverage
 
-### 2024-11-02
+### 2025-05-02
 - Reviewed lynguine/assess/compute.py and confirmed it already has comprehensive docstrings
 - Improved docstrings in lynguine/config/interface.py, enhancing:
   - Class-level docstring with better explanation of the hierarchical interface concept
@@ -69,13 +69,22 @@
 - Analyzed test coverage to identify priority modules for improvement
 - Identified NumPy/Pandas compatibility issues breaking tests in lynguine/assess/data.py
 
-### 2024-11-03
+### 2025-05-02
 - Fixed compatibility issues with newer versions of NumPy and Pandas:
   - Updated liquid environment initialization in compute.py to use Mode.LAX instead of deprecated constants
   - Fixed data.py to use DataFrame.loc indexing instead of direct [] indexing to avoid _NoValueType errors
   - Updated util/dataframe.py functions (reorder_dataframe, ascending, descending) to avoid NumPy _NoValueType issues
 
 ### Next Steps
-1. Fix the compatibility issue with CustomDataFrame in data.py breaking tests
-2. Create basic tests for lynguine/util/html.py to improve its low coverage
-3. Write tests for remaining no-coverage modules in order of importance/usage 
+
+1. Improve test coverage for modules with low coverage:
+   - lynguine/assess/compute.py (currently 51%)
+   - lynguine/config/interface.py (currently 56%)
+   - lynguine/util/yaml.py (currently 61%)
+   - lynguine/util/html.py (currently 29%)
+
+2. Fix documentation warnings about title underlines being too short in module RST files
+
+3. Add usage examples to module documentation to help new users understand how to use the library
+
+4. Consider creating a set of tutorials or example notebooks showing how to use the library for common data processing tasks 
