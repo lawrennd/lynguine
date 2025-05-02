@@ -8,6 +8,29 @@ on:
   workflow_dispatch:
 
 jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: |
+          pip install -U pip
+          pip install toml
+          pip install sphinx sphinx-rtd-theme myst-parser
+      - name: Build documentation
+        run: |
+          cd docs
+          sphinx-build -b html . _build/html
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docs/_build/html
+          
   build-docs:
     runs-on: ubuntu-latest
     steps:
