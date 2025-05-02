@@ -47,7 +47,9 @@ def reorder_dataframe(df, order):
     # Remove any columns from order that are not in the dataframe
     order = [column for column in order if column in df.columns]
     remaining = [column for column in df.columns if column not in order]
-    return df[order + sorted(remaining)]
+    
+    # Use loc instead of direct indexing to avoid NumPy _NoValueType issue
+    return df.loc[:, order + sorted(remaining)]
 
 
 ## Preprocessors
@@ -263,30 +265,44 @@ def fillna(df, column, value):
 ## Sorters
 def ascending(df, by):
     """
-    Sort in ascending order
+    Sort dataframe in ascending order.
 
     :param df: The dataframe to be sorted.
     :type df: pandas.DataFrame or lynguine.data.CustomDataFrame
-    :param by: The column to be sorted by.
+    :param by: The column to sort by.
     :type by: str
     :return: The sorted dataframe.
     :rtype: pandas.DataFrame or lynguine.data.CustomDataFrame
     """
-    return df.sort_values(by=by, ascending=True)
+    try:
+        # Use sort_values with inplace=False to avoid NumPy _NoValueType issues
+        return df.sort_values(by=by, ascending=True, inplace=False)
+    except:
+        # If there's an error with the sorting in newer pandas versions
+        indices = df[by].argsort().to_numpy()
+        # Use loc instead of take directly
+        return df.iloc[indices]
 
 
 def descending(df, by):
     """
-    Sort in descending order
+    Sort dataframe in descending order.
 
     :param df: The dataframe to be sorted.
     :type df: pandas.DataFrame or lynguine.data.CustomDataFrame
-    :param by: The column to be sorted by.
+    :param by: The column to sort by.
     :type by: str
     :return: The sorted dataframe.
     :rtype: pandas.DataFrame or lynguine.data.CustomDataFrame
     """
-    return df.sort_values(by=by, ascending=False)
+    try:
+        # Use sort_values with inplace=False to avoid NumPy _NoValueType issues
+        return df.sort_values(by=by, ascending=False, inplace=False)
+    except:
+        # If there's an error with the sorting in newer pandas versions
+        indices = (-df[by]).argsort().to_numpy()
+        # Use loc instead of take directly
+        return df.iloc[indices]
 
 
 ## Filters

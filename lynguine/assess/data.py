@@ -2838,13 +2838,13 @@ class CustomDataFrame(DataObject):
 
     def _distribute_data(self, data):
         """
-        Distribute data according to the colspecs
-
-        :param data: The input data to be distributed.
-        :raises ValueError: If the data passed isn't pandas or custom DataFrame
-        :raises ValueError: If a parameter column doesn't contain the same values.
+        Internal method to distribute data into the _d dictionary based on column specifications.
+        
+        :param data: The input data to distribute.
+        :type data: pandas.DataFrame or list of pandas.DataFrame
         """
-        # Distribute data across names columns
+     
+        # Make a list out of it
         if not isinstance(data, list):
             data = [data]
 
@@ -2866,7 +2866,14 @@ class CustomDataFrame(DataObject):
                                 f'Column "{col}" is specified as a parameter column and yet the values of the column are not all the same.'
                             )
                 else:
-                    d = df[cols]
+                    # Fix for NumPy compatibility issue - use loc instead of direct indexing
+                    # which uses take internally and has issues with _NoValueType
+                    if len(cols) > 0:  # Only try to access if there are columns to retrieve
+                        d = df.loc[:, cols]  # Use .loc instead of df[cols]
+                    else:
+                        # Create an empty DataFrame with the same index as df
+                        d = pd.DataFrame(index=df.index)
+                        
                     if typ in self.types["series"]:
                         self._d[typ] = d
                     else:
