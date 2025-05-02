@@ -1,0 +1,220 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>lynguine.config &mdash; lynguine 0.1 Documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=a58bc63e"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="lynguine.util" href="lynguine.util.html" />
+    <link rel="prev" title="lynguine.assess" href="lynguine.assess.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            lynguine
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/installation.html">Installation Guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../getting_started/installation.html#prerequisites">Prerequisites</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../getting_started/installation.html#installing-ndlpy">Installing ndlpy</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/quickstart.html">Quick Start Guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../getting_started/quickstart.html#creating-your-first-ndlpy-object">Creating Your First ndlpy Object</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../getting_started/quickstart.html#exploring-further">Exploring Further</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/examples.html">Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../getting_started/examples.html#example-1-basic-usage">Example 1: Basic Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../getting_started/examples.html#example-2-advanced-techniques">Example 2: Advanced Techniques</a></li>
+</ul>
+</li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="lynguine.access.html">lynguine.access</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="lynguine.access.html#io-module">IO Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lynguine.access.html#download-module">Download Module</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="lynguine.assess.html">lynguine.assess</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="lynguine.assess.html#data-module">Data Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lynguine.assess.html#compute-module">Compute Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lynguine.assess.html#display-module">Display Module</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">lynguine.config</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#context-module">Context Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#interface-module">Interface Module</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="lynguine.util.html">lynguine.util</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="lynguine.util.html#dataframe-utilities">DataFrame Utilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lynguine.util.html#file-utilities">File Utilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lynguine.util.html#yaml-utilities">YAML Utilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lynguine.util.html#liquid-template-utilities">Liquid Template Utilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lynguine.util.html#miscellaneous-utilities">Miscellaneous Utilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lynguine.util.html#text-utilities">Text Utilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lynguine.util.html#tex-utilities">TeX Utilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lynguine.util.html#talk-utilities">Talk Utilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lynguine.util.html#fake-data-generation">Fake Data Generation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lynguine.util.html#html-utilities">HTML Utilities</a></li>
+</ul>
+</li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../contributing/guide.html">Contributing to ndlpy</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../contributing/guide.html#code-of-conduct">Code of Conduct</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../contributing/guide.html#i-don-t-want-to-read-this-whole-thing">I Don’t Want to Read This Whole Thing!</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../contributing/guide.html#how-can-i-contribute">How Can I Contribute?</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../contributing/guide.html#reporting-bugs">Reporting Bugs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../contributing/guide.html#suggesting-enhancements">Suggesting Enhancements</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../contributing/guide.html#your-first-code-contribution">Your First Code Contribution</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../contributing/guide.html#pull-requests">Pull Requests</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../contributing/guide.html#style-guides">Style Guides</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../contributing/style_guide.html">Python Style Guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../contributing/style_guide.html#code-formatting-with-black">Code Formatting with Black</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../contributing/style_guide.html#pep-8-compliance">PEP 8 Compliance</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../contributing/setup.html">Setup for Development</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../contributing/setup.html#install-dependencies">Install Dependencies</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../contributing/setup.html#setting-up-a-virtual-environment">Setting Up a Virtual Environment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../contributing/setup.html#configuring-your-development-environment">Configuring Your Development Environment</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../contributing/testing.html">Testing Guidelines</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../contributing/testing.html#running-tests">Running Tests</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../contributing/testing.html#writing-tests">Writing Tests</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../contributing/testing.html#test-coverage">Test Coverage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../contributing/testing.html#continuous-integration">Continuous Integration</a></li>
+</ul>
+</li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../improvement_plan.html">Lynguine Documentation and Test Coverage Improvement Plan</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../improvement_plan.html#documentation-improvements">Documentation Improvements</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../improvement_plan.html#fix-documentation-build-system">1. Fix Documentation Build System</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../improvement_plan.html#enhance-module-documentation">2. Enhance Module Documentation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../improvement_plan.html#improve-code-docstrings">3. Improve Code Docstrings</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../improvement_plan.html#test-coverage-improvements">Test Coverage Improvements</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../improvement_plan.html#fix-immediate-test-issues">1. Fix Immediate Test Issues</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../improvement_plan.html#add-tests-for-modules-with-low-coverage">2. Add Tests for Modules with Low Coverage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../improvement_plan.html#create-tests-for-modules-with-no-coverage">3. Create Tests for Modules with No Coverage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../improvement_plan.html#improve-code-quality">4. Improve Code Quality</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../improvement_plan.html#progress-tracking">Progress Tracking</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../improvement_plan.html#id1">2025-05-02</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../improvement_plan.html#id2">2025-05-02</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../improvement_plan.html#id3">2025-05-02</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../improvement_plan.html#next-steps">Next Steps</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">lynguine</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">lynguine.config</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/modules/lynguine.config.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="lynguine-config">
+<h1>lynguine.config<a class="headerlink" href="#lynguine-config" title="Link to this heading"></a></h1>
+<p>The <cite>config</cite> module provides functionality for configuration management, including context and interface definitions.</p>
+<div class="toctree-wrapper compound">
+</div>
+<section id="context-module">
+<h2>Context Module<a class="headerlink" href="#context-module" title="Link to this heading"></a></h2>
+</section>
+<section id="interface-module">
+<h2>Interface Module<a class="headerlink" href="#interface-module" title="Link to this heading"></a></h2>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="lynguine.assess.html" class="btn btn-neutral float-left" title="lynguine.assess" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="lynguine.util.html" class="btn btn-neutral float-right" title="lynguine.util" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, Neil D. Lawrence &lt;lawrennd@gmail.com&gt;.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

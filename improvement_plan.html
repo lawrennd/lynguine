@@ -1,0 +1,345 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lynguine Documentation and Test Coverage Improvement Plan &mdash; lynguine 0.1 Documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=a58bc63e"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Testing Guidelines" href="contributing/testing.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            lynguine
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="getting_started/installation.html">Installation Guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="getting_started/installation.html#prerequisites">Prerequisites</a></li>
+<li class="toctree-l2"><a class="reference internal" href="getting_started/installation.html#installing-ndlpy">Installing ndlpy</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="getting_started/quickstart.html">Quick Start Guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="getting_started/quickstart.html#creating-your-first-ndlpy-object">Creating Your First ndlpy Object</a></li>
+<li class="toctree-l2"><a class="reference internal" href="getting_started/quickstart.html#exploring-further">Exploring Further</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="getting_started/examples.html">Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="getting_started/examples.html#example-1-basic-usage">Example 1: Basic Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="getting_started/examples.html#example-2-advanced-techniques">Example 2: Advanced Techniques</a></li>
+</ul>
+</li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="modules/lynguine.access.html">lynguine.access</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="modules/lynguine.access.html#io-module">IO Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/lynguine.access.html#download-module">Download Module</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="modules/lynguine.assess.html">lynguine.assess</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="modules/lynguine.assess.html#data-module">Data Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/lynguine.assess.html#compute-module">Compute Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/lynguine.assess.html#display-module">Display Module</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="modules/lynguine.config.html">lynguine.config</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="modules/lynguine.config.html#context-module">Context Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/lynguine.config.html#interface-module">Interface Module</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="modules/lynguine.util.html">lynguine.util</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="modules/lynguine.util.html#dataframe-utilities">DataFrame Utilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/lynguine.util.html#file-utilities">File Utilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/lynguine.util.html#yaml-utilities">YAML Utilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/lynguine.util.html#liquid-template-utilities">Liquid Template Utilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/lynguine.util.html#miscellaneous-utilities">Miscellaneous Utilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/lynguine.util.html#text-utilities">Text Utilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/lynguine.util.html#tex-utilities">TeX Utilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/lynguine.util.html#talk-utilities">Talk Utilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/lynguine.util.html#fake-data-generation">Fake Data Generation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/lynguine.util.html#html-utilities">HTML Utilities</a></li>
+</ul>
+</li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="contributing/guide.html">Contributing to ndlpy</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="contributing/guide.html#code-of-conduct">Code of Conduct</a></li>
+<li class="toctree-l2"><a class="reference internal" href="contributing/guide.html#i-don-t-want-to-read-this-whole-thing">I Don’t Want to Read This Whole Thing!</a></li>
+<li class="toctree-l2"><a class="reference internal" href="contributing/guide.html#how-can-i-contribute">How Can I Contribute?</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="contributing/guide.html#reporting-bugs">Reporting Bugs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="contributing/guide.html#suggesting-enhancements">Suggesting Enhancements</a></li>
+<li class="toctree-l3"><a class="reference internal" href="contributing/guide.html#your-first-code-contribution">Your First Code Contribution</a></li>
+<li class="toctree-l3"><a class="reference internal" href="contributing/guide.html#pull-requests">Pull Requests</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="contributing/guide.html#style-guides">Style Guides</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="contributing/style_guide.html">Python Style Guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="contributing/style_guide.html#code-formatting-with-black">Code Formatting with Black</a></li>
+<li class="toctree-l2"><a class="reference internal" href="contributing/style_guide.html#pep-8-compliance">PEP 8 Compliance</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="contributing/setup.html">Setup for Development</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="contributing/setup.html#install-dependencies">Install Dependencies</a></li>
+<li class="toctree-l2"><a class="reference internal" href="contributing/setup.html#setting-up-a-virtual-environment">Setting Up a Virtual Environment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="contributing/setup.html#configuring-your-development-environment">Configuring Your Development Environment</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="contributing/testing.html">Testing Guidelines</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="contributing/testing.html#running-tests">Running Tests</a></li>
+<li class="toctree-l2"><a class="reference internal" href="contributing/testing.html#writing-tests">Writing Tests</a></li>
+<li class="toctree-l2"><a class="reference internal" href="contributing/testing.html#test-coverage">Test Coverage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="contributing/testing.html#continuous-integration">Continuous Integration</a></li>
+</ul>
+</li>
+</ul>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Lynguine Documentation and Test Coverage Improvement Plan</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#documentation-improvements">Documentation Improvements</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#fix-documentation-build-system">1. Fix Documentation Build System</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#enhance-module-documentation">2. Enhance Module Documentation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#improve-code-docstrings">3. Improve Code Docstrings</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#test-coverage-improvements">Test Coverage Improvements</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#fix-immediate-test-issues">1. Fix Immediate Test Issues</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#add-tests-for-modules-with-low-coverage">2. Add Tests for Modules with Low Coverage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#create-tests-for-modules-with-no-coverage">3. Create Tests for Modules with No Coverage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#improve-code-quality">4. Improve Code Quality</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#progress-tracking">Progress Tracking</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id1">2025-05-02</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id2">2025-05-02</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id3">2025-05-02</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#next-steps">Next Steps</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">lynguine</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Lynguine Documentation and Test Coverage Improvement Plan</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/improvement_plan.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="lynguine-documentation-and-test-coverage-improvement-plan">
+<h1>Lynguine Documentation and Test Coverage Improvement Plan<a class="headerlink" href="#lynguine-documentation-and-test-coverage-improvement-plan" title="Link to this heading"></a></h1>
+<section id="documentation-improvements">
+<h2>Documentation Improvements<a class="headerlink" href="#documentation-improvements" title="Link to this heading"></a></h2>
+<section id="fix-documentation-build-system">
+<h3>1. Fix Documentation Build System<a class="headerlink" href="#fix-documentation-build-system" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p>[x] Add Sphinx and related dependencies to the poetry dev dependencies</p></li>
+<li><p>[x] Correct module names from ndlpy to lynguine throughout documentation</p></li>
+<li><p>[x] Ensure conf.py correctly identifies the project</p></li>
+</ul>
+</section>
+<section id="enhance-module-documentation">
+<h3>2. Enhance Module Documentation<a class="headerlink" href="#enhance-module-documentation" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p>[x] Update .rst files to provide meaningful module overviews</p></li>
+<li><p>[ ] Add examples and usage patterns to module documentation</p></li>
+<li><p>[ ] Include architecture diagrams to explain data flow</p></li>
+<li><p>[x] Create proper index.rst that accurately reflects the project</p></li>
+</ul>
+</section>
+<section id="improve-code-docstrings">
+<h3>3. Improve Code Docstrings<a class="headerlink" href="#improve-code-docstrings" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p>[x] Reviewed lynguine/assess/compute.py and confirmed it has comprehensive docstrings</p></li>
+<li><p>[x] Improved docstrings in lynguine/config/interface.py, enhancing:</p>
+<ul>
+<li><p>Class-level docstring with better explanation of the hierarchical interface concept</p></li>
+<li><p>Method-level docstrings for from_file, <strong>init</strong>, and _process_parent</p></li>
+</ul>
+</li>
+<li><p>[ ] Target remaining modules for docstring improvements based on test coverage results</p></li>
+</ul>
+</section>
+</section>
+<section id="test-coverage-improvements">
+<h2>Test Coverage Improvements<a class="headerlink" href="#test-coverage-improvements" title="Link to this heading"></a></h2>
+<section id="fix-immediate-test-issues">
+<h3>1. Fix Immediate Test Issues<a class="headerlink" href="#fix-immediate-test-issues" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p>[ ] Fix the failures in lynguine/assess/data.py tests related to NumPy compatibility issues with _NoValueType</p></li>
+<li><p>[ ] Prioritize fixing CustomDataFrame implementation to work with current pandas/numpy versions</p></li>
+</ul>
+</section>
+<section id="add-tests-for-modules-with-low-coverage">
+<h3>2. Add Tests for Modules with Low Coverage<a class="headerlink" href="#add-tests-for-modules-with-low-coverage" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p>[ ] lynguine/util/html.py (29% coverage)</p></li>
+<li><p>[ ] lynguine/assess/compute.py (51% coverage)</p></li>
+<li><p>[ ] lynguine/config/interface.py (56% coverage)</p></li>
+<li><p>[ ] lynguine/util/yaml.py (61% coverage)</p></li>
+</ul>
+</section>
+<section id="create-tests-for-modules-with-no-coverage">
+<h3>3. Create Tests for Modules with No Coverage<a class="headerlink" href="#create-tests-for-modules-with-no-coverage" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p>[ ] Create basic test scaffolding for the following modules:</p>
+<ul>
+<li><p>[ ] lynguine/clone_or_pull.py</p></li>
+<li><p>[ ] lynguine/convert.py</p></li>
+<li><p>[ ] lynguine/ndlappointment.py</p></li>
+<li><p>[ ] lynguine/ndlcal.py</p></li>
+<li><p>[ ] lynguine/ndlconvert.py</p></li>
+<li><p>[ ] lynguine/ndlexpenses.py</p></li>
+<li><p>[ ] lynguine/ndlimage.py</p></li>
+<li><p>[ ] lynguine/ndlmarkdown.py</p></li>
+<li><p>[ ] lynguine/ndlstrutil.py</p></li>
+<li><p>[ ] lynguine/ndltext.py</p></li>
+<li><p>[ ] lynguine/old_data.py</p></li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="improve-code-quality">
+<h3>4. Improve Code Quality<a class="headerlink" href="#improve-code-quality" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p>[ ] Refactor code to make it more testable where necessary</p></li>
+<li><p>[ ] Remove or update deprecated code that relies on old versions of dependencies</p></li>
+</ul>
+</section>
+</section>
+<section id="progress-tracking">
+<h2>Progress Tracking<a class="headerlink" href="#progress-tracking" title="Link to this heading"></a></h2>
+<section id="id1">
+<h3>2025-05-02<a class="headerlink" href="#id1" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p>Added Sphinx and related dependencies to poetry dev-dependencies</p></li>
+<li><p>Updated conf.py to use Read the Docs theme and fix project identification</p></li>
+<li><p>Created appropriate module documentation files for lynguine.access, lynguine.assess, lynguine.config, and lynguine.util</p></li>
+<li><p>Fixed index.rst to reflect the current project structure</p></li>
+<li><p>Successfully built documentation using sphinx-build</p></li>
+<li><p>Created GitHub Actions workflow for documentation and test coverage</p></li>
+</ul>
+</section>
+<section id="id2">
+<h3>2025-05-02<a class="headerlink" href="#id2" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p>Reviewed lynguine/assess/compute.py and confirmed it already has comprehensive docstrings</p></li>
+<li><p>Improved docstrings in lynguine/config/interface.py, enhancing:</p>
+<ul>
+<li><p>Class-level docstring with better explanation of the hierarchical interface concept</p></li>
+<li><p>Method-level docstrings including from_file, <strong>init</strong>, and _process_parent</p></li>
+</ul>
+</li>
+<li><p>Fixed liquid environment initialization in compute.py (Mode.LAX instead of deprecated constants)</p></li>
+<li><p>Analyzed test coverage to identify priority modules for improvement</p></li>
+<li><p>Identified NumPy/Pandas compatibility issues breaking tests in lynguine/assess/data.py</p></li>
+</ul>
+</section>
+<section id="id3">
+<h3>2025-05-02<a class="headerlink" href="#id3" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p>Fixed compatibility issues with newer versions of NumPy and Pandas:</p>
+<ul>
+<li><p>Updated liquid environment initialization in compute.py to use Mode.LAX instead of deprecated constants</p></li>
+<li><p>Fixed data.py to use DataFrame.loc indexing instead of direct [] indexing to avoid _NoValueType errors</p></li>
+<li><p>Updated util/dataframe.py functions (reorder_dataframe, ascending, descending) to avoid NumPy _NoValueType issues</p></li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="next-steps">
+<h3>Next Steps<a class="headerlink" href="#next-steps" title="Link to this heading"></a></h3>
+<ol class="arabic simple">
+<li><p>Improve test coverage for modules with low coverage:</p>
+<ul class="simple">
+<li><p>lynguine/assess/compute.py (currently 51%)</p></li>
+<li><p>lynguine/config/interface.py (currently 56%)</p></li>
+<li><p>lynguine/util/yaml.py (currently 61%)</p></li>
+<li><p>lynguine/util/html.py (currently 29%)</p></li>
+</ul>
+</li>
+<li><p>Fix documentation warnings about title underlines being too short in module RST files</p></li>
+<li><p>Add usage examples to module documentation to help new users understand how to use the library</p></li>
+<li><p>Consider creating a set of tutorials or example notebooks showing how to use the library for common data processing tasks</p></li>
+</ol>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="contributing/testing.html" class="btn btn-neutral float-left" title="Testing Guidelines" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, Neil D. Lawrence &lt;lawrennd@gmail.com&gt;.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
