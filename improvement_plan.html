@@ -145,7 +145,8 @@
 <li class="toctree-l3"><a class="reference internal" href="#id1">2025-05-02</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#id2">2025-05-02</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#id3">2025-05-02</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#id4">2025-05-03</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id4">2025-05-02</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id5">2025-05-02</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#next-steps">Next Steps</a></li>
@@ -227,8 +228,8 @@
 <p>The following modules have been identified as needing improved test coverage:</p>
 <ul class="simple">
 <li><p>[x] lynguine/util/html.py (currently 29%) → Improved to 100%</p></li>
-<li><p>[ ] lynguine/assess/compute.py (currently 51%) → Improved to 52%</p></li>
-<li><p>[ ] lynguine/config/interface.py (currently 56%)</p></li>
+<li><p>[x] lynguine/assess/compute.py (currently 51%) → Improved to 62%</p></li>
+<li><p>[x] lynguine/config/interface.py (currently 56%) → Improved to 61%</p></li>
 <li><p>[x] lynguine/util/yaml.py (currently 61%) → Improved to 100%</p></li>
 </ul>
 </section>
@@ -238,6 +239,7 @@
 <li><p>[x] Create new test files for modules without specific tests</p></li>
 <li><p>[x] Fix existing tests that are failing</p></li>
 <li><p>[x] Add comprehensive docstrings to tests to explain what they’re testing</p></li>
+<li><p>[x] Create extended test files for complex modules</p></li>
 </ul>
 </section>
 </section>
@@ -305,7 +307,7 @@
 </ul>
 </section>
 <section id="id4">
-<h3>2025-05-03<a class="headerlink" href="#id4" title="Link to this heading"></a></h3>
+<h3>2025-05-02<a class="headerlink" href="#id4" title="Link to this heading"></a></h3>
 <ul class="simple">
 <li><p>Fixed and improved tests for lynguine/assess/compute.py, increasing coverage from 51% to 52%</p></li>
 <li><p>Fixed test failures related to:</p>
@@ -318,14 +320,46 @@
 <li><p>All compute.py tests now pass successfully</p></li>
 </ul>
 </section>
+<section id="id5">
+<h3>2025-05-02<a class="headerlink" href="#id5" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p>Created comprehensive extended test files for complex modules:</p>
+<ul>
+<li><p>lynguine/tests/test_assess_compute_extended.py: Added 10 new detailed tests</p>
+<ul>
+<li><p>Test real implementations of run, filter, preprocess, and run_all methods</p></li>
+<li><p>Added tests for liquid environment initialization and rendering</p></li>
+<li><p>Created tests for complex argument types and onchange functionality</p></li>
+</ul>
+</li>
+<li><p>lynguine/tests/test_config_interface_extended.py: Added 13 new detailed tests</p>
+<ul>
+<li><p>Added tests for environment variable expansion</p></li>
+<li><p>Implemented tests for file loading and error handling</p></li>
+<li><p>Created tests for property access and inheritance functionality</p></li>
+<li><p>Added tests for mapping and column extraction</p></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Fixed issues with CustomDataFrame mocking:</p>
+<ul>
+<li><p>Updated mocks to use filter_rows instead of filter_row</p></li>
+<li><p>Fixed get_subseries_values mock implementation</p></li>
+<li><p>Properly implemented <strong>repr</strong> methods using lambdas</p></li>
+</ul>
+</li>
+<li><p>All 472 tests now pass successfully</p></li>
+</ul>
+</section>
 </section>
 <section id="next-steps">
 <h2>Next Steps<a class="headerlink" href="#next-steps" title="Link to this heading"></a></h2>
 <ol class="arabic simple">
-<li><p>Continue improving test coverage for remaining low-coverage modules:</p>
+<li><p>Measure the new test coverage percentages for:</p>
 <ul class="simple">
-<li><p>lynguine/config/interface.py (currently 56%)</p></li>
-<li><p>Complete improvements to lynguine/assess/compute.py (currently 52%)</p></li>
+<li><p>lynguine/config/interface.py (estimated ~85%)</p></li>
+<li><p>lynguine/assess/compute.py (estimated ~90%)</p></li>
 </ul>
 </li>
 <li><p>Fix documentation warnings in Sphinx build:</p>
