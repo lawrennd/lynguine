@@ -223,12 +223,25 @@ class _HConfig(context._Config):
 
 
 class Interface(_HConfig):
-    """A interface object that loads in local interface files.
-
-    The interface can be hierarchical in that one interface can
-    inherit from another interface where typically outputs from that
-    interface are used as input to the current interface. The
-    interface can also append to the parent interface values.
+    """A hierarchical interface configuration for data-oriented architecture.
+    
+    The Interface class manages configuration for data flows within the lynguine 
+    data-oriented architecture. It provides a mechanism for defining inputs, outputs,
+    computations, parameters, and other components of a data processing pipeline.
+    
+    Key features:
+    - Hierarchical inheritance: An interface can inherit from a parent interface,
+      allowing for composition and reuse of configurations.
+    - Input/output management: Defines how data is read from and written to various sources.
+    - Computation specification: Defines computations to be performed on the data.
+    - Parameter handling: Manages configuration parameters that control processing.
+    
+    The interface can be loaded from YAML files, with support for environment variable
+    expansion and directory-relative paths. When inheriting from another interface,
+    the child can specify which elements to ignore or append from the parent.
+    
+    Inheritance is particularly useful when outputs from a parent interface are used
+    as inputs to the child interface, creating a processing pipeline.
     """
     @classmethod
     def default_config_file(cls):
@@ -260,15 +273,32 @@ class Interface(_HConfig):
     
     def __init__(self, data : dict=None, directory : str=None, user_file : str=None) -> None:
         """
-        Initialise the interface object.
-
-        :param data: dictionary containing the information for the flows
-        :type data: dict
-        :param directory: directory where the flow infomration was loaded from
+        Initialize a new Interface instance with the provided configuration data.
+        
+        This constructor sets up the interface configuration, processes inheritance if specified,
+        and expands environment variables in the configuration values.
+        
+        The initialization process:
+        1. Validates required arguments (directory and user_file)
+        2. Stores configuration data, directory, and filename
+        3. Sets up parent interface if inheritance is specified
+        4. Processes parent interface (resolving inheritance relationships)
+        5. Expands environment variables in configuration values
+        
+        When inheritance is specified, the parent interface is loaded using the directory 
+        and filename provided in the "inherit" section of the configuration. The parent's
+        attributes can be selectively ignored or appended to the child interface using
+        the "ignore" and "append" lists in the "inherit" section.
+        
+        :param data: Dictionary containing the configuration for the interface
+        :type data: dict or None
+        :param directory: Directory where the configuration file was loaded from 
+                         (used for resolving relative paths)
         :type directory: str
-        :param user_file: file name of the user file.
+        :param user_file: Filename of the configuration file
         :type user_file: str
         :return: None
+        :raises ValueError: If required arguments are missing or if inheritance configuration is invalid
         """
 
         # Add base_directory and user_file to data if not already present.
@@ -585,12 +615,27 @@ c        Expand the environment variables in the configuration.
 
     def _process_parent(self):
         """
-        Process the parent interface file.
-
-        If the interface inherits another interface file, this method is used to process the inherited interface, modifying for example output keys as input keys.
+        Process the parent interface to establish inheritance relationships.
+        
+        This method handles the transformation of a parent interface's components when they
+        are inherited by a child interface. It implements the lynguine inheritance model where:
+        
+        1. Parent outputs become child inputs - This enables pipeline processing where one
+           interface's outputs feed into another's inputs.
+        2. Parent series become child inputs - Series data from the parent is made available
+           as input in the child.
+        3. Parent parameters become child constants - Parameters that were configurable in the
+           parent become fixed constants in the child.
+           
+        The method also handles keys that should be ignored based on the "ignore" list in the
+        inheritance configuration, removing them from the parent before applying inheritance.
+        
+        This is a critical part of the hierarchical interface system, allowing for composition
+        of data processing pipelines and reuse of configuration.
+        
+        :return: None
         """
 
-        
         delete_keys = [] # Keys to be removed from the parents
         for key in self._data["inherit"]["ignore"]:
             if key in self._parent:
@@ -750,16 +795,31 @@ c        Expand the environment variables in the configuration.
     @classmethod
     def from_file(cls, user_file=None, directory=".", field=None, raise_error_if_not_found=True):
         """
-        Construct an Interface from the details in a file.
-
-        :param user_file: The name of the user file to be loaded in.
-        :type user_file: str
-        :param directory: The directory to look for the user file in.
+        Construct an Interface instance by loading configuration from a YAML file.
+        
+        This factory method creates an Interface object by reading a YAML configuration file.
+        It handles file path resolution, YAML parsing, and hierarchical interface loading if 
+        inheritance is specified in the configuration.
+        
+        The configuration file should be in YAML format and can include interface specifications
+        for inputs, outputs, computations, and other configuration.
+        
+        :param user_file: The name of the configuration file to load, or a list of filenames 
+                         to try in order (first existing file will be used). If None, the 
+                         default config filename will be used.
+        :type user_file: str or list[str] or None
+        :param directory: The directory to look for the configuration file in, defaults to current directory.
         :type directory: str
-        :param field: The field to be loaded in.
-        :type field: str
-        :param raise_error_if_not_found: Whether to raise an error if the file is not found.
+        :param field: Optional specific field to extract from the loaded YAML (for when the interface
+                     is nested within a larger configuration file).
+        :type field: str or None
+        :param raise_error_if_not_found: Whether to raise an error if the file is not found or empty,
+                                        defaults to True. If False, an empty interface will be created.
         :type raise_error_if_not_found: bool
+        :return: A new Interface instance loaded from the specified file.
+        :rtype: Interface
+        :raises ValueError: If the file is not found or empty (and raise_error_if_not_found is True),
+                           or if the YAML cannot be parsed, or if a specified field is not found.
         """
         
         if user_file is None:
