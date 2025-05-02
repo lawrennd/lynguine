@@ -186,8 +186,10 @@ poetry run pytest
 
 ### Why lynguine?
 
-The name comes from the idea that data oriented architecture is like a set of streams of data, like linguine pasta. In Italian the word also means "little toungues" so there's also a connotation of translation between services.
+The name comes from the idea that data oriented architecture is like a set of streams of data, like linguine pasta. In Italian the word also means "little tongues" so there's also a connotation of translation between services.
+
 =======
+
 ## Linguine Configuration File Format
 
 A Linguine configuration file is a YAML file used to define the structure and behavior of data-oriented interfaces. These files specify the inputs, outputs, and various operations to be performed on the data. The configuration is hierarchical, allowing one interface to inherit from another.
