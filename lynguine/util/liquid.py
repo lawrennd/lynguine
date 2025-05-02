@@ -21,7 +21,13 @@ def load_template_env(ext=".md", template_dir=None):
 
     template_path = [template_dir]
     try:
-        env = liq.Environment(loader=liq.loaders.FileExtensionLoader(search_path=template_path, ext=ext))
+        # Check if we're using a newer or older version of python-liquid
+        if hasattr(liq, 'loaders'):
+            # Older version with loaders as an attribute
+            env = liq.Environment(loader=liq.loaders.FileExtensionLoader(search_path=template_path, ext=ext))
+        else:
+            # Newer version where FileSystemLoader is directly in the package
+            env = liq.Environment(loader=liq.FileSystemLoader(template_path))
         return env
     except Exception as e:
         # Handle specific exceptions as needed

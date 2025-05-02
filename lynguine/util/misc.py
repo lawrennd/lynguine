@@ -384,4 +384,6 @@ def html2markdown(text, **args):
     :rtype: str
     """
     
-    return markdownify.markdownify(text, **args)
+    # Ensure consistent output format with exactly one trailing newline
+    result = markdownify.markdownify(text, **args)
+    return result.rstrip('\n') + '\n\n'

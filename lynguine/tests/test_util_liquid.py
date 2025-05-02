@@ -8,8 +8,20 @@ def test_load_template_env_default(mocker):
     Test the load_template_env function with default parameters.
     """
     custom_dir = "/custom/path/to/templates"
+    # Mock both possible versions of python-liquid
     mock_env = mocker.patch('liquid.Environment')
-
+    
+    # Mock FileExtensionLoader for older versions
+    mock_loaders = mocker.patch('liquid.loaders', create=True)
+    mock_file_ext_loader = mocker.MagicMock()
+    mock_loaders.FileExtensionLoader = mocker.MagicMock(return_value=mock_file_ext_loader)
+    
+    # Mock FileSystemLoader for newer versions
+    mock_file_system_loader = mocker.patch('liquid.FileSystemLoader', create=True)
+    
+    # Mock hasattr to control which path is taken
+    mocker.patch('lynguine.util.liquid.hasattr', return_value=True)
+    
     mock_os_path_join = mocker.patch('os.path.join', return_value="cat")
     env = load_template_env()
     mock_os_path_join.assert_called_once_with(os.path.dirname(lynguine.__file__), "templates")
@@ -21,7 +33,20 @@ def test_load_template_env_custom_extension(mocker):
     Test the load_template_env function with a custom extension.
     """
     custom_ext = ".html"
+    # Mock both possible versions of python-liquid
     mock_env = mocker.patch('liquid.Environment')
+    
+    # Mock FileExtensionLoader for older versions
+    mock_loaders = mocker.patch('liquid.loaders', create=True)
+    mock_file_ext_loader = mocker.MagicMock()
+    mock_loaders.FileExtensionLoader = mocker.MagicMock(return_value=mock_file_ext_loader)
+    
+    # Mock FileSystemLoader for newer versions
+    mock_file_system_loader = mocker.patch('liquid.FileSystemLoader', create=True)
+    
+    # Mock hasattr to control which path is taken
+    mocker.patch('lynguine.util.liquid.hasattr', return_value=True)
+    
     env = load_template_env(ext=custom_ext)
     mock_env.assert_called_once()
     assert env == mock_env.return_value
@@ -31,7 +56,19 @@ def test_load_template_env_custom_directory(mocker):
     Test the load_template_env function with a custom template directory.
     """
     custom_dir = "/custom/path/to/templates"
+    # Mock both possible versions of python-liquid
     mock_env = mocker.patch('liquid.Environment')
+    
+    # Mock FileExtensionLoader for older versions
+    mock_loaders = mocker.patch('liquid.loaders', create=True)
+    mock_file_ext_loader = mocker.MagicMock()
+    mock_loaders.FileExtensionLoader = mocker.MagicMock(return_value=mock_file_ext_loader)
+    
+    # Mock FileSystemLoader for newer versions
+    mock_file_system_loader = mocker.patch('liquid.FileSystemLoader', create=True)
+    
+    # Mock hasattr to control which path is taken
+    mocker.patch('lynguine.util.liquid.hasattr', return_value=True)
 
     env = load_template_env(template_dir=custom_dir)
 
