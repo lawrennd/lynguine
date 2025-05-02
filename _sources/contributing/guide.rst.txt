@@ -1,9 +1,9 @@
 .. _contributing:
 
-Contributing to ndlpy
+Contributing to lynguine
 =====================
 
-First off, thank you for considering contributing to ndlpy! It's people like you that make ndlpy such a great tool.
+First off, thank you for considering contributing to lynguine! It's people like you that make ndlpy such a great tool.
 
 Code of Conduct
 ---------------
@@ -51,9 +51,9 @@ Pull Requests
 
 The process described here has several goals:
 
-- Maintain ndlpy's quality
+- Maintain lynguine's quality
 - Fix problems that are important to users
-- Engage the community in working toward the best possible ndlpy
+- Engage the community in working toward the best possible lynguine
 - Enable a sustainable system for ndlpy's maintainers to review contributions
 
 Please follow these steps to have your contribution considered by the maintainers:
