@@ -1,48 +1,67 @@
-Welcome to the ndlpy Project's Documentation
-============================================
+Welcome to Lynguine Documentation
+===============================
 
 .. toctree::
    :maxdepth: 2
+   :caption: Contents:
 
-Welcome to the ndlpy Documentation
-==================================
+Overview
+--------
 
-ndlpy is a Python library for ... (provide a brief introduction to your library)
+Lynguine is a Python library for data-oriented architecture (DOA), providing capabilities for managing data flows, accessing various data sources, and applying computations to data. Lynguine follows the access-assess-address pattern, with modules that handle different aspects of data processing.
+
+Key Features
+-----------
+
+* Data-oriented architecture framework
+* Interface definitions for input/output flows
+* Support for various file formats (CSV, JSON, YAML, Excel, etc.)
+* Computing capabilities with function mapping
+* Series-based data manipulation
+* Custom DataFrame extensions
 
 Getting Started
----------------
-This section can include installation instructions, basic usage examples, and an introduction to the main features of ndlpy.
+--------------
+
+.. toctree::
+   :maxdepth: 1
 
    getting_started/installation
    getting_started/quickstart
    getting_started/examples
 
-Modules
--------
-Detailed documentation for each module in ndlpy.
+Modules Documentation
+-------------------
 
-   modules/ndlpy.access	      
-   modules/ndlpy.data
-   modules/ndlpy.util
-   modules/ndlpy.dfutil
-   modules/ndlpy.context
-   modules/ndlpy.settings
+.. toctree::
+   :maxdepth: 2
+
+   modules/lynguine.access
+   modules/lynguine.assess
+   modules/lynguine.config
+   modules/lynguine.util
 
 Contributing
-------------
-Guidelines for contributing to ndlpy, setting up a development environment, and running tests.
+-----------
+
+.. toctree::
+   :maxdepth: 1
 
    contributing/guide
    contributing/style_guide
    contributing/setup
    contributing/testing
 
-FAQs
-----
-Frequently asked questions and their answers.
+Improvement Plan
+---------------
+
+.. toctree::
+   :maxdepth: 1
+
+   improvement_plan
 
 Indices and Tables
-==================
+=================
 
 * :ref:`genindex`
 * :ref:`modindex`
