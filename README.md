@@ -188,8 +188,6 @@ poetry run pytest
 
 The name comes from the idea that data oriented architecture is like a set of streams of data, like linguine pasta. In Italian the word also means "little tongues" so there's also a connotation of translation between services.
 
-=======
-
 ## Linguine Configuration File Format
 
 A Linguine configuration file is a YAML file used to define the structure and behavior of data-oriented interfaces. These files specify the inputs, outputs, and various operations to be performed on the data. The configuration is hierarchical, allowing one interface to inherit from another.
@@ -216,6 +214,7 @@ Specifies the input data for the interface. This can include mappings and column
   - `specifications`: A list of specifications for the input data.
 
 #### `output`
+
 Specifies the output data for the interface. This can include mappings and columns.
 
 - **Type**: `dict`
@@ -226,6 +225,7 @@ Specifies the output data for the interface. This can include mappings and colum
   - `specifications`: A list of specifications for the output data.
 
 #### `compute`
+
 Defines the computations to be performed on the data.
 
 - **Type**: `list`
@@ -234,6 +234,7 @@ Defines the computations to be performed on the data.
   - `operation`: The operation to be performed.
 
 #### `review`
+
 Specifies the fields to be reviewed.
 
 - **Type**: `list`
@@ -242,6 +243,7 @@ Specifies the fields to be reviewed.
   - `operation`: The review operation.
 
 #### `cache`
+
 Specifies the cache columns.
 
 - **Type**: `dict`
@@ -249,6 +251,7 @@ Specifies the cache columns.
   - `columns`: A list of columns to be cached.
 
 #### `constants`
+
 Defines constant values to be used in the interface.
 
 - **Type**: `dict`
@@ -257,6 +260,7 @@ Defines constant values to be used in the interface.
   - `specifications`: A list of specifications for the constants.
 
 #### `parameters`
+
 Specifies parameters for the interface.
 
 - **Type**: `dict`
@@ -265,6 +269,7 @@ Specifies parameters for the interface.
   - `specifications`: A list of specifications for the parameters.
 
 #### `inherit`
+
 Specifies inheritance from another interface.
 
 - **Type**: `dict`
