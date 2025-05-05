@@ -1,5 +1,3 @@
-
-
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" data-content_root="../">
 <head>
@@ -8,18 +6,22 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Testing Guidelines &mdash; lynguine 0.1 Documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
-      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=fd3f3429" />
 
   
-      <script src="../_static/jquery.js?v=5d32c60e"></script>
-      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../_static/documentation_options.js?v=a58bc63e"></script>
-      <script src="../_static/doctools.js?v=9bcbadda"></script>
-      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../_static/documentation_options.js?v=a58bc63e"></script>
+        <script src="../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Lynguine Documentation and Test Coverage Improvement Plan" href="../improvement_plan.html" />
     <link rel="prev" title="Setup for Development" href="setup.html" /> 
 </head>
 
@@ -34,6 +36,9 @@
           <a href="../index.html" class="icon icon-home">
             lynguine
           </a>
+              <div class="version">
+                0.1
+              </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
@@ -61,32 +66,570 @@
 </ul>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../modules/lynguine.access.html">lynguine.access</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../modules/lynguine.access.html#io-module">IO Module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../modules/lynguine.access.html#download-module">Download Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../modules/lynguine.access.html#module-lynguine.access.io">IO Module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.multiline_str_representer"><code class="docutils literal notranslate"><span class="pre">multiline_str_representer()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.str_type"><code class="docutils literal notranslate"><span class="pre">str_type()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.bool_type"><code class="docutils literal notranslate"><span class="pre">bool_type()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.int_type"><code class="docutils literal notranslate"><span class="pre">int_type()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.float_type"><code class="docutils literal notranslate"><span class="pre">float_type()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.extract_dtypes"><code class="docutils literal notranslate"><span class="pre">extract_dtypes()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.extract_sheet"><code class="docutils literal notranslate"><span class="pre">extract_sheet()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.read_json"><code class="docutils literal notranslate"><span class="pre">read_json()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.write_json"><code class="docutils literal notranslate"><span class="pre">write_json()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.read_yaml"><code class="docutils literal notranslate"><span class="pre">read_yaml()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.read_markdown"><code class="docutils literal notranslate"><span class="pre">read_markdown()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.write_markdown"><code class="docutils literal notranslate"><span class="pre">write_markdown()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.write_yaml"><code class="docutils literal notranslate"><span class="pre">write_yaml()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.read_bibtex"><code class="docutils literal notranslate"><span class="pre">read_bibtex()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.write_bibtex"><code class="docutils literal notranslate"><span class="pre">write_bibtex()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.read_directory"><code class="docutils literal notranslate"><span class="pre">read_directory()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.read_list"><code class="docutils literal notranslate"><span class="pre">read_list()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.read_files"><code class="docutils literal notranslate"><span class="pre">read_files()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.write_directory"><code class="docutils literal notranslate"><span class="pre">write_directory()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.read_json_file"><code class="docutils literal notranslate"><span class="pre">read_json_file()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.write_json_file"><code class="docutils literal notranslate"><span class="pre">write_json_file()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.default_file_reader"><code class="docutils literal notranslate"><span class="pre">default_file_reader()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.default_file_writer"><code class="docutils literal notranslate"><span class="pre">default_file_writer()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.read_file"><code class="docutils literal notranslate"><span class="pre">read_file()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.read_yaml_file"><code class="docutils literal notranslate"><span class="pre">read_yaml_file()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.read_bibtex_file"><code class="docutils literal notranslate"><span class="pre">read_bibtex_file()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.yaml_prep"><code class="docutils literal notranslate"><span class="pre">yaml_prep()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.write_bibtex_file"><code class="docutils literal notranslate"><span class="pre">write_bibtex_file()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.write_yaml_file"><code class="docutils literal notranslate"><span class="pre">write_yaml_file()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.read_yaml_meta_file"><code class="docutils literal notranslate"><span class="pre">read_yaml_meta_file()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.write_yaml_meta_file"><code class="docutils literal notranslate"><span class="pre">write_yaml_meta_file()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.read_markdown_file"><code class="docutils literal notranslate"><span class="pre">read_markdown_file()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.read_docx_file"><code class="docutils literal notranslate"><span class="pre">read_docx_file()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.read_talk_file"><code class="docutils literal notranslate"><span class="pre">read_talk_file()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.read_talk_include_file"><code class="docutils literal notranslate"><span class="pre">read_talk_include_file()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.write_url_file"><code class="docutils literal notranslate"><span class="pre">write_url_file()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.write_markdown_file"><code class="docutils literal notranslate"><span class="pre">write_markdown_file()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.create_document_content"><code class="docutils literal notranslate"><span class="pre">create_document_content()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.create_letter"><code class="docutils literal notranslate"><span class="pre">create_letter()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.write_letter_file"><code class="docutils literal notranslate"><span class="pre">write_letter_file()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.write_formlink"><code class="docutils literal notranslate"><span class="pre">write_formlink()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.write_docx_file"><code class="docutils literal notranslate"><span class="pre">write_docx_file()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.write_tex_file"><code class="docutils literal notranslate"><span class="pre">write_tex_file()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.read_csv"><code class="docutils literal notranslate"><span class="pre">read_csv()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.read_excel"><code class="docutils literal notranslate"><span class="pre">read_excel()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.read_fake"><code class="docutils literal notranslate"><span class="pre">read_fake()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.read_local"><code class="docutils literal notranslate"><span class="pre">read_local()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.read_gsheet"><code class="docutils literal notranslate"><span class="pre">read_gsheet()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.write_excel"><code class="docutils literal notranslate"><span class="pre">write_excel()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.write_csv"><code class="docutils literal notranslate"><span class="pre">write_csv()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.write_gsheet"><code class="docutils literal notranslate"><span class="pre">write_gsheet()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.gdrf_"><code class="docutils literal notranslate"><span class="pre">gdrf_()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.update_store_fields"><code class="docutils literal notranslate"><span class="pre">update_store_fields()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.gdwf_"><code class="docutils literal notranslate"><span class="pre">gdwf_()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.populate_directory_readers"><code class="docutils literal notranslate"><span class="pre">populate_directory_readers()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.populate_directory_writers"><code class="docutils literal notranslate"><span class="pre">populate_directory_writers()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.finalize_data"><code class="docutils literal notranslate"><span class="pre">finalize_data()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.read_hstack"><code class="docutils literal notranslate"><span class="pre">read_hstack()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.read_stack"><code class="docutils literal notranslate"><span class="pre">read_stack()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.read_vstack"><code class="docutils literal notranslate"><span class="pre">read_vstack()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.read_series"><code class="docutils literal notranslate"><span class="pre">read_series()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.read_data"><code class="docutils literal notranslate"><span class="pre">read_data()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.read_auto"><code class="docutils literal notranslate"><span class="pre">read_auto()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.convert_data"><code class="docutils literal notranslate"><span class="pre">convert_data()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.data_exists"><code class="docutils literal notranslate"><span class="pre">data_exists()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.load_or_create_df"><code class="docutils literal notranslate"><span class="pre">load_or_create_df()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.globals_data"><code class="docutils literal notranslate"><span class="pre">globals_data()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.cache"><code class="docutils literal notranslate"><span class="pre">cache()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.scores"><code class="docutils literal notranslate"><span class="pre">scores()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.series"><code class="docutils literal notranslate"><span class="pre">series()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.write_data"><code class="docutils literal notranslate"><span class="pre">write_data()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.read_bibtex_directory"><code class="docutils literal notranslate"><span class="pre">read_bibtex_directory()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.read_docx_directory"><code class="docutils literal notranslate"><span class="pre">read_docx_directory()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.read_json_directory"><code class="docutils literal notranslate"><span class="pre">read_json_directory()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.read_markdown_directory"><code class="docutils literal notranslate"><span class="pre">read_markdown_directory()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.read_meta_directory"><code class="docutils literal notranslate"><span class="pre">read_meta_directory()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.read_plain_directory"><code class="docutils literal notranslate"><span class="pre">read_plain_directory()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.read_yaml_directory"><code class="docutils literal notranslate"><span class="pre">read_yaml_directory()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.write_json_directory"><code class="docutils literal notranslate"><span class="pre">write_json_directory()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.write_markdown_directory"><code class="docutils literal notranslate"><span class="pre">write_markdown_directory()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.write_meta_directory"><code class="docutils literal notranslate"><span class="pre">write_meta_directory()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.write_yaml_directory"><code class="docutils literal notranslate"><span class="pre">write_yaml_directory()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../modules/lynguine.access.html#download-module">Download Module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.download.FileDownloader"><code class="docutils literal notranslate"><span class="pre">FileDownloader</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.download.FileDownloader.interface"><code class="docutils literal notranslate"><span class="pre">FileDownloader.interface</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.download.FileDownloader.data_name"><code class="docutils literal notranslate"><span class="pre">FileDownloader.data_name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.download.FileDownloader.data_resources"><code class="docutils literal notranslate"><span class="pre">FileDownloader.data_resources</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.download.FileDownloader.download_data"><code class="docutils literal notranslate"><span class="pre">FileDownloader.download_data()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.download.GitDownloader"><code class="docutils literal notranslate"><span class="pre">GitDownloader</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.download.GitDownloader.data_name"><code class="docutils literal notranslate"><span class="pre">GitDownloader.data_name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.download.GitDownloader.data_resources"><code class="docutils literal notranslate"><span class="pre">GitDownloader.data_resources</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.download.GitDownloader.download_data"><code class="docutils literal notranslate"><span class="pre">GitDownloader.download_data()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.download.GitDownloader.interface"><code class="docutils literal notranslate"><span class="pre">GitDownloader.interface</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../modules/lynguine.assess.html">lynguine.assess</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../modules/lynguine.assess.html#data-module">Data Module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../modules/lynguine.assess.html#compute-module">Compute Module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../modules/lynguine.assess.html#display-module">Display Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../modules/lynguine.assess.html#data-module">Data Module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.iskeyword"><code class="docutils literal notranslate"><span class="pre">iskeyword()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.Accessor"><code class="docutils literal notranslate"><span class="pre">Accessor</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject"><code class="docutils literal notranslate"><span class="pre">DataObject</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.get_subseries"><code class="docutils literal notranslate"><span class="pre">DataObject.get_subseries()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.get_subindices"><code class="docutils literal notranslate"><span class="pre">DataObject.get_subindices()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.get_subseries_values"><code class="docutils literal notranslate"><span class="pre">DataObject.get_subseries_values()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.get_index"><code class="docutils literal notranslate"><span class="pre">DataObject.get_index()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.set_index"><code class="docutils literal notranslate"><span class="pre">DataObject.set_index()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.get_column"><code class="docutils literal notranslate"><span class="pre">DataObject.get_column()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.set_column"><code class="docutils literal notranslate"><span class="pre">DataObject.set_column()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.set_value_column"><code class="docutils literal notranslate"><span class="pre">DataObject.set_value_column()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.get_value_column"><code class="docutils literal notranslate"><span class="pre">DataObject.get_value_column()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.ismutable"><code class="docutils literal notranslate"><span class="pre">DataObject.ismutable()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.autocache"><code class="docutils literal notranslate"><span class="pre">DataObject.autocache</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.interface"><code class="docutils literal notranslate"><span class="pre">DataObject.interface</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.mutable"><code class="docutils literal notranslate"><span class="pre">DataObject.mutable</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.isparameter"><code class="docutils literal notranslate"><span class="pre">DataObject.isparameter()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.isseries"><code class="docutils literal notranslate"><span class="pre">DataObject.isseries()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.get_selector"><code class="docutils literal notranslate"><span class="pre">DataObject.get_selector()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.set_selector"><code class="docutils literal notranslate"><span class="pre">DataObject.set_selector()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.get_subindex"><code class="docutils literal notranslate"><span class="pre">DataObject.get_subindex()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.set_subindex"><code class="docutils literal notranslate"><span class="pre">DataObject.set_subindex()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.get_selectors"><code class="docutils literal notranslate"><span class="pre">DataObject.get_selectors()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.get_value"><code class="docutils literal notranslate"><span class="pre">DataObject.get_value()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.set_value"><code class="docutils literal notranslate"><span class="pre">DataObject.set_value()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.add_row"><code class="docutils literal notranslate"><span class="pre">DataObject.add_row()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.head"><code class="docutils literal notranslate"><span class="pre">DataObject.head()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.tail"><code class="docutils literal notranslate"><span class="pre">DataObject.tail()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.add_column"><code class="docutils literal notranslate"><span class="pre">DataObject.add_column()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.drop_column"><code class="docutils literal notranslate"><span class="pre">DataObject.drop_column()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.filter_rows"><code class="docutils literal notranslate"><span class="pre">DataObject.filter_rows()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.get_shape"><code class="docutils literal notranslate"><span class="pre">DataObject.get_shape()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.describe"><code class="docutils literal notranslate"><span class="pre">DataObject.describe()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.to_pandas"><code class="docutils literal notranslate"><span class="pre">DataObject.to_pandas()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.to_clipboard"><code class="docutils literal notranslate"><span class="pre">DataObject.to_clipboard()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.to_feather"><code class="docutils literal notranslate"><span class="pre">DataObject.to_feather()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.to_json"><code class="docutils literal notranslate"><span class="pre">DataObject.to_json()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.to_orc"><code class="docutils literal notranslate"><span class="pre">DataObject.to_orc()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.to_records"><code class="docutils literal notranslate"><span class="pre">DataObject.to_records()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.to_timestamp"><code class="docutils literal notranslate"><span class="pre">DataObject.to_timestamp()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.to_csv"><code class="docutils literal notranslate"><span class="pre">DataObject.to_csv()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.to_gbq"><code class="docutils literal notranslate"><span class="pre">DataObject.to_gbq()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.to_latex"><code class="docutils literal notranslate"><span class="pre">DataObject.to_latex()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.to_parquet"><code class="docutils literal notranslate"><span class="pre">DataObject.to_parquet()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.to_sql"><code class="docutils literal notranslate"><span class="pre">DataObject.to_sql()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.to_xarray"><code class="docutils literal notranslate"><span class="pre">DataObject.to_xarray()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.to_dict"><code class="docutils literal notranslate"><span class="pre">DataObject.to_dict()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.to_hdf"><code class="docutils literal notranslate"><span class="pre">DataObject.to_hdf()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.to_markdown"><code class="docutils literal notranslate"><span class="pre">DataObject.to_markdown()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.to_period"><code class="docutils literal notranslate"><span class="pre">DataObject.to_period()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.to_stata"><code class="docutils literal notranslate"><span class="pre">DataObject.to_stata()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.to_xml"><code class="docutils literal notranslate"><span class="pre">DataObject.to_xml()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.to_excel"><code class="docutils literal notranslate"><span class="pre">DataObject.to_excel()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.to_html"><code class="docutils literal notranslate"><span class="pre">DataObject.to_html()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.to_numpy"><code class="docutils literal notranslate"><span class="pre">DataObject.to_numpy()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.to_string"><code class="docutils literal notranslate"><span class="pre">DataObject.to_string()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.valid_data_types"><code class="docutils literal notranslate"><span class="pre">DataObject.valid_data_types</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.from_pandas"><code class="docutils literal notranslate"><span class="pre">DataObject.from_pandas()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.from_csv"><code class="docutils literal notranslate"><span class="pre">DataObject.from_csv()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.from_dict"><code class="docutils literal notranslate"><span class="pre">DataObject.from_dict()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.to_flow"><code class="docutils literal notranslate"><span class="pre">DataObject.to_flow()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.compute_from_flow"><code class="docutils literal notranslate"><span class="pre">DataObject.compute_from_flow()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.from_flow"><code class="docutils literal notranslate"><span class="pre">DataObject.from_flow()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.augment_with_df"><code class="docutils literal notranslate"><span class="pre">DataObject.augment_with_df()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.save_flows"><code class="docutils literal notranslate"><span class="pre">DataObject.save_flows()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.sort_values"><code class="docutils literal notranslate"><span class="pre">DataObject.sort_values()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.sort_index"><code class="docutils literal notranslate"><span class="pre">DataObject.sort_index()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.convert"><code class="docutils literal notranslate"><span class="pre">DataObject.convert()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.sum"><code class="docutils literal notranslate"><span class="pre">DataObject.sum()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.mean"><code class="docutils literal notranslate"><span class="pre">DataObject.mean()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.add"><code class="docutils literal notranslate"><span class="pre">DataObject.add()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.subtract"><code class="docutils literal notranslate"><span class="pre">DataObject.subtract()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.multiply"><code class="docutils literal notranslate"><span class="pre">DataObject.multiply()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.equals"><code class="docutils literal notranslate"><span class="pre">DataObject.equals()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.transpose"><code class="docutils literal notranslate"><span class="pre">DataObject.transpose()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.dot"><code class="docutils literal notranslate"><span class="pre">DataObject.dot()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.isna"><code class="docutils literal notranslate"><span class="pre">DataObject.isna()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.isnull"><code class="docutils literal notranslate"><span class="pre">DataObject.isnull()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.notna"><code class="docutils literal notranslate"><span class="pre">DataObject.notna()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.fillna"><code class="docutils literal notranslate"><span class="pre">DataObject.fillna()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.dropna"><code class="docutils literal notranslate"><span class="pre">DataObject.dropna()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.drop_duplicates"><code class="docutils literal notranslate"><span class="pre">DataObject.drop_duplicates()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.groupby"><code class="docutils literal notranslate"><span class="pre">DataObject.groupby()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.pivot_table"><code class="docutils literal notranslate"><span class="pre">DataObject.pivot_table()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.dtypes"><code class="docutils literal notranslate"><span class="pre">DataObject.dtypes</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.log"><code class="docutils literal notranslate"><span class="pre">DataObject.log</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.T"><code class="docutils literal notranslate"><span class="pre">DataObject.T</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.shape"><code class="docutils literal notranslate"><span class="pre">DataObject.shape</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.columns"><code class="docutils literal notranslate"><span class="pre">DataObject.columns</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.index"><code class="docutils literal notranslate"><span class="pre">DataObject.index</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.empty"><code class="docutils literal notranslate"><span class="pre">DataObject.empty</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.values"><code class="docutils literal notranslate"><span class="pre">DataObject.values</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.colspecs"><code class="docutils literal notranslate"><span class="pre">DataObject.colspecs</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.apply"><code class="docutils literal notranslate"><span class="pre">DataObject.apply()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.merge"><code class="docutils literal notranslate"><span class="pre">DataObject.merge()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.join"><code class="docutils literal notranslate"><span class="pre">DataObject.join()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.types"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.types</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.autocache"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.autocache</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.interface"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.interface</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.get_type_columns"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.get_type_columns()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.get_input_columns"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.get_input_columns()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.get_series_columns"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.get_series_columns()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.get_parameters_columns"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.get_parameters_columns()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.get_output_columns"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.get_output_columns()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.get_column_type"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.get_column_type()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.colspecs"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.colspecs</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.coltype"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.coltype()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.compute"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.compute</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.to_pandas"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.to_pandas()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.update_from_pandas"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.update_from_pandas()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.filter"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.filter()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.update_name_column_map"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.update_name_column_map()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.mapping"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.mapping()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.viewer_to_value"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.viewer_to_value()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.view_to_value"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.view_to_value()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.summary_viewer_to_value"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.summary_viewer_to_value()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.T"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.T</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.add"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.add()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.add_column"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.add_column()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.add_row"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.add_row()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.apply"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.apply()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.augment_with_df"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.augment_with_df()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.columns"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.columns</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.compute_from_flow"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.compute_from_flow()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.convert"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.convert()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.describe"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.describe()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.dot"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.dot()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.drop_column"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.drop_column()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.drop_duplicates"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.drop_duplicates()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.dropna"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.dropna()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.dtypes"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.dtypes</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.empty"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.empty</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.equals"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.equals()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.fillna"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.fillna()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.filter_rows"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.filter_rows()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.from_csv"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.from_csv()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.from_dict"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.from_dict()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.from_flow"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.from_flow()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.from_pandas"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.from_pandas()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.get_column"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.get_column()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.get_index"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.get_index()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.get_selector"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.get_selector()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.get_selectors"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.get_selectors()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.get_shape"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.get_shape()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.get_subindex"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.get_subindex()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.get_subindices"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.get_subindices()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.get_subseries"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.get_subseries()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.get_subseries_values"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.get_subseries_values()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.get_value"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.get_value()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.get_value_column"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.get_value_column()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.groupby"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.groupby()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.head"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.head()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.index"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.index</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.ismutable"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.ismutable()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.isna"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.isna()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.isnull"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.isnull()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.isparameter"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.isparameter()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.isseries"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.isseries()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.join"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.join()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.log"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.log</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.mean"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.mean()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.merge"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.merge()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.multiply"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.multiply()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.mutable"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.mutable</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.notna"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.notna()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.pivot_table"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.pivot_table()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.save_flows"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.save_flows()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.set_column"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.set_column()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.set_index"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.set_index()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.set_selector"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.set_selector()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.set_subindex"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.set_subindex()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.set_value"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.set_value()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.set_value_column"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.set_value_column()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.shape"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.shape</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.sort_index"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.sort_index()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.sort_values"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.sort_values()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.subtract"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.subtract()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.sum"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.sum()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.summary_view_to_value"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.summary_view_to_value()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.tail"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.tail()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.to_clipboard"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.to_clipboard()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.to_csv"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.to_csv()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.to_dict"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.to_dict()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.to_excel"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.to_excel()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.to_feather"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.to_feather()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.to_flow"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.to_flow()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.to_gbq"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.to_gbq()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.to_hdf"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.to_hdf()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.to_html"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.to_html()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.to_json"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.to_json()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.to_latex"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.to_latex()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.to_markdown"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.to_markdown()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.to_numpy"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.to_numpy()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.to_orc"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.to_orc()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.to_parquet"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.to_parquet()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.to_period"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.to_period()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.to_records"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.to_records()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.to_sql"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.to_sql()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.to_stata"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.to_stata()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.to_string"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.to_string()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.to_timestamp"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.to_timestamp()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.to_xarray"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.to_xarray()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.to_xml"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.to_xml()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.transpose"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.transpose()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.valid_data_types"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.valid_data_types</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.values"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.values</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.view_to_tmpname"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.view_to_tmpname()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.tally_to_value"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.tally_to_value()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.conditions"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.conditions()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.display_to_tmpname"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.display_to_tmpname()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.display_to_value"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.display_to_value()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.compute_to_value"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.compute_to_value()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.compute_to_tmpname"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.compute_to_tmpname()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.liquid_to_tmpname"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.liquid_to_tmpname()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.liquid_to_value"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.liquid_to_value()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.tally_to_tmpname"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.tally_to_tmpname()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.tally_values"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.tally_values()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.tally_series"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.tally_series()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.concat"><code class="docutils literal notranslate"><span class="pre">concat()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../modules/lynguine.assess.html#compute-module">Compute Module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.compute.Compute"><code class="docutils literal notranslate"><span class="pre">Compute</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.compute.Compute._computes"><code class="docutils literal notranslate"><span class="pre">Compute._computes</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.compute.Compute._liquid_env"><code class="docutils literal notranslate"><span class="pre">Compute._liquid_env</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.compute.Compute.logger"><code class="docutils literal notranslate"><span class="pre">Compute.logger</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.compute.Compute.setup_logger"><code class="docutils literal notranslate"><span class="pre">Compute.setup_logger()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.compute.Compute.computes"><code class="docutils literal notranslate"><span class="pre">Compute.computes</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.compute.Compute.precomputes"><code class="docutils literal notranslate"><span class="pre">Compute.precomputes</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.compute.Compute.postcomputes"><code class="docutils literal notranslate"><span class="pre">Compute.postcomputes</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.compute.Compute.prep"><code class="docutils literal notranslate"><span class="pre">Compute.prep()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.compute.Compute.gca_"><code class="docutils literal notranslate"><span class="pre">Compute.gca_()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.compute.Compute.gcf_"><code class="docutils literal notranslate"><span class="pre">Compute.gcf_()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.compute.Compute.run"><code class="docutils literal notranslate"><span class="pre">Compute.run()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.compute.Compute.preprocess"><code class="docutils literal notranslate"><span class="pre">Compute.preprocess()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.compute.Compute.run_onchange"><code class="docutils literal notranslate"><span class="pre">Compute.run_onchange()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.compute.Compute.run_all"><code class="docutils literal notranslate"><span class="pre">Compute.run_all()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.compute.Compute.filter"><code class="docutils literal notranslate"><span class="pre">Compute.filter()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.compute.Compute.load_liquid"><code class="docutils literal notranslate"><span class="pre">Compute.load_liquid()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.compute.Compute.add_liquid_filters"><code class="docutils literal notranslate"><span class="pre">Compute.add_liquid_filters()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.compute.Compute.from_flow"><code class="docutils literal notranslate"><span class="pre">Compute.from_flow()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../modules/lynguine.assess.html#display-module">Display Module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.display.WidgetCluster"><code class="docutils literal notranslate"><span class="pre">WidgetCluster</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.display.WidgetCluster.clear_children"><code class="docutils literal notranslate"><span class="pre">WidgetCluster.clear_children()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.display.WidgetCluster.close"><code class="docutils literal notranslate"><span class="pre">WidgetCluster.close()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.display.WidgetCluster.has"><code class="docutils literal notranslate"><span class="pre">WidgetCluster.has()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.display.WidgetCluster.get"><code class="docutils literal notranslate"><span class="pre">WidgetCluster.get()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.display.WidgetCluster.refresh"><code class="docutils literal notranslate"><span class="pre">WidgetCluster.refresh()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.display.WidgetCluster.add"><code class="docutils literal notranslate"><span class="pre">WidgetCluster.add()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.display.WidgetCluster.update"><code class="docutils literal notranslate"><span class="pre">WidgetCluster.update()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.display.WidgetCluster.to_markdown"><code class="docutils literal notranslate"><span class="pre">WidgetCluster.to_markdown()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.display.WidgetCluster.to_dict"><code class="docutils literal notranslate"><span class="pre">WidgetCluster.to_dict()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.display.WidgetCluster.display"><code class="docutils literal notranslate"><span class="pre">WidgetCluster.display()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.display.DisplaySystem"><code class="docutils literal notranslate"><span class="pre">DisplaySystem</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.display.DisplaySystem.index"><code class="docutils literal notranslate"><span class="pre">DisplaySystem.index</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.display.DisplaySystem.get_index"><code class="docutils literal notranslate"><span class="pre">DisplaySystem.get_index()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.display.DisplaySystem.set_index"><code class="docutils literal notranslate"><span class="pre">DisplaySystem.set_index()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.display.DisplaySystem.get_value"><code class="docutils literal notranslate"><span class="pre">DisplaySystem.get_value()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.display.DisplaySystem.get_value_by_element"><code class="docutils literal notranslate"><span class="pre">DisplaySystem.get_value_by_element()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.display.DisplaySystem.set_value_by_element"><code class="docutils literal notranslate"><span class="pre">DisplaySystem.set_value_by_element()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.display.DisplaySystem.set_value"><code class="docutils literal notranslate"><span class="pre">DisplaySystem.set_value()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.display.DisplaySystem.get_column"><code class="docutils literal notranslate"><span class="pre">DisplaySystem.get_column()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.display.DisplaySystem.set_column"><code class="docutils literal notranslate"><span class="pre">DisplaySystem.set_column()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.display.DisplaySystem.get_indices"><code class="docutils literal notranslate"><span class="pre">DisplaySystem.get_indices()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.display.DisplaySystem.add_downstream_display"><code class="docutils literal notranslate"><span class="pre">DisplaySystem.add_downstream_display()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.display.DisplaySystem.load_flows"><code class="docutils literal notranslate"><span class="pre">DisplaySystem.load_flows()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.display.DisplaySystem.save_flows"><code class="docutils literal notranslate"><span class="pre">DisplaySystem.save_flows()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.display.DisplaySystem.load_input_flows"><code class="docutils literal notranslate"><span class="pre">DisplaySystem.load_input_flows()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.display.DisplaySystem.load_output_flows"><code class="docutils literal notranslate"><span class="pre">DisplaySystem.load_output_flows()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.display.DisplaySystem.populate_display"><code class="docutils literal notranslate"><span class="pre">DisplaySystem.populate_display()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.display.DisplaySystem.value_updated"><code class="docutils literal notranslate"><span class="pre">DisplaySystem.value_updated()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../modules/lynguine.config.html">lynguine.config</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../modules/lynguine.config.html#context-module">Context Module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../modules/lynguine.config.html#interface-module">Interface Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../modules/lynguine.config.html#context-module">Context Module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.config.html#lynguine.config.context.Context"><code class="docutils literal notranslate"><span class="pre">Context</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.config.html#lynguine.config.context.Context.get"><code class="docutils literal notranslate"><span class="pre">Context.get()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.config.html#lynguine.config.context.Context.items"><code class="docutils literal notranslate"><span class="pre">Context.items()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.config.html#lynguine.config.context.Context.keys"><code class="docutils literal notranslate"><span class="pre">Context.keys()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.config.html#lynguine.config.context.Context.update"><code class="docutils literal notranslate"><span class="pre">Context.update()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.config.html#lynguine.config.context.Context.values"><code class="docutils literal notranslate"><span class="pre">Context.values()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../modules/lynguine.config.html#interface-module">Interface Module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.config.html#lynguine.config.interface.Interface"><code class="docutils literal notranslate"><span class="pre">Interface</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.config.html#lynguine.config.interface.Interface.user_file"><code class="docutils literal notranslate"><span class="pre">Interface.user_file</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.config.html#lynguine.config.interface.Interface.directory"><code class="docutils literal notranslate"><span class="pre">Interface.directory</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.config.html#lynguine.config.interface.Interface.get_output_columns"><code class="docutils literal notranslate"><span class="pre">Interface.get_output_columns()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.config.html#lynguine.config.interface.Interface.get_cache_columns"><code class="docutils literal notranslate"><span class="pre">Interface.get_cache_columns()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.config.html#lynguine.config.interface.Interface.get"><code class="docutils literal notranslate"><span class="pre">Interface.get()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.config.html#lynguine.config.interface.Interface.items"><code class="docutils literal notranslate"><span class="pre">Interface.items()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.config.html#lynguine.config.interface.Interface.keys"><code class="docutils literal notranslate"><span class="pre">Interface.keys()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.config.html#lynguine.config.interface.Interface.update"><code class="docutils literal notranslate"><span class="pre">Interface.update()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.config.html#lynguine.config.interface.Interface.values"><code class="docutils literal notranslate"><span class="pre">Interface.values()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.config.html#lynguine.config.interface.Interface.default_config_file"><code class="docutils literal notranslate"><span class="pre">Interface.default_config_file()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.config.html#lynguine.config.interface.Interface.from_file"><code class="docutils literal notranslate"><span class="pre">Interface.from_file()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.config.html#lynguine.config.interface.Interface.from_yaml"><code class="docutils literal notranslate"><span class="pre">Interface.from_yaml()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.config.html#lynguine.config.interface.Interface.to_yaml"><code class="docutils literal notranslate"><span class="pre">Interface.to_yaml()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../modules/lynguine.util.html">lynguine.util</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../modules/lynguine.util.html#dataframe-utilities">DataFrame Utilities</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../modules/lynguine.util.html#file-utilities">File Utilities</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../modules/lynguine.util.html#yaml-utilities">YAML Utilities</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../modules/lynguine.util.html#liquid-template-utilities">Liquid Template Utilities</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../modules/lynguine.util.html#miscellaneous-utilities">Miscellaneous Utilities</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../modules/lynguine.util.html#text-utilities">Text Utilities</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../modules/lynguine.util.html#tex-utilities">TeX Utilities</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../modules/lynguine.util.html#talk-utilities">Talk Utilities</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../modules/lynguine.util.html#fake-data-generation">Fake Data Generation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../modules/lynguine.util.html#html-utilities">HTML Utilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../modules/lynguine.util.html#dataframe-utilities">DataFrame Utilities</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.dataframe.convert_datetime_to_str"><code class="docutils literal notranslate"><span class="pre">convert_datetime_to_str()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.dataframe.reorder_dataframe"><code class="docutils literal notranslate"><span class="pre">reorder_dataframe()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.dataframe.convert_datetime"><code class="docutils literal notranslate"><span class="pre">convert_datetime()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.dataframe.convert_int"><code class="docutils literal notranslate"><span class="pre">convert_int()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.dataframe.convert_string"><code class="docutils literal notranslate"><span class="pre">convert_string()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.dataframe.convert_year_iso"><code class="docutils literal notranslate"><span class="pre">convert_year_iso()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.dataframe.addmonth"><code class="docutils literal notranslate"><span class="pre">addmonth()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.dataframe.addyear"><code class="docutils literal notranslate"><span class="pre">addyear()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.dataframe.augmentmonth"><code class="docutils literal notranslate"><span class="pre">augmentmonth()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.dataframe.augmentyear"><code class="docutils literal notranslate"><span class="pre">augmentyear()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.dataframe.augmentcurrency"><code class="docutils literal notranslate"><span class="pre">augmentcurrency()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.dataframe.fillna"><code class="docutils literal notranslate"><span class="pre">fillna()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.dataframe.ascending"><code class="docutils literal notranslate"><span class="pre">ascending()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.dataframe.descending"><code class="docutils literal notranslate"><span class="pre">descending()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.dataframe.recent"><code class="docutils literal notranslate"><span class="pre">recent()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.dataframe.current"><code class="docutils literal notranslate"><span class="pre">current()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.dataframe.former"><code class="docutils literal notranslate"><span class="pre">former()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.dataframe.onbool"><code class="docutils literal notranslate"><span class="pre">onbool()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.dataframe.columnis"><code class="docutils literal notranslate"><span class="pre">columnis()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.dataframe.columncontains"><code class="docutils literal notranslate"><span class="pre">columncontains()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../modules/lynguine.util.html#file-utilities">File Utilities</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.files.get_cvs_version"><code class="docutils literal notranslate"><span class="pre">get_cvs_version()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.files.get_svn_version"><code class="docutils literal notranslate"><span class="pre">get_svn_version()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.files.get_git_version"><code class="docutils literal notranslate"><span class="pre">get_git_version()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.files.read_txt_file"><code class="docutils literal notranslate"><span class="pre">read_txt_file()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.files.extract_file_details"><code class="docutils literal notranslate"><span class="pre">extract_file_details()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../modules/lynguine.util.html#yaml-utilities">YAML Utilities</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.yaml.FileFormatError"><code class="docutils literal notranslate"><span class="pre">FileFormatError</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.yaml.FileFormatError.add_note"><code class="docutils literal notranslate"><span class="pre">FileFormatError.add_note()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.yaml.FileFormatError.args"><code class="docutils literal notranslate"><span class="pre">FileFormatError.args</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.yaml.FileFormatError.with_traceback"><code class="docutils literal notranslate"><span class="pre">FileFormatError.with_traceback()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.yaml.update_from_file"><code class="docutils literal notranslate"><span class="pre">update_from_file()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.yaml.header_field"><code class="docutils literal notranslate"><span class="pre">header_field()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.yaml.header_fields"><code class="docutils literal notranslate"><span class="pre">header_fields()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.yaml.extract_header_body"><code class="docutils literal notranslate"><span class="pre">extract_header_body()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../modules/lynguine.util.html#liquid-template-utilities">Liquid Template Utilities</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.liquid.load_template_env"><code class="docutils literal notranslate"><span class="pre">load_template_env()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.liquid.url_escape"><code class="docutils literal notranslate"><span class="pre">url_escape()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.liquid.markdownify"><code class="docutils literal notranslate"><span class="pre">markdownify()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.liquid.relative_url"><code class="docutils literal notranslate"><span class="pre">relative_url()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.liquid.absolute_url"><code class="docutils literal notranslate"><span class="pre">absolute_url()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.liquid.to_i"><code class="docutils literal notranslate"><span class="pre">to_i()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../modules/lynguine.util.html#miscellaneous-utilities">Miscellaneous Utilities</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.misc.iskeyword"><code class="docutils literal notranslate"><span class="pre">iskeyword()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.misc.log"><code class="docutils literal notranslate"><span class="pre">log</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.misc.reorder_dictionary"><code class="docutils literal notranslate"><span class="pre">reorder_dictionary()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.misc.extract_full_filename"><code class="docutils literal notranslate"><span class="pre">extract_full_filename()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.misc.extract_root_directory"><code class="docutils literal notranslate"><span class="pre">extract_root_directory()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.misc.extract_file_type"><code class="docutils literal notranslate"><span class="pre">extract_file_type()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.misc.extract_abs_filename"><code class="docutils literal notranslate"><span class="pre">extract_abs_filename()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.misc.camel_capitalize"><code class="docutils literal notranslate"><span class="pre">camel_capitalize()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.misc.remove_nan"><code class="docutils literal notranslate"><span class="pre">remove_nan()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.misc.isna"><code class="docutils literal notranslate"><span class="pre">isna()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.misc.is_valid_var"><code class="docutils literal notranslate"><span class="pre">is_valid_var()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.misc.to_valid_var"><code class="docutils literal notranslate"><span class="pre">to_valid_var()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.misc.to_camel_case"><code class="docutils literal notranslate"><span class="pre">to_camel_case()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.misc.sub_path_environment"><code class="docutils literal notranslate"><span class="pre">sub_path_environment()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.misc.get_path_env"><code class="docutils literal notranslate"><span class="pre">get_path_env()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.misc.get_url_file"><code class="docutils literal notranslate"><span class="pre">get_url_file()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.misc.prompt_stdin"><code class="docutils literal notranslate"><span class="pre">prompt_stdin()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.misc.markdown2html"><code class="docutils literal notranslate"><span class="pre">markdown2html()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.misc.html2markdown"><code class="docutils literal notranslate"><span class="pre">html2markdown()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../modules/lynguine.util.html#text-utilities">Text Utilities</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.text.render_liquid"><code class="docutils literal notranslate"><span class="pre">render_liquid()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../modules/lynguine.util.html#tex-utilities">TeX Utilities</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.tex.extract_bib_files"><code class="docutils literal notranslate"><span class="pre">extract_bib_files()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.tex.substitute_inputs"><code class="docutils literal notranslate"><span class="pre">substitute_inputs()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.tex.input_file_name"><code class="docutils literal notranslate"><span class="pre">input_file_name()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.tex.process_file"><code class="docutils literal notranslate"><span class="pre">process_file()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.tex.extract_inputs"><code class="docutils literal notranslate"><span class="pre">extract_inputs()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.tex.extract_diagrams"><code class="docutils literal notranslate"><span class="pre">extract_diagrams()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.tex.extract_citations"><code class="docutils literal notranslate"><span class="pre">extract_citations()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.tex.make_bib_file"><code class="docutils literal notranslate"><span class="pre">make_bib_file()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.tex.get_bib_strings"><code class="docutils literal notranslate"><span class="pre">get_bib_strings()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.tex.get_bib_cross_refs"><code class="docutils literal notranslate"><span class="pre">get_bib_cross_refs()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.tex.create_bib_file_given_tex"><code class="docutils literal notranslate"><span class="pre">create_bib_file_given_tex()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../modules/lynguine.util.html#talk-utilities">Talk Utilities</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.talk.talk_field"><code class="docutils literal notranslate"><span class="pre">talk_field()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.talk.extract_bibinputs"><code class="docutils literal notranslate"><span class="pre">extract_bibinputs()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.talk.extract_all"><code class="docutils literal notranslate"><span class="pre">extract_all()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.talk.extract_inputs"><code class="docutils literal notranslate"><span class="pre">extract_inputs()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.talk.extract_diagrams"><code class="docutils literal notranslate"><span class="pre">extract_diagrams()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../modules/lynguine.util.html#fake-data-generation">Fake Data Generation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.fake.prefix"><code class="docutils literal notranslate"><span class="pre">prefix()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.fake.suffix"><code class="docutils literal notranslate"><span class="pre">suffix()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.fake.author_editor"><code class="docutils literal notranslate"><span class="pre">author_editor()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.fake.row"><code class="docutils literal notranslate"><span class="pre">row()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.fake.entry_update"><code class="docutils literal notranslate"><span class="pre">entry_update()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.fake.random_entry_type"><code class="docutils literal notranslate"><span class="pre">random_entry_type()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.fake.bibliography_entry"><code class="docutils literal notranslate"><span class="pre">bibliography_entry()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.fake.rows"><code class="docutils literal notranslate"><span class="pre">rows()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.fake.to_bibtex_author"><code class="docutils literal notranslate"><span class="pre">to_bibtex_author()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.fake.to_bibtex"><code class="docutils literal notranslate"><span class="pre">to_bibtex()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.fake.row_allocation_additional_scores_series"><code class="docutils literal notranslate"><span class="pre">row_allocation_additional_scores_series()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.fake.DataFrame"><code class="docutils literal notranslate"><span class="pre">DataFrame()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.fake.Generate"><code class="docutils literal notranslate"><span class="pre">Generate</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.fake.Generate.person"><code class="docutils literal notranslate"><span class="pre">Generate.person</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.fake.Generate.givenName"><code class="docutils literal notranslate"><span class="pre">Generate.givenName()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.fake.Generate.familyName"><code class="docutils literal notranslate"><span class="pre">Generate.familyName()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.fake.Generate.prefix"><code class="docutils literal notranslate"><span class="pre">Generate.prefix()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.fake.Generate.suffix"><code class="docutils literal notranslate"><span class="pre">Generate.suffix()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.fake.Generate.name"><code class="docutils literal notranslate"><span class="pre">Generate.name()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.fake.Generate.city"><code class="docutils literal notranslate"><span class="pre">Generate.city()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.fake.Generate.state"><code class="docutils literal notranslate"><span class="pre">Generate.state()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.fake.Generate.address"><code class="docutils literal notranslate"><span class="pre">Generate.address()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.fake.Generate.email"><code class="docutils literal notranslate"><span class="pre">Generate.email()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.fake.Generate.date"><code class="docutils literal notranslate"><span class="pre">Generate.date()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../modules/lynguine.util.html#html-utilities">HTML Utilities</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.html.get_reference"><code class="docutils literal notranslate"><span class="pre">get_reference()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.html.write_to_file"><code class="docutils literal notranslate"><span class="pre">write_to_file()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.html.md_write_to_file"><code class="docutils literal notranslate"><span class="pre">md_write_to_file()</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -120,38 +663,6 @@
 <li class="toctree-l2"><a class="reference internal" href="#writing-tests">Writing Tests</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#test-coverage">Test Coverage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#continuous-integration">Continuous Integration</a></li>
-</ul>
-</li>
-</ul>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../improvement_plan.html">Lynguine Documentation and Test Coverage Improvement Plan</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../improvement_plan.html#documentation-improvements">Documentation Improvements</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../improvement_plan.html#fix-documentation-build-system">1. Fix Documentation Build System</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../improvement_plan.html#enhance-module-documentation">2. Enhance Module Documentation</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../improvement_plan.html#improve-code-docstrings">3. Improve Code Docstrings</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="../improvement_plan.html#test-coverage-improvements">Test Coverage Improvements</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../improvement_plan.html#test-coverage-analysis">1. Test Coverage Analysis</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../improvement_plan.html#prioritized-modules-for-test-coverage">2. Prioritized Modules for Test Coverage</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../improvement_plan.html#test-implementation-plan">3. Test Implementation Plan</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="../improvement_plan.html#compatibility-fixes">Compatibility Fixes</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../improvement_plan.html#fix-numpy-pandas-compatibility">1. Fix NumPy/Pandas Compatibility</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../improvement_plan.html#fix-github-actions-workflow">2. Fix GitHub Actions Workflow</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="../improvement_plan.html#progress-log">Progress Log</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../improvement_plan.html#id1">2025-05-02</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../improvement_plan.html#id2">2025-05-02</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../improvement_plan.html#id3">2025-05-02</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../improvement_plan.html#id4">2025-05-02</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../improvement_plan.html#id5">2025-05-02</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../improvement_plan.html#id6">2025-05-02</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="../improvement_plan.html#next-steps">Next Steps</a></li>
 </ul>
 </li>
 </ul>
@@ -215,7 +726,6 @@
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="setup.html" class="btn btn-neutral float-left" title="Setup for Development" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="../improvement_plan.html" class="btn btn-neutral float-right" title="Lynguine Documentation and Test Coverage Improvement Plan" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>
