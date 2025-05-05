@@ -3,7 +3,6 @@
 
 ![Tests](https://github.com/lawrennd/lynguine/actions/workflows/python-tests.yml/badge.svg)
 [![Documentation](https://github.com/lawrennd/lynguine/actions/workflows/docs.yml/badge.svg)](https://lawrennd.github.io/lynguine/)
-[![ReadTheDocs](https://readthedocs.org/projects/lynguine/badge/?version=latest)](https://lynguine.readthedocs.io/en/latest/?badge=latest)
 
 
 [![codecov](https://codecov.io/gh/lawrennd/lynguine/branch/main/graph/badge.svg?token=YOUR_CODECOV_TOKEN)](https://codecov.io/gh/lawrennd/lynguine)
