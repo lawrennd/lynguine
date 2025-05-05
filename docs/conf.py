@@ -30,6 +30,8 @@ extensions = [
     'sphinx.ext.viewcode',
     'sphinx.ext.coverage',
     'sphinx.ext.intersphinx',
+    'sphinx.ext.graphviz',
+    'sphinx.ext.inheritance_diagram',
     'myst_parser',  # For Markdown support
 ]
 
@@ -42,6 +44,8 @@ intersphinx_mapping = {
 
 autodoc_member_order = 'bysource'  # Keep the same order as in the source file
 autodoc_typehints = 'description'  # Put type hints in the description
+autoclass_content = 'both'  # Include both class and __init__ docstrings
+autodoc_inherit_docstrings = True  # Show docstrings of inherited methods
 
 templates_path = ['_templates']
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', '.ipynb_checkpoints']
@@ -71,3 +75,26 @@ html_theme_options = {
 # -- Extension configuration -------------------------------------------------
 # This tells Sphinx to show the full module names on the API docs
 add_module_names = True
+
+# -- Lynguine-specific settings ----------------------------------------
+# This section is for settings specific to lynguine documentation
+
+# Show inheritance diagram for classes
+inheritance_graph_attrs = {
+    'rankdir': 'TB',  # Top to bottom layout
+    'size': '"6.0, 8.0"',
+}
+inheritance_node_attrs = {
+    'shape': 'box',
+    'fontsize': 10,
+    'height': 0.50,
+    'margin': '"0.1,0.1"',
+}
+
+# Add the 'show-inheritance' flag to autodoc directives by default
+autodoc_default_options = {
+    'show-inheritance': True,
+    'members': True,
+    'inherited-members': True,
+    'undoc-members': True,
+}
