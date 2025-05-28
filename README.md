@@ -11,7 +11,15 @@ The `lynguine` library is a library based on DOA principles for managing data. I
 
 It is an attempt to implement the emerging linguine specification, <https://github.com/lawrennd/linguine.git>.
 
-To install use
+## Quick Links
+
+- [Documentation](https://lawrennd.github.io/lynguine/)
+- [Code Improvement Plans](cip/)
+- [Project Backlog](backlog/)
+
+## Installation
+
+To install use:
 
 ```bash
 %pip install lynguine
