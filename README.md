@@ -9,6 +9,8 @@
 
 The `lynguine` library is a library based on DOA principles for managing data. It provides these capabilities to support other libraries like `lamd` and `referia`.
 
+It is an attempt to implement the emerging linguine specification, <https://github.com/lawrennd/linguine.git>.
+
 To install use
 
 ```bash
