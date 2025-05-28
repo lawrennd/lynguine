@@ -1,7 +1,7 @@
 ---
 id: "2025-05-28_index-missing-from-mapping"
 title: "Index column not included in mapping generation"
-status: "Proposed"
+status: "Completed"
 priority: "High"
 effort: "Medium"
 type: "bug"
@@ -41,9 +41,9 @@ This only checks if the column name matches the index name, but doesn't actually
 
 ## Acceptance Criteria
 
-- [ ] Minimal example running without assertion error
-- [ ] Test cases created to ensure that index error doesn't recurr
-- [ ] Index column is properly included in mapping regardless of whether it's present as a DataFrame column
+- [x] Minimal example running without assertion error
+- [x] Test cases created to ensure that index error doesn't recurr
+- [x] Index column is properly included in mapping regardless of whether it's present as a DataFrame column
 
 ## Implementation Notes
 
@@ -60,10 +60,26 @@ This only checks if the column name matches the index name, but doesn't actually
 
 ### Implementation Approach
 
-1. Modify the `mapping()` method in `CustomDataFrame` to:
+1. Modified the `mapping()` method in `CustomDataFrame` to:
    - First generate the mapping from columns as currently done
    - Then explicitly add the index column to the mapping if it exists
    - Ensure the index column is added with its original name as both key and value
+
+### Implementation (2025-05-28)
+
+The fix was implemented by:
+1. Adding a check at the start of the `mapping()` method to ensure the index is in the name-column map:
+```python
+if self.index.name and self.index.name not in self._name_column_map:
+    self.update_name_column_map(name=self.index.name, column=self.index.name)
+```
+
+2. Adding a test case `test_mapping_with_index_name` that verifies:
+   - The index name is automatically included in the mapping
+   - The index value is correctly mapped
+   - The mapping works with both index and column values
+
+All tests are now passing, including the new test case that specifically verifies this functionality.
 
 ## Related
 
@@ -74,4 +90,13 @@ This only checks if the column name matches the index name, but doesn't actually
 
 ### 2025-05-28
 
-Created backlog item after identifying that the fix needs to be implemented in lynguine's `data.py` file. 
+Created backlog item after identifying that the fix needs to be implemented in lynguine's `data.py` file.
+
+### 2025-05-28
+
+Fixed the issue by:
+1. Modifying the `mapping()` method to automatically include the index in the name-column map
+2. Adding a comprehensive test case to verify the fix
+3. Running all tests to ensure no regressions
+
+The fix ensures that the index column is always included in the mapping, regardless of whether it's present as a DataFrame column, which was the root cause of the issue. 

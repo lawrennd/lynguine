@@ -3083,14 +3083,18 @@ class CustomDataFrame(DataObject):
         :returns: dictionary of mapping between variable names and column values
         :rtype: dict
         """
-        
+        # Ensure the index is in the mapping if it has a name and is not already present
+        if self.index.name and self.index.name not in self._name_column_map:
+            self.update_name_column_map(name=self.index.name, column=self.index.name)
+
         if mapping is None:
             log.debug(f"Creating new mapping as mapping is None.")
-            if series is None: # remove any columns not in self.columns
-                mapping = {name: column for name, column in self._default_mapping().items() if column in self.columns or column==self.index.name}
+            if series is None:
+                # Always include all columns and the index in the mapping
+                mapping = {name: column for name, column in self._name_column_map.items() if column in self.columns or column == self.index.name}
                 log.debug(f"Mapping is \"{', '.join(mapping.keys())}\"")
-            else: # remove any columns not in provided series
-                mapping = {name: column for name, column in self._default_mapping().items() if column in series.index}
+            else:
+                mapping = {name: column for name, column in self._name_column_map.items() if column in series.index or column == self.index.name}
 
         form = {}
         for name, column in mapping.items():
@@ -3103,18 +3107,16 @@ class CustomDataFrame(DataObject):
                     except ValueError as e:
                         log.error(e)
                         value = None
-                    
                     log.debug(f"Setting \"{name}\" column of format to \"{value}\".")
                     form[name] = value
-                    
                 else:
                     errmsg = f"Column \"{column}\" in mapping is not in columns \"{', '.join(self.columns)}\"."
                     log.error(errmsg)
                     raise KeyError(errmsg)
             else:
-                if column in series:
-                    form[name] = series[column]
-        mapping = remove_nan(form)        
+                if column in series or column == self.index.name:
+                    form[name] = series[column] if column in series else series.name
+        mapping = remove_nan(form)
         log.debug(f"Mapping now has the following keys \"{', '.join(mapping)}\"")        
         return remove_nan(form)
 

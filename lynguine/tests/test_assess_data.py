@@ -552,23 +552,55 @@ def test_default_mapping(custom_dataframe):
     assert custom_dataframe._default_mapping() == {"var1": "column1", "var2": "column2"}
 
 def test_mapping_with_default(custom_dataframe):
-    # Assuming set_column and get_value methods are part of CustomDataFrame
-    custom_dataframe._name_column_map = {"var1": "column1", "var2": "column2"}
+    # First set up the name-column mapping
+    custom_dataframe.update_name_column_map("var1", "column1")
+    custom_dataframe.update_name_column_map("var2", "column2")
+    
+    # Set up the data
+    custom_dataframe.set_column("column1")
+    custom_dataframe.set_value("value1")
+    custom_dataframe.set_column("column2")
+    custom_dataframe.set_value("value2")
+    
     mapping_result = custom_dataframe.mapping()
     assert mapping_result == {"var1": "value1", "var2": "value2"}
 
 def test_mapping_with_provided_series(custom_dataframe):
-    custom_dataframe._name_column_map = {"var1": "column1", "var2": "column2"}
+    # First set up the name-column mapping
+    custom_dataframe.update_name_column_map("var1", "column1")
+    custom_dataframe.update_name_column_map("var2", "column2")
+    
     provided_series = pd.Series({"column1": "value1", "column2": "value2"})
     mapping_result = custom_dataframe.mapping(series=provided_series)
     assert mapping_result == {"var1": "value1", "var2": "value2"}
 
 def test_mapping_nan_removal(custom_dataframe):
-    custom_dataframe._name_column_map = {"var1": "column1", "var2": "column2"}
+    # First set up the name-column mapping
+    custom_dataframe.update_name_column_map("var1", "column1")
+    custom_dataframe.update_name_column_map("var2", "column2")
+    
+    # Set up the data with a NaN value
+    custom_dataframe.set_column("column1")
+    custom_dataframe.set_value("value1")
     custom_dataframe.set_column("column2")
     custom_dataframe.set_value(None)
+    
     mapping_result = custom_dataframe.mapping()
-    assert mapping_result == {"var1": "value1"} 
+    assert mapping_result == {"var1": "value1"}
+
+def test_mapping_with_index_name(custom_dataframe):
+    # Create a DataFrame with a named index
+    df = pd.DataFrame({'col1': [1, 2, 3]}, index=pd.Index([1, 2, 3], name='test_index'))
+    cdf = lynguine.assess.data.CustomDataFrame(df)
+    
+    # Set up the name-column mapping
+    cdf.update_name_column_map("var1", "col1")
+    
+    # Test that index name is automatically included in mapping
+    mapping = cdf.mapping()
+    assert 'test_index' in mapping
+    assert mapping['test_index'] == 1  # The first index value
+    assert mapping['var1'] == 1  # The first column value
 
 # Test for viewer_to_value with a single dict viewer
 def test_viewer_to_value_single_dict(custom_dataframe):
