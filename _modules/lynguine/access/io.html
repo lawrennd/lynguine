@@ -2611,7 +2611,6 @@
     <span class="k">else</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Field &quot;type&quot; missing in data source details for read_data, details are given as &quot;</span><span class="si">{</span><span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">details</span><span class="p">)</span><span class="si">}</span><span class="s1">&quot;.&#39;</span><span class="p">)</span>
 
-    <span class="nb">print</span><span class="p">(</span><span class="n">details</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">ftype</span> <span class="o">==</span> <span class="s2">&quot;auto&quot;</span><span class="p">:</span>
         <span class="n">df</span> <span class="o">=</span> <span class="n">read_auto</span><span class="p">(</span><span class="n">details</span><span class="p">)</span>
     <span class="k">elif</span> <span class="n">ftype</span> <span class="o">==</span> <span class="s2">&quot;stack&quot;</span><span class="p">:</span>
