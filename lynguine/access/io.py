@@ -1734,7 +1734,6 @@ def read_data(details):
     else:
         raise ValueError(f'Field "type" missing in data source details for read_data, details are given as "{", ".join(details)}".')
 
-    print(details)
     if ftype == "auto":
         df = read_auto(details)
     elif ftype == "stack":
