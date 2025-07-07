@@ -267,9 +267,26 @@ class Compute():
                     self.logger.warning(f"No key \"{key}\" from row_args already found in kwargs.")
                 # if it's a series or a dictionary return element
                 if isinstance(data, (pd.Series, dict)):
-                    kwargs[key] = data[column]
+                    # Check if column is actually a valid key/index
+                    if isinstance(column, str) and column in data:
+                        kwargs[key] = data[column]
+                    else:
+                        # column is not a valid key - this is likely a parameter value
+                        # that should be passed directly, not treated as a column name
+                        available_keys = list(data.keys()) if isinstance(data, dict) else list(data.index)
+                        errmsg = f"Invalid key '{column}' in row_args for key '{key}' when data is {type(data).__name__}. Available keys: {available_keys}. If '{column}' is meant to be a parameter value, it should not be in row_args."
+                        self.logger.error(errmsg)
+                        raise ValueError(errmsg)
                 else:
-                    kwargs[key] = data.get_value_column(column)
+                    # Check if column is actually a valid column name
+                    if isinstance(column, str) and column in data.columns:
+                        kwargs[key] = data.get_value_column(column)
+                    else:
+                        # column is not a valid column name - this is likely a parameter value
+                        # that should be passed directly, not treated as a column name
+                        errmsg = f"Invalid column name '{column}' in row_args for key '{key}'. Available columns: {list(data.columns)}. If '{column}' is meant to be a parameter value, it should not be in row_args."
+                        self.logger.error(errmsg)
+                        raise ValueError(errmsg)
             # kwargs.update(remove_nan(data.mapping(args)))
             self.logger.debug(f"The keyword arguments for the compute function are {kwargs}.")
             if "context" in list_function and list_function["context"]:# if the compute context is required

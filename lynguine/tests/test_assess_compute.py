@@ -432,3 +432,84 @@ def test_str_representation(compute_instance):
     assert isinstance(result, str)
     assert len(result) > 0
 
+def test_row_args_validation_with_invalid_column(compute_instance, mocker):
+    """Test that row_args with invalid column names raises clear error messages."""
+    # Create a mock data frame with known columns
+    mock_data = mocker.MagicMock(spec=CustomDataFrame)
+    mock_data.columns = ['Title', 'Quality', 'Clarity']
+    mock_data.get_column.return_value = 'Title'
+    mock_data.set_column = mocker.MagicMock()
+    mock_data.get_value_column = mocker.MagicMock()
+    
+    # Mock the _compute_functions_list to return a simple test function
+    test_func = lambda **kwargs: "test_result"
+    test_func.__name__ = "test_function"
+    mocked_functions = [
+        {"name": "test_function", "function": test_func, "default_args": {}}
+    ]
+    mocker.patch.object(compute_instance, '_compute_functions_list', return_value=mocked_functions)
+    
+    # Get the compute function that will actually execute the validation
+    compute_func = compute_instance.gcf_("test_function", mock_data)
+    
+    # Test with invalid column name in row_args (like the "1" issue)
+    with pytest.raises(ValueError, match="Invalid column name '1' in row_args for key 'start_page'"):
+        compute_func(mock_data, row_args={"start_page": 1})
+    
+    # Test with invalid column name that's a string but not in columns
+    with pytest.raises(ValueError, match="Invalid column name 'InvalidColumn' in row_args for key 'test_key'"):
+        compute_func(mock_data, row_args={"test_key": "InvalidColumn"})
+
+def test_row_args_validation_with_valid_column(compute_instance, mocker):
+    """Test that row_args with valid column names works correctly."""
+    # Create a mock data frame with known columns
+    mock_data = mocker.MagicMock(spec=CustomDataFrame)
+    mock_data.columns = ['Title', 'Quality', 'Clarity']
+    mock_data.get_column.return_value = 'Title'
+    mock_data.set_column = mocker.MagicMock()
+    mock_data.get_value_column = mocker.MagicMock(return_value="test_value")
+    
+    # Mock the _compute_functions_list to return a simple test function
+    test_func = lambda **kwargs: "test_result"
+    test_func.__name__ = "test_function"
+    mocked_functions = [
+        {"name": "test_function", "function": test_func, "default_args": {}}
+    ]
+    mocker.patch.object(compute_instance, '_compute_functions_list', return_value=mocked_functions)
+    
+    # Get the compute function that will actually execute
+    compute_func = compute_instance.gcf_("test_function", mock_data)
+    
+    # Test with valid column name in row_args - should not raise an error
+    result = compute_func(mock_data, row_args={"test_key": "Quality"})
+    assert result == "test_result"
+    # Verify that get_value_column was called with the correct column
+    mock_data.get_value_column.assert_called_with("Quality")
+
+def test_row_args_validation_with_series_data(compute_instance, mocker):
+    """Test that row_args validation works correctly with Series data."""
+    # Create a CustomDataFrame with a Series column
+    mock_data = mocker.MagicMock(spec=CustomDataFrame)
+    mock_data.columns = ['Title', 'Quality', 'Clarity']
+    mock_data.get_column.return_value = 'Title'
+    mock_data.set_column = mocker.MagicMock()
+    mock_data.get_value_column = mocker.MagicMock()
+    
+    # Mock the _compute_functions_list to return a simple test function
+    test_func = lambda **kwargs: "test_result"
+    test_func.__name__ = "test_function"
+    mocked_functions = [
+        {"name": "test_function", "function": test_func, "default_args": {}}
+    ]
+    mocker.patch.object(compute_instance, '_compute_functions_list', return_value=mocked_functions)
+    
+    # Get the compute function that will actually execute the validation
+    compute_func = compute_instance.gcf_("test_function", mock_data)
+    
+    # Create a mock Series to pass to the compute function
+    mock_series = pd.Series([1, 2, 3], index=['a', 'b', 'c'])
+    
+    # Test with invalid key in row_args for Series data
+    with pytest.raises(ValueError, match="Invalid key '1' in row_args for key 'start_page' when data is Series"):
+        compute_func(mock_series, row_args={"start_page": 1})
+
