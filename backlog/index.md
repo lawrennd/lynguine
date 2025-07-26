@@ -23,7 +23,9 @@ This file provides an overview of all current backlog items organized by categor
 
 ### Ready
 
-*No tasks currently ready.*
+- [Set Up GitHub Repository for VibeSafe](infrastructure/2025-05-05_github-repository-setup.md)
+
+- [Set Up GitHub Repository for VibeSafe](infrastructure/2023-10-26_github-repository-setup.md)
 
 
 ### In Progress
@@ -40,7 +42,7 @@ This file provides an overview of all current backlog items organized by categor
 
 ### Ready
 
-*No tasks currently ready.*
+- [Implement Easy Installation Method for VibeSafe](features/2025-05-05_easy-installation-method.md)
 
 
 ### In Progress

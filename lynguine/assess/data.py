@@ -3084,7 +3084,7 @@ class CustomDataFrame(DataObject):
         :rtype: dict
         """
         # Ensure the index is in the mapping if it has a name and is not already present
-        if self.index.name and self.index.name not in self._name_column_map:
+        if self.index.name and self.index.name not in self._column_name_map:
             self.update_name_column_map(name=self.index.name, column=self.index.name)
 
         if mapping is None:

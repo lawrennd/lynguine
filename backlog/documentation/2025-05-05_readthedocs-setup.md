@@ -1,3 +1,17 @@
+---
+id: "2025-05-05_readthedocs-setup"
+title: "Set Up ReadTheDocs Integration for Lynguine"
+status: "Ready"
+priority: "Medium"
+effort: "Small"
+type: "documentation"
+created: "2025-05-05"
+last_updated: "2025-05-05"
+owner: "TBD"
+github_issue: null
+dependencies: null
+---
+
 # Task: Set Up ReadTheDocs Integration
 
 - **ID**: 2025-05-05_readthedocs-setup

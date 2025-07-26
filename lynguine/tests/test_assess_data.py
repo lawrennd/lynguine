@@ -586,7 +586,7 @@ def test_mapping_nan_removal(custom_dataframe):
     custom_dataframe.set_value(None)
     
     mapping_result = custom_dataframe.mapping()
-    assert mapping_result == {"var1": "value1"}
+    assert mapping_result == {"var1": "value1"} 
 
 def test_mapping_with_index_name(custom_dataframe):
     # Create a DataFrame with a named index
