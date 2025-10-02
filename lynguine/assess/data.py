@@ -3429,7 +3429,7 @@ class CustomDataFrame(DataObject):
         if kwargs is None or kwargs=={}:
             kwargs = self.mapping()
         kwargs.update(local)
-        log.debug(f"Kwargs is \"{kwargs}\".")
+        log.debug(f"Kwargs keys: {list(kwargs.keys())}")
         try:
             return self.compute._liquid_env.from_string(display).render(**remove_nan(kwargs))
         except Exception as err:
