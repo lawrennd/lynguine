@@ -547,6 +547,39 @@ def test_update_name_column_map(custom_dataframe):
     with pytest.raises(ValueError):
         custom_dataframe.update_name_column_map("new_var_name", "column_name")
 
+def test_update_name_column_map_override_auto_generated(custom_dataframe):
+    """Test that auto-generated mappings can be overridden with explicit mappings."""
+    from lynguine.util.misc import to_camel_case
+    
+    # Create a column name with invalid characters that will be auto-generated
+    invalid_column = "What is your name (primary organiser and point of contact)?"
+    auto_generated_name = to_camel_case(invalid_column)
+    
+    # First, simulate auto-generation by manually adding the auto-generated mapping
+    custom_dataframe.update_name_column_map(auto_generated_name, invalid_column)
+    assert custom_dataframe._name_column_map[auto_generated_name] == invalid_column
+    assert custom_dataframe._column_name_map[invalid_column] == auto_generated_name
+    
+    # Now test that we can override the auto-generated mapping with an explicit one
+    explicit_name = "Name"
+    custom_dataframe.update_name_column_map(explicit_name, invalid_column)
+    
+    # The explicit mapping should now be in place
+    assert custom_dataframe._name_column_map[explicit_name] == invalid_column
+    assert custom_dataframe._column_name_map[invalid_column] == explicit_name
+    
+    # The old auto-generated mapping should be removed
+    assert auto_generated_name not in custom_dataframe._name_column_map
+
+def test_update_name_column_map_prevent_user_override(custom_dataframe):
+    """Test that user-defined mappings cannot be overridden accidentally."""
+    # Create a user-defined mapping
+    custom_dataframe.update_name_column_map("userVar", "userColumn")
+    
+    # Try to override with a different name - this should fail
+    with pytest.raises(ValueError, match="already exists in the name-column map"):
+        custom_dataframe.update_name_column_map("differentVar", "userColumn")
+
 def test_default_mapping(custom_dataframe):
     custom_dataframe._name_column_map = {"var1": "column1", "var2": "column2"}
     assert custom_dataframe._default_mapping() == {"var1": "column1", "var2": "column2"}

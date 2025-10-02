@@ -1,7 +1,7 @@
 ---
 id: "2025-10-02_column-mapping-conflict"
 title: "Column Mapping Conflict with Auto-Generated Names"
-status: "Proposed"
+status: "Completed"
 priority: "High"
 created: "2025-10-02"
 last_updated: "2025-10-02"
@@ -46,11 +46,11 @@ ValueError: Column "What is your name (primary organiser and point of contact)?"
 
 ## Acceptance Criteria
 
-- [ ] Users can override auto-generated column mappings with explicit mappings
-- [ ] System still prevents accidental overwrites of user-defined mappings
-- [ ] Auto-generation continues to work for unmapped columns
-- [ ] Clear logging when auto-generated mappings are overwritten
-- [ ] No breaking changes to existing functionality
+- [x] Users can override auto-generated column mappings with explicit mappings
+- [x] System still prevents accidental overwrites of user-defined mappings
+- [x] Auto-generation continues to work for unmapped columns
+- [x] Clear logging when auto-generated mappings are overwritten
+- [x] No breaking changes to existing functionality
 
 ## Implementation Notes
 
@@ -73,3 +73,13 @@ Modified `update_name_column_map` method in `lynguine/assess/data.py`:
 
 ### 2025-10-02
 Task created after identifying the mapping conflict issue during referia application processing.
+
+### 2025-10-02
+Fixed the issue by modifying the `update_name_column_map` method to detect and allow overwriting of auto-generated mappings while maintaining protection for user-defined mappings.
+
+## Testing
+
+The fix was tested with a real referia application that had columns with invalid names:
+- Successfully processed 56 rows of data
+- Explicit mappings now override auto-generated ones
+- System continues to auto-generate for unmapped columns
