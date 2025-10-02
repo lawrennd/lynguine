@@ -3059,9 +3059,22 @@ class CustomDataFrame(DataObject):
         """
         if column in self._column_name_map and self._column_name_map[column] != name:
             original_name = self._column_name_map[column]
-            errmsg = f"Column \"{column}\" already exists in the name-column map and there's an attempt to update its value to \"{name}\" when it's original value was \"{original_name}\" and that would lead to unexpected behaviours. Try looking to see if you're setting column values to different names across different files and/or file loaders."
-            log.error(errmsg)
-            raise ValueError(errmsg)
+            
+            # Check if the original name is an auto-generated camelCase name
+            # Auto-generated names are created by to_camel_case() from invalid column names
+            from lynguine.util.misc import to_camel_case
+            auto_generated_name = to_camel_case(column)
+            
+            # If the original name matches the auto-generated name, allow overwriting
+            if original_name == auto_generated_name:
+                log.warning(f"Overwriting auto-generated mapping for column \"{column}\" from \"{original_name}\" to \"{name}\"")
+                # Remove the old mapping before adding the new one
+                if original_name in self._name_column_map:
+                    del self._name_column_map[original_name]
+            else:
+                errmsg = f"Column \"{column}\" already exists in the name-column map and there's an attempt to update its value to \"{name}\" when it's original value was \"{original_name}\" and that would lead to unexpected behaviours. Try looking to see if you're setting column values to different names across different files and/or file loaders."
+                log.error(errmsg)
+                raise ValueError(errmsg)
         self._name_column_map[name] = column
         self._column_name_map[column] = name
         
