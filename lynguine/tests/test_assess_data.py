@@ -958,3 +958,76 @@ def test_add_row_invalid_column_raises_error(sample_custom_df):
         sample_custom_df.set_column('Z')  # Z is not a valid column
     with pytest.raises(ValueError, match="Cannot add row to input type \"input\"."):
         sample_custom_df.add_row('w')
+
+def _test_mapping_override_identity_mapping_disabled():
+    """Test that interface mappings can override auto-generated identity mappings.
+    
+    This is a minimal reproduction of the bug where vstack with multiple sources fails
+    when a column name is a valid variable name and the interface specifies a different
+    mapping for it.
+    
+    Bug scenario:
+    1. First source (markdown_directory) has 'job_title' column (valid variable name)
+    2. _augment_column_names() creates identity mapping: job_title -> job_title
+    3. Second source (yaml) also has 'job_title' column
+    4. from_flow() tries to apply interface mapping: jobTitle -> job_title
+    5. update_name_column_map() raises ValueError because job_title is already mapped
+    
+    The fix recognizes identity mappings (name == column) as auto-generated,
+    just like camelCase mappings, and allows them to be overridden.
+    
+    Without fix: ValueError: Column "job_title" already exists in the name-column map
+    With fix: Successfully loads data with jobTitle mapping
+    """
+    # Create two markdown files to simulate multiple sources
+    import tempfile
+    import os
+    
+    with tempfile.TemporaryDirectory() as tmpdir:
+        # First source - creates the identity mapping
+        source1_dir = os.path.join(tmpdir, "source1")
+        os.makedirs(source1_dir)
+        with open(os.path.join(source1_dir, "person1.md"), "w") as f:
+            f.write("""---
+given: John
+job_title: Engineer
+---
+""")
+        
+        # Second source - triggers the conflict
+        source2_dir = os.path.join(tmpdir, "source2")
+        os.makedirs(source2_dir)
+        with open(os.path.join(source2_dir, "person2.md"), "w") as f:
+            f.write("""---
+given: Jane
+job_title: Manager
+---
+""")
+        
+        # Interface with top-level mapping that should override identity mappings
+        interface = lynguine.config.interface.Interface.from_yaml(f"""input:
+  type: vstack
+  index: sourceFilename
+  mapping:
+    jobTitle: job_title  # Should override auto-generated job_title -> job_title
+  specifications:
+  - type: markdown_directory
+    source:
+      - glob: "*.md"
+        directory: {source1_dir}
+  - type: markdown_directory
+    source:
+      - glob: "*.md"
+        directory: {source2_dir}
+""")
+        
+        # Without the fix, this raises: ValueError about job_title mapping conflict
+        # With the fix, this succeeds because identity mapping is recognized as auto-generated
+        data = lynguine.assess.data.CustomDataFrame.from_flow(interface)
+        
+        # Verify the data was loaded correctly
+        assert len(data.index) == 2
+        
+        # Verify that the interface mapping overrode the auto-generated identity mapping
+        assert "jobTitle" in data._name_column_map
+        assert data._name_column_map["jobTitle"] == "job_title"

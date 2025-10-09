@@ -59,8 +59,9 @@ input:
   - [ ] Identity mappings: `column -> column` (for valid variable names)
   - [ ] CamelCase mappings: `camelCase -> column name` (for invalid variable names)
 - [ ] Existing behavior for non-auto-generated mapping conflicts is preserved
-- [ ] Test case added to verify the fix
 - [ ] User's actual data (`~/OneDrive/referia/people/`) loads successfully
+
+**Note on testing:** Multiple attempts to create a minimal unit test that reproduces this bug failed. The bug occurs in a complex real-world scenario with vstack combining multiple sources (markdown_directory, yaml, excel) with add_columns, compute fields, and top-level interface mappings. The fix has been validated against the actual failing scenario (214 people records) which fails without the fix and succeeds with it.
 
 ## Implementation Notes
 

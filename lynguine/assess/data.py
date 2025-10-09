@@ -3060,13 +3060,15 @@ class CustomDataFrame(DataObject):
         if column in self._column_name_map and self._column_name_map[column] != name:
             original_name = self._column_name_map[column]
             
-            # Check if the original name is an auto-generated camelCase name
-            # Auto-generated names are created by to_camel_case() from invalid column names
+            # Check if the original name is an auto-generated mapping
+            # Auto-generated mappings are either:
+            # 1. Identity mappings: column -> column (for valid variable names)
+            # 2. camelCase mappings: to_camel_case(column) -> column (for invalid variable names)
             from lynguine.util.misc import to_camel_case
             auto_generated_name = to_camel_case(column)
             
-            # If the original name matches the auto-generated name, allow overwriting
-            if original_name == auto_generated_name:
+            # If the original name matches the auto-generated name or is an identity mapping, allow overwriting
+            if original_name == auto_generated_name or original_name == column:
                 log.warning(f"Overwriting auto-generated mapping for column \"{column}\" from \"{original_name}\" to \"{name}\"")
                 # Remove the old mapping before adding the new one
                 if original_name in self._name_column_map:
