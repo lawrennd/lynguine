@@ -548,7 +548,7 @@ def test_update_name_column_map(custom_dataframe):
         custom_dataframe.update_name_column_map("new_var_name", "column_name")
 
 def test_update_name_column_map_override_auto_generated(custom_dataframe):
-    """Test that auto-generated mappings can be overridden with explicit mappings."""
+    """Test that lynguine is strict and does not allow overriding auto-generated mappings."""
     from lynguine.util.misc import to_camel_case
     
     # Create a column name with invalid characters that will be auto-generated
@@ -560,16 +560,13 @@ def test_update_name_column_map_override_auto_generated(custom_dataframe):
     assert custom_dataframe._name_column_map[auto_generated_name] == invalid_column
     assert custom_dataframe._column_name_map[invalid_column] == auto_generated_name
     
-    # Now test that we can override the auto-generated mapping with an explicit one
+    # Now test that lynguine is strict and does NOT allow overriding the auto-generated mapping
     explicit_name = "Name"
-    custom_dataframe.update_name_column_map(explicit_name, invalid_column)
+    with pytest.raises(ValueError, match="Column.*already exists in the name-column map"):
+        custom_dataframe.update_name_column_map(explicit_name, invalid_column)
     
-    # The explicit mapping should now be in place
-    assert custom_dataframe._name_column_map[explicit_name] == invalid_column
-    assert custom_dataframe._column_name_map[invalid_column] == explicit_name
-    
-    # The old auto-generated mapping should be removed
-    assert auto_generated_name not in custom_dataframe._name_column_map
+    # The old auto-generated mapping should still be there (no override happened)
+    assert auto_generated_name in custom_dataframe._name_column_map
 
 def test_update_name_column_map_prevent_user_override(custom_dataframe):
     """Test that user-defined mappings cannot be overridden accidentally."""

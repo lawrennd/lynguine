@@ -19,12 +19,12 @@ import lynguine.assess.data
 
 def test_identity_mapping_override_with_vstack():
     """
-    Test that explicit interface mappings can override auto-generated identity mappings.
+    Test that lynguine is strict and does not allow overriding auto-generated identity mappings.
     
-    This reproduces the bug where:
+    This reproduces the scenario where:
     1. referia's CustomDataFrame.__init__ calls _augment_column_names, creating job_title -> job_title
     2. Later, vstack mapping tries to apply jobTitle: job_title
-    3. Without the fix, this raises ValueError about conflicting mappings
+    3. lynguine should raise ValueError about conflicting mappings (strict behavior)
     """
     
     # Patch lynguine's CustomDataFrame to mimic referia's behavior
@@ -72,11 +72,9 @@ def test_identity_mapping_override_with_vstack():
             directory=tmpdir
         )
         
-        # This should NOT raise ValueError with the fix
-        data = lynguine.assess.data.CustomDataFrame.from_flow(interface)
-        
-        assert len(data) == 1
-        assert 'job_title' in data._d['input'].columns
+        # This SHOULD raise ValueError because lynguine is strict
+        with pytest.raises(ValueError, match="Column.*already exists in the name-column map"):
+            data = lynguine.assess.data.CustomDataFrame.from_flow(interface)
         
     finally:
         # Restore original __init__
