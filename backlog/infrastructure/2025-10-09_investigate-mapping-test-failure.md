@@ -180,3 +180,54 @@ Created backlog item after spending significant effort trying to create minimal 
 
 All test scenarios passed even without the fix, suggesting the real scenario has a critical condition we haven't identified.
 
+### 2025-10-10
+
+**INVESTIGATION COMPLETE - Root cause identified!**
+
+Added comprehensive tracing to real scenario and discovered the exact bug sequence:
+
+**The Critical Discovery:**
+The bug occurs at `from_flow` line 1101, NOT in `_finalize_df`. There are TWO different code paths for applying mappings:
+
+1. **Path A (in `_finalize_df` lines 2959-2964)**: 
+   - Applies interface mapping FIRST (line 2961)
+   - Then calls `_augment_column_names` (line 2964)
+   - No conflict because mapping exists before augmentation
+
+2. **Path B (in `from_flow` lines 1095-1102)**: 
+   - Calls `_augment_column_names` FIRST (line 1102)
+   - Creates identity mapping: `job_title -> job_title`
+   - Then applies interface mapping (line 1101)
+   - **CONFLICT!** Tries to change `job_title` mapping to `jobTitle`
+
+**Why tests failed:**
+My minimal tests all hit Path A (_finalize_df), but the real scenario hits Path B (from_flow line 1101) for the vstacked result. The vstack specifications each create CustomDataFrame instances that go through Path A, but then the vstack result itself goes through Path B.
+
+**Trace evidence:**
+```
+[56] CDF-2._augment_column_names()  # Line 1102 - augment FIRST
+[114] CDF-2.update_name_column_map(jobTitle, job_title)  # Line 1101 - mapping AFTER
+    ERROR: Column "job_title" already exists...
+```
+
+**Verification:**
+- WITHOUT fix: Real scenario fails with ValueError ✗
+- WITH fix: Real scenario succeeds, loads 214 records ✓
+
+**Outcome:**
+Despite multiple attempts to create a minimal reproducing test (maximal then pruning down approach), could not trigger the exact sequence. However, investigation was successful:
+
+1. **Fix verified on real data**: Fails without fix (ValueError), succeeds with fix (214 records loaded)
+2. **Root cause understood**: At from_flow:1101, interface mappings try to override identity mappings created by _augment, causing conflict  
+3. **Solution correct**: Recognizing identity mappings (`original_name == column`) as auto-generated allows them to be overridden
+
+**Why tests failed to reproduce:**
+The bug requires a specific sequence in from_flow's processing loop that wasn't triggered by simplified tests. The exact conditions involve vstack with multiple specifications, interface-level mappings, and the timing of when CDF instances are created and augmented relative to mapping application.
+
+**Recommendation:**
+Accept the fix based on:
+- Verified failure on real data without fix
+- Verified success on real data with fix  
+- Clear understanding of root cause from comprehensive tracing
+- Minimal, logical one-line fix that extends existing auto-generated mapping logic
+

@@ -1057,7 +1057,7 @@ class DataObject:
                     if not newdf.index.is_unique:
                         # Extract the names of duplicate rows.
                         duplicates = newdf[newdf.index.duplicated(keep="first")]
-                        duplicate_names = duplicates.index.tolist()
+                        duplicate_names = [str(x) for x in duplicates.index.tolist()]
                         log.warning(f"Duplicate index values found in the data frame for key \"{key}\". Duplicates are \"{', '.join(duplicate_names)}\". Removing duplicates.")
                         newdf = newdf[~newdf.index.duplicated(keep="first")]
                         
@@ -3067,7 +3067,7 @@ class CustomDataFrame(DataObject):
             from lynguine.util.misc import to_camel_case
             auto_generated_name = to_camel_case(column)
             
-            # If the original name matches the auto-generated name or is an identity mapping, allow overwriting
+            # Check if this is an auto-generated mapping we can override (either camelCase or identity)
             if original_name == auto_generated_name or original_name == column:
                 log.warning(f"Overwriting auto-generated mapping for column \"{column}\" from \"{original_name}\" to \"{name}\"")
                 # Remove the old mapping before adding the new one
