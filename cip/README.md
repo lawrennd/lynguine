@@ -35,7 +35,11 @@ Each CIP can have one of the following statuses:
 
 ## Current CIPs
 
-- [CIP-0001](./cip0001.md): 
+- [CIP-0001](./cip0001.md): Initial CIP
+- [CIP-0002](./cip0002.md): 
+- [CIP-0003](./cip0003.md): Consistent Mapping Initialization Across lynguine and referia
+- [CIP-0004](./cip0004.md): LLM Integration via LangChain for Compute Framework
+- [CIP-0005](./cip0005.md): Secure Credential Management System ⚠️ *Implemented before CIP creation* 
 
 ## Creating a Good CIP
 

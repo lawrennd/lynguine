@@ -39,6 +39,24 @@ try:
     import gspread_pandas as gspd
 except ImportError:
     GSPREAD_AVAILABLE = False
+
+# Import secure credential management
+try:
+    from ..security.credentials import (
+        get_credential_manager,
+        CredentialNotFoundError,
+        CredentialValidationError
+    )
+    from ..security.access_control import (
+        get_access_controller,
+        AccessLevel,
+        AccessDeniedError,
+        RateLimitError
+    )
+    SECURE_CREDENTIALS_AVAILABLE = True
+except ImportError:
+    SECURE_CREDENTIALS_AVAILABLE = False
+
 # This file accesses the data
 
 """Place commands in this file to access the data electronically. Don't remove any missing values, or deal with outliers. Make sure you have legalities correct, both intellectual property and personal data privacy rights. Beyond the legal side also think about the ethical issues around this data. """
@@ -160,6 +178,117 @@ def extract_sheet(details, gsheet=True):
             return 0
         else:
             return None
+
+
+def _get_google_sheets_config(details):
+    """
+    Get Google Sheets configuration using secure credential management.
+    
+    This function retrieves Google Sheets credentials securely, falling back
+    to the legacy context-based approach if secure credentials are not available.
+    
+    :param details: The details dictionary that may contain credential references
+    :type details: dict
+    :return: Configuration dictionary for gspread_pandas
+    :rtype: dict
+    :raises ValueError: If credentials cannot be retrieved
+    """
+    gconfig = {}
+    
+    # Try secure credential management first
+    if SECURE_CREDENTIALS_AVAILABLE:
+        try:
+            # Get access controller for authorization
+            access_controller = get_access_controller()
+            
+            # Determine which credential to use
+            credential_key = None
+            if "credential" in details:
+                # Explicit credential reference in details
+                credential_key = details["credential"]
+            elif "google_oauth" in ctxt:
+                # Check if context has a credential reference
+                oauth_config = ctxt["google_oauth"]
+                if isinstance(oauth_config, str) and oauth_config.startswith("${credential:"):
+                    # Extract credential key from reference
+                    credential_key = oauth_config[13:-1]  # Remove ${credential: and }
+            else:
+                # Default credential keys
+                credential_key = "google_sheets_oauth"
+            
+            if credential_key:
+                # Authorize access
+                try:
+                    access_controller.authorize_access(
+                        credential_key=credential_key,
+                        operation=AccessLevel.READ,
+                        context="google_sheets_read"
+                    )
+                except (AccessDeniedError, RateLimitError) as e:
+                    log.error(f"Access denied for Google Sheets credential: {e}")
+                    raise ValueError(f"Failed to authorize credential access: {e}")
+                
+                # Get credential from manager
+                credential_manager = get_credential_manager()
+                try:
+                    credential = credential_manager.get_credential(
+                        credential_key,
+                        credential_type="google_oauth"
+                    )
+                    
+                    if credential and "value" in credential:
+                        cred_value = credential["value"]
+                        if isinstance(cred_value, dict):
+                            # Expand environment variables in credential values
+                            for key, val in cred_value.items():
+                                if isinstance(val, str):
+                                    gconfig[key] = os.path.expandvars(val)
+                                else:
+                                    gconfig[key] = val
+                            
+                            log.debug("Using secure credential management for Google Sheets")
+                            return gconfig
+                except CredentialNotFoundError:
+                    log.warning(
+                        f"Credential '{credential_key}' not found in secure storage, "
+                        "falling back to context-based credentials"
+                    )
+                except CredentialValidationError as e:
+                    log.warning(
+                        f"Credential validation failed: {e}, "
+                        "falling back to context-based credentials"
+                    )
+        except Exception as e:
+            log.warning(
+                f"Error using secure credential management: {e}, "
+                "falling back to context-based credentials"
+            )
+    
+    # Fallback to legacy context-based approach
+    if "google_oauth" in ctxt:
+        log.debug("Using legacy context-based credentials for Google Sheets")
+        for key, val in ctxt["google_oauth"].items():
+            if isinstance(val, str):
+                gconfig[key] = os.path.expandvars(val)
+            else:
+                gconfig[key] = val
+        return gconfig
+    elif "gspread_pandas" in ctxt:
+        log.debug("Using legacy gspread_pandas context-based credentials")
+        for key, val in ctxt["gspread_pandas"].items():
+            if isinstance(val, str):
+                gconfig[key] = os.path.expandvars(val)
+            else:
+                gconfig[key] = val
+        return gconfig
+    else:
+        errmsg = (
+            "No Google Sheets credentials found. "
+            "Configure credentials using secure credential management or "
+            "add 'google_oauth' to your context configuration."
+        )
+        log.error(errmsg)
+        raise ValueError(errmsg)
 
 
 def read_json(details):
@@ -1141,20 +1270,22 @@ if GSPREAD_AVAILABLE:
 
     def read_gsheet(details):
         """
-        Read data from a Google sheet.
+        Read data from a Google sheet using secure credential management.
 
         :param details: The details of the file to be read.
         :type details: dict
         :return: The data read from the file.
         :rtype: pandas.DataFrame
+        :raises ValueError: If credentials cannot be retrieved
         """
         dtypes = extract_dtypes(details)
         filename = extract_full_filename(details)
         log.debug(f"Reading Google sheet named {filename}")
         sheet = extract_sheet(details)
-        gconfig = {}
-        for key, val in ctxt["google_oauth"].items():
-            gconfig[key] = os.path.expandvars(val)
+        
+        # Use secure credential management
+        gconfig = _get_google_sheets_config(details)
+        
         gsheet = gspd.Spread(
             spread=filename,
             sheet=sheet,
@@ -1237,21 +1368,26 @@ if GSPREAD_AVAILABLE:
 
     def write_gsheet(df, details):
         """
-        Read data from a Google sheet.
+        Write data to a Google sheet using secure credential management.
 
-        :param details: The details of the file to be read.
+        :param df: The data to be written.
+        :type df: pandas.DataFrame or lynguine.data.CustomDataFrame
+        :param details: The details of the file to be written.
         :type details: dict
-        :return: The data read from the file.
-        :rtype: pandas.DataFrame
+        :raises ValueError: If credentials cannot be retrieved
         """
         filename = extract_full_filename(details)
         sheet = extract_sheet(details)
         log.debug(f"Writing Google sheet named {filename}")
+        
+        # Use secure credential management
+        gconfig = _get_google_sheets_config(details)
+        
         gsheet = gspd.Spread(
             spread=filename,
             sheet=sheet,
             create_spread=True,
-            config=ctxt["gspread_pandas"],
+            config=gconfig,
         )
         gsheet.df_to_sheet(
             df=df,

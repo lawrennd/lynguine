@@ -1,7 +1,19 @@
 # This file loads configurations that are specific to the context
 import os
 import yaml
+import re
 from itertools import chain
+
+# Import secure credential management
+try:
+    from ..security.credentials import (
+        get_credential_manager,
+        CredentialNotFoundError,
+        CredentialValidationError
+    )
+    SECURE_CREDENTIALS_AVAILABLE = True
+except ImportError:
+    SECURE_CREDENTIALS_AVAILABLE = False
 
 class _Config(object):
     """
@@ -188,13 +200,104 @@ class Context(_Config):
 
     def _expand_vars(self):
         """
-        Expand the environment variables in the configuration.
+        Expand environment variables and credential references in configuration.
+        
+        Supports:
+        - Environment variables: $VAR or ${VAR}
+        - Credential references: ${credential:key_name}
 
         :return: None
         """
         for key, item in self._data.items():
-            if item is str:
-                self._data[key] = os.path.expandvars(item)
+            self._data[key] = self._expand_value(item)
+    
+    def _expand_value(self, value):
+        """
+        Recursively expand a configuration value.
+        
+        :param value: The value to expand
+        :return: The expanded value
+        """
+        if isinstance(value, str):
+            # Expand credential references first
+            value = self._expand_credential_references(value)
+            # Then expand environment variables
+            value = os.path.expandvars(value)
+            return value
+        elif isinstance(value, dict):
+            return {k: self._expand_value(v) for k, v in value.items()}
+        elif isinstance(value, list):
+            return [self._expand_value(item) for item in value]
+        else:
+            return value
+    
+    def _expand_credential_references(self, value):
+        """
+        Expand credential references in a string value.
+        
+        Credential references have the format: ${credential:key_name}
+        
+        :param value: The string value to expand
+        :type value: str
+        :return: The expanded value
+        :rtype: str
+        """
+        if not isinstance(value, str):
+            return value
+        
+        # Pattern to match ${credential:key_name}
+        pattern = r'\$\{credential:([^}]+)\}'
+        
+        def replace_credential(match):
+            credential_key = match.group(1)
+            
+            if not SECURE_CREDENTIALS_AVAILABLE:
+                # If secure credentials not available, return the reference unchanged
+                return match.group(0)
+            
+            try:
+                credential_manager = get_credential_manager()
+                credential = credential_manager.get_credential(credential_key)
+                
+                if credential and "value" in credential:
+                    cred_value = credential["value"]
+                    # If the credential value is a dict, return it as-is
+                    # (will be handled by caller)
+                    if isinstance(cred_value, dict):
+                        # For string replacement, we can't embed a dict
+                        # Return a placeholder that indicates success
+                        return f"__CREDENTIAL_DICT_{credential_key}__"
+                    else:
+                        # For simple values, return the string representation
+                        return str(cred_value)
+                else:
+                    raise CredentialNotFoundError(
+                        f"Credential '{credential_key}' has no value"
+                    )
+            except (CredentialNotFoundError, CredentialValidationError) as e:
+                # Log warning but don't fail - return the original reference
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.warning(
+                    f"Failed to resolve credential reference '{credential_key}': {e}"
+                )
+                return match.group(0)
+        
+        # Replace all credential references
+        expanded = re.sub(pattern, replace_credential, value)
+        
+        # If the entire value is a credential dict placeholder, fetch and return the dict
+        if expanded.startswith("__CREDENTIAL_DICT_") and expanded.endswith("__"):
+            credential_key = expanded[18:-2]  # Extract key from placeholder
+            try:
+                credential_manager = get_credential_manager()
+                credential = credential_manager.get_credential(credential_key)
+                if credential and "value" in credential:
+                    return credential["value"]
+            except Exception:
+                pass
+        
+        return expanded
 
     def _add_logging_defaults(self):
         """
