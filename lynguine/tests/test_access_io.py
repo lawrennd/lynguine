@@ -237,6 +237,48 @@ def test_read_list(mocker):
     assert isinstance(result, pd.DataFrame)
     assert not result.empty
 
+# Test for read_data with type="list"
+def test_read_data_with_list_type(mocker):
+    # Mock read_files function
+    mock_read_files = mocker.patch('lynguine.access.io.read_files', return_value=pd.DataFrame([{'data': 'content'}]))
+
+    # Test without base_directory
+    details = {
+        'type': 'list',
+        'filename': ['file1.md', 'file2.md']
+    }
+
+    result = io_module.read_data(details)
+
+    # Assertions
+    assert isinstance(result, tuple)
+    df, returned_details = result
+    assert isinstance(df, pd.DataFrame)
+    assert not df.empty
+    mock_read_files.assert_called_once_with(['file1.md', 'file2.md'])
+
+# Test for read_data with type="list" and base_directory
+def test_read_data_with_list_type_and_base_directory(mocker):
+    # Mock read_files function
+    mock_read_files = mocker.patch('lynguine.access.io.read_files', return_value=pd.DataFrame([{'data': 'content'}]))
+
+    # Test with base_directory
+    details = {
+        'type': 'list',
+        'filename': ['file1.md', 'file2.md'],
+        'base_directory': '/tmp/data'
+    }
+
+    result = io_module.read_data(details)
+
+    # Assertions
+    assert isinstance(result, tuple)
+    df, returned_details = result
+    assert isinstance(df, pd.DataFrame)
+    assert not df.empty
+    # Verify that filelist was constructed with full paths
+    mock_read_files.assert_called_once_with(['/tmp/data/file1.md', '/tmp/data/file2.md'])
+
 # Test for read_files
 def test_read_files(mocker):
     # Mock dependencies

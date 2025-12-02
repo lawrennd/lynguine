@@ -1897,7 +1897,11 @@ def read_data(details):
     elif ftype == "markdown":
         df = read_markdown(details)
     elif ftype == "list":
-        df = read_list(details)
+        filelist = details.get("filename", [])
+        base_dir = details.get("base_directory", "")
+        if base_dir:
+            filelist = [os.path.join(base_dir, f) for f in filelist]
+        df = read_list(filelist)
     elif ftype == "yaml_directory":
         df = read_yaml_directory(details)
     elif ftype == "json_directory":
