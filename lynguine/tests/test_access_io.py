@@ -295,6 +295,49 @@ def test_read_files(mocker):
     assert all(f in result['sourceFile'].values for f in filelist)
 
 
+def test_read_files_extracts_file_type(mocker):
+    """
+    Test that read_files properly extracts file type from filename
+    and passes it to default_file_reader (not the full filename).
+    
+    This test ensures the bug where full filename was passed to
+    default_file_reader is caught.
+    """
+    # Mock dependencies
+    mocker.patch('os.path.exists', return_value=True)
+    
+    # Mock extract_file_type to return 'markdown' for .md files
+    mock_extract_type = mocker.patch('lynguine.access.io.extract_file_type', return_value='markdown')
+    
+    # Mock the default_file_reader to verify it receives the type, not filename
+    mock_default_reader = mocker.patch('lynguine.access.io.default_file_reader')
+    mock_reader_func = mocker.MagicMock(return_value={'content': 'test'})
+    mock_default_reader.return_value = mock_reader_func
+    
+    filelist = ['/path/to/file1.md', '/path/to/file2.md']
+    
+    result = io_module.read_files(filelist)
+    
+    # Verify extract_file_type was called with filenames
+    assert mock_extract_type.call_count == 2
+    mock_extract_type.assert_any_call('/path/to/file1.md')
+    mock_extract_type.assert_any_call('/path/to/file2.md')
+    
+    # Verify default_file_reader was called with the type 'markdown', not the filename
+    assert mock_default_reader.call_count == 2
+    mock_default_reader.assert_called_with('markdown')
+    # Should NOT be called with full filename like '/path/to/file1.md'
+    
+    # Verify the reader function was called with the actual filenames
+    assert mock_reader_func.call_count == 2
+    mock_reader_func.assert_any_call('/path/to/file1.md')
+    mock_reader_func.assert_any_call('/path/to/file2.md')
+    
+    # Verify result is a DataFrame
+    assert isinstance(result, pd.DataFrame)
+    assert len(result) == len(filelist)
+
+
 # Test for write_directory
 def test_write_directory(mocker):
     # Mock dependencies

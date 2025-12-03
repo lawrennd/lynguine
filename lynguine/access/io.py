@@ -538,7 +538,8 @@ def read_files(filelist, store_fields=None, filereader=None, filereader_args=Non
         if not os.path.exists(filename):
             log.warning(f'File "{filename}" is not a file or a directory.')
         if filereader is None:
-            filereader = default_file_reader(filename)
+            typ = extract_file_type(filename)
+            filereader = default_file_reader(typ)
         if filereader_args is None:
             data.append(filereader(filename))
         else:
