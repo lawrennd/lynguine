@@ -1050,7 +1050,11 @@ class DataObject:
                         # Select the data from the dataframe.
                         log.debug(f"Selecting item with index \"{item['select']}\" for the parameter type \"{key}\".")
                         newds = newdf.loc[item["select"]]
-                        newdf = newds 
+                        newdf = newds
+                    elif isinstance(newdf, pd.DataFrame) and len(newdf) == 1:
+                        # Convert single-row DataFrame to Series for parameters
+                        log.debug(f"Converting single-row DataFrame to Series for parameter type \"{key}\".")
+                        newdf = newdf.iloc[0] 
 
                 if key not in cls.types["series"] and key not in cls.types["parameters"]:
                     # Remove duplicates in newdf index

@@ -330,6 +330,13 @@ def read_yaml(details):
     """
     filename = extract_full_filename(details)
     data = read_yaml_file(filename)
+    
+    # Handle scalar dictionaries (e.g., for parameters/constants)
+    if isinstance(data, dict) and all(not isinstance(v, (list, dict)) for v in data.values()):
+        # All values are scalars - provide an index
+        index_name = details.get("index", "value")
+        return pd.DataFrame(data, index=[index_name])
+    
     return pd.DataFrame(data)
 
 def read_markdown(details):
@@ -1262,7 +1269,14 @@ def read_local(details):
     # Create data frame from details
     
     try:
-        df = pd.DataFrame(data=details["data"])
+        data = details["data"]
+        # Handle scalar dictionaries (e.g., for parameters/constants)
+        if isinstance(data, dict) and all(not isinstance(v, (list, dict)) for v in data.values()):
+            # All values are scalars - provide an index
+            index_name = details.get("index", "value")
+            df = pd.DataFrame(data, index=[index_name])
+        else:
+            df = pd.DataFrame(data=data)
     except KeyError as e:
         errmsg = f"Could not create data frame from details specified in \"local\" entry. Missing key {e}."
         log.error(errmsg)
