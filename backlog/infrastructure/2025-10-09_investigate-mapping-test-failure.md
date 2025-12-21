@@ -1,10 +1,10 @@
 ---
 id: "2025-10-09_investigate-mapping-test-failure"
 title: "Investigate why identity mapping bug cannot be minimally reproduced"
-status: "Proposed"
+status: "completed"
 priority: "Medium"
 created: "2025-10-09"
-last_updated: "2025-10-10"
+last_updated: "2025-12-21"
 owner: "lawrennd"
 github_issue: null
 dependencies: null
@@ -122,11 +122,11 @@ compute:
 
 ## Acceptance Criteria
 
-- [ ] Understand the exact sequence of operations that causes the identity mapping conflict
-- [ ] Create a minimal test case that reproduces the bug (fails without fix, passes with fix)
-- [ ] Document the conditions required for the bug to manifest
-- [ ] Add comprehensive test coverage for the mapping system
-- [ ] Update `update_name_column_map()` documentation to explain auto-generated mapping types
+- [x] Understand the exact sequence of operations that causes the identity mapping conflict
+- [x] Create a minimal test case that reproduces the bug (fails without fix, passes with fix)
+- [x] Document the conditions required for the bug to manifest
+- [x] Add comprehensive test coverage for the mapping system
+- [x] Update `update_name_column_map()` documentation to explain auto-generated mapping types
 
 ## Implementation Notes
 
@@ -230,4 +230,26 @@ Accept the fix based on:
 - Verified success on real data with fix  
 - Clear understanding of root cause from comprehensive tracing
 - Minimal, logical one-line fix that extends existing auto-generated mapping logic
+
+### 2025-12-21 - Completed
+
+**Investigation Complete and Architectural Fix Implemented**
+
+This investigation has been fully completed:
+
+1. ✅ **Root Cause Identified** (2025-10-10): Path B in `from_flow` line 1102 caused timing conflict
+2. ✅ **Workaround Implemented**: Identity mapping override in `update_name_column_map()`
+3. ✅ **Test Created**: `lynguine/tests/test_identity_mapping_referia.py` reproduces the issue
+4. ✅ **Proper Fix Implemented** (2025-12-21): CIP-0003/CIP-0005 architectural fix
+   - referia's `from_flow()` override ensures augmentation happens AFTER interface mappings
+   - Timing conflict resolved at architectural level
+   - Original Path B problem no longer exists
+
+**Final Outcome**:
+- Investigation successfully identified root cause
+- Workaround provided functional fix
+- Proper architectural solution now in place
+- All acceptance criteria met
+
+**Status**: Marked as completed. Investigation objective achieved and issue fully resolved.
 
