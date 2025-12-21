@@ -38,3 +38,4 @@ tags:
 - Resolution: Applications should handle early availability in their own layer, not expect infrastructure to provide it
 - **vs User Convenience**: When users want immediate access to processed data
 - Resolution: Provide clear flow-based APIs and let applications handle convenience layers
+
