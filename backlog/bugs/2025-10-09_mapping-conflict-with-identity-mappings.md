@@ -1,7 +1,7 @@
 ---
 id: "2025-10-09_mapping-conflict-with-identity-mappings"
 title: "Mapping conflict when interface mapping overrides auto-generated identity mapping"
-status: "workaround_implemented"
+status: "completed"
 priority: "Medium"
 created: "2025-10-09"
 last_updated: "2025-12-21"
@@ -135,4 +135,25 @@ After investigation, it was determined that:
 **Proper Fix**: Would require implementing CIP-0003 / CIP-0005 (move augmentation to `from_flow()`)
 
 **Status Change**: Changed from "High Priority" to "Medium Priority" and marked as "workaround_implemented" since the issue is functional but not architecturally ideal.
+
+### 2025-12-21 - Completed via CIP-0003 Implementation
+
+**Proper Fix Implemented**: CIP-0003 / CIP-0005 fully implemented in referia
+
+The architectural fix has been completed:
+- referia's `__init__` no longer calls `_augment_column_names()` early
+- referia's `from_flow()` override applies augmentation AFTER parent completes
+- Explicit interface mappings are applied BEFORE augmentation
+- Timing conflict resolved at architectural level ✅
+
+**Implementation Location**: `referia/assess/data.py`
+- Line 178-180: Removed early augmentation from `__init__`
+- Lines 241-266: Added `from_flow()` override with proper timing
+
+**Result**: 
+- No more timing conflicts between identity and interface mappings
+- Workaround in `update_name_column_map()` remains as defensive programming
+- Issue completely resolved
+
+**Status**: Marked as "completed" - proper architectural fix implemented.
 

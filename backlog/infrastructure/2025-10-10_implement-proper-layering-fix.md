@@ -1,8 +1,8 @@
 ---
 id: "2025-10-10_implement-proper-layering-fix"
 title: "Implement proper layering fix for mapping initialization timing conflict"
-status: "deferred"
-priority: "Low"
+status: "completed"
+priority: "Medium"
 created: "2025-10-10"
 last_updated: "2025-12-21"
 owner: "lawrennd"
@@ -125,6 +125,29 @@ The acceptance criteria have been met, but through a workaround rather than the 
 The ideal solution described in CIP-0003 would move `_augment_column_names()` from referia's `__init__` to `from_flow()` override. This remains unimplemented but deferred as the workaround is sufficient for current needs.
 
 **Decision**: Defer proper architectural fix unless/until timing issues resurface or architectural clarity becomes critical.
+
+### 2025-12-21 - Completed via CIP-0003 Implementation
+
+**Proper Architectural Fix Implemented**: Changed status from "deferred" to "completed"
+
+The proper layering fix described in CIP-0003 has been fully implemented in referia:
+
+1. ✅ **lynguine remains strict**: No changes to lynguine, maintains explicit behavior
+2. ✅ **referia handles timing correctly**: 
+   - Removed early `_augment_column_names()` from `__init__`
+   - Added `from_flow()` override that augments AFTER parent processes interface
+3. ✅ **Clear separation of concerns**: 
+   - lynguine = strict infrastructure
+   - referia = convenient application layer with proper timing
+
+**Implementation**: CIP-0003 Option B implemented via referia's CIP-0005
+- Location: `referia/assess/data.py` lines 178-180 (removal), 241-266 (override)
+- Result: Explicit interface mappings applied before augmentation
+- Timing conflict resolved architecturally ✅
+
+**Workaround Status**: The `update_name_column_map()` workaround remains as defensive programming but is no longer strictly necessary.
+
+**Status**: Marked as "completed" - proper architectural layering achieved.
 
 ### 2025-10-10
 Task created with Proposed status. Identified the need for proper architectural layering fix.
