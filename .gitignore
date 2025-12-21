@@ -103,3 +103,15 @@ docs/examples/
 # OS files
 .DS_Store
 Thumbs.db
+
+# Temporary/experimental files
+cat
+diagnose_numpy_issue.py
+testfile.txt
+my_bibtex_file.bib
+requirements.txt
+
+# Experimental scripts and directories
+lynguine/clone_or_pull.py
+lynguine/replace_linguine.sh
+lynguine/ruby/
