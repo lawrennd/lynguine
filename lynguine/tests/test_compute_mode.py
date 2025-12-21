@@ -12,16 +12,16 @@ from lynguine.assess.data import CustomDataFrame
 
 @pytest.fixture
 def sample_dataframe():
-    """Create a sample CustomDataFrame for testing."""
+    """Create a sample CustomDataFrame for testing with mutable content column."""
     data = pd.DataFrame({'content': ['Initial content']}, index=['A'])
-    return CustomDataFrame(data=data)
+    return CustomDataFrame(data=data, colspecs="cache")
 
 
 @pytest.fixture
 def empty_dataframe():
-    """Create a CustomDataFrame with empty content."""
+    """Create a CustomDataFrame with empty content and mutable column."""
     data = pd.DataFrame({'content': ['']}, index=['A'])
-    return CustomDataFrame(data=data)
+    return CustomDataFrame(data=data, colspecs="cache")
 
 
 @pytest.fixture
@@ -458,15 +458,24 @@ class TestComputeModeWithNewColumn:
 class TestComputeModeWithRefresh:
     """Test mode parameter interaction with refresh flag."""
     
-    def test_append_with_refresh_false_skips_if_value_exists(self, sample_dataframe, simple_function, compute_instance, mocker):
-        """Test that append with refresh=False doesn't append if value already exists."""
+    def test_append_to_non_empty_field_without_refresh(self, sample_dataframe, simple_function, compute_instance, mocker):
+        """
+        Regression test for bug where append mode fails on non-empty fields.
+        
+        This is the primary use case for append mode: adding to existing content.
+        The bug was that append only worked with refresh=True, defeating the purpose.
+        
+        With the fix (2025-12-21), append/prepend modes ALWAYS write, regardless
+        of refresh flag, because they need to read existing content to work correctly.
+        """
         interface = {
             "compute": {
                 "function": "test_func",
                 "field": "content",
                 "mode": "append",
-                "refresh": False,  # Don't refresh existing values
-                "args": {"message": "Should not append"}
+                "refresh": False,  # Should work WITHOUT refresh=True
+                "separator": "\n---\n",
+                "args": {"message": "Second entry"}
             }
         }
         
@@ -484,8 +493,47 @@ class TestComputeModeWithRefresh:
         compute_instance.run(sample_dataframe, interface)
         
         result = sample_dataframe.get_value_column("content")
-        # Should not have changed because refresh=False and value exists
-        assert result == "Initial content"
+        # Should append even with refresh=False (this is the fix!)
+        assert result == "Initial content\n---\nSecond entry"
+        assert "Initial content" in result
+        assert "Second entry" in result
+    
+    def test_prepend_to_non_empty_field_without_refresh(self, sample_dataframe, simple_function, compute_instance, mocker):
+        """
+        Regression test for bug where prepend mode fails on non-empty fields.
+        
+        Like append, prepend should work without refresh=True because it needs
+        to read existing content. Tests the same fix applied to prepend mode.
+        """
+        interface = {
+            "compute": {
+                "function": "test_func",
+                "field": "content",
+                "mode": "prepend",
+                "refresh": False,  # Should work WITHOUT refresh=True
+                "separator": "\n---\n",
+                "args": {"message": "First entry"}
+            }
+        }
+        
+        mocker.patch.object(
+            compute_instance,
+            '_compute_functions_list',
+            return_value=[{
+                "name": "test_func",
+                "function": simple_function,
+                "default_args": {"message": "default"},
+                "context": False
+            }]
+        )
+        
+        compute_instance.run(sample_dataframe, interface)
+        
+        result = sample_dataframe.get_value_column("content")
+        # Should prepend even with refresh=False (this is the fix!)
+        assert result == "First entry\n---\nInitial content"
+        assert "Initial content" in result
+        assert "First entry" in result
     
     def test_append_with_refresh_true_always_appends(self, sample_dataframe, simple_function, compute_instance, mocker):
         """Test that append with refresh=True always appends even if value exists."""

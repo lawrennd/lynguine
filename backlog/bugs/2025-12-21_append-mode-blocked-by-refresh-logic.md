@@ -1,7 +1,7 @@
 ---
 id: "2025-12-21_append-mode-blocked-by-refresh-logic"
 title: "Append/Prepend Modes Blocked by Refresh Logic"
-status: "Proposed"
+status: "Completed"
 priority: "High"
 created: "2025-12-21"
 last_updated: "2025-12-21"
@@ -54,10 +54,10 @@ When a field already has content:
 ## Acceptance Criteria
 
 - [x] Identify the root cause (line 406 logic error)
-- [ ] Fix the conditional logic to allow append/prepend writes even when field has content
-- [ ] Ensure replace mode still respects `refresh` and `missing_val` optimization
-- [ ] Add regression test that catches this specific bug
-- [ ] Verify all existing tests still pass
+- [x] Fix the conditional logic to allow append/prepend writes even when field has content
+- [x] Ensure replace mode still respects `refresh` and `missing_val` optimization
+- [x] Add regression test that catches this specific bug
+- [x] Verify all existing tests still pass
 - [ ] Test with real-world referia workflow (multiple appends to same field)
 
 ## Implementation Notes
@@ -153,4 +153,28 @@ Priority set to **High** because:
 - Affects core feature (conversation history accumulation)
 - Simple one-line fix with clear test case
 - Must be fixed before referia can use the new modes
+
+### 2025-12-21 - Bug Fixed
+
+**Fix Implemented:**
+
+The bug was actually in TWO places, not just line 406:
+
+1. **Line 380** (the earlier check): The condition `if refresh or any(missing_vals):` prevented the compute function from even running when `refresh=False` and the field had content. Fixed by adding mode check: `should_run = refresh or any(missing_vals) or mode in ["append", "prepend"]`
+
+2. **Line 406** (the write check): The condition `if refresh or missing_val and data.ismutable(column):` prevented the write from happening. Fixed with explicit logic: `should_write = (mode in ["append", "prepend"]) or refresh or missing_val`
+
+**Tests Updated:**
+
+- Fixed `test_append_to_non_empty_field_without_refresh()` - renamed and updated to test the correct behavior (append should work without `refresh=True`)
+- Added `test_prepend_to_non_empty_field_without_refresh()` - parallel test for prepend mode
+- Fixed test fixtures to use `colspecs="cache"` instead of immutable input columns
+
+**Test Results:**
+
+- All 16 compute mode tests pass ✅
+- All 35 compute tests pass ✅
+- All 552 tests pass ✅
+
+**Status:** Bug fixed and regression tests added. Ready for referia integration.
 

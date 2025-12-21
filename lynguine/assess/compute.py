@@ -358,6 +358,9 @@ class Compute():
                 compute_prep["function"](data, **fargs)
                 continue
             
+            # Get mode parameter early to determine if we need to run compute
+            mode = compute.get("mode", "replace")
+            
             # If we're not refreshing, need to determine which columns aren't set so they can be refreshed.
             missing_vals = []
             if not refresh:
@@ -377,7 +380,10 @@ class Compute():
                 # When refreshing, treat all columns as if they need updating
                 missing_vals = [True] * len(columns)
 
-            if refresh or any(missing_vals):
+            # Append/prepend modes must always run to read existing content
+            should_run = refresh or any(missing_vals) or mode in ["append", "prepend"]
+            
+            if should_run:
                 # Compute the function and get the new values  
                 self.logger.debug(f"Running compute function \"{fname}\" storing in field(s) \"{columns}\" with index=\"{index}\" with refresh=\"{refresh}\" and arguments \"{fargs}\".")
                     
@@ -395,15 +401,21 @@ class Compute():
             else:
                 new_vals = [new_vals]
 
-            # Get mode and separator parameters for write operation
-            mode = compute.get("mode", "replace")
+            # Get separator parameter for write operation (mode was retrieved earlier)
             separator = compute.get("separator", "\n\n---\n\n")
             
             # Distribute the updated values to the columns
             for column, new_val, missing_val in zip(columns, new_vals, missing_vals):
                 if column == "_":
                     continue
-                if refresh or missing_val and data.ismutable(column):
+                # Always write for append/prepend modes, respect refresh/missing_val for replace
+                should_write = (
+                    (mode in ["append", "prepend"]) or  # Accumulating modes always write
+                    refresh or                           # Explicit refresh requested
+                    missing_val                          # Field is empty
+                )
+                
+                if should_write and data.ismutable(column):
                     # Apply write mode logic
                     if mode == "append" or mode == "prepend":
                         # Read current value for append/prepend modes
