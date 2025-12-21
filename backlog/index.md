@@ -18,7 +18,7 @@ This file provides an overview of all current backlog items organized by categor
 
 ### Proposed
 
-*No tasks currently proposed.*
+- [Document Dynamic Column Creation Patterns in CustomDataFrame](documentation/2025-12-21_document-dynamic-column-creation.md)
 
 
 ## Infrastructure
@@ -56,7 +56,7 @@ This file provides an overview of all current backlog items organized by categor
 
 ### Proposed
 
-*No tasks currently proposed.*
+- [Implement add_column() and drop_column() Methods in CustomDataFrame](features/2025-12-21_implement-add-column-drop-column.md)
 
 
 ## Bugs
@@ -79,6 +79,8 @@ This file provides an overview of all current backlog items organized by categor
 ---
 
 ## Recently Completed Tasks
+
+- [Implement Mode Parameter in Compute System](features/2025-12-21_implement-mode-parameter-compute.md)
 
 - [read_data passes dict to read_list instead of extracting filelist](bugs/2025-12-02_read-data-list-type-passes-dict.md)
 
