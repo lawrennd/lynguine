@@ -392,12 +392,39 @@ class Compute():
             else:
                 new_vals = [new_vals]
 
+            # Get mode and separator parameters for write operation
+            mode = compute.get("mode", "replace")
+            separator = compute.get("separator", "\n\n---\n\n")
+            
             # Distribute the updated values to the columns
             for column, new_val, missing_val in zip(columns, new_vals, missing_vals):
                 if column == "_":
                     continue
                 if refresh or missing_val and data.ismutable(column):
-                    self.logger.debug(f"Setting column \"{column}\" in data structure to value \"{new_val}\" from compute.")
+                    # Apply write mode logic
+                    if mode == "append" or mode == "prepend":
+                        # Read current value for append/prepend modes
+                        try:
+                            current_val = data.get_value_column(column)
+                            # Check if current value is non-empty
+                            if current_val and not isna(current_val) and str(current_val).strip():
+                                if mode == "append":
+                                    # Append: current + separator + new
+                                    new_val = str(current_val) + separator + str(new_val)
+                                    self.logger.debug(f"Appending to column \"{column}\" with separator.")
+                                elif mode == "prepend":
+                                    # Prepend: new + separator + current
+                                    new_val = str(new_val) + separator + str(current_val)
+                                    self.logger.debug(f"Prepending to column \"{column}\" with separator.")
+                        except (KeyError, AttributeError):
+                            # Column doesn't exist yet, just use new value
+                            pass
+                    elif mode != "replace":
+                        errmsg = f"Invalid mode '{mode}' specified for compute operation. Valid modes are: 'replace', 'append', 'prepend'."
+                        self.logger.error(errmsg)
+                        raise ValueError(errmsg)
+                    
+                    self.logger.debug(f"Setting column \"{column}\" in data structure to value \"{new_val}\" from compute (mode: {mode}).")
                     data.set_value_column(new_val, column)
 
         
