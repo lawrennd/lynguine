@@ -1,7 +1,7 @@
 ---
 id: "2025-12-21_fix-read-files-sourceroot-conflict"
 title: "Fix read_files_extracts_file_type test failure with sourceRoot field conflict"
-status: "Proposed"
+status: "completed"
 priority: "Medium"
 created: "2025-12-21"
 last_updated: "2025-12-21"
@@ -48,16 +48,16 @@ This could be caused by:
 
 ## Acceptance Criteria
 
-- [ ] Examine the test at line 319 to understand what data is being passed
-- [ ] Review `lynguine/access/io.py:552` to see the validation logic
-- [ ] Determine if "sourceRoot" is a reserved field name or if the conflict is legitimate
-- [ ] Either:
-  - Fix the test data to not include "sourceRoot" if it's reserved
+- [x] Examine the test at line 319 to understand what data is being passed
+- [x] Review `lynguine/access/io.py:552` to see the validation logic
+- [x] Determine if "sourceRoot" is a reserved field name or if the conflict is legitimate
+- [x] Either:
+  - Fix the test data to not include "sourceRoot" if it's reserved ✅
   - Change the internal field name for root to avoid conflicts (e.g., "_sourceRoot", "source_root_dir")
   - Update the validation to handle this case more gracefully
-- [ ] Verify the test passes after changes
-- [ ] Ensure no other tests break
-- [ ] Document any reserved field names if applicable
+- [x] Verify the test passes after changes
+- [x] Ensure no other tests break
+- [x] Document any reserved field names if applicable
 
 ## Implementation Notes
 
@@ -74,7 +74,23 @@ This could be caused by:
 
 ## Progress Updates
 
-### 2025-12-21
+### 2025-12-21 - Initial Report
 
 Test failure identified during full test suite run. The test triggers a field name conflict where "sourceRoot" exists both as user data and as an internal field name for the root directory. Need to investigate whether this is a test issue or a design issue with field naming conventions.
+
+### 2025-12-21 - Completed
+
+**Fix implemented and committed** (commit: 397d3d9)
+
+Root cause identified: **Two separate bugs**
+
+1. **Code bug in `read_files()`**: The filereader was determined once from the first file and then reused for all subsequent files. This meant `extract_file_type()` was only called once instead of per-file.
+   - **Fix**: Changed to determine reader per file by using `current_reader` variable instead of reassigning `filereader`
+
+2. **Test bug in mock**: The mock was returning the same dictionary object for all calls, so after processing the first file (which added `sourceRoot`), the second file received the same dict object that already contained `sourceRoot`.
+   - **Fix**: Changed mock to use `side_effect=lambda x: {'content': 'test'}` to return a new dict for each call
+
+Test `test_read_files_extracts_file_type` now passes ✅
+
+This was a real production bug - files of different types in the same list would all be read using the first file's reader!
 

@@ -1,7 +1,7 @@
 ---
 id: "2025-12-21_fix-network-error-test-download"
 title: "Fix test_network_errors_in_download_url test failure"
-status: "Proposed"
+status: "completed"
 priority: "Medium"
 created: "2025-12-21"
 last_updated: "2025-12-21"
@@ -38,12 +38,12 @@ This test is verifying that the download functionality properly handles network 
 
 ## Acceptance Criteria
 
-- [ ] Review the test to understand expected behavior
-- [ ] Examine `lynguine/access/download.py` to identify network error handling
-- [ ] Determine if the test expectations are correct or if the implementation needs fixing
-- [ ] Update either the test or the implementation to ensure network errors are properly handled
-- [ ] Verify the test passes after fixes
-- [ ] Ensure no other tests are broken by the changes
+- [x] Review the test to understand expected behavior
+- [x] Examine `lynguine/access/download.py` to identify network error handling
+- [x] Determine if the test expectations are correct or if the implementation needs fixing
+- [x] Update either the test or the implementation to ensure network errors are properly handled
+- [x] Verify the test passes after fixes
+- [x] Ensure no other tests are broken by the changes
 
 ## Implementation Notes
 
@@ -59,7 +59,27 @@ This test is verifying that the download functionality properly handles network 
 
 ## Progress Updates
 
-### 2025-12-21
+### 2025-12-21 - Initial Report
 
 Test failure identified during full test suite run. Test expects `ValueError` to be raised on network errors but exception is not being raised. Need to investigate whether test expectations are correct or if error handling needs to be implemented/fixed.
+
+### 2025-12-21 - Completed
+
+**Fix implemented and committed** (commit: 4967417)
+
+Root cause identified: **Test monkeypatch bug**
+
+The production code in `lynguine/access/download.py` correctly handles HTTPError and raises ValueError (lines 164-167). The test was failing because:
+
+1. The download module imports urlopen directly: `from urllib.request import urlopen`
+2. The test was patching `urllib.request.urlopen` (the original module function)
+3. However, the download module's local imported reference was not being patched
+
+**Fixes applied**:
+- Changed monkeypatch target from `"urllib.request.urlopen"` to `"lynguine.access.download.urlopen"`
+- Added missing `from urllib.error import HTTPError` import to test file
+
+Test `test_network_errors_in_download_url` now passes ✅
+
+The production code was actually correct - only the test needed fixing!
 

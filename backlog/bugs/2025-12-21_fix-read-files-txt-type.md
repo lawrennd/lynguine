@@ -1,7 +1,7 @@
 ---
 id: "2025-12-21_fix-read-files-txt-type"
 title: "Fix read_files failure with unrecognized .txt file type"
-status: "Proposed"
+status: "completed"
 priority: "Medium"
 created: "2025-12-21"
 last_updated: "2025-12-21"
@@ -45,12 +45,12 @@ This is likely a simple oversight where `.txt` was not added to the list of reco
 
 ## Acceptance Criteria
 
-- [ ] Add `.txt` file type support to `extract_file_type()` in `lynguine/util/misc.py`
-- [ ] Determine appropriate type label for `.txt` files (e.g., "text", "txt", or "plaintext")
-- [ ] If needed, implement a reader function for text files in `lynguine/access/io.py`
-- [ ] Verify `test_read_files` passes after changes
-- [ ] Add additional test cases for text file reading if not already present
-- [ ] Ensure consistency with other file type handling
+- [x] Add `.txt` file type support to `extract_file_type()` in `lynguine/util/misc.py`
+- [x] Determine appropriate type label for `.txt` files (e.g., "text", "txt", or "plaintext")
+- [x] If needed, implement a reader function for text files in `lynguine/access/io.py`
+- [x] Verify `test_read_files` passes after changes
+- [x] Add additional test cases for text file reading if not already present
+- [x] Ensure consistency with other file type handling
 
 ## Implementation Notes
 
@@ -67,7 +67,19 @@ This is likely a simple oversight where `.txt` was not added to the list of reco
 
 ## Progress Updates
 
-### 2025-12-21
+### 2025-12-21 - Initial Report
 
 Test failure identified during full test suite run. The `extract_file_type()` function throws `ValueError` for `.txt` files because this file type is not in the recognized types list. Simple fix: add `.txt` to the recognized file types.
+
+### 2025-12-21 - Completed
+
+**Fix implemented and committed** (commit: d458ce2)
+
+Changes made:
+- Added `"txt"` to recognized file extensions in `extract_file_type()` (lynguine/util/misc.py)
+- Implemented `read_txt_file()` function in `lynguine/access/io.py`
+- Registered txt reader in `default_file_reader()` function
+- Test `test_read_files` now passes ✅
+
+The fix was straightforward: added txt file type recognition and a simple reader that returns file content in a dictionary format, consistent with other file type readers.
 
