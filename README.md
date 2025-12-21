@@ -166,6 +166,40 @@ Assess is about taking the raw data and processing it. Under `assess` `lynguine`
 import lynguine
 ```
 
+#### Working with Columns in CustomDataFrame
+
+CustomDataFrame supports dynamic column creation and management:
+
+```python
+import pandas as pd
+from lynguine.assess.data import CustomDataFrame
+
+# Create a basic dataframe
+df = CustomDataFrame(pd.DataFrame({'A': [1, 2, 3]}, index=['a', 'b', 'c']))
+
+# Add columns using direct assignment (default: cache type)
+df['B'] = [4, 5, 6]
+
+# Add columns with explicit type using add_column()
+df.add_column('output_col', [7, 8, 9], colspec='output')  # Saved to file
+df.add_column('cache_col', [10, 11, 12])  # Temporary data
+
+# Remove columns
+df.drop_column('cache_col')
+
+# Check column types
+print(df.get_column_type('output_col'))  # 'output'
+```
+
+**Column Types (colspecs):**
+- `input`: Read-only source data
+- `output`: Mutable data written to files
+- `cache`: Temporary intermediate calculations
+- `parameters`: Global values without index
+- `series`: Data with multiple rows per index
+
+For detailed documentation, see the [Column Management Guide](https://lynguine.readthedocs.io/en/latest/getting_started/column_management.html).
+
 ### `compute`
 
 The compute capability allows the user to specify computations that should take place on the data. The format is as follows.

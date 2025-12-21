@@ -2200,6 +2200,64 @@ class DataObject:
         raise NotImplementedError("This is a base class")
     
 class CustomDataFrame(DataObject):
+    """
+    Enhanced DataFrame for data-oriented architecture with typed column specifications.
+    
+    CustomDataFrame extends the DataObject base class to provide flow-based data processing
+    with strongly-typed column specifications. It manages data across different types
+    (input, output, cache, parameters, series) and supports dynamic column creation,
+    mapping management, and compute operations.
+    
+    Column Specification Types:
+        - **input**: Immutable data (read-only)
+        - **output**: Mutable data written to files
+        - **cache**: Mutable temporary data for intermediate calculations
+        - **parameters**: Global values without index
+        - **series**: Data with multiple rows per index value
+    
+    Examples:
+        Basic usage with dynamic column creation:
+        
+        >>> import pandas as pd
+        >>> from lynguine.assess.data import CustomDataFrame
+        >>> 
+        >>> # Create a dataframe
+        >>> df = CustomDataFrame(pd.DataFrame({'A': [1, 2, 3]}, index=['a', 'b', 'c']))
+        >>> 
+        >>> # Add columns using direct assignment (default: cache type)
+        >>> df['B'] = [4, 5, 6]
+        >>> 
+        >>> # Add columns with explicit type using add_column()
+        >>> df.add_column('output_col', [7, 8, 9], colspec='output')
+        >>> df.add_column('cache_col', [10, 11, 12])  # Default colspec='cache'
+        >>> 
+        >>> # Drop columns
+        >>> df.drop_column('cache_col')
+        >>> 
+        >>> # Check column types
+        >>> df.get_column_type('output_col')
+        'output'
+        
+        Working with flow-based processing:
+        
+        >>> from lynguine.config.interface import Interface
+        >>> 
+        >>> # Create from interface with explicit mappings
+        >>> interface = Interface({
+        ...     'input': {
+        ...         'type': 'yaml',
+        ...         'filename': 'data.yml',
+        ...         'mapping': {'jobTitle': 'job_title'}
+        ...     }
+        ... })
+        >>> cdf = CustomDataFrame.from_flow(interface)
+    
+    See Also:
+        - :meth:`add_column`: Add a new column with optional type specification
+        - :meth:`drop_column`: Remove a column from the dataframe
+        - :meth:`from_flow`: Create CustomDataFrame from interface configuration
+        - :class:`DataObject`: Base class providing core functionality
+    """
     types = {
         # Input types are standard DataFrames but are not mutable.
         "input": [

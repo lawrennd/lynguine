@@ -28,6 +28,7 @@ Getting Started
 
    getting_started/installation
    getting_started/quickstart
+   getting_started/column_management
    getting_started/examples
 
 Modules Documentation

@@ -1,7 +1,7 @@
 ---
 id: "2025-12-21_document-dynamic-column-creation"
 title: "Document Dynamic Column Creation Patterns in CustomDataFrame"
-status: "Proposed"
+status: "completed"
 priority: "Medium"
 created: "2025-12-21"
 last_updated: "2025-12-21"
@@ -37,16 +37,16 @@ This task is to comprehensively document:
 
 ## Acceptance Criteria
 
-- [ ] Add section to README.md on "Working with Columns"
-- [ ] Document `autocache` property in API docs with examples
-- [ ] Add examples to `CustomDataFrame` docstring showing column creation
-- [ ] Create user guide section in docs/: "Column Management in CustomDataFrame"
-- [ ] Document all `colspec` types and their use cases
-- [ ] Add examples showing when to use `add_column()` vs. direct assignment
-- [ ] Document the limitation: `set_value_column()` requires column to exist first
-- [ ] Add troubleshooting section for common column-related errors
-- [ ] Include examples in quickstart or getting started guide
-- [ ] Update compute framework documentation to mention dynamic column creation
+- [x] Add section to README.md on "Working with Columns"
+- [x] Document `autocache` property in API docs with examples
+- [x] Add examples to `CustomDataFrame` docstring showing column creation
+- [x] Create user guide section in docs/: "Column Management in CustomDataFrame"
+- [x] Document all `colspec` types and their use cases
+- [x] Add examples showing when to use `add_column()` vs. direct assignment
+- [x] Document the limitation: `set_value_column()` requires column to exist first
+- [x] Add troubleshooting section for common column-related errors
+- [x] Include examples in quickstart or getting started guide
+- [x] Update compute framework documentation to mention dynamic column creation
 
 ## Implementation Notes
 
@@ -146,4 +146,35 @@ df['series_col'] = pd.Series([1, 2, 2, 3], index=[0, 0, 1, 1])  # Multiple value
 ### 2025-12-21
 
 Task created. Identified significant documentation gaps around dynamic column creation, `autocache`, and `colspec` types. Users currently have to discover these patterns through trial and error or by reading the source code.
+
+### 2025-12-21 - Completion
+
+Documentation completed with comprehensive coverage:
+
+1. **CustomDataFrame Class Docstring** (lynguine/assess/data.py):
+   - Added 57-line docstring with full API overview
+   - Included examples of add_column(), drop_column(), direct assignment
+   - Documented all column specification types
+   - Added cross-references to related methods
+
+2. **Column Management Guide** (docs/getting_started/column_management.rst):
+   - Created comprehensive 240-line user guide
+   - Explained all 5 colspec types with use cases
+   - Provided two methods for adding columns with pros/cons
+   - Documented common patterns (pre-creating columns, type conversion, series data)
+   - Included best practices section
+   - Added troubleshooting for 3 common errors with solutions
+   - Integrated into docs/index.rst table of contents
+
+3. **README.md Update**:
+   - Added "Working with Columns in CustomDataFrame" section
+   - Provided practical examples of add_column(), drop_column()
+   - Explained all colspec types concisely
+   - Linked to full ReadTheDocs documentation
+
+All acceptance criteria met. Documentation is now discoverable in:
+- API docs (class docstring, autodoc)
+- User guides (column_management.rst in getting_started)
+- README (quick reference with link to full docs)
+- ReadTheDocs site (fully integrated)
 
