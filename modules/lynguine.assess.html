@@ -59,6 +59,30 @@
 <li class="toctree-l2"><a class="reference internal" href="../getting_started/quickstart.html#exploring-further">Exploring Further</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/column_management.html">Column Management in CustomDataFrame</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../getting_started/column_management.html#understanding-column-specifications-colspecs">Understanding Column Specifications (colspecs)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../getting_started/column_management.html#adding-columns">Adding Columns</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../getting_started/column_management.html#method-1-direct-assignment-recommended-for-quick-operations">Method 1: Direct Assignment (Recommended for Quick Operations)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../getting_started/column_management.html#method-2-add-column-method-recommended-for-explicit-type-control">Method 2: add_column() Method (Recommended for Explicit Type Control)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../getting_started/column_management.html#removing-columns">Removing Columns</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../getting_started/column_management.html#common-patterns">Common Patterns</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../getting_started/column_management.html#pattern-1-pre-creating-columns-for-compute-operations">Pattern 1: Pre-creating Columns for Compute Operations</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../getting_started/column_management.html#pattern-2-converting-column-types">Pattern 2: Converting Column Types</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../getting_started/column_management.html#pattern-3-working-with-series-data-multiple-rows-per-index">Pattern 3: Working with Series Data (Multiple Rows Per Index)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../getting_started/column_management.html#best-practices">Best Practices</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../getting_started/column_management.html#common-errors-and-solutions">Common Errors and Solutions</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../getting_started/column_management.html#error-column-already-exists">Error: Column already exists</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../getting_started/column_management.html#error-column-not-found">Error: Column not found</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../getting_started/column_management.html#error-invalid-colspec">Error: Invalid colspec</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../getting_started/column_management.html#related-documentation">Related Documentation</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="../getting_started/examples.html">Examples</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../getting_started/examples.html#example-1-basic-usage">Example 1: Basic Usage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../getting_started/examples.html#example-2-advanced-techniques">Example 2: Advanced Techniques</a></li>
@@ -2109,6 +2133,67 @@ Pandas Series, NumPy array, list, and dictionary to the CustomDataFrame format.<
 <dt class="sig sig-object py" id="lynguine.assess.data.CustomDataFrame">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">lynguine.assess.data.</span></span><span class="sig-name descname"><span class="pre">CustomDataFrame</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">colspecs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">column</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">selector</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subindex</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">compute</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interface</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lynguine/assess/data.html#CustomDataFrame"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lynguine.assess.data.CustomDataFrame" title="Link to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="#lynguine.assess.data.DataObject" title="lynguine.assess.data.DataObject"><code class="xref py py-class docutils literal notranslate"><span class="pre">DataObject</span></code></a></p>
+<p>Enhanced DataFrame for data-oriented architecture with typed column specifications.</p>
+<p>CustomDataFrame extends the DataObject base class to provide flow-based data processing
+with strongly-typed column specifications. It manages data across different types
+(input, output, cache, parameters, series) and supports dynamic column creation,
+mapping management, and compute operations.</p>
+<dl class="simple">
+<dt>Column Specification Types:</dt><dd><ul class="simple">
+<li><p><strong>input</strong>: Immutable data (read-only)</p></li>
+<li><p><strong>output</strong>: Mutable data written to files</p></li>
+<li><p><strong>cache</strong>: Mutable temporary data for intermediate calculations</p></li>
+<li><p><strong>parameters</strong>: Global values without index</p></li>
+<li><p><strong>series</strong>: Data with multiple rows per index value</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<p>Basic usage with dynamic column creation:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">lynguine.assess.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">CustomDataFrame</span>
+<span class="gp">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Create a dataframe</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">df</span> <span class="o">=</span> <span class="n">CustomDataFrame</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s1">&#39;A&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">]},</span> <span class="n">index</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">,</span> <span class="s1">&#39;b&#39;</span><span class="p">,</span> <span class="s1">&#39;c&#39;</span><span class="p">]))</span>
+<span class="gp">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Add columns using direct assignment (default: cache type)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;B&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Add columns with explicit type using add_column()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">df</span><span class="o">.</span><span class="n">add_column</span><span class="p">(</span><span class="s1">&#39;output_col&#39;</span><span class="p">,</span> <span class="p">[</span><span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">9</span><span class="p">],</span> <span class="n">colspec</span><span class="o">=</span><span class="s1">&#39;output&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">df</span><span class="o">.</span><span class="n">add_column</span><span class="p">(</span><span class="s1">&#39;cache_col&#39;</span><span class="p">,</span> <span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">11</span><span class="p">,</span> <span class="mi">12</span><span class="p">])</span>  <span class="c1"># Default colspec=&#39;cache&#39;</span>
+<span class="gp">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Drop columns</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">df</span><span class="o">.</span><span class="n">drop_column</span><span class="p">(</span><span class="s1">&#39;cache_col&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Check column types</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">df</span><span class="o">.</span><span class="n">get_column_type</span><span class="p">(</span><span class="s1">&#39;output_col&#39;</span><span class="p">)</span>
+<span class="go">&#39;output&#39;</span>
+</pre></div>
+</div>
+<p>Working with flow-based processing:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">lynguine.config.interface</span><span class="w"> </span><span class="kn">import</span> <span class="n">Interface</span>
+<span class="gp">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Create from interface with explicit mappings</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">interface</span> <span class="o">=</span> <span class="n">Interface</span><span class="p">({</span>
+<span class="gp">... </span>    <span class="s1">&#39;input&#39;</span><span class="p">:</span> <span class="p">{</span>
+<span class="gp">... </span>        <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;yaml&#39;</span><span class="p">,</span>
+<span class="gp">... </span>        <span class="s1">&#39;filename&#39;</span><span class="p">:</span> <span class="s1">&#39;data.yml&#39;</span><span class="p">,</span>
+<span class="gp">... </span>        <span class="s1">&#39;mapping&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;jobTitle&#39;</span><span class="p">:</span> <span class="s1">&#39;job_title&#39;</span><span class="p">}</span>
+<span class="gp">... </span>    <span class="p">}</span>
+<span class="gp">... </span><span class="p">})</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">cdf</span> <span class="o">=</span> <span class="n">CustomDataFrame</span><span class="o">.</span><span class="n">from_flow</span><span class="p">(</span><span class="n">interface</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#lynguine.assess.data.CustomDataFrame.add_column" title="lynguine.assess.data.CustomDataFrame.add_column"><code class="xref py py-meth docutils literal notranslate"><span class="pre">add_column()</span></code></a>: Add a new column with optional type specification</p></li>
+<li><p><a class="reference internal" href="#lynguine.assess.data.CustomDataFrame.drop_column" title="lynguine.assess.data.CustomDataFrame.drop_column"><code class="xref py py-meth docutils literal notranslate"><span class="pre">drop_column()</span></code></a>: Remove a column from the dataframe</p></li>
+<li><p><a class="reference internal" href="#lynguine.assess.data.CustomDataFrame.from_flow" title="lynguine.assess.data.CustomDataFrame.from_flow"><code class="xref py py-meth docutils literal notranslate"><span class="pre">from_flow()</span></code></a>: Create CustomDataFrame from interface configuration</p></li>
+<li><p><a class="reference internal" href="#lynguine.assess.data.DataObject" title="lynguine.assess.data.DataObject"><code class="xref py py-class docutils literal notranslate"><span class="pre">DataObject</span></code></a>: Base class providing core functionality</p></li>
+</ul>
+</div>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="lynguine.assess.data.CustomDataFrame.types">
 <span class="sig-name descname"><span class="pre">types</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'cache':</span> <span class="pre">['cache',</span> <span class="pre">'series_cache',</span> <span class="pre">'parameter_cache',</span> <span class="pre">'global_cache'],</span> <span class="pre">'input':</span> <span class="pre">['input',</span> <span class="pre">'data',</span> <span class="pre">'constants',</span> <span class="pre">'global_consts'],</span> <span class="pre">'output':</span> <span class="pre">['output',</span> <span class="pre">'series',</span> <span class="pre">'writedata',</span> <span class="pre">'writeseries',</span> <span class="pre">'parameters',</span> <span class="pre">'globals'],</span> <span class="pre">'parameters':</span> <span class="pre">['constants',</span> <span class="pre">'global_consts',</span> <span class="pre">'parameters',</span> <span class="pre">'globals',</span> <span class="pre">'parameter_cache',</span> <span class="pre">'global_cache'],</span> <span class="pre">'series':</span> <span class="pre">['series',</span> <span class="pre">'writeseries',</span> <span class="pre">'series_cache']}</span></em><a class="headerlink" href="#lynguine.assess.data.CustomDataFrame.types" title="Link to this definition"></a></dt>

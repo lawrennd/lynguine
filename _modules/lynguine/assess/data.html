@@ -56,6 +56,30 @@
 <li class="toctree-l2"><a class="reference internal" href="../../../getting_started/quickstart.html#exploring-further">Exploring Further</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/column_management.html">Column Management in CustomDataFrame</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../getting_started/column_management.html#understanding-column-specifications-colspecs">Understanding Column Specifications (colspecs)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../getting_started/column_management.html#adding-columns">Adding Columns</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../getting_started/column_management.html#method-1-direct-assignment-recommended-for-quick-operations">Method 1: Direct Assignment (Recommended for Quick Operations)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../getting_started/column_management.html#method-2-add-column-method-recommended-for-explicit-type-control">Method 2: add_column() Method (Recommended for Explicit Type Control)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../getting_started/column_management.html#removing-columns">Removing Columns</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../getting_started/column_management.html#common-patterns">Common Patterns</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../getting_started/column_management.html#pattern-1-pre-creating-columns-for-compute-operations">Pattern 1: Pre-creating Columns for Compute Operations</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../getting_started/column_management.html#pattern-2-converting-column-types">Pattern 2: Converting Column Types</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../getting_started/column_management.html#pattern-3-working-with-series-data-multiple-rows-per-index">Pattern 3: Working with Series Data (Multiple Rows Per Index)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../getting_started/column_management.html#best-practices">Best Practices</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../getting_started/column_management.html#common-errors-and-solutions">Common Errors and Solutions</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../getting_started/column_management.html#error-column-already-exists">Error: Column already exists</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../getting_started/column_management.html#error-column-not-found">Error: Column not found</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../getting_started/column_management.html#error-invalid-colspec">Error: Invalid colspec</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../getting_started/column_management.html#related-documentation">Related Documentation</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="../../../getting_started/examples.html">Examples</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../../getting_started/examples.html#example-1-basic-usage">Example 1: Basic Usage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../getting_started/examples.html#example-2-advanced-techniques">Example 2: Advanced Techniques</a></li>
@@ -3299,6 +3323,64 @@
 <div class="viewcode-block" id="CustomDataFrame">
 <a class="viewcode-back" href="../../../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">CustomDataFrame</span><span class="p">(</span><span class="n">DataObject</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Enhanced DataFrame for data-oriented architecture with typed column specifications.</span>
+<span class="sd">    </span>
+<span class="sd">    CustomDataFrame extends the DataObject base class to provide flow-based data processing</span>
+<span class="sd">    with strongly-typed column specifications. It manages data across different types</span>
+<span class="sd">    (input, output, cache, parameters, series) and supports dynamic column creation,</span>
+<span class="sd">    mapping management, and compute operations.</span>
+<span class="sd">    </span>
+<span class="sd">    Column Specification Types:</span>
+<span class="sd">        - **input**: Immutable data (read-only)</span>
+<span class="sd">        - **output**: Mutable data written to files</span>
+<span class="sd">        - **cache**: Mutable temporary data for intermediate calculations</span>
+<span class="sd">        - **parameters**: Global values without index</span>
+<span class="sd">        - **series**: Data with multiple rows per index value</span>
+<span class="sd">    </span>
+<span class="sd">    Examples:</span>
+<span class="sd">        Basic usage with dynamic column creation:</span>
+<span class="sd">        </span>
+<span class="sd">        &gt;&gt;&gt; import pandas as pd</span>
+<span class="sd">        &gt;&gt;&gt; from lynguine.assess.data import CustomDataFrame</span>
+<span class="sd">        &gt;&gt;&gt; </span>
+<span class="sd">        &gt;&gt;&gt; # Create a dataframe</span>
+<span class="sd">        &gt;&gt;&gt; df = CustomDataFrame(pd.DataFrame({&#39;A&#39;: [1, 2, 3]}, index=[&#39;a&#39;, &#39;b&#39;, &#39;c&#39;]))</span>
+<span class="sd">        &gt;&gt;&gt; </span>
+<span class="sd">        &gt;&gt;&gt; # Add columns using direct assignment (default: cache type)</span>
+<span class="sd">        &gt;&gt;&gt; df[&#39;B&#39;] = [4, 5, 6]</span>
+<span class="sd">        &gt;&gt;&gt; </span>
+<span class="sd">        &gt;&gt;&gt; # Add columns with explicit type using add_column()</span>
+<span class="sd">        &gt;&gt;&gt; df.add_column(&#39;output_col&#39;, [7, 8, 9], colspec=&#39;output&#39;)</span>
+<span class="sd">        &gt;&gt;&gt; df.add_column(&#39;cache_col&#39;, [10, 11, 12])  # Default colspec=&#39;cache&#39;</span>
+<span class="sd">        &gt;&gt;&gt; </span>
+<span class="sd">        &gt;&gt;&gt; # Drop columns</span>
+<span class="sd">        &gt;&gt;&gt; df.drop_column(&#39;cache_col&#39;)</span>
+<span class="sd">        &gt;&gt;&gt; </span>
+<span class="sd">        &gt;&gt;&gt; # Check column types</span>
+<span class="sd">        &gt;&gt;&gt; df.get_column_type(&#39;output_col&#39;)</span>
+<span class="sd">        &#39;output&#39;</span>
+<span class="sd">        </span>
+<span class="sd">        Working with flow-based processing:</span>
+<span class="sd">        </span>
+<span class="sd">        &gt;&gt;&gt; from lynguine.config.interface import Interface</span>
+<span class="sd">        &gt;&gt;&gt; </span>
+<span class="sd">        &gt;&gt;&gt; # Create from interface with explicit mappings</span>
+<span class="sd">        &gt;&gt;&gt; interface = Interface({</span>
+<span class="sd">        ...     &#39;input&#39;: {</span>
+<span class="sd">        ...         &#39;type&#39;: &#39;yaml&#39;,</span>
+<span class="sd">        ...         &#39;filename&#39;: &#39;data.yml&#39;,</span>
+<span class="sd">        ...         &#39;mapping&#39;: {&#39;jobTitle&#39;: &#39;job_title&#39;}</span>
+<span class="sd">        ...     }</span>
+<span class="sd">        ... })</span>
+<span class="sd">        &gt;&gt;&gt; cdf = CustomDataFrame.from_flow(interface)</span>
+<span class="sd">    </span>
+<span class="sd">    See Also:</span>
+<span class="sd">        - :meth:`add_column`: Add a new column with optional type specification</span>
+<span class="sd">        - :meth:`drop_column`: Remove a column from the dataframe</span>
+<span class="sd">        - :meth:`from_flow`: Create CustomDataFrame from interface configuration</span>
+<span class="sd">        - :class:`DataObject`: Base class providing core functionality</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">types</span> <span class="o">=</span> <span class="p">{</span>
         <span class="c1"># Input types are standard DataFrames but are not mutable.</span>
         <span class="s2">&quot;input&quot;</span><span class="p">:</span> <span class="p">[</span>
