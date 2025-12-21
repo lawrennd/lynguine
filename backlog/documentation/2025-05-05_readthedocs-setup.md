@@ -22,11 +22,11 @@ dependencies: null
 - **Last Updated**: 2025-05-05
 - **Owner**: TBD
 - **GitHub Issue**: N/A
-- **Dependencies**: None (CIP-0002 local configuration is complete)
+- **Dependencies**: CIP-0001 (local documentation structure is complete)
 
 ## Description
 
-While the ReadTheDocs configuration file (.readthedocs.yml) has been created as part of CIP-0002, the project has not yet been registered on the ReadTheDocs platform. This task involves setting up the project on ReadTheDocs to enable hosted documentation.
+While the ReadTheDocs configuration file (.readthedocs.yml) has been created as part of CIP-0001, the project has not yet been registered on the ReadTheDocs platform. This task involves setting up the project on ReadTheDocs to enable hosted documentation.
 
 ## Acceptance Criteria
 
@@ -36,7 +36,7 @@ While the ReadTheDocs configuration file (.readthedocs.yml) has been created as 
 - [x] Add security section to documentation structure
 - [ ] Verify that documentation builds successfully on ReadTheDocs
 - [ ] Add ReadTheDocs badge to the README.md
-- [ ] Update CIP-0002 to mark ReadTheDocs integration as fully completed
+- [ ] Update CIP-0001 to mark ReadTheDocs integration as fully completed
 
 ## Implementation Notes
 
@@ -50,7 +50,7 @@ Steps to register on ReadTheDocs:
 
 ## Related
 
-- CIP: 0002 (Standardized Documentation Compilation)
+- CIP: 0001 (Documentation and Test Coverage Improvement Plan)
 - Documentation: .readthedocs.yml, docs/conf.py
 
 ## Progress Updates
