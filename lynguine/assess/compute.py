@@ -136,7 +136,7 @@ class Compute():
             compute_prep["field"] = settings["field"]
         return compute_prep
 
-    def gca_(self, function, field=None, refresh=False, args={}, row_args={}, view_args={}, function_args={}, subseries_args={}, column_args={}):
+    def gca_(self, function, field=None, refresh=False, args={}, row_args={}, view_args={}, function_args={}, subseries_args={}, column_args={}, mode=None, separator=None):
         """
         Args generator for compute functions.
 
@@ -359,8 +359,8 @@ class Compute():
                 continue
             
             # If we're not refreshing, need to determine which columns aren't set so they can be refreshed.
+            missing_vals = []
             if not refresh:
-                missing_vals = []
                 for column in columns:
                     if column not in data.columns:
                         missing_vals.append(True)
@@ -373,6 +373,9 @@ class Compute():
                         missing_vals.append(True) # The value is missing.
                     else:
                         missing_vals.append(False)
+            else:
+                # When refreshing, treat all columns as if they need updating
+                missing_vals = [True] * len(columns)
 
             if refresh or any(missing_vals):
                 # Compute the function and get the new values  

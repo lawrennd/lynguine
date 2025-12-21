@@ -2,9 +2,6 @@
 Tests for compute mode parameter (replace, append, prepend).
 
 This test file covers CIP-0007: Append Mode for Compute Operations.
-
-Note: These tests directly test the compute mode logic by creating minimal
-setups. More comprehensive integration tests should be added separately.
 """
 
 import pytest
@@ -13,436 +10,494 @@ from lynguine.assess.compute import Compute
 from lynguine.assess.data import CustomDataFrame
 
 
-def test_replace_mode_default():
-    """Test that replace mode is default when mode is not specified."""
-    # Create data with existing content
-    data = pd.DataFrame({'content': ['Old content']}, index=['A'])
-    cdf = CustomDataFrame(data=data)
-    
-    # Create interface with compute (no mode specified)
-    interface = {
-        "compute": {
-            "function": "simple_concat",
-            "field": "content",
-            "args": {"message": "New content"}
-        }
-    }
-    
-    # Mock function
-    def simple_concat(data, message="test"):
-        return message
-    simple_concat.__name__ = "simple_concat"
-    
-    compute = Compute(interface)
-    compute._list_functions = [
-        {
-            "name": "simple_concat",
-            "function": simple_concat,
-            "default_args": {},
-            "context": False
-        }
-    ]
-    
-    compute.run(cdf, interface)
-    
-    # Should replace, not append
-    result = cdf.get_value_column("content")
-    assert result == "New content"
+@pytest.fixture
+def sample_dataframe():
+    """Create a sample CustomDataFrame for testing."""
+    data = pd.DataFrame({'content': ['Initial content']}, index=['A'])
+    return CustomDataFrame(data=data)
 
 
-def test_replace_mode_explicit():
-    """Test explicit replace mode."""
-    data = pd.DataFrame({'content': ['Old content']}, index=['A'])
-    cdf = CustomDataFrame(data=data)
-    
-    interface = {
-        "compute": {
-            "function": "simple_concat",
-            "field": "content",
-            "mode": "replace",
-            "args": {"message": "New content"}
-        }
-    }
-    
-    def simple_concat(data, message="test"):
-        return message
-    simple_concat.__name__ = "simple_concat"
-    
-    compute = Compute(interface)
-    compute._list_functions = [
-        {
-            "name": "simple_concat",
-            "function": simple_concat,
-            "default_args": {},
-            "context": False
-        }
-    ]
-    
-    compute.run(cdf, interface)
-    
-    result = cdf.get_value_column("content")
-    assert result == "New content"
-
-
-def test_append_mode_to_existing_content():
-    """Test appending to existing non-empty content."""
-    data = pd.DataFrame({'content': ['First']}, index=['A'])
-    cdf = CustomDataFrame(data=data)
-    
-    interface = {
-        "compute": {
-            "function": "simple_concat",
-            "field": "content",
-            "mode": "append",
-            "separator": "\n",
-            "args": {"message": "Second"}
-        }
-    }
-    
-    def simple_concat(data, message="test"):
-        return message
-    simple_concat.__name__ = "simple_concat"
-    
-    compute = Compute(interface)
-    compute._list_functions = [
-        {
-            "name": "simple_concat",
-            "function": simple_concat,
-            "default_args": {},
-            "context": False
-        }
-    ]
-    
-    compute.run(cdf, interface)
-    
-    result = cdf.get_value_column("content")
-    assert result == "First\nSecond", f"Expected 'First\\nSecond', got: '{result}'"
-
-
-def test_append_mode_to_empty_content():
-    """Test appending to empty content (should just set the value)."""
+@pytest.fixture
+def empty_dataframe():
+    """Create a CustomDataFrame with empty content."""
     data = pd.DataFrame({'content': ['']}, index=['A'])
-    cdf = CustomDataFrame(data=data)
-    
-    interface = {
-        "compute": {
-            "function": "simple_concat",
-            "field": "content",
-            "mode": "append",
-            "args": {"message": "First"}
-        }
-    }
-    
-    def simple_concat(data, message="test"):
+    return CustomDataFrame(data=data)
+
+
+@pytest.fixture
+def simple_function():
+    """Create a simple test function."""
+    def test_func(message="default"):
         return message
-    simple_concat.__name__ = "simple_concat"
-    
-    compute = Compute(interface)
-    compute._list_functions = [
-        {
-            "name": "simple_concat",
-            "function": simple_concat,
-            "default_args": {},
-            "context": False
-        }
-    ]
-    
-    compute.run(cdf, interface)
-    
-    result = cdf.get_value_column("content")
-    assert result == "First"
+    test_func.__name__ = "test_func"
+    return test_func
 
 
-def test_append_mode_default_separator():
-    """Test that default separator is used when not specified."""
-    data = pd.DataFrame({'content': ['First']}, index=['A'])
-    cdf = CustomDataFrame(data=data)
-    
-    interface = {
-        "compute": {
-            "function": "simple_concat",
-            "field": "content",
-            "mode": "append",
-            # separator not specified - should use default "\n\n---\n\n"
-            "args": {"message": "Second"}
-        }
-    }
-    
-    def simple_concat(data, message="test"):
-        return message
-    simple_concat.__name__ = "simple_concat"
-    
-    compute = Compute(interface)
-    compute._list_functions = [
-        {
-            "name": "simple_concat",
-            "function": simple_concat,
-            "default_args": {},
-            "context": False
-        }
-    ]
-    
-    compute.run(cdf, interface)
-    
-    result = cdf.get_value_column("content")
-    assert result == "First\n\n---\n\nSecond"
+@pytest.fixture
+def compute_instance():
+    """Create a Compute instance for testing."""
+    interface = {"compute": []}
+    return Compute(interface)
 
 
-def test_append_mode_empty_separator():
-    """Test appending with empty separator (direct concatenation)."""
-    data = pd.DataFrame({'content': ['First']}, index=['A'])
-    cdf = CustomDataFrame(data=data)
+class TestComputeReplaceMode:
+    """Test replace mode (default behavior)."""
     
-    interface = {
-        "compute": {
-            "function": "simple_concat",
-            "field": "content",
-            "mode": "append",
-            "separator": "",
-            "args": {"message": "Second"}
-        }
-    }
-    
-    def simple_concat(data, message="test"):
-        return message
-    simple_concat.__name__ = "simple_concat"
-    
-    compute = Compute(interface)
-    compute._list_functions = [
-        {
-            "name": "simple_concat",
-            "function": simple_concat,
-            "default_args": {},
-            "context": False
-        }
-    ]
-    
-    compute.run(cdf, interface)
-    
-    result = cdf.get_value_column("content")
-    assert result == "FirstSecond"
-
-
-def test_prepend_mode_to_existing_content():
-    """Test prepending to existing non-empty content."""
-    data = pd.DataFrame({'content': ['Second']}, index=['A'])
-    cdf = CustomDataFrame(data=data)
-    
-    interface = {
-        "compute": {
-            "function": "simple_concat",
-            "field": "content",
-            "mode": "prepend",
-            "separator": "\n",
-            "args": {"message": "First"}
-        }
-    }
-    
-    def simple_concat(data, message="test"):
-        return message
-    simple_concat.__name__ = "simple_concat"
-    
-    compute = Compute(interface)
-    compute._list_functions = [
-        {
-            "name": "simple_concat",
-            "function": simple_concat,
-            "default_args": {},
-            "context": False
-        }
-    ]
-    
-    compute.run(cdf, interface)
-    
-    result = cdf.get_value_column("content")
-    assert result == "First\nSecond"
-
-
-def test_prepend_mode_to_empty_content():
-    """Test prepending to empty content (should just set the value)."""
-    data = pd.DataFrame({'content': ['']}, index=['A'])
-    cdf = CustomDataFrame(data=data)
-    
-    interface = {
-        "compute": {
-            "function": "simple_concat",
-            "field": "content",
-            "mode": "prepend",
-            "args": {"message": "First"}
-        }
-    }
-    
-    def simple_concat(data, message="test"):
-        return message
-    simple_concat.__name__ = "simple_concat"
-    
-    compute = Compute(interface)
-    compute._list_functions = [
-        {
-            "name": "simple_concat",
-            "function": simple_concat,
-            "default_args": {},
-            "context": False
-        }
-    ]
-    
-    compute.run(cdf, interface)
-    
-    result = cdf.get_value_column("content")
-    assert result == "First"
-
-
-def test_multiple_appends():
-    """Test multiple append operations accumulate correctly."""
-    data = pd.DataFrame({'content': ['First']}, index=['A'])
-    cdf = CustomDataFrame(data=data)
-    
-    interface = {
-        "compute": [
-            {
-                "function": "simple_concat",
+    def test_replace_mode_default(self, sample_dataframe, simple_function, compute_instance, mocker):
+        """Test that replace mode is default when mode is not specified."""
+        interface = {
+            "compute": {
+                "function": "test_func",
                 "field": "content",
-                "mode": "append",
-                "separator": "\n",
-                "args": {"message": "Second"}
-            },
-            {
-                "function": "simple_concat",
-                "field": "content",
-                "mode": "append",
-                "separator": "\n",
-                "args": {"message": "Third"}
+                "refresh": True,  # Force refresh to run compute
+                "args": {"message": "New content"}
             }
-        ]
-    }
-    
-    def simple_concat(data, message="test"):
-        return message
-    simple_concat.__name__ = "simple_concat"
-    
-    compute = Compute(interface)
-    compute._list_functions = [
-        {
-            "name": "simple_concat",
-            "function": simple_concat,
-            "default_args": {},
-            "context": False
         }
-    ]
+        
+        # Mock the function list
+        mocker.patch.object(
+            compute_instance, 
+            '_compute_functions_list',
+            return_value=[{
+                "name": "test_func",
+                "function": simple_function,
+                "default_args": {"message": "default"},
+                "context": False
+            }]
+        )
+        
+        compute_instance.run(sample_dataframe, interface)
+        
+        result = sample_dataframe.get_value_column("content")
+        assert result == "New content"
     
-    compute.run(cdf, interface)
-    
-    result = cdf.get_value_column("content")
-    assert result == "First\nSecond\nThird"
+    def test_replace_mode_explicit(self, sample_dataframe, simple_function, compute_instance, mocker):
+        """Test explicit replace mode."""
+        interface = {
+            "compute": {
+                "function": "test_func",
+                "field": "content",
+                "mode": "replace",
+                "refresh": True,
+                "args": {"message": "New content"}
+            }
+        }
+        
+        mocker.patch.object(
+            compute_instance,
+            '_compute_functions_list',
+            return_value=[{
+                "name": "test_func",
+                "function": simple_function,
+                "default_args": {"message": "default"},
+                "context": False
+            }]
+        )
+        
+        compute_instance.run(sample_dataframe, interface)
+        
+        result = sample_dataframe.get_value_column("content")
+        assert result == "New content"
 
 
-def test_multiple_prepends():
-    """Test multiple prepend operations accumulate correctly (newest first)."""
-    data = pd.DataFrame({'content': ['Third']}, index=['A'])
-    cdf = CustomDataFrame(data=data)
+class TestComputeAppendMode:
+    """Test append mode functionality."""
     
-    interface = {
-        "compute": [
-            {
-                "function": "simple_concat",
+    def test_append_to_existing_content(self, sample_dataframe, simple_function, compute_instance, mocker):
+        """Test appending to existing non-empty content."""
+        interface = {
+            "compute": {
+                "function": "test_func",
+                "field": "content",
+                "mode": "append",
+                "refresh": True,
+                "separator": "\n",
+                "args": {"message": "Appended content"}
+            }
+        }
+        
+        mocker.patch.object(
+            compute_instance,
+            '_compute_functions_list',
+            return_value=[{
+                "name": "test_func",
+                "function": simple_function,
+                "default_args": {"message": "default"},
+                "context": False
+            }]
+        )
+        
+        compute_instance.run(sample_dataframe, interface)
+        
+        result = sample_dataframe.get_value_column("content")
+        assert result == "Initial content\nAppended content"
+    
+    def test_append_to_empty_content(self, empty_dataframe, simple_function, compute_instance, mocker):
+        """Test appending to empty content (should just set the value)."""
+        interface = {
+            "compute": {
+                "function": "test_func",
+                "field": "content",
+                "mode": "append",
+                "args": {"message": "First content"}
+            }
+        }
+        
+        mocker.patch.object(
+            compute_instance,
+            '_compute_functions_list',
+            return_value=[{
+                "name": "test_func",
+                "function": simple_function,
+                "default_args": {"message": "default"},
+                "context": False
+            }]
+        )
+        
+        compute_instance.run(empty_dataframe, interface)
+        
+        result = empty_dataframe.get_value_column("content")
+        assert result == "First content"
+    
+    def test_append_default_separator(self, sample_dataframe, simple_function, compute_instance, mocker):
+        """Test that default separator is used when not specified."""
+        interface = {
+            "compute": {
+                "function": "test_func",
+                "field": "content",
+                "mode": "append",
+                "refresh": True,
+                # separator not specified - should use default "\n\n---\n\n"
+                "args": {"message": "Appended content"}
+            }
+        }
+        
+        mocker.patch.object(
+            compute_instance,
+            '_compute_functions_list',
+            return_value=[{
+                "name": "test_func",
+                "function": simple_function,
+                "default_args": {"message": "default"},
+                "context": False
+            }]
+        )
+        
+        compute_instance.run(sample_dataframe, interface)
+        
+        result = sample_dataframe.get_value_column("content")
+        assert result == "Initial content\n\n---\n\nAppended content"
+    
+    def test_append_empty_separator(self, sample_dataframe, simple_function, compute_instance, mocker):
+        """Test appending with empty separator (direct concatenation)."""
+        interface = {
+            "compute": {
+                "function": "test_func",
+                "field": "content",
+                "mode": "append",
+                "separator": "",
+                "args": {"message": " appended"}
+            }
+        }
+        
+        mocker.patch.object(
+            compute_instance,
+            '_compute_functions_list',
+            return_value=[{
+                "name": "test_func",
+                "function": simple_function,
+                "default_args": {"message": "default"},
+                "context": False
+            }]
+        )
+        
+        compute_instance.run(sample_dataframe, interface)
+        
+        result = sample_dataframe.get_value_column("content")
+        assert result == "Initial content appended"
+    
+    def test_multiple_appends(self, sample_dataframe, simple_function, compute_instance, mocker):
+        """Test multiple append operations accumulate correctly."""
+        interface = {
+            "compute": [
+                {
+                    "function": "test_func",
+                    "field": "content",
+                    "mode": "append",
+                    "separator": "\n",
+                    "args": {"message": "Second"}
+                },
+                {
+                    "function": "test_func",
+                    "field": "content",
+                    "mode": "append",
+                    "separator": "\n",
+                    "args": {"message": "Third"}
+                }
+            ]
+        }
+        
+        mocker.patch.object(
+            compute_instance,
+            '_compute_functions_list',
+            return_value=[{
+                "name": "test_func",
+                "function": simple_function,
+                "default_args": {"message": "default"},
+                "context": False
+            }]
+        )
+        
+        compute_instance.run(sample_dataframe, interface)
+        
+        result = sample_dataframe.get_value_column("content")
+        assert result == "Initial content\nSecond\nThird"
+
+
+class TestComputePrependMode:
+    """Test prepend mode functionality."""
+    
+    def test_prepend_to_existing_content(self, sample_dataframe, simple_function, compute_instance, mocker):
+        """Test prepending to existing non-empty content."""
+        interface = {
+            "compute": {
+                "function": "test_func",
                 "field": "content",
                 "mode": "prepend",
                 "separator": "\n",
-                "args": {"message": "Second"}
-            },
-            {
-                "function": "simple_concat",
+                "args": {"message": "Prepended content"}
+            }
+        }
+        
+        mocker.patch.object(
+            compute_instance,
+            '_compute_functions_list',
+            return_value=[{
+                "name": "test_func",
+                "function": simple_function,
+                "default_args": {"message": "default"},
+                "context": False
+            }]
+        )
+        
+        compute_instance.run(sample_dataframe, interface)
+        
+        result = sample_dataframe.get_value_column("content")
+        assert result == "Prepended content\nInitial content"
+    
+    def test_prepend_to_empty_content(self, empty_dataframe, simple_function, compute_instance, mocker):
+        """Test prepending to empty content (should just set the value)."""
+        interface = {
+            "compute": {
+                "function": "test_func",
                 "field": "content",
                 "mode": "prepend",
-                "separator": "\n",
-                "args": {"message": "First"}
+                "args": {"message": "First content"}
             }
-        ]
-    }
-    
-    def simple_concat(data, message="test"):
-        return message
-    simple_concat.__name__ = "simple_concat"
-    
-    compute = Compute(interface)
-    compute._list_functions = [
-        {
-            "name": "simple_concat",
-            "function": simple_concat,
-            "default_args": {},
-            "context": False
         }
-    ]
+        
+        mocker.patch.object(
+            compute_instance,
+            '_compute_functions_list',
+            return_value=[{
+                "name": "test_func",
+                "function": simple_function,
+                "default_args": {"message": "default"},
+                "context": False
+            }]
+        )
+        
+        compute_instance.run(empty_dataframe, interface)
+        
+        result = empty_dataframe.get_value_column("content")
+        assert result == "First content"
     
-    compute.run(cdf, interface)
-    
-    result = cdf.get_value_column("content")
-    # First is prepended last, so it appears first
-    assert result == "First\nSecond\nThird"
+    def test_multiple_prepends(self, sample_dataframe, simple_function, compute_instance, mocker):
+        """Test multiple prepend operations accumulate correctly (newest first)."""
+        interface = {
+            "compute": [
+                {
+                    "function": "test_func",
+                    "field": "content",
+                    "mode": "prepend",
+                    "separator": "\n",
+                    "args": {"message": "Second"}
+                },
+                {
+                    "function": "test_func",
+                    "field": "content",
+                    "mode": "prepend",
+                    "separator": "\n",
+                    "args": {"message": "First"}
+                }
+            ]
+        }
+        
+        mocker.patch.object(
+            compute_instance,
+            '_compute_functions_list',
+            return_value=[{
+                "name": "test_func",
+                "function": simple_function,
+                "default_args": {"message": "default"},
+                "context": False
+            }]
+        )
+        
+        compute_instance.run(sample_dataframe, interface)
+        
+        result = sample_dataframe.get_value_column("content")
+        # First is prepended last, so it appears first
+        assert result == "First\nSecond\nInitial content"
 
 
-def test_invalid_mode_raises_error():
-    """Test that invalid mode value raises ValueError."""
-    data = pd.DataFrame({'content': ['Content']}, index=['A'])
-    cdf = CustomDataFrame(data=data)
+class TestComputeModeErrors:
+    """Test error handling for invalid mode values."""
     
-    interface = {
-        "compute": {
-            "function": "simple_concat",
-            "field": "content",
-            "mode": "invalid_mode",
-            "args": {"message": "Test"}
+    def test_invalid_mode_raises_error(self, sample_dataframe, simple_function, compute_instance, mocker):
+        """Test that invalid mode value raises ValueError."""
+        interface = {
+            "compute": {
+                "function": "test_func",
+                "field": "content",
+                "mode": "invalid_mode",
+                "args": {"message": "Test"}
+            }
         }
-    }
-    
-    def simple_concat(data, message="test"):
-        return message
-    simple_concat.__name__ = "simple_concat"
-    
-    compute = Compute(interface)
-    compute._list_functions = [
-        {
-            "name": "simple_concat",
-            "function": simple_concat,
-            "default_args": {},
-            "context": False
-        }
-    ]
-    
-    with pytest.raises(ValueError, match="Invalid mode 'invalid_mode'"):
-        compute.run(cdf, interface)
+        
+        mocker.patch.object(
+            compute_instance,
+            '_compute_functions_list',
+            return_value=[{
+                "name": "test_func",
+                "function": simple_function,
+                "default_args": {"message": "default"},
+                "context": False
+            }]
+        )
+        
+        with pytest.raises(ValueError, match="Invalid mode 'invalid_mode'"):
+            compute_instance.run(sample_dataframe, interface)
 
 
-def test_append_to_nonexistent_column():
-    """Test appending to a column that doesn't exist yet."""
-    data = pd.DataFrame({'existing': ['value']}, index=['A'])
-    cdf = CustomDataFrame(data=data)
+class TestComputeModeWithNewColumn:
+    """Test mode parameter with columns that don't exist yet."""
     
-    interface = {
-        "compute": {
-            "function": "simple_concat",
-            "field": "new_column",
-            "mode": "append",
-            "args": {"message": "First"}
+    def test_append_to_nonexistent_column(self, sample_dataframe, simple_function, compute_instance, mocker):
+        """Test appending to a column that doesn't exist yet."""
+        interface = {
+            "compute": {
+                "function": "test_func",
+                "field": "new_column",
+                "mode": "append",
+                "args": {"message": "First content"}
+            }
         }
-    }
+        
+        mocker.patch.object(
+            compute_instance,
+            '_compute_functions_list',
+            return_value=[{
+                "name": "test_func",
+                "function": simple_function,
+                "default_args": {"message": "default"},
+                "context": False
+            }]
+        )
+        
+        compute_instance.run(sample_dataframe, interface)
+        
+        result = sample_dataframe.get_value_column("new_column")
+        # Should just set the value since column didn't exist
+        assert result == "First content"
     
-    def simple_concat(data, message="test"):
-        return message
-    simple_concat.__name__ = "simple_concat"
-    
-    compute = Compute(interface)
-    compute._list_functions = [
-        {
-            "name": "simple_concat",
-            "function": simple_concat,
-            "default_args": {},
-            "context": False
+    def test_prepend_to_nonexistent_column(self, sample_dataframe, simple_function, compute_instance, mocker):
+        """Test prepending to a column that doesn't exist yet."""
+        interface = {
+            "compute": {
+                "function": "test_func",
+                "field": "new_column",
+                "mode": "prepend",
+                "args": {"message": "First content"}
+            }
         }
-    ]
+        
+        mocker.patch.object(
+            compute_instance,
+            '_compute_functions_list',
+            return_value=[{
+                "name": "test_func",
+                "function": simple_function,
+                "default_args": {"message": "default"},
+                "context": False
+            }]
+        )
+        
+        compute_instance.run(sample_dataframe, interface)
+        
+        result = sample_dataframe.get_value_column("new_column")
+        # Should just set the value since column didn't exist
+        assert result == "First content"
+
+
+class TestComputeModeWithRefresh:
+    """Test mode parameter interaction with refresh flag."""
     
-    compute.run(cdf, interface)
+    def test_append_with_refresh_false_skips_if_value_exists(self, sample_dataframe, simple_function, compute_instance, mocker):
+        """Test that append with refresh=False doesn't append if value already exists."""
+        interface = {
+            "compute": {
+                "function": "test_func",
+                "field": "content",
+                "mode": "append",
+                "refresh": False,  # Don't refresh existing values
+                "args": {"message": "Should not append"}
+            }
+        }
+        
+        mocker.patch.object(
+            compute_instance,
+            '_compute_functions_list',
+            return_value=[{
+                "name": "test_func",
+                "function": simple_function,
+                "default_args": {"message": "default"},
+                "context": False
+            }]
+        )
+        
+        compute_instance.run(sample_dataframe, interface)
+        
+        result = sample_dataframe.get_value_column("content")
+        # Should not have changed because refresh=False and value exists
+        assert result == "Initial content"
     
-    result = cdf.get_value_column("new_column")
-    # Should just set the value since column didn't exist
-    assert result == "First"
+    def test_append_with_refresh_true_always_appends(self, sample_dataframe, simple_function, compute_instance, mocker):
+        """Test that append with refresh=True always appends even if value exists."""
+        interface = {
+            "compute": {
+                "function": "test_func",
+                "field": "content",
+                "mode": "append",
+                "refresh": True,  # Always refresh
+                "separator": " | ",
+                "args": {"message": "Always appends"}
+            }
+        }
+        
+        mocker.patch.object(
+            compute_instance,
+            '_compute_functions_list',
+            return_value=[{
+                "name": "test_func",
+                "function": simple_function,
+                "default_args": {"message": "default"},
+                "context": False
+            }]
+        )
+        
+        compute_instance.run(sample_dataframe, interface)
+        
+        result = sample_dataframe.get_value_column("content")
+        # Should have appended because refresh=True
+        assert result == "Initial content | Always appends"
