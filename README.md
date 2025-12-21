@@ -3,6 +3,7 @@
 
 ![Tests](https://github.com/lawrennd/lynguine/actions/workflows/python-tests.yml/badge.svg)
 [![Documentation](https://github.com/lawrennd/lynguine/actions/workflows/docs.yml/badge.svg)](https://lawrennd.github.io/lynguine/)
+[![ReadTheDocs](https://readthedocs.org/projects/lynguine/badge/?version=latest)](https://lynguine.readthedocs.io/en/latest/)
 
 
 [![codecov](https://codecov.io/gh/lawrennd/lynguine/branch/main/graph/badge.svg?token=YOUR_CODECOV_TOKEN)](https://codecov.io/gh/lawrennd/lynguine)
@@ -13,10 +14,10 @@ It is an attempt to implement the emerging linguine specification, <https://gith
 
 ## Quick Links
 
-- [Documentation](https://lawrennd.github.io/lynguine/)
+- [Documentation](https://lynguine.readthedocs.io/)
 - [Code Improvement Plans](cip/)
 - [Project Backlog](backlog/)
-- [Security Documentation](docs/security/) - Secure credential management
+- [Security Documentation](https://lynguine.readthedocs.io/en/latest/security/)
 
 ## Security
 
