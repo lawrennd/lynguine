@@ -1,13 +1,13 @@
 ---
 id: "2025-10-10_implement-proper-layering-fix"
 title: "Implement proper layering fix for mapping initialization timing conflict"
-status: "Proposed"
-priority: "High"
+status: "deferred"
+priority: "Low"
 created: "2025-10-10"
-last_updated: "2025-10-10"
+last_updated: "2025-12-21"
 owner: "lawrennd"
 github_issue: null
-dependencies: null
+dependencies: "CIP-0003"
 tags:
 - backlog
 - infrastructure
@@ -89,12 +89,14 @@ def update_name_column_map(self, name, column):
 
 ## Acceptance Criteria
 
-- [ ] lynguine is strict for all mapping conflicts
-- [ ] No implicit behavior in lynguine
-- [ ] referia handles implicit behavior in its own layer
-- [ ] Clear separation of concerns
-- [ ] All existing tests pass
-- [ ] New tests verify strict behavior
+- [x] lynguine is strict for all mapping conflicts
+- [x] No implicit behavior in lynguine
+- [x] referia handles implicit behavior in its own layer
+- [x] Clear separation of concerns
+- [x] All existing tests pass
+- [x] New tests verify strict behavior
+
+**Note**: Acceptance criteria met via workaround, not via proper architectural fix described in this backlog item.
 
 ## Related
 
@@ -103,6 +105,26 @@ def update_name_column_map(self, name, column):
 - **Related referia backlog**: 2025-10-10_implement-proper-layering-fix
 
 ## Progress Updates
+
+### 2025-12-21 - Deferred (Workaround Sufficient)
+
+**Status Update**: Changed to "deferred" with priority lowered to "Low"
+
+The acceptance criteria have been met, but through a workaround rather than the proper architectural fix:
+
+1. ✅ **lynguine is strict**: No changes made to lynguine, remains strict for all mapping conflicts
+2. ✅ **referia handles implicit behavior**: Implemented via `update_name_column_map()` override
+3. ✅ **Clear separation**: lynguine = strict infrastructure, referia = convenient application layer
+
+**Workaround Details**:
+- Location: `referia/assess/data.py` lines 210-238
+- Method: Override `update_name_column_map()` to allow default mapping overrides
+- Result: Functional but not the ideal architecture described in CIP-0003
+
+**Proper Fix (Deferred)**:
+The ideal solution described in CIP-0003 would move `_augment_column_names()` from referia's `__init__` to `from_flow()` override. This remains unimplemented but deferred as the workaround is sufficient for current needs.
+
+**Decision**: Defer proper architectural fix unless/until timing issues resurface or architectural clarity becomes critical.
 
 ### 2025-10-10
 Task created with Proposed status. Identified the need for proper architectural layering fix.

@@ -1,13 +1,13 @@
 ---
 id: "2025-10-09_mapping-conflict-with-identity-mappings"
 title: "Mapping conflict when interface mapping overrides auto-generated identity mapping"
-status: "Proposed"
-priority: "High"
+status: "workaround_implemented"
+priority: "Medium"
 created: "2025-10-09"
-last_updated: "2025-10-09"
+last_updated: "2025-12-21"
 owner: "lawrennd"
 github_issue: null
-dependencies: null
+dependencies: "CIP-0003"
 tags:
 - backlog
 - bug
@@ -117,4 +117,22 @@ Fix verified:
 - Real scenario works correctly with 214 people loaded
 
 Related investigation task (`2025-10-09_investigate-mapping-test-failure.md`) completed.
+
+### 2025-12-21 - Workaround Status
+
+**Current Status**: Workaround implemented in referia, not lynguine
+
+After investigation, it was determined that:
+1. The bug originates from referia's `__init__` calling `_augment_column_names()` early
+2. lynguine remains strict (does not allow mapping overrides)
+3. referia implements the workaround in its own `update_name_column_map()` override
+
+**Workaround Location**: `referia/assess/data.py` lines 210-238
+- referia's `update_name_column_map()` allows overwriting "default mappings"
+- Uses `_is_default_mapping()` to identify identity and camelCase mappings
+- Maintains lynguine's strict behavior for non-default mappings
+
+**Proper Fix**: Would require implementing CIP-0003 / CIP-0005 (move augmentation to `from_flow()`)
+
+**Status Change**: Changed from "High Priority" to "Medium Priority" and marked as "workaround_implemented" since the issue is functional but not architecturally ideal.
 
