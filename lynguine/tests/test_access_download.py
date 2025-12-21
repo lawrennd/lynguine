@@ -2,6 +2,7 @@ import pytest
 import os
 import pytest
 from unittest.mock import MagicMock
+from urllib.error import HTTPError
 from lynguine.access.download import FileDownloader, GitDownloader, Interface
 
 class MockResponse:
@@ -164,7 +165,8 @@ def test_network_errors_in_download_url(file_downloader, monkeypatch):
     def fake_urlopen(url):
         raise HTTPError(url, 404, "Not Found", None, None)
 
-    monkeypatch.setattr("urllib.request.urlopen", fake_urlopen)
+    # Patch the imported urlopen in the download module, not urllib.request
+    monkeypatch.setattr("lynguine.access.download.urlopen", fake_urlopen)
     
     with pytest.raises(ValueError):
         file_downloader._download_url("http://invalidurl.com", ".", "testfile.txt")
