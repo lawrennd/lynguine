@@ -1388,7 +1388,7 @@ a python dictionary if it exists.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="lynguine.access.io.read_gsheet">
 <span class="sig-prename descclassname"><span class="pre">lynguine.access.io.</span></span><span class="sig-name descname"><span class="pre">read_gsheet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">details</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lynguine/access/io.html#read_gsheet"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lynguine.access.io.read_gsheet" title="Link to this definition"></a></dt>
-<dd><p>Read data from a Google sheet.</p>
+<dd><p>Read data from a Google sheet using secure credential management.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>details</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><em>dict</em></a>) – The details of the file to be read.</p>
@@ -1398,6 +1398,9 @@ a python dictionary if it exists.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.3.3)">pandas.DataFrame</a></p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – If credentials cannot be retrieved</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1433,16 +1436,16 @@ a python dictionary if it exists.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="lynguine.access.io.write_gsheet">
 <span class="sig-prename descclassname"><span class="pre">lynguine.access.io.</span></span><span class="sig-name descname"><span class="pre">write_gsheet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">details</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lynguine/access/io.html#write_gsheet"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lynguine.access.io.write_gsheet" title="Link to this definition"></a></dt>
-<dd><p>Read data from a Google sheet.</p>
+<dd><p>Write data to a Google sheet using secure credential management.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>details</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><em>dict</em></a>) – The details of the file to be read.</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df</strong> (<a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.3.3)"><em>pandas.DataFrame</em></a><em> or </em><em>lynguine.data.CustomDataFrame</em>) – The data to be written.</p></li>
+<li><p><strong>details</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><em>dict</em></a>) – The details of the file to be written.</p></li>
+</ul>
 </dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The data read from the file.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.3.3)">pandas.DataFrame</a></p>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – If credentials cannot be retrieved</p>
 </dd>
 </dl>
 </dd></dl>

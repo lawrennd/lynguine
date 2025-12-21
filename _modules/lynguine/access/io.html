@@ -731,6 +731,24 @@
     <span class="kn">import</span><span class="w"> </span><span class="nn">gspread_pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">gspd</span>
 <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
     <span class="n">GSPREAD_AVAILABLE</span> <span class="o">=</span> <span class="kc">False</span>
+
+<span class="c1"># Import secure credential management</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">..security.credentials</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+        <span class="n">get_credential_manager</span><span class="p">,</span>
+        <span class="n">CredentialNotFoundError</span><span class="p">,</span>
+        <span class="n">CredentialValidationError</span>
+    <span class="p">)</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">..security.access_control</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+        <span class="n">get_access_controller</span><span class="p">,</span>
+        <span class="n">AccessLevel</span><span class="p">,</span>
+        <span class="n">AccessDeniedError</span><span class="p">,</span>
+        <span class="n">RateLimitError</span>
+    <span class="p">)</span>
+    <span class="n">SECURE_CREDENTIALS_AVAILABLE</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="n">SECURE_CREDENTIALS_AVAILABLE</span> <span class="o">=</span> <span class="kc">False</span>
+
 <span class="c1"># This file accesses the data</span>
 
 <span class="sd">&quot;&quot;&quot;Place commands in this file to access the data electronically. Don&#39;t remove any missing values, or deal with outliers. Make sure you have legalities correct, both intellectual property and personal data privacy rights. Beyond the legal side also think about the ethical issues around this data. &quot;&quot;&quot;</span>
@@ -873,6 +891,117 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">None</span></div>
 
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_get_google_sheets_config</span><span class="p">(</span><span class="n">details</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Get Google Sheets configuration using secure credential management.</span>
+<span class="sd">    </span>
+<span class="sd">    This function retrieves Google Sheets credentials securely, falling back</span>
+<span class="sd">    to the legacy context-based approach if secure credentials are not available.</span>
+<span class="sd">    </span>
+<span class="sd">    :param details: The details dictionary that may contain credential references</span>
+<span class="sd">    :type details: dict</span>
+<span class="sd">    :return: Configuration dictionary for gspread_pandas</span>
+<span class="sd">    :rtype: dict</span>
+<span class="sd">    :raises ValueError: If credentials cannot be retrieved</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">gconfig</span> <span class="o">=</span> <span class="p">{}</span>
+    
+    <span class="c1"># Try secure credential management first</span>
+    <span class="k">if</span> <span class="n">SECURE_CREDENTIALS_AVAILABLE</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># Get access controller for authorization</span>
+            <span class="n">access_controller</span> <span class="o">=</span> <span class="n">get_access_controller</span><span class="p">()</span>
+            
+            <span class="c1"># Determine which credential to use</span>
+            <span class="n">credential_key</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">if</span> <span class="s2">&quot;credential&quot;</span> <span class="ow">in</span> <span class="n">details</span><span class="p">:</span>
+                <span class="c1"># Explicit credential reference in details</span>
+                <span class="n">credential_key</span> <span class="o">=</span> <span class="n">details</span><span class="p">[</span><span class="s2">&quot;credential&quot;</span><span class="p">]</span>
+            <span class="k">elif</span> <span class="s2">&quot;google_oauth&quot;</span> <span class="ow">in</span> <span class="n">ctxt</span><span class="p">:</span>
+                <span class="c1"># Check if context has a credential reference</span>
+                <span class="n">oauth_config</span> <span class="o">=</span> <span class="n">ctxt</span><span class="p">[</span><span class="s2">&quot;google_oauth&quot;</span><span class="p">]</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">oauth_config</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="n">oauth_config</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;${credential:&quot;</span><span class="p">):</span>
+                    <span class="c1"># Extract credential key from reference</span>
+                    <span class="n">credential_key</span> <span class="o">=</span> <span class="n">oauth_config</span><span class="p">[</span><span class="mi">13</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>  <span class="c1"># Remove ${credential: and }</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># Default credential keys</span>
+                <span class="n">credential_key</span> <span class="o">=</span> <span class="s2">&quot;google_sheets_oauth&quot;</span>
+            
+            <span class="k">if</span> <span class="n">credential_key</span><span class="p">:</span>
+                <span class="c1"># Authorize access</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">access_controller</span><span class="o">.</span><span class="n">authorize_access</span><span class="p">(</span>
+                        <span class="n">credential_key</span><span class="o">=</span><span class="n">credential_key</span><span class="p">,</span>
+                        <span class="n">operation</span><span class="o">=</span><span class="n">AccessLevel</span><span class="o">.</span><span class="n">READ</span><span class="p">,</span>
+                        <span class="n">context</span><span class="o">=</span><span class="s2">&quot;google_sheets_read&quot;</span>
+                    <span class="p">)</span>
+                <span class="k">except</span> <span class="p">(</span><span class="n">AccessDeniedError</span><span class="p">,</span> <span class="n">RateLimitError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                    <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Access denied for Google Sheets credential: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Failed to authorize credential access: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                
+                <span class="c1"># Get credential from manager</span>
+                <span class="n">credential_manager</span> <span class="o">=</span> <span class="n">get_credential_manager</span><span class="p">()</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">credential</span> <span class="o">=</span> <span class="n">credential_manager</span><span class="o">.</span><span class="n">get_credential</span><span class="p">(</span>
+                        <span class="n">credential_key</span><span class="p">,</span>
+                        <span class="n">credential_type</span><span class="o">=</span><span class="s2">&quot;google_oauth&quot;</span>
+                    <span class="p">)</span>
+                    
+                    <span class="k">if</span> <span class="n">credential</span> <span class="ow">and</span> <span class="s2">&quot;value&quot;</span> <span class="ow">in</span> <span class="n">credential</span><span class="p">:</span>
+                        <span class="n">cred_value</span> <span class="o">=</span> <span class="n">credential</span><span class="p">[</span><span class="s2">&quot;value&quot;</span><span class="p">]</span>
+                        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cred_value</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+                            <span class="c1"># Expand environment variables in credential values</span>
+                            <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">cred_value</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+                                    <span class="n">gconfig</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expandvars</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+                                <span class="k">else</span><span class="p">:</span>
+                                    <span class="n">gconfig</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">val</span>
+                            
+                            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Using secure credential management for Google Sheets&quot;</span><span class="p">)</span>
+                            <span class="k">return</span> <span class="n">gconfig</span>
+                <span class="k">except</span> <span class="n">CredentialNotFoundError</span><span class="p">:</span>
+                    <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;Credential &#39;</span><span class="si">{</span><span class="n">credential_key</span><span class="si">}</span><span class="s2">&#39; not found in secure storage, &quot;</span>
+                        <span class="s2">&quot;falling back to context-based credentials&quot;</span>
+                    <span class="p">)</span>
+                <span class="k">except</span> <span class="n">CredentialValidationError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                    <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;Credential validation failed: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">, &quot;</span>
+                        <span class="s2">&quot;falling back to context-based credentials&quot;</span>
+                    <span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Error using secure credential management: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">, &quot;</span>
+                <span class="s2">&quot;falling back to context-based credentials&quot;</span>
+            <span class="p">)</span>
+    
+    <span class="c1"># Fallback to legacy context-based approach</span>
+    <span class="k">if</span> <span class="s2">&quot;google_oauth&quot;</span> <span class="ow">in</span> <span class="n">ctxt</span><span class="p">:</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Using legacy context-based credentials for Google Sheets&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">ctxt</span><span class="p">[</span><span class="s2">&quot;google_oauth&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+                <span class="n">gconfig</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expandvars</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">gconfig</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">val</span>
+        <span class="k">return</span> <span class="n">gconfig</span>
+    <span class="k">elif</span> <span class="s2">&quot;gspread_pandas&quot;</span> <span class="ow">in</span> <span class="n">ctxt</span><span class="p">:</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Using legacy gspread_pandas context-based credentials&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">ctxt</span><span class="p">[</span><span class="s2">&quot;gspread_pandas&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+                <span class="n">gconfig</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expandvars</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">gconfig</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">val</span>
+        <span class="k">return</span> <span class="n">gconfig</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">errmsg</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="s2">&quot;No Google Sheets credentials found. &quot;</span>
+            <span class="s2">&quot;Configure credentials using secure credential management or &quot;</span>
+            <span class="s2">&quot;add &#39;google_oauth&#39; to your context configuration.&quot;</span>
+        <span class="p">)</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">errmsg</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">errmsg</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="read_json">
@@ -1154,7 +1283,8 @@
         <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">filename</span><span class="p">):</span>
             <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;File &quot;</span><span class="si">{</span><span class="n">filename</span><span class="si">}</span><span class="s1">&quot; is not a file or a directory.&#39;</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">filereader</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">filereader</span> <span class="o">=</span> <span class="n">default_file_reader</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+            <span class="n">typ</span> <span class="o">=</span> <span class="n">extract_file_type</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+            <span class="n">filereader</span> <span class="o">=</span> <span class="n">default_file_reader</span><span class="p">(</span><span class="n">typ</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">filereader_args</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">filereader</span><span class="p">(</span><span class="n">filename</span><span class="p">))</span>
         <span class="k">else</span><span class="p">:</span>
@@ -1976,20 +2106,22 @@
 <a class="viewcode-back" href="../../../modules/lynguine.access.html#lynguine.access.io.read_gsheet">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">read_gsheet</span><span class="p">(</span><span class="n">details</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Read data from a Google sheet.</span>
+<span class="sd">        Read data from a Google sheet using secure credential management.</span>
 
 <span class="sd">        :param details: The details of the file to be read.</span>
 <span class="sd">        :type details: dict</span>
 <span class="sd">        :return: The data read from the file.</span>
 <span class="sd">        :rtype: pandas.DataFrame</span>
+<span class="sd">        :raises ValueError: If credentials cannot be retrieved</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">dtypes</span> <span class="o">=</span> <span class="n">extract_dtypes</span><span class="p">(</span><span class="n">details</span><span class="p">)</span>
         <span class="n">filename</span> <span class="o">=</span> <span class="n">extract_full_filename</span><span class="p">(</span><span class="n">details</span><span class="p">)</span>
         <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Reading Google sheet named </span><span class="si">{</span><span class="n">filename</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="n">sheet</span> <span class="o">=</span> <span class="n">extract_sheet</span><span class="p">(</span><span class="n">details</span><span class="p">)</span>
-        <span class="n">gconfig</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">ctxt</span><span class="p">[</span><span class="s2">&quot;google_oauth&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="n">gconfig</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expandvars</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+        
+        <span class="c1"># Use secure credential management</span>
+        <span class="n">gconfig</span> <span class="o">=</span> <span class="n">_get_google_sheets_config</span><span class="p">(</span><span class="n">details</span><span class="p">)</span>
+        
         <span class="n">gsheet</span> <span class="o">=</span> <span class="n">gspd</span><span class="o">.</span><span class="n">Spread</span><span class="p">(</span>
             <span class="n">spread</span><span class="o">=</span><span class="n">filename</span><span class="p">,</span>
             <span class="n">sheet</span><span class="o">=</span><span class="n">sheet</span><span class="p">,</span>
@@ -2081,21 +2213,26 @@
 <a class="viewcode-back" href="../../../modules/lynguine.access.html#lynguine.access.io.write_gsheet">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">write_gsheet</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">details</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Read data from a Google sheet.</span>
+<span class="sd">        Write data to a Google sheet using secure credential management.</span>
 
-<span class="sd">        :param details: The details of the file to be read.</span>
+<span class="sd">        :param df: The data to be written.</span>
+<span class="sd">        :type df: pandas.DataFrame or lynguine.data.CustomDataFrame</span>
+<span class="sd">        :param details: The details of the file to be written.</span>
 <span class="sd">        :type details: dict</span>
-<span class="sd">        :return: The data read from the file.</span>
-<span class="sd">        :rtype: pandas.DataFrame</span>
+<span class="sd">        :raises ValueError: If credentials cannot be retrieved</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">filename</span> <span class="o">=</span> <span class="n">extract_full_filename</span><span class="p">(</span><span class="n">details</span><span class="p">)</span>
         <span class="n">sheet</span> <span class="o">=</span> <span class="n">extract_sheet</span><span class="p">(</span><span class="n">details</span><span class="p">)</span>
         <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Writing Google sheet named </span><span class="si">{</span><span class="n">filename</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        
+        <span class="c1"># Use secure credential management</span>
+        <span class="n">gconfig</span> <span class="o">=</span> <span class="n">_get_google_sheets_config</span><span class="p">(</span><span class="n">details</span><span class="p">)</span>
+        
         <span class="n">gsheet</span> <span class="o">=</span> <span class="n">gspd</span><span class="o">.</span><span class="n">Spread</span><span class="p">(</span>
             <span class="n">spread</span><span class="o">=</span><span class="n">filename</span><span class="p">,</span>
             <span class="n">sheet</span><span class="o">=</span><span class="n">sheet</span><span class="p">,</span>
             <span class="n">create_spread</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-            <span class="n">config</span><span class="o">=</span><span class="n">ctxt</span><span class="p">[</span><span class="s2">&quot;gspread_pandas&quot;</span><span class="p">],</span>
+            <span class="n">config</span><span class="o">=</span><span class="n">gconfig</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">gsheet</span><span class="o">.</span><span class="n">df_to_sheet</span><span class="p">(</span>
             <span class="n">df</span><span class="o">=</span><span class="n">df</span><span class="p">,</span>
@@ -2638,7 +2775,11 @@
     <span class="k">elif</span> <span class="n">ftype</span> <span class="o">==</span> <span class="s2">&quot;markdown&quot;</span><span class="p">:</span>
         <span class="n">df</span> <span class="o">=</span> <span class="n">read_markdown</span><span class="p">(</span><span class="n">details</span><span class="p">)</span>
     <span class="k">elif</span> <span class="n">ftype</span> <span class="o">==</span> <span class="s2">&quot;list&quot;</span><span class="p">:</span>
-        <span class="n">df</span> <span class="o">=</span> <span class="n">read_list</span><span class="p">(</span><span class="n">details</span><span class="p">)</span>
+        <span class="n">filelist</span> <span class="o">=</span> <span class="n">details</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;filename&quot;</span><span class="p">,</span> <span class="p">[])</span>
+        <span class="n">base_dir</span> <span class="o">=</span> <span class="n">details</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;base_directory&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">base_dir</span><span class="p">:</span>
+            <span class="n">filelist</span> <span class="o">=</span> <span class="p">[</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">base_dir</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">filelist</span><span class="p">]</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">read_list</span><span class="p">(</span><span class="n">filelist</span><span class="p">)</span>
     <span class="k">elif</span> <span class="n">ftype</span> <span class="o">==</span> <span class="s2">&quot;yaml_directory&quot;</span><span class="p">:</span>
         <span class="n">df</span> <span class="o">=</span> <span class="n">read_yaml_directory</span><span class="p">(</span><span class="n">details</span><span class="p">)</span>
     <span class="k">elif</span> <span class="n">ftype</span> <span class="o">==</span> <span class="s2">&quot;json_directory&quot;</span><span class="p">:</span>

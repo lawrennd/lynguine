@@ -693,7 +693,19 @@
 <span></span><span class="c1"># This file loads configurations that are specific to the context</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">yaml</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">itertools</span><span class="w"> </span><span class="kn">import</span> <span class="n">chain</span>
+
+<span class="c1"># Import secure credential management</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">..security.credentials</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+        <span class="n">get_credential_manager</span><span class="p">,</span>
+        <span class="n">CredentialNotFoundError</span><span class="p">,</span>
+        <span class="n">CredentialValidationError</span>
+    <span class="p">)</span>
+    <span class="n">SECURE_CREDENTIALS_AVAILABLE</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="n">SECURE_CREDENTIALS_AVAILABLE</span> <span class="o">=</span> <span class="kc">False</span>
 
 <span class="k">class</span><span class="w"> </span><span class="nc">_Config</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
@@ -882,13 +894,104 @@
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_expand_vars</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Expand the environment variables in the configuration.</span>
+<span class="sd">        Expand environment variables and credential references in configuration.</span>
+<span class="sd">        </span>
+<span class="sd">        Supports:</span>
+<span class="sd">        - Environment variables: $VAR or ${VAR}</span>
+<span class="sd">        - Credential references: ${credential:key_name}</span>
 
 <span class="sd">        :return: None</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="k">if</span> <span class="n">item</span> <span class="ow">is</span> <span class="nb">str</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expandvars</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_expand_value</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">_expand_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Recursively expand a configuration value.</span>
+<span class="sd">        </span>
+<span class="sd">        :param value: The value to expand</span>
+<span class="sd">        :return: The expanded value</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="c1"># Expand credential references first</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_expand_credential_references</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+            <span class="c1"># Then expand environment variables</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expandvars</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">value</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="k">return</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_expand_value</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">value</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_expand_value</span><span class="p">(</span><span class="n">item</span><span class="p">)</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">value</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">value</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">_expand_credential_references</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Expand credential references in a string value.</span>
+<span class="sd">        </span>
+<span class="sd">        Credential references have the format: ${credential:key_name}</span>
+<span class="sd">        </span>
+<span class="sd">        :param value: The string value to expand</span>
+<span class="sd">        :type value: str</span>
+<span class="sd">        :return: The expanded value</span>
+<span class="sd">        :rtype: str</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">value</span>
+        
+        <span class="c1"># Pattern to match ${credential:key_name}</span>
+        <span class="n">pattern</span> <span class="o">=</span> <span class="sa">r</span><span class="s1">&#39;\$\{credential:([^}]+)\}&#39;</span>
+        
+        <span class="k">def</span><span class="w"> </span><span class="nf">replace_credential</span><span class="p">(</span><span class="n">match</span><span class="p">):</span>
+            <span class="n">credential_key</span> <span class="o">=</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+            
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">SECURE_CREDENTIALS_AVAILABLE</span><span class="p">:</span>
+                <span class="c1"># If secure credentials not available, return the reference unchanged</span>
+                <span class="k">return</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+            
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">credential_manager</span> <span class="o">=</span> <span class="n">get_credential_manager</span><span class="p">()</span>
+                <span class="n">credential</span> <span class="o">=</span> <span class="n">credential_manager</span><span class="o">.</span><span class="n">get_credential</span><span class="p">(</span><span class="n">credential_key</span><span class="p">)</span>
+                
+                <span class="k">if</span> <span class="n">credential</span> <span class="ow">and</span> <span class="s2">&quot;value&quot;</span> <span class="ow">in</span> <span class="n">credential</span><span class="p">:</span>
+                    <span class="n">cred_value</span> <span class="o">=</span> <span class="n">credential</span><span class="p">[</span><span class="s2">&quot;value&quot;</span><span class="p">]</span>
+                    <span class="c1"># If the credential value is a dict, return it as-is</span>
+                    <span class="c1"># (will be handled by caller)</span>
+                    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cred_value</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+                        <span class="c1"># For string replacement, we can&#39;t embed a dict</span>
+                        <span class="c1"># Return a placeholder that indicates success</span>
+                        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;__CREDENTIAL_DICT_</span><span class="si">{</span><span class="n">credential_key</span><span class="si">}</span><span class="s2">__&quot;</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="c1"># For simple values, return the string representation</span>
+                        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">cred_value</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="n">CredentialNotFoundError</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;Credential &#39;</span><span class="si">{</span><span class="n">credential_key</span><span class="si">}</span><span class="s2">&#39; has no value&quot;</span>
+                    <span class="p">)</span>
+            <span class="k">except</span> <span class="p">(</span><span class="n">CredentialNotFoundError</span><span class="p">,</span> <span class="n">CredentialValidationError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="c1"># Log warning but don&#39;t fail - return the original reference</span>
+                <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+                <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Failed to resolve credential reference &#39;</span><span class="si">{</span><span class="n">credential_key</span><span class="si">}</span><span class="s2">&#39;: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="p">)</span>
+                <span class="k">return</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        
+        <span class="c1"># Replace all credential references</span>
+        <span class="n">expanded</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="n">pattern</span><span class="p">,</span> <span class="n">replace_credential</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+        
+        <span class="c1"># If the entire value is a credential dict placeholder, fetch and return the dict</span>
+        <span class="k">if</span> <span class="n">expanded</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;__CREDENTIAL_DICT_&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">expanded</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;__&quot;</span><span class="p">):</span>
+            <span class="n">credential_key</span> <span class="o">=</span> <span class="n">expanded</span><span class="p">[</span><span class="mi">18</span><span class="p">:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>  <span class="c1"># Extract key from placeholder</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">credential_manager</span> <span class="o">=</span> <span class="n">get_credential_manager</span><span class="p">()</span>
+                <span class="n">credential</span> <span class="o">=</span> <span class="n">credential_manager</span><span class="o">.</span><span class="n">get_credential</span><span class="p">(</span><span class="n">credential_key</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">credential</span> <span class="ow">and</span> <span class="s2">&quot;value&quot;</span> <span class="ow">in</span> <span class="n">credential</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="n">credential</span><span class="p">[</span><span class="s2">&quot;value&quot;</span><span class="p">]</span>
+            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                <span class="k">pass</span>
+        
+        <span class="k">return</span> <span class="n">expanded</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_add_logging_defaults</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
