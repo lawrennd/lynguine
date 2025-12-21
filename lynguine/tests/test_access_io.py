@@ -311,7 +311,8 @@ def test_read_files_extracts_file_type(mocker):
     
     # Mock the default_file_reader to verify it receives the type, not filename
     mock_default_reader = mocker.patch('lynguine.access.io.default_file_reader')
-    mock_reader_func = mocker.MagicMock(return_value={'content': 'test'})
+    # Use side_effect to return a NEW dict each time (avoid reusing same dict object)
+    mock_reader_func = mocker.MagicMock(side_effect=lambda x: {'content': 'test'})
     mock_default_reader.return_value = mock_reader_func
     
     filelist = ['/path/to/file1.md', '/path/to/file2.md']

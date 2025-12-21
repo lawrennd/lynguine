@@ -537,13 +537,16 @@ def read_files(filelist, store_fields=None, filereader=None, filereader_args=Non
     for filename in filelist:
         if not os.path.exists(filename):
             log.warning(f'File "{filename}" is not a file or a directory.')
+        # Determine reader for each file (use provided filereader or detect from file type)
         if filereader is None:
             typ = extract_file_type(filename)
-            filereader = default_file_reader(typ)
-        if filereader_args is None:
-            data.append(filereader(filename))
+            current_reader = default_file_reader(typ)
         else:
-            data.append(filereader(filename, **filereader_args))
+            current_reader = filereader
+        if filereader_args is None:
+            data.append(current_reader(filename))
+        else:
+            data.append(current_reader(filename, **filereader_args))
 
         # Add the root location, directory and filename to the data.
         split_path = os.path.split(filename)
