@@ -86,6 +86,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../../../modules/lynguine.access.html#lynguine.access.io.write_directory"><code class="docutils literal notranslate"><span class="pre">write_directory()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../modules/lynguine.access.html#lynguine.access.io.read_json_file"><code class="docutils literal notranslate"><span class="pre">read_json_file()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../modules/lynguine.access.html#lynguine.access.io.write_json_file"><code class="docutils literal notranslate"><span class="pre">write_json_file()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../modules/lynguine.access.html#lynguine.access.io.read_txt_file"><code class="docutils literal notranslate"><span class="pre">read_txt_file()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../modules/lynguine.access.html#lynguine.access.io.default_file_reader"><code class="docutils literal notranslate"><span class="pre">default_file_reader()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../modules/lynguine.access.html#lynguine.access.io.default_file_writer"><code class="docutils literal notranslate"><span class="pre">default_file_writer()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../modules/lynguine.access.html#lynguine.access.io.read_file"><code class="docutils literal notranslate"><span class="pre">read_file()</span></code></a></li>
@@ -1566,6 +1567,16 @@
 
 
 
+<div class="viewcode-block" id="read_txt_file">
+<a class="viewcode-back" href="../../../modules/lynguine.access.html#lynguine.access.io.read_txt_file">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">read_txt_file</span><span class="p">(</span><span class="n">filename</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Read a text file and return a dictionary with the content.&quot;&quot;&quot;</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">content</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;content&quot;</span><span class="p">:</span> <span class="n">content</span><span class="p">}</span></div>
+
+
+
 <div class="viewcode-block" id="default_file_reader">
 <a class="viewcode-back" href="../../../modules/lynguine.access.html#lynguine.access.io.default_file_reader">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">default_file_reader</span><span class="p">(</span><span class="n">typ</span><span class="p">):</span>
@@ -1588,6 +1599,8 @@
         <span class="k">return</span> <span class="n">read_bibtex_file</span>
     <span class="k">if</span> <span class="n">typ</span> <span class="o">==</span> <span class="s2">&quot;docx&quot;</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">read_docx_file</span>
+    <span class="k">if</span> <span class="n">typ</span> <span class="o">==</span> <span class="s2">&quot;txt&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">read_txt_file</span>
     <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Unrecognised type of file &quot;</span><span class="si">{</span><span class="n">typ</span><span class="si">}</span><span class="s1">&quot;.&#39;</span><span class="p">)</span></div>
 
 
