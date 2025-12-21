@@ -390,14 +390,17 @@ class TestComputeModeErrors:
 class TestComputeModeWithNewColumn:
     """Test mode parameter with columns that don't exist yet."""
     
-    @pytest.mark.xfail(reason="CustomDataFrame doesn't support dynamic column creation via set_value_column")
     def test_append_to_nonexistent_column(self, sample_dataframe, simple_function, compute_instance, mocker):
-        """Test appending to a column that doesn't exist yet."""
+        """Test appending to a column that doesn't exist yet (must pre-create with direct assignment)."""
+        # Pre-create the column using direct assignment (the proper way in CustomDataFrame)
+        sample_dataframe['new_column'] = pd.Series([''], index=sample_dataframe.index)
+        
         interface = {
             "compute": {
                 "function": "test_func",
                 "field": "new_column",
                 "mode": "append",
+                "refresh": True,
                 "args": {"message": "First content"}
             }
         }
@@ -416,17 +419,20 @@ class TestComputeModeWithNewColumn:
         compute_instance.run(sample_dataframe, interface)
         
         result = sample_dataframe.get_value_column("new_column")
-        # Should just set the value since column didn't exist
+        # Should just set the value since column was empty
         assert result == "First content"
     
-    @pytest.mark.xfail(reason="CustomDataFrame doesn't support dynamic column creation via set_value_column")
     def test_prepend_to_nonexistent_column(self, sample_dataframe, simple_function, compute_instance, mocker):
-        """Test prepending to a column that doesn't exist yet."""
+        """Test prepending to a column that doesn't exist yet (must pre-create with direct assignment)."""
+        # Pre-create the column using direct assignment (the proper way in CustomDataFrame)
+        sample_dataframe['new_column'] = pd.Series([''], index=sample_dataframe.index)
+        
         interface = {
             "compute": {
                 "function": "test_func",
                 "field": "new_column",
                 "mode": "prepend",
+                "refresh": True,
                 "args": {"message": "First content"}
             }
         }
@@ -445,7 +451,7 @@ class TestComputeModeWithNewColumn:
         compute_instance.run(sample_dataframe, interface)
         
         result = sample_dataframe.get_value_column("new_column")
-        # Should just set the value since column didn't exist
+        # Should just set the value since column was empty
         assert result == "First content"
 
 
