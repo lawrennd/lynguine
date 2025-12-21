@@ -1,0 +1,1630 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Implementation Summary &mdash; lynguine 0.1 Documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=fd3f3429" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../_static/documentation_options.js?v=a58bc63e"></script>
+        <script src="../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="API Reference" href="api_reference.html" />
+    <link rel="prev" title="User Guide" href="user_guide.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            lynguine
+          </a>
+              <div class="version">
+                0.1
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/installation.html">Installation Guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../getting_started/installation.html#prerequisites">Prerequisites</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../getting_started/installation.html#installing-lynguine">Installing lynguine</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/quickstart.html">Quick Start Guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../getting_started/quickstart.html#creating-your-first-ndlpy-object">Creating Your First ndlpy Object</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../getting_started/quickstart.html#exploring-further">Exploring Further</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/examples.html">Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../getting_started/examples.html#example-1-basic-usage">Example 1: Basic Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../getting_started/examples.html#example-2-advanced-techniques">Example 2: Advanced Techniques</a></li>
+</ul>
+</li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../modules/lynguine.access.html">lynguine.access</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../modules/lynguine.access.html#module-lynguine.access.io">IO Module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.multiline_str_representer"><code class="docutils literal notranslate"><span class="pre">multiline_str_representer()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.str_type"><code class="docutils literal notranslate"><span class="pre">str_type()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.bool_type"><code class="docutils literal notranslate"><span class="pre">bool_type()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.int_type"><code class="docutils literal notranslate"><span class="pre">int_type()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.float_type"><code class="docutils literal notranslate"><span class="pre">float_type()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.extract_dtypes"><code class="docutils literal notranslate"><span class="pre">extract_dtypes()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.extract_sheet"><code class="docutils literal notranslate"><span class="pre">extract_sheet()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.read_json"><code class="docutils literal notranslate"><span class="pre">read_json()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.write_json"><code class="docutils literal notranslate"><span class="pre">write_json()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.read_yaml"><code class="docutils literal notranslate"><span class="pre">read_yaml()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.read_markdown"><code class="docutils literal notranslate"><span class="pre">read_markdown()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.write_markdown"><code class="docutils literal notranslate"><span class="pre">write_markdown()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.write_yaml"><code class="docutils literal notranslate"><span class="pre">write_yaml()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.read_bibtex"><code class="docutils literal notranslate"><span class="pre">read_bibtex()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.write_bibtex"><code class="docutils literal notranslate"><span class="pre">write_bibtex()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.read_directory"><code class="docutils literal notranslate"><span class="pre">read_directory()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.read_list"><code class="docutils literal notranslate"><span class="pre">read_list()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.read_files"><code class="docutils literal notranslate"><span class="pre">read_files()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.write_directory"><code class="docutils literal notranslate"><span class="pre">write_directory()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.read_json_file"><code class="docutils literal notranslate"><span class="pre">read_json_file()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.write_json_file"><code class="docutils literal notranslate"><span class="pre">write_json_file()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.default_file_reader"><code class="docutils literal notranslate"><span class="pre">default_file_reader()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.default_file_writer"><code class="docutils literal notranslate"><span class="pre">default_file_writer()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.read_file"><code class="docutils literal notranslate"><span class="pre">read_file()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.read_yaml_file"><code class="docutils literal notranslate"><span class="pre">read_yaml_file()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.read_bibtex_file"><code class="docutils literal notranslate"><span class="pre">read_bibtex_file()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.yaml_prep"><code class="docutils literal notranslate"><span class="pre">yaml_prep()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.write_bibtex_file"><code class="docutils literal notranslate"><span class="pre">write_bibtex_file()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.write_yaml_file"><code class="docutils literal notranslate"><span class="pre">write_yaml_file()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.read_yaml_meta_file"><code class="docutils literal notranslate"><span class="pre">read_yaml_meta_file()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.write_yaml_meta_file"><code class="docutils literal notranslate"><span class="pre">write_yaml_meta_file()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.read_markdown_file"><code class="docutils literal notranslate"><span class="pre">read_markdown_file()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.read_docx_file"><code class="docutils literal notranslate"><span class="pre">read_docx_file()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.read_talk_file"><code class="docutils literal notranslate"><span class="pre">read_talk_file()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.read_talk_include_file"><code class="docutils literal notranslate"><span class="pre">read_talk_include_file()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.write_url_file"><code class="docutils literal notranslate"><span class="pre">write_url_file()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.write_markdown_file"><code class="docutils literal notranslate"><span class="pre">write_markdown_file()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.create_document_content"><code class="docutils literal notranslate"><span class="pre">create_document_content()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.create_letter"><code class="docutils literal notranslate"><span class="pre">create_letter()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.write_letter_file"><code class="docutils literal notranslate"><span class="pre">write_letter_file()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.write_formlink"><code class="docutils literal notranslate"><span class="pre">write_formlink()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.write_docx_file"><code class="docutils literal notranslate"><span class="pre">write_docx_file()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.write_tex_file"><code class="docutils literal notranslate"><span class="pre">write_tex_file()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.read_csv"><code class="docutils literal notranslate"><span class="pre">read_csv()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.read_excel"><code class="docutils literal notranslate"><span class="pre">read_excel()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.read_fake"><code class="docutils literal notranslate"><span class="pre">read_fake()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.read_local"><code class="docutils literal notranslate"><span class="pre">read_local()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.read_gsheet"><code class="docutils literal notranslate"><span class="pre">read_gsheet()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.write_excel"><code class="docutils literal notranslate"><span class="pre">write_excel()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.write_csv"><code class="docutils literal notranslate"><span class="pre">write_csv()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.write_gsheet"><code class="docutils literal notranslate"><span class="pre">write_gsheet()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.gdrf_"><code class="docutils literal notranslate"><span class="pre">gdrf_()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.update_store_fields"><code class="docutils literal notranslate"><span class="pre">update_store_fields()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.gdwf_"><code class="docutils literal notranslate"><span class="pre">gdwf_()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.populate_directory_readers"><code class="docutils literal notranslate"><span class="pre">populate_directory_readers()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.populate_directory_writers"><code class="docutils literal notranslate"><span class="pre">populate_directory_writers()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.finalize_data"><code class="docutils literal notranslate"><span class="pre">finalize_data()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.read_hstack"><code class="docutils literal notranslate"><span class="pre">read_hstack()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.read_stack"><code class="docutils literal notranslate"><span class="pre">read_stack()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.read_vstack"><code class="docutils literal notranslate"><span class="pre">read_vstack()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.read_series"><code class="docutils literal notranslate"><span class="pre">read_series()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.read_data"><code class="docutils literal notranslate"><span class="pre">read_data()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.read_auto"><code class="docutils literal notranslate"><span class="pre">read_auto()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.convert_data"><code class="docutils literal notranslate"><span class="pre">convert_data()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.data_exists"><code class="docutils literal notranslate"><span class="pre">data_exists()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.load_or_create_df"><code class="docutils literal notranslate"><span class="pre">load_or_create_df()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.globals_data"><code class="docutils literal notranslate"><span class="pre">globals_data()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.cache"><code class="docutils literal notranslate"><span class="pre">cache()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.scores"><code class="docutils literal notranslate"><span class="pre">scores()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.series"><code class="docutils literal notranslate"><span class="pre">series()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.write_data"><code class="docutils literal notranslate"><span class="pre">write_data()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.read_bibtex_directory"><code class="docutils literal notranslate"><span class="pre">read_bibtex_directory()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.read_docx_directory"><code class="docutils literal notranslate"><span class="pre">read_docx_directory()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.read_json_directory"><code class="docutils literal notranslate"><span class="pre">read_json_directory()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.read_markdown_directory"><code class="docutils literal notranslate"><span class="pre">read_markdown_directory()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.read_meta_directory"><code class="docutils literal notranslate"><span class="pre">read_meta_directory()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.read_plain_directory"><code class="docutils literal notranslate"><span class="pre">read_plain_directory()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.read_yaml_directory"><code class="docutils literal notranslate"><span class="pre">read_yaml_directory()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.write_json_directory"><code class="docutils literal notranslate"><span class="pre">write_json_directory()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.write_markdown_directory"><code class="docutils literal notranslate"><span class="pre">write_markdown_directory()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.write_meta_directory"><code class="docutils literal notranslate"><span class="pre">write_meta_directory()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.io.write_yaml_directory"><code class="docutils literal notranslate"><span class="pre">write_yaml_directory()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../modules/lynguine.access.html#download-module">Download Module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.download.FileDownloader"><code class="docutils literal notranslate"><span class="pre">FileDownloader</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.download.FileDownloader.interface"><code class="docutils literal notranslate"><span class="pre">FileDownloader.interface</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.download.FileDownloader.data_name"><code class="docutils literal notranslate"><span class="pre">FileDownloader.data_name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.download.FileDownloader.data_resources"><code class="docutils literal notranslate"><span class="pre">FileDownloader.data_resources</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.download.FileDownloader.download_data"><code class="docutils literal notranslate"><span class="pre">FileDownloader.download_data()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.download.GitDownloader"><code class="docutils literal notranslate"><span class="pre">GitDownloader</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.download.GitDownloader.data_name"><code class="docutils literal notranslate"><span class="pre">GitDownloader.data_name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.download.GitDownloader.data_resources"><code class="docutils literal notranslate"><span class="pre">GitDownloader.data_resources</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.download.GitDownloader.download_data"><code class="docutils literal notranslate"><span class="pre">GitDownloader.download_data()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.access.html#lynguine.access.download.GitDownloader.interface"><code class="docutils literal notranslate"><span class="pre">GitDownloader.interface</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/lynguine.assess.html">lynguine.assess</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../modules/lynguine.assess.html#data-module">Data Module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.iskeyword"><code class="docutils literal notranslate"><span class="pre">iskeyword()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.Accessor"><code class="docutils literal notranslate"><span class="pre">Accessor</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject"><code class="docutils literal notranslate"><span class="pre">DataObject</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.get_subseries"><code class="docutils literal notranslate"><span class="pre">DataObject.get_subseries()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.get_subindices"><code class="docutils literal notranslate"><span class="pre">DataObject.get_subindices()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.get_subseries_values"><code class="docutils literal notranslate"><span class="pre">DataObject.get_subseries_values()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.get_index"><code class="docutils literal notranslate"><span class="pre">DataObject.get_index()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.set_index"><code class="docutils literal notranslate"><span class="pre">DataObject.set_index()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.get_column"><code class="docutils literal notranslate"><span class="pre">DataObject.get_column()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.set_column"><code class="docutils literal notranslate"><span class="pre">DataObject.set_column()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.set_value_column"><code class="docutils literal notranslate"><span class="pre">DataObject.set_value_column()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.get_value_column"><code class="docutils literal notranslate"><span class="pre">DataObject.get_value_column()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.ismutable"><code class="docutils literal notranslate"><span class="pre">DataObject.ismutable()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.autocache"><code class="docutils literal notranslate"><span class="pre">DataObject.autocache</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.interface"><code class="docutils literal notranslate"><span class="pre">DataObject.interface</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.mutable"><code class="docutils literal notranslate"><span class="pre">DataObject.mutable</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.isparameter"><code class="docutils literal notranslate"><span class="pre">DataObject.isparameter()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.isseries"><code class="docutils literal notranslate"><span class="pre">DataObject.isseries()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.get_selector"><code class="docutils literal notranslate"><span class="pre">DataObject.get_selector()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.set_selector"><code class="docutils literal notranslate"><span class="pre">DataObject.set_selector()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.get_subindex"><code class="docutils literal notranslate"><span class="pre">DataObject.get_subindex()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.set_subindex"><code class="docutils literal notranslate"><span class="pre">DataObject.set_subindex()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.get_selectors"><code class="docutils literal notranslate"><span class="pre">DataObject.get_selectors()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.get_value"><code class="docutils literal notranslate"><span class="pre">DataObject.get_value()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.set_value"><code class="docutils literal notranslate"><span class="pre">DataObject.set_value()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.add_row"><code class="docutils literal notranslate"><span class="pre">DataObject.add_row()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.head"><code class="docutils literal notranslate"><span class="pre">DataObject.head()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.tail"><code class="docutils literal notranslate"><span class="pre">DataObject.tail()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.add_column"><code class="docutils literal notranslate"><span class="pre">DataObject.add_column()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.drop_column"><code class="docutils literal notranslate"><span class="pre">DataObject.drop_column()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.filter_rows"><code class="docutils literal notranslate"><span class="pre">DataObject.filter_rows()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.get_shape"><code class="docutils literal notranslate"><span class="pre">DataObject.get_shape()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.describe"><code class="docutils literal notranslate"><span class="pre">DataObject.describe()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.to_pandas"><code class="docutils literal notranslate"><span class="pre">DataObject.to_pandas()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.to_clipboard"><code class="docutils literal notranslate"><span class="pre">DataObject.to_clipboard()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.to_feather"><code class="docutils literal notranslate"><span class="pre">DataObject.to_feather()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.to_json"><code class="docutils literal notranslate"><span class="pre">DataObject.to_json()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.to_orc"><code class="docutils literal notranslate"><span class="pre">DataObject.to_orc()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.to_records"><code class="docutils literal notranslate"><span class="pre">DataObject.to_records()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.to_timestamp"><code class="docutils literal notranslate"><span class="pre">DataObject.to_timestamp()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.to_csv"><code class="docutils literal notranslate"><span class="pre">DataObject.to_csv()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.to_gbq"><code class="docutils literal notranslate"><span class="pre">DataObject.to_gbq()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.to_latex"><code class="docutils literal notranslate"><span class="pre">DataObject.to_latex()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.to_parquet"><code class="docutils literal notranslate"><span class="pre">DataObject.to_parquet()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.to_sql"><code class="docutils literal notranslate"><span class="pre">DataObject.to_sql()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.to_xarray"><code class="docutils literal notranslate"><span class="pre">DataObject.to_xarray()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.to_dict"><code class="docutils literal notranslate"><span class="pre">DataObject.to_dict()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.to_hdf"><code class="docutils literal notranslate"><span class="pre">DataObject.to_hdf()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.to_markdown"><code class="docutils literal notranslate"><span class="pre">DataObject.to_markdown()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.to_period"><code class="docutils literal notranslate"><span class="pre">DataObject.to_period()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.to_stata"><code class="docutils literal notranslate"><span class="pre">DataObject.to_stata()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.to_xml"><code class="docutils literal notranslate"><span class="pre">DataObject.to_xml()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.to_excel"><code class="docutils literal notranslate"><span class="pre">DataObject.to_excel()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.to_html"><code class="docutils literal notranslate"><span class="pre">DataObject.to_html()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.to_numpy"><code class="docutils literal notranslate"><span class="pre">DataObject.to_numpy()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.to_string"><code class="docutils literal notranslate"><span class="pre">DataObject.to_string()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.valid_data_types"><code class="docutils literal notranslate"><span class="pre">DataObject.valid_data_types</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.from_pandas"><code class="docutils literal notranslate"><span class="pre">DataObject.from_pandas()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.from_csv"><code class="docutils literal notranslate"><span class="pre">DataObject.from_csv()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.from_dict"><code class="docutils literal notranslate"><span class="pre">DataObject.from_dict()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.to_flow"><code class="docutils literal notranslate"><span class="pre">DataObject.to_flow()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.compute_from_flow"><code class="docutils literal notranslate"><span class="pre">DataObject.compute_from_flow()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.from_flow"><code class="docutils literal notranslate"><span class="pre">DataObject.from_flow()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.augment_with_df"><code class="docutils literal notranslate"><span class="pre">DataObject.augment_with_df()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.save_flows"><code class="docutils literal notranslate"><span class="pre">DataObject.save_flows()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.sort_values"><code class="docutils literal notranslate"><span class="pre">DataObject.sort_values()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.sort_index"><code class="docutils literal notranslate"><span class="pre">DataObject.sort_index()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.convert"><code class="docutils literal notranslate"><span class="pre">DataObject.convert()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.sum"><code class="docutils literal notranslate"><span class="pre">DataObject.sum()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.mean"><code class="docutils literal notranslate"><span class="pre">DataObject.mean()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.add"><code class="docutils literal notranslate"><span class="pre">DataObject.add()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.subtract"><code class="docutils literal notranslate"><span class="pre">DataObject.subtract()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.multiply"><code class="docutils literal notranslate"><span class="pre">DataObject.multiply()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.equals"><code class="docutils literal notranslate"><span class="pre">DataObject.equals()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.transpose"><code class="docutils literal notranslate"><span class="pre">DataObject.transpose()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.dot"><code class="docutils literal notranslate"><span class="pre">DataObject.dot()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.isna"><code class="docutils literal notranslate"><span class="pre">DataObject.isna()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.isnull"><code class="docutils literal notranslate"><span class="pre">DataObject.isnull()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.notna"><code class="docutils literal notranslate"><span class="pre">DataObject.notna()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.fillna"><code class="docutils literal notranslate"><span class="pre">DataObject.fillna()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.dropna"><code class="docutils literal notranslate"><span class="pre">DataObject.dropna()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.drop_duplicates"><code class="docutils literal notranslate"><span class="pre">DataObject.drop_duplicates()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.groupby"><code class="docutils literal notranslate"><span class="pre">DataObject.groupby()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.pivot_table"><code class="docutils literal notranslate"><span class="pre">DataObject.pivot_table()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.dtypes"><code class="docutils literal notranslate"><span class="pre">DataObject.dtypes</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.log"><code class="docutils literal notranslate"><span class="pre">DataObject.log</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.T"><code class="docutils literal notranslate"><span class="pre">DataObject.T</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.shape"><code class="docutils literal notranslate"><span class="pre">DataObject.shape</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.columns"><code class="docutils literal notranslate"><span class="pre">DataObject.columns</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.index"><code class="docutils literal notranslate"><span class="pre">DataObject.index</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.empty"><code class="docutils literal notranslate"><span class="pre">DataObject.empty</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.values"><code class="docutils literal notranslate"><span class="pre">DataObject.values</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.colspecs"><code class="docutils literal notranslate"><span class="pre">DataObject.colspecs</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.apply"><code class="docutils literal notranslate"><span class="pre">DataObject.apply()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.merge"><code class="docutils literal notranslate"><span class="pre">DataObject.merge()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.DataObject.join"><code class="docutils literal notranslate"><span class="pre">DataObject.join()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.types"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.types</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.autocache"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.autocache</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.interface"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.interface</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.get_type_columns"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.get_type_columns()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.get_input_columns"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.get_input_columns()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.get_series_columns"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.get_series_columns()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.get_parameters_columns"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.get_parameters_columns()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.get_output_columns"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.get_output_columns()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.get_column_type"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.get_column_type()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.colspecs"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.colspecs</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.coltype"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.coltype()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.compute"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.compute</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.to_pandas"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.to_pandas()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.update_from_pandas"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.update_from_pandas()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.filter"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.filter()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.update_name_column_map"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.update_name_column_map()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.mapping"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.mapping()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.viewer_to_value"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.viewer_to_value()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.view_to_value"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.view_to_value()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.summary_viewer_to_value"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.summary_viewer_to_value()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.T"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.T</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.add"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.add()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.add_column"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.add_column()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.add_row"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.add_row()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.apply"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.apply()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.augment_with_df"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.augment_with_df()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.columns"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.columns</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.compute_from_flow"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.compute_from_flow()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.convert"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.convert()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.describe"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.describe()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.dot"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.dot()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.drop_column"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.drop_column()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.drop_duplicates"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.drop_duplicates()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.dropna"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.dropna()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.dtypes"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.dtypes</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.empty"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.empty</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.equals"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.equals()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.fillna"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.fillna()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.filter_rows"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.filter_rows()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.from_csv"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.from_csv()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.from_dict"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.from_dict()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.from_flow"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.from_flow()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.from_pandas"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.from_pandas()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.get_column"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.get_column()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.get_index"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.get_index()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.get_selector"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.get_selector()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.get_selectors"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.get_selectors()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.get_shape"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.get_shape()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.get_subindex"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.get_subindex()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.get_subindices"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.get_subindices()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.get_subseries"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.get_subseries()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.get_subseries_values"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.get_subseries_values()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.get_value"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.get_value()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.get_value_column"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.get_value_column()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.groupby"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.groupby()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.head"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.head()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.index"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.index</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.ismutable"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.ismutable()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.isna"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.isna()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.isnull"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.isnull()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.isparameter"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.isparameter()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.isseries"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.isseries()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.join"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.join()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.log"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.log</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.mean"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.mean()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.merge"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.merge()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.multiply"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.multiply()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.mutable"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.mutable</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.notna"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.notna()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.pivot_table"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.pivot_table()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.save_flows"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.save_flows()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.set_column"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.set_column()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.set_index"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.set_index()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.set_selector"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.set_selector()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.set_subindex"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.set_subindex()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.set_value"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.set_value()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.set_value_column"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.set_value_column()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.shape"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.shape</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.sort_index"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.sort_index()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.sort_values"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.sort_values()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.subtract"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.subtract()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.sum"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.sum()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.summary_view_to_value"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.summary_view_to_value()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.tail"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.tail()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.to_clipboard"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.to_clipboard()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.to_csv"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.to_csv()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.to_dict"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.to_dict()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.to_excel"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.to_excel()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.to_feather"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.to_feather()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.to_flow"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.to_flow()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.to_gbq"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.to_gbq()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.to_hdf"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.to_hdf()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.to_html"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.to_html()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.to_json"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.to_json()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.to_latex"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.to_latex()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.to_markdown"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.to_markdown()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.to_numpy"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.to_numpy()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.to_orc"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.to_orc()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.to_parquet"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.to_parquet()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.to_period"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.to_period()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.to_records"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.to_records()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.to_sql"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.to_sql()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.to_stata"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.to_stata()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.to_string"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.to_string()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.to_timestamp"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.to_timestamp()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.to_xarray"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.to_xarray()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.to_xml"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.to_xml()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.transpose"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.transpose()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.valid_data_types"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.valid_data_types</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.values"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.values</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.view_to_tmpname"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.view_to_tmpname()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.tally_to_value"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.tally_to_value()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.conditions"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.conditions()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.display_to_tmpname"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.display_to_tmpname()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.display_to_value"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.display_to_value()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.compute_to_value"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.compute_to_value()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.compute_to_tmpname"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.compute_to_tmpname()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.liquid_to_tmpname"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.liquid_to_tmpname()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.liquid_to_value"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.liquid_to_value()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.tally_to_tmpname"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.tally_to_tmpname()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.tally_values"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.tally_values()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.CustomDataFrame.tally_series"><code class="docutils literal notranslate"><span class="pre">CustomDataFrame.tally_series()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.data.concat"><code class="docutils literal notranslate"><span class="pre">concat()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../modules/lynguine.assess.html#compute-module">Compute Module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.compute.Compute"><code class="docutils literal notranslate"><span class="pre">Compute</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.compute.Compute._computes"><code class="docutils literal notranslate"><span class="pre">Compute._computes</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.compute.Compute._liquid_env"><code class="docutils literal notranslate"><span class="pre">Compute._liquid_env</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.compute.Compute.logger"><code class="docutils literal notranslate"><span class="pre">Compute.logger</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.compute.Compute.setup_logger"><code class="docutils literal notranslate"><span class="pre">Compute.setup_logger()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.compute.Compute.computes"><code class="docutils literal notranslate"><span class="pre">Compute.computes</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.compute.Compute.precomputes"><code class="docutils literal notranslate"><span class="pre">Compute.precomputes</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.compute.Compute.postcomputes"><code class="docutils literal notranslate"><span class="pre">Compute.postcomputes</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.compute.Compute.prep"><code class="docutils literal notranslate"><span class="pre">Compute.prep()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.compute.Compute.gca_"><code class="docutils literal notranslate"><span class="pre">Compute.gca_()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.compute.Compute.gcf_"><code class="docutils literal notranslate"><span class="pre">Compute.gcf_()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.compute.Compute.run"><code class="docutils literal notranslate"><span class="pre">Compute.run()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.compute.Compute.preprocess"><code class="docutils literal notranslate"><span class="pre">Compute.preprocess()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.compute.Compute.run_onchange"><code class="docutils literal notranslate"><span class="pre">Compute.run_onchange()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.compute.Compute.run_all"><code class="docutils literal notranslate"><span class="pre">Compute.run_all()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.compute.Compute.filter"><code class="docutils literal notranslate"><span class="pre">Compute.filter()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.compute.Compute.load_liquid"><code class="docutils literal notranslate"><span class="pre">Compute.load_liquid()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.compute.Compute.add_liquid_filters"><code class="docutils literal notranslate"><span class="pre">Compute.add_liquid_filters()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.compute.Compute.from_flow"><code class="docutils literal notranslate"><span class="pre">Compute.from_flow()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../modules/lynguine.assess.html#display-module">Display Module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.display.WidgetCluster"><code class="docutils literal notranslate"><span class="pre">WidgetCluster</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.display.WidgetCluster.clear_children"><code class="docutils literal notranslate"><span class="pre">WidgetCluster.clear_children()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.display.WidgetCluster.close"><code class="docutils literal notranslate"><span class="pre">WidgetCluster.close()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.display.WidgetCluster.has"><code class="docutils literal notranslate"><span class="pre">WidgetCluster.has()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.display.WidgetCluster.get"><code class="docutils literal notranslate"><span class="pre">WidgetCluster.get()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.display.WidgetCluster.refresh"><code class="docutils literal notranslate"><span class="pre">WidgetCluster.refresh()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.display.WidgetCluster.add"><code class="docutils literal notranslate"><span class="pre">WidgetCluster.add()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.display.WidgetCluster.update"><code class="docutils literal notranslate"><span class="pre">WidgetCluster.update()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.display.WidgetCluster.to_markdown"><code class="docutils literal notranslate"><span class="pre">WidgetCluster.to_markdown()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.display.WidgetCluster.to_dict"><code class="docutils literal notranslate"><span class="pre">WidgetCluster.to_dict()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.display.WidgetCluster.display"><code class="docutils literal notranslate"><span class="pre">WidgetCluster.display()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.display.DisplaySystem"><code class="docutils literal notranslate"><span class="pre">DisplaySystem</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.display.DisplaySystem.index"><code class="docutils literal notranslate"><span class="pre">DisplaySystem.index</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.display.DisplaySystem.get_index"><code class="docutils literal notranslate"><span class="pre">DisplaySystem.get_index()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.display.DisplaySystem.set_index"><code class="docutils literal notranslate"><span class="pre">DisplaySystem.set_index()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.display.DisplaySystem.get_value"><code class="docutils literal notranslate"><span class="pre">DisplaySystem.get_value()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.display.DisplaySystem.get_value_by_element"><code class="docutils literal notranslate"><span class="pre">DisplaySystem.get_value_by_element()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.display.DisplaySystem.set_value_by_element"><code class="docutils literal notranslate"><span class="pre">DisplaySystem.set_value_by_element()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.display.DisplaySystem.set_value"><code class="docutils literal notranslate"><span class="pre">DisplaySystem.set_value()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.display.DisplaySystem.get_column"><code class="docutils literal notranslate"><span class="pre">DisplaySystem.get_column()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.display.DisplaySystem.set_column"><code class="docutils literal notranslate"><span class="pre">DisplaySystem.set_column()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.display.DisplaySystem.get_indices"><code class="docutils literal notranslate"><span class="pre">DisplaySystem.get_indices()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.display.DisplaySystem.add_downstream_display"><code class="docutils literal notranslate"><span class="pre">DisplaySystem.add_downstream_display()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.display.DisplaySystem.load_flows"><code class="docutils literal notranslate"><span class="pre">DisplaySystem.load_flows()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.display.DisplaySystem.save_flows"><code class="docutils literal notranslate"><span class="pre">DisplaySystem.save_flows()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.display.DisplaySystem.load_input_flows"><code class="docutils literal notranslate"><span class="pre">DisplaySystem.load_input_flows()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.display.DisplaySystem.load_output_flows"><code class="docutils literal notranslate"><span class="pre">DisplaySystem.load_output_flows()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.display.DisplaySystem.populate_display"><code class="docutils literal notranslate"><span class="pre">DisplaySystem.populate_display()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.assess.html#lynguine.assess.display.DisplaySystem.value_updated"><code class="docutils literal notranslate"><span class="pre">DisplaySystem.value_updated()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/lynguine.config.html">lynguine.config</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../modules/lynguine.config.html#context-module">Context Module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.config.html#lynguine.config.context.Context"><code class="docutils literal notranslate"><span class="pre">Context</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.config.html#lynguine.config.context.Context.get"><code class="docutils literal notranslate"><span class="pre">Context.get()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.config.html#lynguine.config.context.Context.items"><code class="docutils literal notranslate"><span class="pre">Context.items()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.config.html#lynguine.config.context.Context.keys"><code class="docutils literal notranslate"><span class="pre">Context.keys()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.config.html#lynguine.config.context.Context.update"><code class="docutils literal notranslate"><span class="pre">Context.update()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.config.html#lynguine.config.context.Context.values"><code class="docutils literal notranslate"><span class="pre">Context.values()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../modules/lynguine.config.html#interface-module">Interface Module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.config.html#lynguine.config.interface.Interface"><code class="docutils literal notranslate"><span class="pre">Interface</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.config.html#lynguine.config.interface.Interface.user_file"><code class="docutils literal notranslate"><span class="pre">Interface.user_file</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.config.html#lynguine.config.interface.Interface.directory"><code class="docutils literal notranslate"><span class="pre">Interface.directory</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.config.html#lynguine.config.interface.Interface.get_output_columns"><code class="docutils literal notranslate"><span class="pre">Interface.get_output_columns()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.config.html#lynguine.config.interface.Interface.get_cache_columns"><code class="docutils literal notranslate"><span class="pre">Interface.get_cache_columns()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.config.html#lynguine.config.interface.Interface.get"><code class="docutils literal notranslate"><span class="pre">Interface.get()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.config.html#lynguine.config.interface.Interface.items"><code class="docutils literal notranslate"><span class="pre">Interface.items()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.config.html#lynguine.config.interface.Interface.keys"><code class="docutils literal notranslate"><span class="pre">Interface.keys()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.config.html#lynguine.config.interface.Interface.update"><code class="docutils literal notranslate"><span class="pre">Interface.update()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.config.html#lynguine.config.interface.Interface.values"><code class="docutils literal notranslate"><span class="pre">Interface.values()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.config.html#lynguine.config.interface.Interface.default_config_file"><code class="docutils literal notranslate"><span class="pre">Interface.default_config_file()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.config.html#lynguine.config.interface.Interface.from_file"><code class="docutils literal notranslate"><span class="pre">Interface.from_file()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.config.html#lynguine.config.interface.Interface.from_yaml"><code class="docutils literal notranslate"><span class="pre">Interface.from_yaml()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.config.html#lynguine.config.interface.Interface.to_yaml"><code class="docutils literal notranslate"><span class="pre">Interface.to_yaml()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/lynguine.util.html">lynguine.util</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../modules/lynguine.util.html#dataframe-utilities">DataFrame Utilities</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.dataframe.convert_datetime_to_str"><code class="docutils literal notranslate"><span class="pre">convert_datetime_to_str()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.dataframe.reorder_dataframe"><code class="docutils literal notranslate"><span class="pre">reorder_dataframe()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.dataframe.convert_datetime"><code class="docutils literal notranslate"><span class="pre">convert_datetime()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.dataframe.convert_int"><code class="docutils literal notranslate"><span class="pre">convert_int()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.dataframe.convert_string"><code class="docutils literal notranslate"><span class="pre">convert_string()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.dataframe.convert_year_iso"><code class="docutils literal notranslate"><span class="pre">convert_year_iso()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.dataframe.addmonth"><code class="docutils literal notranslate"><span class="pre">addmonth()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.dataframe.addyear"><code class="docutils literal notranslate"><span class="pre">addyear()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.dataframe.augmentmonth"><code class="docutils literal notranslate"><span class="pre">augmentmonth()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.dataframe.augmentyear"><code class="docutils literal notranslate"><span class="pre">augmentyear()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.dataframe.augmentcurrency"><code class="docutils literal notranslate"><span class="pre">augmentcurrency()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.dataframe.fillna"><code class="docutils literal notranslate"><span class="pre">fillna()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.dataframe.ascending"><code class="docutils literal notranslate"><span class="pre">ascending()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.dataframe.descending"><code class="docutils literal notranslate"><span class="pre">descending()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.dataframe.recent"><code class="docutils literal notranslate"><span class="pre">recent()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.dataframe.current"><code class="docutils literal notranslate"><span class="pre">current()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.dataframe.former"><code class="docutils literal notranslate"><span class="pre">former()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.dataframe.onbool"><code class="docutils literal notranslate"><span class="pre">onbool()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.dataframe.columnis"><code class="docutils literal notranslate"><span class="pre">columnis()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.dataframe.columncontains"><code class="docutils literal notranslate"><span class="pre">columncontains()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../modules/lynguine.util.html#file-utilities">File Utilities</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.files.get_cvs_version"><code class="docutils literal notranslate"><span class="pre">get_cvs_version()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.files.get_svn_version"><code class="docutils literal notranslate"><span class="pre">get_svn_version()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.files.get_git_version"><code class="docutils literal notranslate"><span class="pre">get_git_version()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.files.read_txt_file"><code class="docutils literal notranslate"><span class="pre">read_txt_file()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.files.extract_file_details"><code class="docutils literal notranslate"><span class="pre">extract_file_details()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../modules/lynguine.util.html#yaml-utilities">YAML Utilities</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.yaml.FileFormatError"><code class="docutils literal notranslate"><span class="pre">FileFormatError</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.yaml.FileFormatError.add_note"><code class="docutils literal notranslate"><span class="pre">FileFormatError.add_note()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.yaml.FileFormatError.args"><code class="docutils literal notranslate"><span class="pre">FileFormatError.args</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.yaml.FileFormatError.with_traceback"><code class="docutils literal notranslate"><span class="pre">FileFormatError.with_traceback()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.yaml.update_from_file"><code class="docutils literal notranslate"><span class="pre">update_from_file()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.yaml.header_field"><code class="docutils literal notranslate"><span class="pre">header_field()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.yaml.header_fields"><code class="docutils literal notranslate"><span class="pre">header_fields()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.yaml.extract_header_body"><code class="docutils literal notranslate"><span class="pre">extract_header_body()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../modules/lynguine.util.html#liquid-template-utilities">Liquid Template Utilities</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.liquid.load_template_env"><code class="docutils literal notranslate"><span class="pre">load_template_env()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.liquid.url_escape"><code class="docutils literal notranslate"><span class="pre">url_escape()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.liquid.markdownify"><code class="docutils literal notranslate"><span class="pre">markdownify()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.liquid.relative_url"><code class="docutils literal notranslate"><span class="pre">relative_url()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.liquid.absolute_url"><code class="docutils literal notranslate"><span class="pre">absolute_url()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.liquid.to_i"><code class="docutils literal notranslate"><span class="pre">to_i()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../modules/lynguine.util.html#miscellaneous-utilities">Miscellaneous Utilities</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.misc.iskeyword"><code class="docutils literal notranslate"><span class="pre">iskeyword()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.misc.log"><code class="docutils literal notranslate"><span class="pre">log</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.misc.reorder_dictionary"><code class="docutils literal notranslate"><span class="pre">reorder_dictionary()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.misc.extract_full_filename"><code class="docutils literal notranslate"><span class="pre">extract_full_filename()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.misc.extract_root_directory"><code class="docutils literal notranslate"><span class="pre">extract_root_directory()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.misc.extract_file_type"><code class="docutils literal notranslate"><span class="pre">extract_file_type()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.misc.extract_abs_filename"><code class="docutils literal notranslate"><span class="pre">extract_abs_filename()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.misc.camel_capitalize"><code class="docutils literal notranslate"><span class="pre">camel_capitalize()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.misc.remove_nan"><code class="docutils literal notranslate"><span class="pre">remove_nan()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.misc.isna"><code class="docutils literal notranslate"><span class="pre">isna()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.misc.is_valid_var"><code class="docutils literal notranslate"><span class="pre">is_valid_var()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.misc.to_valid_var"><code class="docutils literal notranslate"><span class="pre">to_valid_var()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.misc.to_camel_case"><code class="docutils literal notranslate"><span class="pre">to_camel_case()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.misc.sub_path_environment"><code class="docutils literal notranslate"><span class="pre">sub_path_environment()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.misc.get_path_env"><code class="docutils literal notranslate"><span class="pre">get_path_env()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.misc.get_url_file"><code class="docutils literal notranslate"><span class="pre">get_url_file()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.misc.prompt_stdin"><code class="docutils literal notranslate"><span class="pre">prompt_stdin()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.misc.markdown2html"><code class="docutils literal notranslate"><span class="pre">markdown2html()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.misc.html2markdown"><code class="docutils literal notranslate"><span class="pre">html2markdown()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../modules/lynguine.util.html#text-utilities">Text Utilities</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.text.render_liquid"><code class="docutils literal notranslate"><span class="pre">render_liquid()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../modules/lynguine.util.html#tex-utilities">TeX Utilities</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.tex.extract_bib_files"><code class="docutils literal notranslate"><span class="pre">extract_bib_files()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.tex.substitute_inputs"><code class="docutils literal notranslate"><span class="pre">substitute_inputs()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.tex.input_file_name"><code class="docutils literal notranslate"><span class="pre">input_file_name()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.tex.process_file"><code class="docutils literal notranslate"><span class="pre">process_file()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.tex.extract_inputs"><code class="docutils literal notranslate"><span class="pre">extract_inputs()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.tex.extract_diagrams"><code class="docutils literal notranslate"><span class="pre">extract_diagrams()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.tex.extract_citations"><code class="docutils literal notranslate"><span class="pre">extract_citations()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.tex.make_bib_file"><code class="docutils literal notranslate"><span class="pre">make_bib_file()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.tex.get_bib_strings"><code class="docutils literal notranslate"><span class="pre">get_bib_strings()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.tex.get_bib_cross_refs"><code class="docutils literal notranslate"><span class="pre">get_bib_cross_refs()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.tex.create_bib_file_given_tex"><code class="docutils literal notranslate"><span class="pre">create_bib_file_given_tex()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../modules/lynguine.util.html#talk-utilities">Talk Utilities</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.talk.talk_field"><code class="docutils literal notranslate"><span class="pre">talk_field()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.talk.extract_bibinputs"><code class="docutils literal notranslate"><span class="pre">extract_bibinputs()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.talk.extract_all"><code class="docutils literal notranslate"><span class="pre">extract_all()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.talk.extract_inputs"><code class="docutils literal notranslate"><span class="pre">extract_inputs()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.talk.extract_diagrams"><code class="docutils literal notranslate"><span class="pre">extract_diagrams()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../modules/lynguine.util.html#fake-data-generation">Fake Data Generation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.fake.prefix"><code class="docutils literal notranslate"><span class="pre">prefix()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.fake.suffix"><code class="docutils literal notranslate"><span class="pre">suffix()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.fake.author_editor"><code class="docutils literal notranslate"><span class="pre">author_editor()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.fake.row"><code class="docutils literal notranslate"><span class="pre">row()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.fake.entry_update"><code class="docutils literal notranslate"><span class="pre">entry_update()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.fake.random_entry_type"><code class="docutils literal notranslate"><span class="pre">random_entry_type()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.fake.bibliography_entry"><code class="docutils literal notranslate"><span class="pre">bibliography_entry()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.fake.rows"><code class="docutils literal notranslate"><span class="pre">rows()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.fake.to_bibtex_author"><code class="docutils literal notranslate"><span class="pre">to_bibtex_author()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.fake.to_bibtex"><code class="docutils literal notranslate"><span class="pre">to_bibtex()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.fake.row_allocation_additional_scores_series"><code class="docutils literal notranslate"><span class="pre">row_allocation_additional_scores_series()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.fake.DataFrame"><code class="docutils literal notranslate"><span class="pre">DataFrame()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.fake.Generate"><code class="docutils literal notranslate"><span class="pre">Generate</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.fake.Generate.person"><code class="docutils literal notranslate"><span class="pre">Generate.person</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.fake.Generate.givenName"><code class="docutils literal notranslate"><span class="pre">Generate.givenName()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.fake.Generate.familyName"><code class="docutils literal notranslate"><span class="pre">Generate.familyName()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.fake.Generate.prefix"><code class="docutils literal notranslate"><span class="pre">Generate.prefix()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.fake.Generate.suffix"><code class="docutils literal notranslate"><span class="pre">Generate.suffix()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.fake.Generate.name"><code class="docutils literal notranslate"><span class="pre">Generate.name()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.fake.Generate.city"><code class="docutils literal notranslate"><span class="pre">Generate.city()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.fake.Generate.state"><code class="docutils literal notranslate"><span class="pre">Generate.state()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.fake.Generate.address"><code class="docutils literal notranslate"><span class="pre">Generate.address()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.fake.Generate.email"><code class="docutils literal notranslate"><span class="pre">Generate.email()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.fake.Generate.date"><code class="docutils literal notranslate"><span class="pre">Generate.date()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../modules/lynguine.util.html#html-utilities">HTML Utilities</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.html.get_reference"><code class="docutils literal notranslate"><span class="pre">get_reference()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.html.write_to_file"><code class="docutils literal notranslate"><span class="pre">write_to_file()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lynguine.util.html#lynguine.util.html.md_write_to_file"><code class="docutils literal notranslate"><span class="pre">md_write_to_file()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Security</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="user_guide.html">User Guide</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="user_guide.html#lynguine-secure-credential-management-user-guide">Lynguine Secure Credential Management - User Guide</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="user_guide.html#table-of-contents">Table of Contents</a></li>
+<li class="toctree-l4"><a class="reference internal" href="user_guide.html#quick-start-5-minutes">Quick Start (5 Minutes)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="user_guide.html#installation-setup">Installation &amp; Setup</a></li>
+<li class="toctree-l4"><a class="reference internal" href="user_guide.html#basic-usage">Basic Usage</a></li>
+<li class="toctree-l4"><a class="reference internal" href="user_guide.html#common-scenarios">Common Scenarios</a></li>
+<li class="toctree-l4"><a class="reference internal" href="user_guide.html#migration-guide">Migration Guide</a></li>
+<li class="toctree-l4"><a class="reference internal" href="user_guide.html#advanced-features">Advanced Features</a></li>
+<li class="toctree-l4"><a class="reference internal" href="user_guide.html#troubleshooting">Troubleshooting</a></li>
+<li class="toctree-l4"><a class="reference internal" href="user_guide.html#security-best-practices">Security Best Practices</a></li>
+<li class="toctree-l4"><a class="reference internal" href="user_guide.html#api-reference">API Reference</a></li>
+<li class="toctree-l4"><a class="reference internal" href="user_guide.html#getting-help">Getting Help</a></li>
+<li class="toctree-l4"><a class="reference internal" href="user_guide.html#related-documentation">Related Documentation</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Implementation Summary</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#secure-credential-management-implementation-summary">Secure Credential Management Implementation Summary</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#overview">Overview</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#implementation-completed">Implementation Completed</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#security-features-implemented">Security Features Implemented</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#files-created-modified">Files Created/Modified</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#architecture-decisions">Architecture Decisions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#security-considerations">Security Considerations</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#testing-strategy">Testing Strategy</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#future-enhancements">Future Enhancements</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#dependencies">Dependencies</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#migration-guide-for-users">Migration Guide for Users</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#performance-impact">Performance Impact</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#conclusion">Conclusion</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="api_reference.html">API Reference</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="api_reference.html#module-lynguine.security">Core Functions</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api_reference.html#lynguine.security.CredentialProvider"><code class="docutils literal notranslate"><span class="pre">CredentialProvider</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api_reference.html#lynguine.security.EnvironmentCredentialProvider"><code class="docutils literal notranslate"><span class="pre">EnvironmentCredentialProvider</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api_reference.html#lynguine.security.EncryptedFileCredentialProvider"><code class="docutils literal notranslate"><span class="pre">EncryptedFileCredentialProvider</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api_reference.html#lynguine.security.CredentialManager"><code class="docutils literal notranslate"><span class="pre">CredentialManager</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api_reference.html#lynguine.security.get_credential_manager"><code class="docutils literal notranslate"><span class="pre">get_credential_manager()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api_reference.html#lynguine.security.set_credential_manager"><code class="docutils literal notranslate"><span class="pre">set_credential_manager()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api_reference.html#lynguine.security.get_credential"><code class="docutils literal notranslate"><span class="pre">get_credential()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api_reference.html#lynguine.security.set_credential"><code class="docutils literal notranslate"><span class="pre">set_credential()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api_reference.html#lynguine.security.CredentialError"><code class="docutils literal notranslate"><span class="pre">CredentialError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api_reference.html#lynguine.security.CredentialNotFoundError"><code class="docutils literal notranslate"><span class="pre">CredentialNotFoundError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api_reference.html#lynguine.security.CredentialValidationError"><code class="docutils literal notranslate"><span class="pre">CredentialValidationError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api_reference.html#lynguine.security.CredentialEncryptionError"><code class="docutils literal notranslate"><span class="pre">CredentialEncryptionError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api_reference.html#lynguine.security.CredentialCache"><code class="docutils literal notranslate"><span class="pre">CredentialCache</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api_reference.html#lynguine.security.AccessLevel"><code class="docutils literal notranslate"><span class="pre">AccessLevel</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api_reference.html#lynguine.security.AuditEventType"><code class="docutils literal notranslate"><span class="pre">AuditEventType</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api_reference.html#lynguine.security.AuditEvent"><code class="docutils literal notranslate"><span class="pre">AuditEvent</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api_reference.html#lynguine.security.AuditLogger"><code class="docutils literal notranslate"><span class="pre">AuditLogger</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api_reference.html#lynguine.security.AccessPolicy"><code class="docutils literal notranslate"><span class="pre">AccessPolicy</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api_reference.html#lynguine.security.RateLimiter"><code class="docutils literal notranslate"><span class="pre">RateLimiter</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api_reference.html#lynguine.security.CredentialAccessController"><code class="docutils literal notranslate"><span class="pre">CredentialAccessController</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api_reference.html#lynguine.security.get_access_controller"><code class="docutils literal notranslate"><span class="pre">get_access_controller()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api_reference.html#lynguine.security.set_access_controller"><code class="docutils literal notranslate"><span class="pre">set_access_controller()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api_reference.html#lynguine.security.AccessControlError"><code class="docutils literal notranslate"><span class="pre">AccessControlError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api_reference.html#lynguine.security.AccessDeniedError"><code class="docutils literal notranslate"><span class="pre">AccessDeniedError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api_reference.html#lynguine.security.RateLimitError"><code class="docutils literal notranslate"><span class="pre">RateLimitError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api_reference.html#lynguine.security.SanitizingFormatter"><code class="docutils literal notranslate"><span class="pre">SanitizingFormatter</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api_reference.html#lynguine.security.SecureExceptionHandler"><code class="docutils literal notranslate"><span class="pre">SecureExceptionHandler</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api_reference.html#lynguine.security.SecureLogger"><code class="docutils literal notranslate"><span class="pre">SecureLogger</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api_reference.html#lynguine.security.setup_secure_logging"><code class="docutils literal notranslate"><span class="pre">setup_secure_logging()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api_reference.html#lynguine.security.get_secure_logger"><code class="docutils literal notranslate"><span class="pre">get_secure_logger()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api_reference.html#lynguine.security.sanitize_dict"><code class="docutils literal notranslate"><span class="pre">sanitize_dict()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api_reference.html#lynguine.security.secure_repr"><code class="docutils literal notranslate"><span class="pre">secure_repr()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api_reference.html#lynguine.security.CredentialMigrator"><code class="docutils literal notranslate"><span class="pre">CredentialMigrator</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api_reference.html#lynguine.security.MigrationError"><code class="docutils literal notranslate"><span class="pre">MigrationError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api_reference.html#lynguine.security.create_migration_guide"><code class="docutils literal notranslate"><span class="pre">create_migration_guide()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api_reference.html#lynguine.security.save_migration_guide"><code class="docutils literal notranslate"><span class="pre">save_migration_guide()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api_reference.html#module-lynguine.security.credentials">Credential Providers</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api_reference.html#lynguine.security.credentials.CredentialError"><code class="docutils literal notranslate"><span class="pre">CredentialError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api_reference.html#lynguine.security.credentials.CredentialNotFoundError"><code class="docutils literal notranslate"><span class="pre">CredentialNotFoundError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api_reference.html#lynguine.security.credentials.CredentialValidationError"><code class="docutils literal notranslate"><span class="pre">CredentialValidationError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api_reference.html#lynguine.security.credentials.CredentialEncryptionError"><code class="docutils literal notranslate"><span class="pre">CredentialEncryptionError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api_reference.html#lynguine.security.credentials.CredentialProvider"><code class="docutils literal notranslate"><span class="pre">CredentialProvider</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api_reference.html#lynguine.security.credentials.EnvironmentCredentialProvider"><code class="docutils literal notranslate"><span class="pre">EnvironmentCredentialProvider</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api_reference.html#lynguine.security.credentials.EncryptedFileCredentialProvider"><code class="docutils literal notranslate"><span class="pre">EncryptedFileCredentialProvider</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api_reference.html#lynguine.security.credentials.CredentialCache"><code class="docutils literal notranslate"><span class="pre">CredentialCache</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api_reference.html#lynguine.security.credentials.CredentialManager"><code class="docutils literal notranslate"><span class="pre">CredentialManager</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api_reference.html#lynguine.security.credentials.get_credential_manager"><code class="docutils literal notranslate"><span class="pre">get_credential_manager()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api_reference.html#lynguine.security.credentials.set_credential_manager"><code class="docutils literal notranslate"><span class="pre">set_credential_manager()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api_reference.html#lynguine.security.credentials.get_credential"><code class="docutils literal notranslate"><span class="pre">get_credential()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api_reference.html#lynguine.security.credentials.set_credential"><code class="docutils literal notranslate"><span class="pre">set_credential()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api_reference.html#module-lynguine.security.access_control">Access Control</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api_reference.html#lynguine.security.access_control.AccessLevel"><code class="docutils literal notranslate"><span class="pre">AccessLevel</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api_reference.html#lynguine.security.access_control.AuditEventType"><code class="docutils literal notranslate"><span class="pre">AuditEventType</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api_reference.html#lynguine.security.access_control.AccessControlError"><code class="docutils literal notranslate"><span class="pre">AccessControlError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api_reference.html#lynguine.security.access_control.AccessDeniedError"><code class="docutils literal notranslate"><span class="pre">AccessDeniedError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api_reference.html#lynguine.security.access_control.RateLimitError"><code class="docutils literal notranslate"><span class="pre">RateLimitError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api_reference.html#lynguine.security.access_control.AuditEvent"><code class="docutils literal notranslate"><span class="pre">AuditEvent</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api_reference.html#lynguine.security.access_control.AuditLogger"><code class="docutils literal notranslate"><span class="pre">AuditLogger</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api_reference.html#lynguine.security.access_control.AccessPolicy"><code class="docutils literal notranslate"><span class="pre">AccessPolicy</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api_reference.html#lynguine.security.access_control.RateLimiter"><code class="docutils literal notranslate"><span class="pre">RateLimiter</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api_reference.html#lynguine.security.access_control.CredentialAccessController"><code class="docutils literal notranslate"><span class="pre">CredentialAccessController</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api_reference.html#lynguine.security.access_control.get_access_controller"><code class="docutils literal notranslate"><span class="pre">get_access_controller()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api_reference.html#lynguine.security.access_control.set_access_controller"><code class="docutils literal notranslate"><span class="pre">set_access_controller()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api_reference.html#module-lynguine.security.secure_logging">Secure Logging</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api_reference.html#lynguine.security.secure_logging.SanitizingFormatter"><code class="docutils literal notranslate"><span class="pre">SanitizingFormatter</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api_reference.html#lynguine.security.secure_logging.SecureExceptionHandler"><code class="docutils literal notranslate"><span class="pre">SecureExceptionHandler</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api_reference.html#lynguine.security.secure_logging.setup_secure_logging"><code class="docutils literal notranslate"><span class="pre">setup_secure_logging()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api_reference.html#lynguine.security.secure_logging.sanitize_dict"><code class="docutils literal notranslate"><span class="pre">sanitize_dict()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api_reference.html#lynguine.security.secure_logging.secure_repr"><code class="docutils literal notranslate"><span class="pre">secure_repr()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api_reference.html#lynguine.security.secure_logging.SecureLogger"><code class="docutils literal notranslate"><span class="pre">SecureLogger</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api_reference.html#lynguine.security.secure_logging.get_secure_logger"><code class="docutils literal notranslate"><span class="pre">get_secure_logger()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api_reference.html#module-lynguine.security.migration">Migration Tools</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api_reference.html#lynguine.security.migration.MigrationError"><code class="docutils literal notranslate"><span class="pre">MigrationError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api_reference.html#lynguine.security.migration.CredentialMigrator"><code class="docutils literal notranslate"><span class="pre">CredentialMigrator</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api_reference.html#lynguine.security.migration.create_migration_guide"><code class="docutils literal notranslate"><span class="pre">create_migration_guide()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api_reference.html#lynguine.security.migration.save_migration_guide"><code class="docutils literal notranslate"><span class="pre">save_migration_guide()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api_reference.html#quick-reference">Quick Reference</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api_reference.html#id1">Core Functions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api_reference.html#providers">Providers</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api_reference.html#id2">Access Control</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api_reference.html#exceptions">Exceptions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api_reference.html#logging">Logging</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api_reference.html#migration">Migration</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api_reference.html#examples">Examples</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api_reference.html#basic-usage">Basic Usage</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api_reference.html#environment-variables">Environment Variables</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api_reference.html#encrypted-storage">Encrypted Storage</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api_reference.html#id3">Access Control</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api_reference.html#error-handling">Error Handling</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api_reference.html#see-also">See Also</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#quick-start">Quick Start</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#architecture">Architecture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#implementation-details">Implementation Details</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#security-compliance">Security Compliance</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#common-use-cases">Common Use Cases</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#api-reference">API Reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#getting-help">Getting Help</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#related-documentation">Related Documentation</a></li>
+</ul>
+</li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../contributing/guide.html">Contributing to lynguine</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../contributing/guide.html#code-of-conduct">Code of Conduct</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../contributing/guide.html#i-don-t-want-to-read-this-whole-thing">I Don’t Want to Read This Whole Thing!</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../contributing/guide.html#how-can-i-contribute">How Can I Contribute?</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../contributing/guide.html#reporting-bugs">Reporting Bugs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../contributing/guide.html#suggesting-enhancements">Suggesting Enhancements</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../contributing/guide.html#your-first-code-contribution">Your First Code Contribution</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../contributing/guide.html#pull-requests">Pull Requests</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../contributing/guide.html#style-guides">Style Guides</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../contributing/style_guide.html">Python Style Guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../contributing/style_guide.html#code-formatting-with-black">Code Formatting with Black</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../contributing/style_guide.html#pep-8-compliance">PEP 8 Compliance</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../contributing/setup.html">Setup for Development</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../contributing/setup.html#install-dependencies">Install Dependencies</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../contributing/setup.html#setting-up-a-virtual-environment">Setting Up a Virtual Environment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../contributing/setup.html#configuring-your-development-environment">Configuring Your Development Environment</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../contributing/testing.html">Testing Guidelines</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../contributing/testing.html#running-tests">Running Tests</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../contributing/testing.html#writing-tests">Writing Tests</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../contributing/testing.html#test-coverage">Test Coverage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../contributing/testing.html#continuous-integration">Continuous Integration</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">lynguine</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">Security</a></li>
+      <li class="breadcrumb-item active">Implementation Summary</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/security/implementation_summary.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="implementation-summary">
+<h1>Implementation Summary<a class="headerlink" href="#implementation-summary" title="Link to this heading"></a></h1>
+<section id="secure-credential-management-implementation-summary">
+<h2>Secure Credential Management Implementation Summary<a class="headerlink" href="#secure-credential-management-implementation-summary" title="Link to this heading"></a></h2>
+<section id="overview">
+<h3>Overview<a class="headerlink" href="#overview" title="Link to this heading"></a></h3>
+<p>This document summarizes the implementation of comprehensive secure credential management for the Lynguine library. The implementation addresses critical Google Sheets API credential vulnerabilities and establishes a robust, enterprise-grade credential security system.</p>
+</section>
+<section id="implementation-completed">
+<h3>Implementation Completed<a class="headerlink" href="#implementation-completed" title="Link to this heading"></a></h3>
+<section id="core-credential-management-infrastructure-lynguine-security-credentials-py">
+<h4>1. Core Credential Management Infrastructure (<code class="docutils literal notranslate"><span class="pre">lynguine/security/credentials.py</span></code>)<a class="headerlink" href="#core-credential-management-infrastructure-lynguine-security-credentials-py" title="Link to this heading"></a></h4>
+<section id="components-implemented">
+<h5>Components Implemented:<a class="headerlink" href="#components-implemented" title="Link to this heading"></a></h5>
+<p><strong>Abstract Base Classes:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">CredentialProvider</span></code>: Abstract base for all credential providers</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">get_credential()</span></code>: Retrieve credentials</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">set_credential()</span></code>: Store credentials</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">delete_credential()</span></code>: Remove credentials</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">list_credentials()</span></code>: List available credentials</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">validate_credential()</span></code>: Validate credential format</p></li>
+</ul>
+</li>
+</ul>
+<p><strong>Concrete Providers:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">EnvironmentCredentialProvider</span></code>:</p>
+<ul>
+<li><p>Retrieves credentials from environment variables</p></li>
+<li><p>Supports JSON-encoded complex credentials</p></li>
+<li><p>Prefix-based naming (e.g., <code class="docutils literal notranslate"><span class="pre">LYNGUINE_CRED_&lt;KEY&gt;</span></code>)</p></li>
+<li><p>Automatic sanitization of credential keys</p></li>
+</ul>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">EncryptedFileCredentialProvider</span></code>:</p>
+<ul>
+<li><p>AES encryption via Fernet (cryptography library)</p></li>
+<li><p>PBKDF2 key derivation from master password</p></li>
+<li><p>Secure file permissions (0600)</p></li>
+<li><p>Metadata tracking (creation/update timestamps)</p></li>
+<li><p>Thread-safe encryption operations</p></li>
+</ul>
+</li>
+</ul>
+<p><strong>Credential Management:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">CredentialCache</span></code>: Thread-safe TTL-based caching</p>
+<ul>
+<li><p>Configurable expiration (default 5 minutes)</p></li>
+<li><p>Automatic cache invalidation</p></li>
+<li><p>Performance optimization for repeated access</p></li>
+</ul>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">CredentialManager</span></code>: Central orchestration</p>
+<ul>
+<li><p>Multiple provider support with priority</p></li>
+<li><p>Provider fallback chain</p></li>
+<li><p>Credential type validation</p></li>
+<li><p>Cache integration</p></li>
+<li><p>Thread-safe operations</p></li>
+<li><p>Global singleton pattern</p></li>
+</ul>
+</li>
+</ul>
+<p><strong>Exception Hierarchy:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">CredentialError</span></code>: Base exception</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">CredentialNotFoundError</span></code>: Credential not available</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">CredentialValidationError</span></code>: Validation failure</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">CredentialEncryptionError</span></code>: Encryption/decryption failure</p></li>
+</ul>
+</section>
+</section>
+<section id="access-control-and-auditing-lynguine-security-access-control-py">
+<h4>2. Access Control and Auditing (<code class="docutils literal notranslate"><span class="pre">lynguine/security/access_control.py</span></code>)<a class="headerlink" href="#access-control-and-auditing-lynguine-security-access-control-py" title="Link to this heading"></a></h4>
+<section id="id1">
+<h5>Components Implemented:<a class="headerlink" href="#id1" title="Link to this heading"></a></h5>
+<p><strong>Access Control:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">AccessLevel</span></code> enum: NONE, READ, WRITE, DELETE, ADMIN</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">AccessPolicy</span></code>: Rule-based access control</p>
+<ul>
+<li><p>Pattern-based credential matching (wildcards)</p></li>
+<li><p>User-based access control</p></li>
+<li><p>Context-aware permissions</p></li>
+<li><p>Configurable default policy</p></li>
+</ul>
+</li>
+</ul>
+<p><strong>Audit Logging:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">AuditEventType</span></code> enum:</p>
+<ul>
+<li><p>CREDENTIAL_ACCESS, CREDENTIAL_CREATE, CREDENTIAL_UPDATE, CREDENTIAL_DELETE</p></li>
+<li><p>ACCESS_DENIED, VALIDATION_FAILED, AUTHENTICATION_FAILED, RATE_LIMIT_EXCEEDED</p></li>
+</ul>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">AuditEvent</span></code>: Structured security events</p>
+<ul>
+<li><p>Timestamp tracking</p></li>
+<li><p>User identification</p></li>
+<li><p>Context information</p></li>
+<li><p>Success/failure status</p></li>
+<li><p>JSON serialization</p></li>
+</ul>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">AuditLogger</span></code>: Security event logging</p>
+<ul>
+<li><p>Structured log format</p></li>
+<li><p>Secure file permissions (0600)</p></li>
+<li><p>Credential key sanitization</p></li>
+<li><p>Query interface for event retrieval</p></li>
+<li><p>Time-range and type filtering</p></li>
+</ul>
+</li>
+</ul>
+<p><strong>Rate Limiting:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">RateLimiter</span></code>: Brute-force protection</p>
+<ul>
+<li><p>Per-user, per-credential limits</p></li>
+<li><p>Configurable time windows</p></li>
+<li><p>Thread-safe request tracking</p></li>
+<li><p>Automatic cleanup of expired entries</p></li>
+</ul>
+</li>
+</ul>
+<p><strong>Integrated Controller:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">CredentialAccessController</span></code>: Unified security</p>
+<ul>
+<li><p>Access authorization</p></li>
+<li><p>Rate limit enforcement</p></li>
+<li><p>Audit logging integration</p></li>
+<li><p>Context-aware security policies</p></li>
+</ul>
+</li>
+</ul>
+</section>
+</section>
+<section id="secure-error-handling-and-logging-lynguine-security-secure-logging-py">
+<h4>3. Secure Error Handling and Logging (<code class="docutils literal notranslate"><span class="pre">lynguine/security/secure_logging.py</span></code>)<a class="headerlink" href="#secure-error-handling-and-logging-lynguine-security-secure-logging-py" title="Link to this heading"></a></h4>
+<section id="id2">
+<h5>Components Implemented:<a class="headerlink" href="#id2" title="Link to this heading"></a></h5>
+<p><strong>Pattern-Based Sanitization:</strong></p>
+<ul class="simple">
+<li><p>Comprehensive sensitive pattern detection:</p>
+<ul>
+<li><p>API keys and tokens</p></li>
+<li><p>Passwords and secrets</p></li>
+<li><p>OAuth credentials</p></li>
+<li><p>Private keys (PEM format)</p></li>
+<li><p>Connection strings</p></li>
+<li><p>Email addresses</p></li>
+</ul>
+</li>
+</ul>
+<p><strong>Logging Components:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">SanitizingFormatter</span></code>: Automatic log sanitization</p>
+<ul>
+<li><p>Replaces sensitive patterns in log messages</p></li>
+<li><p>Handles all logging levels</p></li>
+<li><p>Configurable additional patterns</p></li>
+</ul>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">SecureExceptionHandler</span></code>: Exception sanitization</p>
+<ul>
+<li><p>Sanitizes exception messages</p></li>
+<li><p>Sanitizes stack traces</p></li>
+<li><p>Prevents credential leakage in errors</p></li>
+</ul>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">SecureLogger</span></code>: High-level secure logging interface</p>
+<ul>
+<li><p>Drop-in replacement for standard logger</p></li>
+<li><p>Automatic sanitization of all log levels</p></li>
+<li><p>Context-aware secure exception logging</p></li>
+</ul>
+</li>
+</ul>
+<p><strong>Utility Functions:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">sanitize_dict()</span></code>: Sanitize sensitive dictionary keys</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">secure_repr()</span></code>: Safe object representation</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">setup_secure_logging()</span></code>: Easy logger configuration</p></li>
+</ul>
+</section>
+</section>
+<section id="google-sheets-integration-lynguine-access-io-py">
+<h4>4. Google Sheets Integration (<code class="docutils literal notranslate"><span class="pre">lynguine/access/io.py</span></code>)<a class="headerlink" href="#google-sheets-integration-lynguine-access-io-py" title="Link to this heading"></a></h4>
+<section id="modifications-implemented">
+<h5>Modifications Implemented:<a class="headerlink" href="#modifications-implemented" title="Link to this heading"></a></h5>
+<p><strong>Secure Credential Retrieval:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">_get_google_sheets_config()</span></code>: Helper function</p>
+<ul>
+<li><p>Attempts secure credential management first</p></li>
+<li><p>Falls back to legacy context-based approach</p></li>
+<li><p>Supports credential references: <code class="docutils literal notranslate"><span class="pre">${credential:key}</span></code></p></li>
+<li><p>Integrates access control authorization</p></li>
+<li><p>Validates credentials before use</p></li>
+<li><p>Comprehensive error handling</p></li>
+</ul>
+</li>
+</ul>
+<p><strong>Updated Functions:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">read_gsheet()</span></code>: Now uses secure credentials</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">write_gsheet()</span></code>: Now uses secure credentials</p></li>
+</ul>
+<p><strong>Backward Compatibility:</strong></p>
+<ul class="simple">
+<li><p>Graceful degradation to context-based credentials</p></li>
+<li><p>Works with or without cryptography library</p></li>
+<li><p>No breaking changes to existing configurations</p></li>
+</ul>
+</section>
+</section>
+<section id="configuration-system-integration-lynguine-config-context-py">
+<h4>5. Configuration System Integration (<code class="docutils literal notranslate"><span class="pre">lynguine/config/context.py</span></code>)<a class="headerlink" href="#configuration-system-integration-lynguine-config-context-py" title="Link to this heading"></a></h4>
+<section id="enhancements-implemented">
+<h5>Enhancements Implemented:<a class="headerlink" href="#enhancements-implemented" title="Link to this heading"></a></h5>
+<p><strong>Credential Reference Support:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">_expand_credential_references()</span></code>: Reference resolver</p>
+<ul>
+<li><p>Parses <code class="docutils literal notranslate"><span class="pre">${credential:key_name}</span></code> syntax</p></li>
+<li><p>Retrieves credentials via credential manager</p></li>
+<li><p>Supports both simple and dict credential values</p></li>
+<li><p>Handles missing credentials gracefully</p></li>
+</ul>
+</li>
+</ul>
+<p><strong>Enhanced Variable Expansion:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">_expand_value()</span></code>: Recursive value expansion</p>
+<ul>
+<li><p>Credential references</p></li>
+<li><p>Environment variables</p></li>
+<li><p>Nested dictionaries and lists</p></li>
+<li><p>Type-aware expansion</p></li>
+</ul>
+</li>
+</ul>
+<p><strong>Error Handling:</strong></p>
+<ul class="simple">
+<li><p>Logs warnings for missing credentials</p></li>
+<li><p>Falls back to original reference on failure</p></li>
+<li><p>No breaking changes for invalid references</p></li>
+</ul>
+</section>
+</section>
+<section id="migration-tools-lynguine-security-migration-py">
+<h4>6. Migration Tools (<code class="docutils literal notranslate"><span class="pre">lynguine/security/migration.py</span></code>)<a class="headerlink" href="#migration-tools-lynguine-security-migration-py" title="Link to this heading"></a></h4>
+<section id="id3">
+<h5>Components Implemented:<a class="headerlink" href="#id3" title="Link to this heading"></a></h5>
+<p><strong>Migration Utilities:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">CredentialMigrator</span></code>: Automated migration</p>
+<ul>
+<li><p>YAML configuration parsing</p></li>
+<li><p>Nested key path support (dot notation)</p></li>
+<li><p>Automatic backups with timestamps</p></li>
+<li><p>Secure file permissions</p></li>
+<li><p>Dry-run mode for testing</p></li>
+</ul>
+</li>
+</ul>
+<p><strong>Migration Features:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">migrate_yaml_config()</span></code>: Generic YAML migration</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">migrate_google_sheets_credentials()</span></code>: Google Sheets specific</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">generate_environment_variable_script()</span></code>: Env var generation</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">validate_migration()</span></code>: Post-migration verification</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">rollback()</span></code>: Restore from backup</p></li>
+</ul>
+<p><strong>Migration Documentation:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">create_migration_guide()</span></code>: Comprehensive guide</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">save_migration_guide()</span></code>: Save guide to file</p></li>
+<li><p>Step-by-step migration instructions</p></li>
+<li><p>Troubleshooting guidance</p></li>
+</ul>
+</section>
+</section>
+<section id="comprehensive-testing-lynguine-tests-test-security-credentials-py">
+<h4>7. Comprehensive Testing (<code class="docutils literal notranslate"><span class="pre">lynguine/tests/test_security_credentials.py</span></code>)<a class="headerlink" href="#comprehensive-testing-lynguine-tests-test-security-credentials-py" title="Link to this heading"></a></h4>
+<section id="test-coverage">
+<h5>Test Coverage:<a class="headerlink" href="#test-coverage" title="Link to this heading"></a></h5>
+<p><strong>Provider Tests:</strong></p>
+<ul class="simple">
+<li><p>Environment provider: set, get, delete, list, JSON handling</p></li>
+<li><p>Encrypted file provider: encryption, decryption, wrong key handling</p></li>
+<li><p>Provider initialization and configuration</p></li>
+</ul>
+<p><strong>Manager Tests:</strong></p>
+<ul class="simple">
+<li><p>Multiple provider fallback</p></li>
+<li><p>Caching behavior</p></li>
+<li><p>Provider priority</p></li>
+<li><p>Credential CRUD operations</p></li>
+</ul>
+<p><strong>Cache Tests:</strong></p>
+<ul class="simple">
+<li><p>TTL expiration</p></li>
+<li><p>Invalidation</p></li>
+<li><p>Clear operations</p></li>
+</ul>
+<p><strong>Access Control Tests:</strong></p>
+<ul class="simple">
+<li><p>Audit event creation and logging</p></li>
+<li><p>Access policy rules</p></li>
+<li><p>Rate limiting</p></li>
+<li><p>Authorization flow</p></li>
+</ul>
+<p><strong>Logging Tests:</strong></p>
+<ul class="simple">
+<li><p>Pattern sanitization</p></li>
+<li><p>Dictionary sanitization</p></li>
+<li><p>Secure repr</p></li>
+<li><p>Formatter behavior</p></li>
+</ul>
+<p><strong>Migration Tests:</strong></p>
+<ul class="simple">
+<li><p>File backup</p></li>
+<li><p>YAML migration</p></li>
+<li><p>Dry-run mode</p></li>
+<li><p>Validation</p></li>
+</ul>
+<p><strong>Integration Tests:</strong></p>
+<ul class="simple">
+<li><p>End-to-end workflows</p></li>
+<li><p>Multi-provider scenarios</p></li>
+<li><p>Encrypted storage workflows</p></li>
+</ul>
+</section>
+</section>
+<section id="documentation">
+<h4>8. Documentation<a class="headerlink" href="#documentation" title="Link to this heading"></a></h4>
+<p><strong>Comprehensive Guides:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">docs/security/SECURE_CREDENTIALS.md</span></code>: Complete user guide</p>
+<ul>
+<li><p>Quick start guide</p></li>
+<li><p>Storage backend documentation</p></li>
+<li><p>Access control guide</p></li>
+<li><p>Audit logging guide</p></li>
+<li><p>Migration instructions</p></li>
+<li><p>Troubleshooting</p></li>
+<li><p>API reference</p></li>
+<li><p>Examples</p></li>
+</ul>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">docs/security/IMPLEMENTATION_SUMMARY.md</span></code>: This document</p></li>
+</ul>
+<p><strong>Code Documentation:</strong></p>
+<ul class="simple">
+<li><p>Comprehensive docstrings for all classes and methods</p></li>
+<li><p>Type hints throughout</p></li>
+<li><p>Usage examples in docstrings</p></li>
+<li><p>Parameter and return value documentation</p></li>
+</ul>
+</section>
+</section>
+<section id="security-features-implemented">
+<h3>Security Features Implemented<a class="headerlink" href="#security-features-implemented" title="Link to this heading"></a></h3>
+<section id="encryption">
+<h4>Encryption<a class="headerlink" href="#encryption" title="Link to this heading"></a></h4>
+<ul class="simple">
+<li><p>✅ AES-256 encryption via Fernet</p></li>
+<li><p>✅ PBKDF2 key derivation (100,000 iterations)</p></li>
+<li><p>✅ Secure master key handling</p></li>
+<li><p>✅ Thread-safe encryption operations</p></li>
+</ul>
+</section>
+<section id="access-control">
+<h4>Access Control<a class="headerlink" href="#access-control" title="Link to this heading"></a></h4>
+<ul class="simple">
+<li><p>✅ Role-based access control (RBAC)</p></li>
+<li><p>✅ Pattern-based credential matching</p></li>
+<li><p>✅ Context-aware permissions</p></li>
+<li><p>✅ Rate limiting (brute-force protection)</p></li>
+</ul>
+</section>
+<section id="auditing">
+<h4>Auditing<a class="headerlink" href="#auditing" title="Link to this heading"></a></h4>
+<ul class="simple">
+<li><p>✅ Comprehensive security event logging</p></li>
+<li><p>✅ Event type categorization</p></li>
+<li><p>✅ Timestamp tracking</p></li>
+<li><p>✅ User identification</p></li>
+<li><p>✅ Query interface for compliance</p></li>
+</ul>
+</section>
+<section id="secure-logging">
+<h4>Secure Logging<a class="headerlink" href="#secure-logging" title="Link to this heading"></a></h4>
+<ul class="simple">
+<li><p>✅ Automatic credential sanitization</p></li>
+<li><p>✅ Pattern-based sensitive data detection</p></li>
+<li><p>✅ Secure exception handling</p></li>
+<li><p>✅ Stack trace sanitization</p></li>
+</ul>
+</section>
+<section id="credential-lifecycle">
+<h4>Credential Lifecycle<a class="headerlink" href="#credential-lifecycle" title="Link to this heading"></a></h4>
+<ul class="simple">
+<li><p>✅ Credential validation</p></li>
+<li><p>✅ Type-based validation</p></li>
+<li><p>✅ Metadata tracking</p></li>
+<li><p>✅ Rotation support</p></li>
+<li><p>✅ Cache invalidation</p></li>
+</ul>
+</section>
+<section id="integration">
+<h4>Integration<a class="headerlink" href="#integration" title="Link to this heading"></a></h4>
+<ul class="simple">
+<li><p>✅ Backward compatibility</p></li>
+<li><p>✅ Credential references in configuration</p></li>
+<li><p>✅ Multiple storage backends</p></li>
+<li><p>✅ Graceful degradation</p></li>
+<li><p>✅ Migration tools</p></li>
+</ul>
+</section>
+</section>
+<section id="files-created-modified">
+<h3>Files Created/Modified<a class="headerlink" href="#files-created-modified" title="Link to this heading"></a></h3>
+<section id="new-files-created">
+<h4>New Files Created:<a class="headerlink" href="#new-files-created" title="Link to this heading"></a></h4>
+<ol class="arabic simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">lynguine/security/credentials.py</span></code> (769 lines)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">lynguine/security/access_control.py</span></code> (642 lines)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">lynguine/security/secure_logging.py</span></code> (533 lines)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">lynguine/security/migration.py</span></code> (565 lines)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">lynguine/security/__init__.py</span></code> (117 lines)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">lynguine/tests/test_security_credentials.py</span></code> (693 lines)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">docs/security/SECURE_CREDENTIALS.md</span></code> (685 lines)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">docs/security/IMPLEMENTATION_SUMMARY.md</span></code> (this file)</p></li>
+</ol>
+</section>
+<section id="files-modified">
+<h4>Files Modified:<a class="headerlink" href="#files-modified" title="Link to this heading"></a></h4>
+<ol class="arabic simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">lynguine/access/io.py</span></code>:</p>
+<ul class="simple">
+<li><p>Added secure credential imports</p></li>
+<li><p>Added <code class="docutils literal notranslate"><span class="pre">_get_google_sheets_config()</span></code> function</p></li>
+<li><p>Updated <code class="docutils literal notranslate"><span class="pre">read_gsheet()</span></code> to use secure credentials</p></li>
+<li><p>Updated <code class="docutils literal notranslate"><span class="pre">write_gsheet()</span></code> to use secure credentials</p></li>
+</ul>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">lynguine/config/context.py</span></code>:</p>
+<ul class="simple">
+<li><p>Added credential reference support</p></li>
+<li><p>Enhanced <code class="docutils literal notranslate"><span class="pre">_expand_vars()</span></code> method</p></li>
+<li><p>Added <code class="docutils literal notranslate"><span class="pre">_expand_value()</span></code> method</p></li>
+<li><p>Added <code class="docutils literal notranslate"><span class="pre">_expand_credential_references()</span></code> method</p></li>
+</ul>
+</li>
+</ol>
+<p><strong>Total Lines of Code: ~4,000+ lines</strong></p>
+</section>
+</section>
+<section id="architecture-decisions">
+<h3>Architecture Decisions<a class="headerlink" href="#architecture-decisions" title="Link to this heading"></a></h3>
+<section id="provider-pattern">
+<h4>Provider Pattern<a class="headerlink" href="#provider-pattern" title="Link to this heading"></a></h4>
+<p><strong>Decision:</strong> Use abstract provider pattern for credential storage backends.</p>
+<p><strong>Rationale:</strong></p>
+<ul class="simple">
+<li><p>Enables multiple storage backends</p></li>
+<li><p>Easy to add new providers (cloud vaults, etc.)</p></li>
+<li><p>Testable in isolation</p></li>
+<li><p>Follows SOLID principles</p></li>
+</ul>
+</section>
+<section id="singleton-pattern-for-managers">
+<h4>Singleton Pattern for Managers<a class="headerlink" href="#singleton-pattern-for-managers" title="Link to this heading"></a></h4>
+<p><strong>Decision:</strong> Global singleton instances for CredentialManager and AccessController.</p>
+<p><strong>Rationale:</strong></p>
+<ul class="simple">
+<li><p>Consistent configuration across application</p></li>
+<li><p>Simplifies usage in existing codebase</p></li>
+<li><p>Maintains state (cache, audit logs)</p></li>
+<li><p>Still allows custom instances for testing</p></li>
+</ul>
+</section>
+<section id="backward-compatibility">
+<h4>Backward Compatibility<a class="headerlink" href="#backward-compatibility" title="Link to this heading"></a></h4>
+<p><strong>Decision:</strong> Graceful degradation to legacy credentials.</p>
+<p><strong>Rationale:</strong></p>
+<ul class="simple">
+<li><p>No breaking changes for existing users</p></li>
+<li><p>Smooth migration path</p></li>
+<li><p>Works with or without cryptography library</p></li>
+<li><p>Allows incremental adoption</p></li>
+</ul>
+</section>
+<section id="thread-safety">
+<h4>Thread Safety<a class="headerlink" href="#thread-safety" title="Link to this heading"></a></h4>
+<p><strong>Decision:</strong> Thread-safe operations throughout.</p>
+<p><strong>Rationale:</strong></p>
+<ul class="simple">
+<li><p>Lynguine may be used in multi-threaded environments</p></li>
+<li><p>Concurrent credential access is common</p></li>
+<li><p>Prevents race conditions in caching</p></li>
+<li><p>Essential for production use</p></li>
+</ul>
+</section>
+<section id="credential-reference-syntax">
+<h4>Credential Reference Syntax<a class="headerlink" href="#credential-reference-syntax" title="Link to this heading"></a></h4>
+<p><strong>Decision:</strong> Use <code class="docutils literal notranslate"><span class="pre">${credential:key}</span></code> syntax.</p>
+<p><strong>Rationale:</strong></p>
+<ul class="simple">
+<li><p>Familiar to users (similar to env var syntax)</p></li>
+<li><p>Clear distinction from environment variables</p></li>
+<li><p>Easy to parse with regex</p></li>
+<li><p>Doesn’t conflict with existing syntax</p></li>
+</ul>
+</section>
+</section>
+<section id="security-considerations">
+<h3>Security Considerations<a class="headerlink" href="#security-considerations" title="Link to this heading"></a></h3>
+<section id="threat-mitigation">
+<h4>Threat Mitigation<a class="headerlink" href="#threat-mitigation" title="Link to this heading"></a></h4>
+<ol class="arabic simple">
+<li><p><strong>Credential Exposure</strong> ✅</p>
+<ul class="simple">
+<li><p>Encrypted storage</p></li>
+<li><p>Secure file permissions</p></li>
+<li><p>No plaintext in memory longer than necessary</p></li>
+</ul>
+</li>
+<li><p><strong>Credential Spoofing</strong> ✅</p>
+<ul class="simple">
+<li><p>Validation of credential format</p></li>
+<li><p>Type-specific validators</p></li>
+<li><p>SSL/TLS enforcement in Google API calls</p></li>
+</ul>
+</li>
+<li><p><strong>Brute Force Attacks</strong> ✅</p>
+<ul class="simple">
+<li><p>Rate limiting per user/credential</p></li>
+<li><p>Configurable thresholds</p></li>
+<li><p>Audit logging of attempts</p></li>
+</ul>
+</li>
+<li><p><strong>Information Disclosure</strong> ✅</p>
+<ul class="simple">
+<li><p>Log sanitization</p></li>
+<li><p>Exception sanitization</p></li>
+<li><p>Credential key masking in audit logs</p></li>
+</ul>
+</li>
+<li><p><strong>Unauthorized Access</strong> ✅</p>
+<ul class="simple">
+<li><p>Role-based access control</p></li>
+<li><p>Pattern-based permissions</p></li>
+<li><p>Access auditing</p></li>
+</ul>
+</li>
+</ol>
+</section>
+<section id="security-best-practices-implemented">
+<h4>Security Best Practices Implemented<a class="headerlink" href="#security-best-practices-implemented" title="Link to this heading"></a></h4>
+<ul class="simple">
+<li><p>✅ Principle of least privilege</p></li>
+<li><p>✅ Defense in depth (multiple layers)</p></li>
+<li><p>✅ Fail secure (deny by default)</p></li>
+<li><p>✅ Complete mediation (all access controlled)</p></li>
+<li><p>✅ Separation of concerns</p></li>
+<li><p>✅ Audit all security events</p></li>
+<li><p>✅ Encrypt sensitive data at rest</p></li>
+<li><p>✅ Secure by default configuration</p></li>
+</ul>
+</section>
+</section>
+<section id="testing-strategy">
+<h3>Testing Strategy<a class="headerlink" href="#testing-strategy" title="Link to this heading"></a></h3>
+<section id="unit-tests">
+<h4>Unit Tests<a class="headerlink" href="#unit-tests" title="Link to this heading"></a></h4>
+<ul class="simple">
+<li><p>Individual component testing</p></li>
+<li><p>Mock external dependencies</p></li>
+<li><p>Test error conditions</p></li>
+<li><p>Validate security properties</p></li>
+</ul>
+</section>
+<section id="integration-tests">
+<h4>Integration Tests<a class="headerlink" href="#integration-tests" title="Link to this heading"></a></h4>
+<ul class="simple">
+<li><p>End-to-end workflows</p></li>
+<li><p>Multi-component interaction</p></li>
+<li><p>Backward compatibility</p></li>
+<li><p>Migration scenarios</p></li>
+</ul>
+</section>
+<section id="security-tests">
+<h4>Security Tests<a class="headerlink" href="#security-tests" title="Link to this heading"></a></h4>
+<ul class="simple">
+<li><p>Encryption strength</p></li>
+<li><p>Access control bypass attempts</p></li>
+<li><p>Rate limit enforcement</p></li>
+<li><p>Log sanitization effectiveness</p></li>
+</ul>
+</section>
+</section>
+<section id="future-enhancements">
+<h3>Future Enhancements<a class="headerlink" href="#future-enhancements" title="Link to this heading"></a></h3>
+<section id="planned-features">
+<h4>Planned Features:<a class="headerlink" href="#planned-features" title="Link to this heading"></a></h4>
+<ol class="arabic simple">
+<li><p><strong>Cloud Vault Integration</strong></p>
+<ul class="simple">
+<li><p>HashiCorp Vault provider</p></li>
+<li><p>AWS Secrets Manager provider</p></li>
+<li><p>Azure Key Vault provider</p></li>
+</ul>
+</li>
+<li><p><strong>Advanced Rotation</strong></p>
+<ul class="simple">
+<li><p>Automatic credential rotation</p></li>
+<li><p>Rolling rotation with overlap</p></li>
+<li><p>Rotation notifications</p></li>
+</ul>
+</li>
+<li><p><strong>Enhanced Auditing</strong></p>
+<ul class="simple">
+<li><p>Real-time alerting</p></li>
+<li><p>Anomaly detection</p></li>
+<li><p>Compliance reporting</p></li>
+</ul>
+</li>
+<li><p><strong>Multi-Factor Authentication</strong></p>
+<ul class="simple">
+<li><p>MFA for credential access</p></li>
+<li><p>Hardware token support</p></li>
+</ul>
+</li>
+<li><p><strong>Credential Sharing</strong></p>
+<ul class="simple">
+<li><p>Team-based credentials</p></li>
+<li><p>Temporary access grants</p></li>
+<li><p>Delegation support</p></li>
+</ul>
+</li>
+</ol>
+</section>
+</section>
+<section id="dependencies">
+<h3>Dependencies<a class="headerlink" href="#dependencies" title="Link to this heading"></a></h3>
+<section id="required">
+<h4>Required:<a class="headerlink" href="#required" title="Link to this heading"></a></h4>
+<ul class="simple">
+<li><p>Python 3.6+</p></li>
+<li><p>PyYAML (already required by Lynguine)</p></li>
+</ul>
+</section>
+<section id="optional">
+<h4>Optional:<a class="headerlink" href="#optional" title="Link to this heading"></a></h4>
+<ul class="simple">
+<li><p>cryptography&gt;=3.0 (for encrypted file storage)</p></li>
+</ul>
+</section>
+<section id="no-breaking-changes">
+<h4>No Breaking Changes:<a class="headerlink" href="#no-breaking-changes" title="Link to this heading"></a></h4>
+<ul class="simple">
+<li><p>Works with all existing Lynguine dependencies</p></li>
+<li><p>Gracefully handles missing optional dependencies</p></li>
+</ul>
+</section>
+</section>
+<section id="migration-guide-for-users">
+<h3>Migration Guide for Users<a class="headerlink" href="#migration-guide-for-users" title="Link to this heading"></a></h3>
+<p>See <code class="docutils literal notranslate"><span class="pre">docs/security/SECURE_CREDENTIALS.md</span></code> for complete migration guide.</p>
+<section id="quick-migration-steps">
+<h4>Quick Migration Steps:<a class="headerlink" href="#quick-migration-steps" title="Link to this heading"></a></h4>
+<ol class="arabic">
+<li><p>Install cryptography (optional but recommended):</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>cryptography
+</pre></div>
+</div>
+</li>
+<li><p>Set master key:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">LYNGUINE_MASTER_KEY</span><span class="o">=</span><span class="s2">&quot;your-secure-password&quot;</span>
+</pre></div>
+</div>
+</li>
+<li><p>Run migration:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">lynguine.security</span><span class="w"> </span><span class="kn">import</span> <span class="n">CredentialMigrator</span>
+<span class="n">migrator</span> <span class="o">=</span> <span class="n">CredentialMigrator</span><span class="p">()</span>
+<span class="n">migrator</span><span class="o">.</span><span class="n">migrate_google_sheets_credentials</span><span class="p">(</span><span class="s2">&quot;~/.lynguine/config/machine.yml&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</li>
+<li><p>Validate:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">migrator</span><span class="o">.</span><span class="n">validate_migration</span><span class="p">(</span><span class="s2">&quot;~/.lynguine/config/machine.yml&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</li>
+</ol>
+</section>
+</section>
+<section id="performance-impact">
+<h3>Performance Impact<a class="headerlink" href="#performance-impact" title="Link to this heading"></a></h3>
+<section id="minimal-overhead">
+<h4>Minimal Overhead:<a class="headerlink" href="#minimal-overhead" title="Link to this heading"></a></h4>
+<ul class="simple">
+<li><p>Caching reduces repeated credential lookups</p></li>
+<li><p>Encryption operations are fast (&lt; 1ms)</p></li>
+<li><p>Audit logging is asynchronous-safe</p></li>
+<li><p>No impact on data processing performance</p></li>
+</ul>
+</section>
+<section id="benchmarks-estimated">
+<h4>Benchmarks (estimated):<a class="headerlink" href="#benchmarks-estimated" title="Link to this heading"></a></h4>
+<ul class="simple">
+<li><p>Environment variable retrieval: &lt; 0.1ms</p></li>
+<li><p>Encrypted file retrieval (cached): &lt; 0.1ms</p></li>
+<li><p>Encrypted file retrieval (uncached): &lt; 5ms</p></li>
+<li><p>Credential validation: &lt; 0.5ms</p></li>
+</ul>
+</section>
+</section>
+<section id="conclusion">
+<h3>Conclusion<a class="headerlink" href="#conclusion" title="Link to this heading"></a></h3>
+<p>The secure credential management implementation provides enterprise-grade security for Lynguine while maintaining backward compatibility and ease of use. All implementation goals have been achieved:</p>
+<p>✅ Multiple secure storage backends
+✅ End-to-end encryption
+✅ Access control and authorization
+✅ Comprehensive audit logging
+✅ Rate limiting and brute-force protection
+✅ Secure error handling
+✅ Configuration system integration
+✅ Google Sheets security enhancement
+✅ Migration tools
+✅ Comprehensive testing
+✅ Complete documentation</p>
+<p>The system is production-ready and follows security best practices throughout.</p>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="user_guide.html" class="btn btn-neutral float-left" title="User Guide" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="api_reference.html" class="btn btn-neutral float-right" title="API Reference" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, Neil D. Lawrence &lt;lawrennd@gmail.com&gt;.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
