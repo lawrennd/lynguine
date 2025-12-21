@@ -3555,6 +3555,89 @@ class CustomDataFrame(DataObject):
             errmsg = "Unrecognised subindices specifier in tally."
             log.error(errmsg)
             raise ValueError(errmsg)
+
+    def add_column(self, column_name, data, colspec='cache'):
+        """
+        Add a new column to the CustomDataFrame.
+        
+        This is a convenience method that wraps the __setitem__ functionality,
+        allowing explicit specification of the column type (colspec).
+        
+        :param column_name: The name of the new column.
+        :type column_name: str
+        :param data: The data for the new column (pd.Series, list, or array-like).
+        :type data: pd.Series, list, or array-like
+        :param colspec: The column specification type (default: 'cache').
+                       Must be a valid type from CustomDataFrame.types.
+        :type colspec: str
+        :raises ValueError: If column already exists or colspec is invalid.
+        
+        Example:
+            >>> df.add_column('new_col', pd.Series([1, 2, 3], index=df.index))
+            >>> df.add_column('output_col', [1, 2, 3], colspec='output')
+        """
+        if column_name in self.columns:
+            raise ValueError(f"Column '{column_name}' already exists")
+        
+        # Validate colspec
+        all_types = [typ for typs in self.types.values() for typ in typs]
+        if colspec not in all_types:
+            raise ValueError(f"Invalid colspec '{colspec}'. Must be one of: {', '.join(all_types)}")
+        
+        # Use existing __setitem__ functionality to add the column
+        # This will add it to 'cache' or 'cacheseries' by default
+        self[column_name] = data
+        
+        # If a specific colspec was requested and it's not the default,
+        # move the column to the correct colspec
+        current_type = self.get_column_type(column_name)
+        if colspec != current_type:
+            # Remove from current colspec
+            if current_type in self._colspecs and column_name in self._colspecs[current_type]:
+                self._colspecs[current_type].remove(column_name)
+                
+            # Get the data
+            col_data = self._d[current_type][column_name]
+            
+            # Remove from current data dict
+            self._d[current_type] = self._d[current_type].drop(columns=[column_name])
+            
+            # Add to requested colspec
+            if colspec not in self._colspecs:
+                self._colspecs[colspec] = []
+            if colspec not in self._d:
+                self._d[colspec] = pd.DataFrame(index=self.index)
+                
+            self._colspecs[colspec].append(column_name)
+            self._d[colspec][column_name] = col_data
+
+    def drop_column(self, column_name):
+        """
+        Drop a column from the CustomDataFrame.
+        
+        This method removes the column from both the internal data storage
+        and the column specifications.
+        
+        :param column_name: The name of the column to drop.
+        :type column_name: str
+        :raises KeyError: If column doesn't exist.
+        
+        Example:
+            >>> df.drop_column('unwanted_col')
+        """
+        if column_name not in self.columns:
+            raise KeyError(f"Column '{column_name}' not found")
+        
+        # Find which colspec contains this column
+        col_type = self.get_column_type(column_name)
+        
+        # Remove from the appropriate dataframe
+        if col_type in self._d:
+            self._d[col_type] = self._d[col_type].drop(columns=[column_name])
+        
+        # Remove from colspecs
+        if col_type in self._colspecs and column_name in self._colspecs[col_type]:
+            self._colspecs[col_type].remove(column_name)
     
 def concat(objs, *args, **kwargs):
     """

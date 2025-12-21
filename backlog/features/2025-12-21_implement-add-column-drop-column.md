@@ -1,7 +1,7 @@
 ---
 id: "2025-12-21_implement-add-column-drop-column"
 title: "Implement add_column() and drop_column() Methods in CustomDataFrame"
-status: "Proposed"
+status: "completed"
 priority: "Medium"
 created: "2025-12-21"
 last_updated: "2025-12-21"
@@ -127,7 +127,34 @@ def drop_column(self, column_name):
 
 ## Progress Updates
 
-### 2025-12-21
+### 2025-12-21 - Completed
+
+**Implementation Complete**: Both methods fully implemented and tested
+
+**Changes Made**:
+1. ✅ **Implemented `add_column()` method** (lynguine/assess/data.py lines ~3560-3604)
+   - Wraps existing `__setitem__` functionality
+   - Supports optional `colspec` parameter to specify column type
+   - Validates column doesn't already exist
+   - Validates colspec is valid type
+   - Properly moves column to requested colspec if needed
+
+2. ✅ **Implemented `drop_column()` method** (lynguine/assess/data.py lines ~3606-3628)
+   - Removes column from internal data storage (`_d`)
+   - Removes column from column specifications (`_colspecs`)
+   - Validates column exists before dropping
+
+3. ✅ **Comprehensive Test Suite** (lynguine/tests/test_add_drop_column.py)
+   - 13 tests covering all functionality
+   - All tests passing ✅
+   - Coverage includes: basic operations, error handling, different colspecs, edge cases
+
+**Test Results**: 13 passed in 1.52s
+
+**Status**: Feature complete and ready for use. The `add_column()` and `drop_column()` methods now provide convenient, documented ways to add and remove columns from CustomDataFrame instances.
+
+### 2025-12-21 - Created
 
 Task created. Identified that `add_column()` and `drop_column()` exist in API but raise `NotImplementedError`, while the functionality already exists via `__setitem__`. Proposed implementation as convenience methods.
+
 
