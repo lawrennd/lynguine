@@ -96,6 +96,10 @@ test.markdown
 # Poetry
 poetry.lock
 
+# Documentation builds
+docs/_build/
+docs/examples/
+
 # OS files
 .DS_Store
 Thumbs.db

@@ -41,6 +41,14 @@ Modules Documentation
    modules/lynguine.config
    modules/lynguine.util
 
+Security
+--------
+
+.. toctree::
+   :maxdepth: 2
+
+   security/index
+
 Contributing
 -----------
 

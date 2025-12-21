@@ -16,6 +16,21 @@ It is an attempt to implement the emerging linguine specification, <https://gith
 - [Documentation](https://lawrennd.github.io/lynguine/)
 - [Code Improvement Plans](cip/)
 - [Project Backlog](backlog/)
+- [Security Documentation](docs/security/) - Secure credential management
+
+## Security
+
+Lynguine includes enterprise-grade secure credential management for API keys, OAuth tokens, and other sensitive data. Features include:
+
+- 🔒 **Encrypted Storage** - AES-256 encryption for credentials at rest
+- 🔑 **Multiple Backends** - Environment variables, encrypted files, or cloud vaults
+- 👥 **Access Control** - Role-based permissions and rate limiting
+- 📊 **Audit Logging** - Comprehensive security event tracking
+- 🔄 **Easy Migration** - Tools to migrate from plain-text credentials
+
+**Quick Start**: See the [Security User Guide](docs/security/USER_GUIDE.md) for setup instructions and examples.
+
+**Technical Details**: See [CIP-0005](cip/cip0005.md) for the complete security architecture.
 
 ## Installation
 
