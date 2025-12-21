@@ -140,6 +140,8 @@ def extract_file_type(filename : str) -> str:
         return "bibtex"
     if ext in ["docx"]:
         return "docx"
+    if ext in ["txt"]:
+        return "txt"
     raise ValueError(f'Unrecognised type of file in "{filename}"')
 
 

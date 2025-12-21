@@ -653,6 +653,13 @@ def write_json_file(data, filename):
             log.warning(exc)
 
 
+def read_txt_file(filename):
+    """Read a text file and return a dictionary with the content."""
+    with open(filename, 'r') as f:
+        content = f.read()
+    return {"content": content}
+
+
 def default_file_reader(typ):
     """
     Return the default file reader for a given type.
@@ -673,6 +680,8 @@ def default_file_reader(typ):
         return read_bibtex_file
     if typ == "docx":
         return read_docx_file
+    if typ == "txt":
+        return read_txt_file
     raise ValueError(f'Unrecognised type of file "{typ}".')
 
 def default_file_writer(typ):
