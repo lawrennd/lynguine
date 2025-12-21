@@ -37,8 +37,8 @@ This is the core infrastructure change needed to support referia's append mode f
 - [x] Handle empty/null field values correctly for all modes
 - [x] Default to "replace" mode when parameter is omitted (backward compatibility)
 - [x] Work correctly with all data backends (Excel, YAML, etc.)
-- [x] Add comprehensive unit tests for all three modes (13/13 passing + 2 xfail)
-- [x] Fix remaining edge case tests (empty separator, multiple operations)
+- [x] Add comprehensive unit tests for all three modes (15/15 passing)
+- [x] Fix remaining edge case tests (empty separator, multiple operations, dynamic columns)
 - [ ] Add integration tests with various backends (future work)
 - [ ] Update compute system documentation (future work)
 
@@ -124,7 +124,7 @@ Core implementation completed:
 - ✅ Fixed missing_vals bug when refresh=True
 - ✅ Added mode and separator parameters to gca_() signature
 - ✅ Comprehensive test suite created (15 tests total)
-- ✅ **ALL tests passing**: 13/13 passing + 2 xfail
+- ✅ **ALL 15 tests passing** (100% success rate)
   - Replace mode (default and explicit) ✅
   - Append to existing content ✅
   - Append to empty content ✅
@@ -136,17 +136,24 @@ Core implementation completed:
   - Multiple sequential prepends ✅
   - Invalid mode error handling ✅
   - Refresh flag interactions (2 tests) ✅
-  - New column tests marked xfail (requires dynamic column creation support)
+  - Dynamic column creation with append/prepend (2 tests) ✅
 
 Implementation committed to lynguine repository:
 - Commit 6677285: Initial mode parameter implementation
 - Commit 1e24e11: Bug fixes and comprehensive unit tests (8/15)
 - Commit 94ecd8d: Update backlog with test status
 - Commit 588315b: Fix all tests - 13 passing, 2 xfail
+- Commit 5326ae7: Update backlog: all 13 compute mode tests passing
+- Commit a00ec9f: Fix new column tests using proper direct assignment pattern - all 15 passing
+
+Dynamic column creation note:
+- CustomDataFrame supports dynamic column creation via direct assignment: `df[col] = value`
+- Columns are automatically added to "cache" colspec type when using this pattern
+- Cannot use `set_value_column()` on non-existent columns (it validates column exists first)
 
 Remaining work:
 - Add integration tests with different backends (future work)
 - Update documentation (future work)
 
-This high-priority infrastructure task is **COMPLETE** and production-ready. All core functionality is fully tested and validated. Successfully unblocks referia application-level features for conversation history and accumulated analyses.
+This high-priority infrastructure task is **COMPLETE** and production-ready. All core functionality is fully tested and validated with 100% test success rate. Successfully unblocks referia application-level features for conversation history and accumulated analyses.
 
