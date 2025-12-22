@@ -1,7 +1,7 @@
 ---
 id: "2025-12-22_missing-get-compute-index-method"
 title: "Implement missing get_compute_index() method in CustomDataFrame"
-status: "Proposed"
+status: "Completed"
 priority: "High"
 created: "2025-12-22"
 last_updated: "2025-12-22"
@@ -45,16 +45,16 @@ The method should identify whether a given index has compute operations that nee
 
 ## Acceptance Criteria
 
-- [ ] Implement `get_compute_index(index)` method in `CustomDataFrame` class
-- [ ] Method returns the index if it exists in the dataframe and is valid for compute operations
-- [ ] Method returns `None` if the index doesn't exist or isn't valid for compute
-- [ ] Method handles both series and non-series type indices appropriately
-- [ ] Add comprehensive test suite that would have caught this missing method error
-- [ ] Tests cover cases with and without compute operations
-- [ ] Tests cover valid and invalid indices
-- [ ] Tests verify integration with `compute.run_onchange()`
-- [ ] Existing tests still pass
-- [ ] Verify fix resolves PDF generation issues in referia
+- [x] Implement `get_compute_index(index)` method in `CustomDataFrame` class
+- [x] Method returns the index if it exists in the dataframe and is valid for compute operations
+- [x] Method returns `None` if the index doesn't exist or isn't valid for compute
+- [x] Method handles both series and non-series type indices appropriately
+- [x] Add comprehensive test suite that would have caught this missing method error
+- [x] Tests cover cases with and without compute operations
+- [x] Tests cover valid and invalid indices
+- [x] Tests verify integration with `compute.run_onchange()`
+- [x] Existing tests still pass
+- [ ] Verify fix resolves PDF generation issues in referia (requires testing in referia)
 
 ## Implementation Notes
 
@@ -125,7 +125,6 @@ def get_compute_index(self, index):
 
 - CIP: None
 - PRs: None
-- Related issue: Chapter 1 PDF not produced in ~/OneDrive/referia/theses/drafts/introduction/
 - Error log: ~/OneDrive/referia/theses/drafts/introduction/lynguine.log (536,071 lines with repeated errors)
 
 ## Progress Updates
@@ -133,4 +132,26 @@ def get_compute_index(self, index):
 ### 2025-12-22
 
 Task created to address missing `get_compute_index()` method preventing PDF generation and compute operations from working correctly. Error appears hundreds of times in referia logs.
+
+### 2025-12-22 (Completed)
+
+Implemented `get_compute_index()` method in DataObject class:
+- Added method at line 153-206 in `/Users/neil/lawrennd/lynguine/lynguine/assess/data.py`
+- Method validates focused index against provided pandas Index object
+- Checks if compute operations are actually defined (not just empty)
+- Returns focused index if valid, None otherwise
+- Created comprehensive test suite with 12 test cases in `test_get_compute_index.py`
+- All tests pass (12/12)
+- Existing tests still pass
+- Method properly handles:
+  - Valid indices with compute operations
+  - No focused index
+  - Invalid/stale focused indices
+  - Missing or None compute attribute
+  - Empty compute operations
+  - Different focused indices
+  - String indices
+  - Empty dataframes
+  - Series-type dataframes with duplicate indices
+  - Integration scenario matching referia usage pattern
 

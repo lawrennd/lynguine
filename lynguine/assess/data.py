@@ -150,6 +150,60 @@ class DataObject:
             log.error(errmsg)
             raise KeyError(errmsg)
  
+    def get_compute_index(self, index : pd.Index) -> object:
+        """
+        Validate the currently focused index for compute operations.
+        
+        Takes the full pandas Index object and returns the currently focused index
+        if it's valid for compute operations, or None otherwise. This acts as a
+        validation gate before calling compute.run_onchange().
+        
+        This method is used by referia's compute_onchange() to determine if compute
+        operations (like timestamp updates) should run when a field value changes.
+        
+        :param index: The pandas Index object containing all dataframe indices
+        :type index: pd.Index
+        :return: The currently focused index if valid for compute, None otherwise
+        :rtype: object or None
+        """
+        # Get the currently focused index
+        current_index = self.get_index()
+        
+        # If no focused index, nothing to compute
+        if current_index is None:
+            log.debug("No focused index, returning None for compute.")
+            return None
+        
+        # If focused index isn't in the provided Index, invalid
+        if current_index not in index:
+            log.debug(f"Focused index \"{current_index}\" not in provided Index, returning None for compute.")
+            return None
+        
+        # If no compute operations defined, no need to run
+        if not hasattr(self, 'compute') or self.compute is None:
+            log.debug("No compute attribute, returning None for compute.")
+            return None
+            
+        if not hasattr(self.compute, '_computes'):
+            log.debug("No _computes attribute, returning None for compute.")
+            return None
+        
+        # Check if _computes is a dict with any non-empty lists
+        if isinstance(self.compute._computes, dict):
+            has_computes = any(
+                isinstance(v, list) and len(v) > 0 
+                for v in self.compute._computes.values()
+            )
+            if not has_computes:
+                log.debug("No compute operations defined (all lists empty), returning None for compute.")
+                return None
+        elif not self.compute._computes:
+            log.debug("No compute operations defined, returning None for compute.")
+            return None
+        
+        # Return the focused index as valid for compute
+        log.debug(f"Returning focused index \"{current_index}\" as valid for compute.")
+        return current_index
 
     def get_column(self):
         """
