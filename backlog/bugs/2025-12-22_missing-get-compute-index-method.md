@@ -58,15 +58,24 @@ The method should identify whether a given index has compute operations that nee
 
 ## Implementation Notes
 
-**Inferred behavior:**
-Based on the calling context and the fact that it's used to gate `run_onchange()` calls, the method should:
+**Key insight - Why not just use `get_index()`?**
 
-1. Check if the provided `index` exists in the dataframe's indices
-2. Return the index if it's valid and the dataframe has compute operations
-3. Return `None` if:
-   - The index doesn't exist
-   - The dataframe has no compute operations defined
-   - The index is not valid for compute operations
+- `get_index()` (no params) → Returns the currently focused index value (`self._index`)
+- `get_compute_index(index)` (takes pandas Index) → Validation gate that:
+  1. Takes the **full pandas Index object** (all indices in dataframe)
+  2. Validates the currently focused index is still in the Index
+  3. Checks if compute operations are actually defined
+  4. Returns the focused index IF valid for compute, or `None` otherwise
+
+**Pattern in calling code:**
+```python
+if self.index is not None:  # Check: Does Index exist?
+    compute_index = data.get_compute_index(self.index)  # Validate: Is focused index valid?
+    if compute_index is not None:  # Only run if validated
+        run_onchange(data, compute_index, column)
+```
+
+**Purpose:** Defensive programming - centralizes validation logic to prevent `run_onchange()` being called with stale/invalid indices or when no compute operations are defined.
 
 **Implementation location:** `/Users/neil/lawrennd/lynguine/lynguine/assess/data.py`
 
@@ -74,26 +83,34 @@ Based on the calling context and the fact that it's used to gate `run_onchange()
 ```python
 def get_compute_index(self, index):
     """
-    Get the compute index for a given index if it's valid for compute operations.
+    Validate the currently focused index for compute operations.
     
-    This method is used by compute_onchange() to determine if compute operations
-    should run when a field value changes at a specific index.
+    Takes the full pandas Index object and returns the currently focused index
+    if it's valid for compute operations, or None otherwise. This acts as a
+    validation gate before calling compute.run_onchange().
     
-    :param index: The index to check for compute operations.
-    :type index: object
-    :return: The index if valid for compute operations, None otherwise.
+    :param index: The pandas Index object containing all dataframe indices
+    :type index: pd.Index
+    :return: The currently focused index if valid for compute, None otherwise
     :rtype: object or None
     """
-    # Check if index exists in the dataframe
-    if index not in self.index:
+    # Get the currently focused index
+    current_index = self.get_index()
+    
+    # If no focused index, nothing to compute
+    if current_index is None:
         return None
     
-    # Check if compute operations are defined
-    if self.compute is None or not self.compute._computes:
+    # If focused index isn't in the provided Index, invalid
+    if current_index not in index:
         return None
     
-    # Return the index if it's valid for compute operations
-    return index
+    # If no compute operations defined, no need to run
+    if self.compute is None or not hasattr(self.compute, '_computes') or not self.compute._computes:
+        return None
+    
+    # Return the focused index as valid for compute
+    return current_index
 ```
 
 **Test scenarios:**
