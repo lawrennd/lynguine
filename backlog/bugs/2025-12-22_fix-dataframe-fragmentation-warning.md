@@ -84,11 +84,12 @@ Task created to address DataFrame fragmentation warning identified during testin
 ### 2025-12-22 (Completed)
 
 Fixed DataFrame fragmentation issue in `_finalize_df` method:
-- Replaced iterative `df[column] = None` loop with batch operations using `assign()`
+- Replaced iterative `df[column] = None` loop with batch operations using `pd.concat(axis=1)`
 - Added handling for both CustomDataFrame and regular pandas DataFrames
-- For CustomDataFrame: directly modify underlying `_d["cache"]` DataFrame using `assign()`
-- For pandas DataFrame: use `assign()` directly
+- For CustomDataFrame: directly modify underlying `_d["cache"]` DataFrame using `pd.concat()`
+- For pandas DataFrame: use `pd.concat()` directly (not `assign()` which can still cause fragmentation)
 - Also fixed `set_index` issue to work with both DataFrame types
 - Created comprehensive test suite (`test_finalize_df_missing_columns.py`) with 6 test cases
-- All tests pass, no performance warnings, existing tests still pass
+- All tests pass with `-W error::pandas.errors.PerformanceWarning` (treats warnings as errors)
+- Existing tests still pass
 

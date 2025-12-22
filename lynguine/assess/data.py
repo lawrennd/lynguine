@@ -3043,19 +3043,20 @@ class CustomDataFrame(DataObject):
             missing_columns = [col for col in interface["columns"] if col not in df.columns]
             if missing_columns:
                 # Add all missing columns at once to avoid DataFrame fragmentation
-                # Create a dict with all missing columns and add them in batch
+                # Use pd.concat as recommended by pandas to avoid fragmentation
                 if hasattr(df, '_d') and hasattr(df, '_colspecs'):
                     # CustomDataFrame: add to underlying storage
                     if "cache" not in df._colspecs:
                         df._colspecs["cache"] = []
                         df._d["cache"] = pd.DataFrame(index=df.index)
-                    # Add all columns at once using assign on the underlying DataFrame
-                    df._d["cache"] = df._d["cache"].assign(**{col: None for col in missing_columns})
+                    # Create new DataFrame with missing columns and concat
+                    missing_df = pd.DataFrame({col: None for col in missing_columns}, index=df._d["cache"].index)
+                    df._d["cache"] = pd.concat([df._d["cache"], missing_df], axis=1)
                     df._colspecs["cache"].extend(missing_columns)
                 else:
-                    # Regular pandas DataFrame: add columns in batch using assign
-                    new_cols = {col: None for col in missing_columns}
-                    df = df.assign(**new_cols)
+                    # Regular pandas DataFrame: use pd.concat to avoid fragmentation
+                    missing_df = pd.DataFrame({col: None for col in missing_columns}, index=df.index)
+                    df = pd.concat([df, missing_df], axis=1)
             if strict_columns:
                 if "columns" not in interface:
                     errmsg = f"You can't have strict_columns set to True and not list the columns in the interface structure."
