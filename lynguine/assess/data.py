@@ -3039,9 +3039,23 @@ class CustomDataFrame(DataObject):
         
         if "columns" in interface:
             # Make sure the listed columns are present.
-            for column in interface["columns"]:
-                if column not in df.columns:
-                    df[column] = None
+            # Use batch operation to avoid DataFrame fragmentation
+            missing_columns = [col for col in interface["columns"] if col not in df.columns]
+            if missing_columns:
+                # Add all missing columns at once to avoid DataFrame fragmentation
+                # Create a dict with all missing columns and add them in batch
+                if hasattr(df, '_d') and hasattr(df, '_colspecs'):
+                    # CustomDataFrame: add to underlying storage
+                    if "cache" not in df._colspecs:
+                        df._colspecs["cache"] = []
+                        df._d["cache"] = pd.DataFrame(index=df.index)
+                    # Add all columns at once using assign on the underlying DataFrame
+                    df._d["cache"] = df._d["cache"].assign(**{col: None for col in missing_columns})
+                    df._colspecs["cache"].extend(missing_columns)
+                else:
+                    # Regular pandas DataFrame: add columns in batch using assign
+                    new_cols = {col: None for col in missing_columns}
+                    df = df.assign(**new_cols)
             if strict_columns:
                 if "columns" not in interface:
                     errmsg = f"You can't have strict_columns set to True and not list the columns in the interface structure."
@@ -3056,9 +3070,20 @@ class CustomDataFrame(DataObject):
 
         # Set the index column
         if index_column_name in df.columns:
-            index = pd.Index(df[index_column_name], name=index_column_name)
-            df.set_index(index, inplace=True)
-            del df[index_column_name]            
+            if hasattr(df, '_d') and hasattr(df, '_colspecs'):
+                # CustomDataFrame: set index on underlying DataFrames
+                for typ in df._d:
+                    if index_column_name in df._d[typ].columns:
+                        df._d[typ].index = pd.Index(df._d[typ][index_column_name], name=index_column_name)
+                        df._d[typ] = df._d[typ].drop(columns=[index_column_name])
+                # Remove from colspecs
+                for colspec_type in df._colspecs:
+                    if index_column_name in df._colspecs[colspec_type]:
+                        df._colspecs[colspec_type].remove(index_column_name)
+            else:
+                # Regular pandas DataFrame
+                df.index = pd.Index(df[index_column_name], name=index_column_name)
+                df = df.drop(columns=[index_column_name])            
                     
         return df
     

@@ -1,7 +1,7 @@
 ---
 id: "2025-12-22_fix-dataframe-fragmentation-warning"
 title: "Fix DataFrame fragmentation warning in _finalize_df"
-status: "Proposed"
+status: "Completed"
 priority: "Medium"
 created: "2025-12-22"
 last_updated: "2025-12-22"
@@ -37,11 +37,11 @@ This approach has poor performance because each assignment causes pandas to crea
 
 ## Acceptance Criteria
 
-- [ ] Replace the iterative column addition with a batch operation using `pd.concat(axis=1)` or similar
-- [ ] Ensure all missing columns from `interface["columns"]` are still added with `None` values
-- [ ] Verify that the PerformanceWarning no longer appears
-- [ ] Ensure existing tests pass
-- [ ] Add a test case that verifies multiple missing columns are added efficiently
+- [x] Replace the iterative column addition with a batch operation using `pd.concat(axis=1)` or similar
+- [x] Ensure all missing columns from `interface["columns"]` are still added with `None` values
+- [x] Verify that the PerformanceWarning no longer appears
+- [x] Ensure existing tests pass
+- [x] Add a test case that verifies multiple missing columns are added efficiently
 
 ## Implementation Notes
 
@@ -80,4 +80,15 @@ This approach has poor performance because each assignment causes pandas to crea
 ### 2025-12-22
 
 Task created to address DataFrame fragmentation warning identified during testing.
+
+### 2025-12-22 (Completed)
+
+Fixed DataFrame fragmentation issue in `_finalize_df` method:
+- Replaced iterative `df[column] = None` loop with batch operations using `assign()`
+- Added handling for both CustomDataFrame and regular pandas DataFrames
+- For CustomDataFrame: directly modify underlying `_d["cache"]` DataFrame using `assign()`
+- For pandas DataFrame: use `assign()` directly
+- Also fixed `set_index` issue to work with both DataFrame types
+- Created comprehensive test suite (`test_finalize_df_missing_columns.py`) with 6 test cases
+- All tests pass, no performance warnings, existing tests still pass
 
