@@ -1,10 +1,10 @@
 ---
 id: 2024-12-24_yaml-block-scalars
 title: "Use block scalars for multiline strings in YAML output"
-status: Proposed
+status: Completed
 priority: Medium
 created: 2024-12-24
-updated: 2024-12-24
+updated: 2025-12-24
 owner: 
 tags:
   - yaml
@@ -26,11 +26,13 @@ Summary Comment: "This thesis covers the challenges of integrating machine\
 
 **Desired output:**
 ```yaml
-Summary Comment: |
+Summary Comment: |-
   This thesis covers the challenges of integrating machine
   learning solutions into affective robotics. In particular the case
   where the robots continually learn is considered.
 ```
+
+*(Note: `|-` is literal block scalar with trailing newlines stripped - cleaner than `|`)*
 
 ## Motivation
 
@@ -73,18 +75,28 @@ def write_yaml_file(data, filename):
 ```
 
 **Considerations:**
-- Use `|` (literal) to preserve line breaks
+- PyYAML produces `|-` (literal, strip trailing newlines) with `style='|'` - this is correct
 - Could use `>` (folded) for paragraph text, but `|` is safer
 - May want to make this configurable via `details` parameter
 - Consider adding `default_flow_style=False` for nested structures
 
+**Verified behavior:**
+```python
+# Tested with PyYAML - produces:
+# short: single line
+# long: |-
+#   This is a long string
+#   with multiple lines
+#   of text.
+```
+
 ## Acceptance Criteria
 
-- [ ] Multiline strings in YAML output use `|` block scalar style
-- [ ] Short single-line strings remain inline
-- [ ] Existing YAML reading functionality unchanged
-- [ ] Tests added for multiline string formatting
-- [ ] Documentation updated
+- [x] Multiline strings in YAML output use `|` block scalar style
+- [x] Short single-line strings remain inline
+- [x] Existing YAML reading functionality unchanged
+- [x] Tests added for multiline string formatting
+- [x] Documentation updated
 
 ## Implementation Notes
 
@@ -107,4 +119,32 @@ def write_yaml_file(data, filename):
 
 ### 2024-12-24
 Task created with Proposed status. Identified during referia YAML output development.
+
+### 2025-12-24
+**Status: Completed**
+
+Implementation completed with the following changes:
+
+1. **Bug Fix**: Fixed `write_yaml_file()` to use `Dumper=yaml.SafeDumper` (line 829 of `lynguine/access/io.py`)
+   - Previously, the custom `multiline_str_representer` was defined but never used
+   - Now properly uses the representer to output multiline strings with `|` block scalar style
+
+2. **Tests Added**: Added comprehensive tests in `lynguine/tests/test_access_io.py`:
+   - `test_write_yaml_file` - Updated to verify SafeDumper is used
+   - `test_write_yaml_file_multiline_strings` - Tests block scalar formatting for multiline strings
+   - `test_write_yaml_file_special_characters` - Tests tabs, quotes, backslashes, and mixed content
+   - `test_write_yaml_file_unicode_preservation` - Tests Chinese characters, emoji, and multiline unicode
+
+3. **Verification**: All tests pass, confirming:
+   - ✅ Multiline strings use `|-` block scalar format
+   - ✅ Single-line strings remain inline
+   - ✅ Unicode characters (世界, 🌍) preserved correctly with `allow_unicode=True`
+   - ✅ Special characters (tabs, quotes, backslashes) handled correctly
+   - ✅ Round-trip reading/writing maintains data integrity
+
+**Technical Details**:
+- Uses `|` (literal) style for all multiline strings (preserves line breaks exactly)
+- Does not use `>` (folded) style - this is intentional for safety and predictability
+- Unicode support via `allow_unicode=True` parameter
+- Tabs remain escaped as `\t` in YAML (correct behavior)
 
