@@ -1,10 +1,10 @@
 ---
-id: 2024-12-24_yaml-block-scalars
+id: 2025-12-25_yaml-block-scalars
 title: "Use block scalars for multiline strings in YAML output"
 status: Completed
 priority: Medium
-created: 2024-12-24
-updated: 2025-12-24
+created: 2025-12-25
+updated: 2025-12-25
 owner: 
 tags:
   - yaml
@@ -117,34 +117,47 @@ def write_yaml_file(data, filename):
 
 ## Progress Updates
 
-### 2024-12-24
+### 2025-12-25
 Task created with Proposed status. Identified during referia YAML output development.
 
-### 2025-12-24
 **Status: Completed**
 
 Implementation completed with the following changes:
 
-1. **Bug Fix**: Fixed `write_yaml_file()` to use `Dumper=yaml.SafeDumper` (line 829 of `lynguine/access/io.py`)
+1. **Initial Bug Fix**: Fixed `write_yaml_file()` to use `Dumper=yaml.SafeDumper`
    - Previously, the custom `multiline_str_representer` was defined but never used
-   - Now properly uses the representer to output multiline strings with `|` block scalar style
+   - This fixed short multiline strings but revealed a deeper issue
 
-2. **Tests Added**: Added comprehensive tests in `lynguine/tests/test_access_io.py`:
-   - `test_write_yaml_file` - Updated to verify SafeDumper is used
+2. **Root Cause Discovered**: PyYAML's Emitter overrides representer style choices for long strings
+   - Long multiline strings (>500 chars) were still using quoted format with escaped `\n`
+   - PyYAML falls back to quoted strings when complexity threshold is exceeded
+   - The `width=70` parameter was also removed to give PyYAML more flexibility
+
+3. **Final Solution - Custom Dumper**: Created `LynguineSafeDumper` class
+   - Subclasses `yaml.SafeDumper` to preserve safety features
+   - Overrides `choose_scalar_style()` to force block scalar style for multiline strings
+   - Prevents PyYAML from falling back to quoted strings for long text
+   - Handles strings of any length (tested up to 3000+ characters)
+
+4. **Tests Added**: Added comprehensive tests in `lynguine/tests/test_access_io.py`:
+   - `test_write_yaml_file` - Updated to verify LynguineSafeDumper is used
    - `test_write_yaml_file_multiline_strings` - Tests block scalar formatting for multiline strings
    - `test_write_yaml_file_special_characters` - Tests tabs, quotes, backslashes, and mixed content
    - `test_write_yaml_file_unicode_preservation` - Tests Chinese characters, emoji, and multiline unicode
 
-3. **Verification**: All tests pass, confirming:
-   - ✅ Multiline strings use `|-` block scalar format
+5. **Verification**: All 15 YAML tests pass, confirming:
+   - ✅ Multiline strings use `|-` or `|` block scalar format
+   - ✅ Works for strings of any length (short and 2500+ char strings)
    - ✅ Single-line strings remain inline
    - ✅ Unicode characters (世界, 🌍) preserved correctly with `allow_unicode=True`
-   - ✅ Special characters (tabs, quotes, backslashes) handled correctly
+   - ✅ Special characters (tabs, quotes, backslashes, asterisks) handled correctly
    - ✅ Round-trip reading/writing maintains data integrity
+   - ✅ Referia review output now uses clean block scalar format
 
 **Technical Details**:
 - Uses `|` (literal) style for all multiline strings (preserves line breaks exactly)
 - Does not use `>` (folded) style - this is intentional for safety and predictability
 - Unicode support via `allow_unicode=True` parameter
 - Tabs remain escaped as `\t` in YAML (correct behavior)
+- Custom dumper approach works around PyYAML's internal style overriding for long strings
 

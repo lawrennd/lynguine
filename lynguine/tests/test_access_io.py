@@ -4,6 +4,7 @@ import pandas as pd
 import numpy as np
 import tempfile
 import pytest
+import yaml
 from pytest_mock import mocker
 from unittest.mock import patch, mock_open, MagicMock
 from datetime import datetime
@@ -458,6 +459,83 @@ def test_write_yaml_file(mocker):
 
     mock_open.assert_called_once_with(filename, "w")
     mock_yaml_dump.assert_called_once()
+    # Verify LynguineSafeDumper (custom dumper) is used
+    call_kwargs = mock_yaml_dump.call_args[1]
+    dumper_class = call_kwargs['Dumper']
+    # Check it's our custom dumper (subclass of SafeDumper)
+    assert issubclass(dumper_class, yaml.SafeDumper)
+    assert dumper_class.__name__ == 'LynguineSafeDumper'
+
+# test for write_yaml_file with multiline strings
+def test_write_yaml_file_multiline_strings(tmp_path):
+    """Test that multiline strings use block scalar format."""
+    test_file = tmp_path / "test_multiline.yaml"
+    
+    data = {
+        'simple': 'Hello',
+        'multiline': 'Line 1\nLine 2\nLine 3',
+        'unicode': 'Hello 世界 🌍',
+        'unicode_multiline': 'Unicode text:\n世界\n🌍',
+    }
+    
+    io_module.write_yaml_file(data, str(test_file))
+    
+    # Read back the file content as text to check formatting
+    with open(test_file, 'r') as f:
+        content = f.read()
+    
+    # Multiline strings should use block scalar (|- or |)
+    assert 'multiline: |-' in content or 'multiline: |' in content
+    # Single line strings should not use block scalar
+    assert 'simple: Hello' in content or 'simple: |-' not in content
+    # Unicode should be preserved
+    assert '世界' in content
+    assert '🌍' in content
+
+# test for write_yaml_file with special characters
+def test_write_yaml_file_special_characters(tmp_path):
+    """Test that special characters are handled correctly."""
+    test_file = tmp_path / "test_special.yaml"
+    
+    data = {
+        'tabs': 'Col1\tCol2\tCol3',
+        'quotes': 'He said "Hello"',
+        'backslash': 'Path\\to\\file',
+        'mixed': 'Text:\n- Item 1\n- Item 2',
+    }
+    
+    io_module.write_yaml_file(data, str(test_file))
+    
+    # Read back and parse to verify round-trip
+    result = io_module.read_yaml_file(str(test_file))
+    
+    # Verify data integrity
+    assert result['tabs'] == 'Col1\tCol2\tCol3'
+    assert result['quotes'] == 'He said "Hello"'
+    assert result['backslash'] == 'Path\\to\\file'
+    assert result['mixed'] == 'Text:\n- Item 1\n- Item 2'
+
+# test for write_yaml_file unicode preservation
+def test_write_yaml_file_unicode_preservation(tmp_path):
+    """Test that unicode characters are preserved correctly."""
+    test_file = tmp_path / "test_unicode.yaml"
+    
+    data = {
+        'chinese': '你好世界',
+        'emoji': '🎉🌟💖',
+        'mixed': 'Hello 世界! 🌍',
+        'multiline_unicode': '第一行\n第二行\n第三行',
+    }
+    
+    io_module.write_yaml_file(data, str(test_file))
+    
+    # Read back and verify
+    result = io_module.read_yaml_file(str(test_file))
+    
+    assert result['chinese'] == '你好世界'
+    assert result['emoji'] == '🎉🌟💖'
+    assert result['mixed'] == 'Hello 世界! 🌍'
+    assert result['multiline_unicode'] == '第一行\n第二行\n第三行'
 
 # test for read_yaml_file
 def test_read_yaml_meta_file(mocker):

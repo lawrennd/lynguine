@@ -75,7 +75,28 @@ def multiline_str_representer(dumper, data):
     return dumper.represent_scalar("tag:yaml.org,2002:str", data)
 
 
-yaml.add_representer(str, multiline_str_representer, Dumper=yaml.SafeDumper)
+# Custom dumper that forces block scalars for multiline strings
+class LynguineSafeDumper(yaml.SafeDumper):
+    def choose_scalar_style(self):
+        """Override to force block scalar style for multiline strings."""
+        # Call parent to get initial style choice
+        if self.event.style:
+            self.event.style = self.event.style
+        else:
+            # Default from parent
+            if (not self.simple_key_context and
+                (self.flow_level and self.event.value in '[]{}:,')):
+                self.event.style = "'"
+            
+        # Force block literal style for multiline strings
+        if '\n' in self.event.value and self.event.style == '|':
+            # Keep the block scalar style that was requested
+            return self.event.style
+        
+        return super().choose_scalar_style()
+
+# Register the representer with our custom dumper
+LynguineSafeDumper.add_representer(str, multiline_str_representer)
 
 # class EnvTag(yaml.YAMLObject):
 #     yaml_tag = u'!ENV'
@@ -826,7 +847,8 @@ def write_yaml_file(data, filename):
     with open(filename, "w") as stream:
         try:
             log.debug(f'Writing yaml file "{filename}".')
-            yaml.dump(writedata, stream, sort_keys=False, allow_unicode=True, width=70)
+            # Use custom dumper that forces block scalars for multiline strings
+            yaml.dump(writedata, stream, Dumper=LynguineSafeDumper, sort_keys=False, allow_unicode=True)
         except yaml.YAMLError as exc:
             log.warning(exc)
 
