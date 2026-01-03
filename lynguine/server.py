@@ -20,6 +20,7 @@ from pathlib import Path
 import traceback
 
 # Import lynguine components
+from lynguine import __version__
 from lynguine.config.interface import Interface
 from lynguine.access import io
 from lynguine.log import Logger
@@ -380,7 +381,7 @@ class LynguineHandler(BaseHTTPRequestHandler):
         self.send_json_response({
             'status': 'ok',
             'server': 'lynguine-server-poc',
-            'version': '0.1.0'
+            'version': __version__
         })
     
     def handle_read_data(self, request_data: Dict[str, Any]):
@@ -581,7 +582,7 @@ class LynguineHandler(BaseHTTPRequestHandler):
             status_info = {
                 'status': 'ok',
                 'server': 'lynguine-server',
-                'version': '0.2.0',
+                'version': __version__,
                 'pid': os.getpid(),
                 'uptime_seconds': uptime_seconds,
                 'memory': {
@@ -617,7 +618,7 @@ class LynguineHandler(BaseHTTPRequestHandler):
             basic_status = {
                 'status': 'ok',
                 'server': 'lynguine-server',
-                'version': '0.2.0',
+                'version': __version__,
                 'pid': os.getpid(),
                 'message': 'Install psutil for detailed diagnostics'
             }
