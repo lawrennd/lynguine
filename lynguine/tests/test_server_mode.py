@@ -73,6 +73,7 @@ def test_config_file(tmp_path):
   cols:
     - name
     - email
+  index: name
 """
     config_file = tmp_path / "test_config.yml"
     config_file.write_text(config_content)
@@ -82,6 +83,11 @@ def test_config_file(tmp_path):
 @pytest.fixture
 def server_process():
     """Start a test server in a separate process"""
+    # Clean up any leftover lockfile first
+    lockfile = get_lockfile_path(host=TEST_HOST, port=TEST_PORT)
+    if lockfile.exists():
+        lockfile.unlink()
+    
     proc = Process(target=_run_test_server, daemon=True)
     proc.start()
     
@@ -104,6 +110,10 @@ def server_process():
     if proc.is_alive():
         proc.kill()
         proc.join()
+    
+    # Clean up lockfile
+    if lockfile.exists():
+        lockfile.unlink()
 
 
 @pytest.fixture
