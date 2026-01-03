@@ -1,0 +1,11 @@
+# Test configuration for lynguine server mode PoC
+# This is a minimal configuration for benchmarking
+
+input:
+  type: fake
+  nrows: 100
+  cols:
+    - name
+    - email
+    - city
+
