@@ -357,6 +357,94 @@ class TestIdleTimeout:
             process.join(timeout=2)
 
 
+class TestAutoStart:
+    """Tests for client auto-start capability"""
+    
+    def test_client_auto_start_disabled_by_default(self):
+        """Test that auto-start is disabled by default"""
+        client = ServerClient(server_url='http://127.0.0.1:9999')  # Non-existent server
+        assert client.auto_start is False
+        assert client.ping() is False
+    
+    def test_client_auto_start_enabled(self):
+        """Test that client can auto-start server"""
+        import time
+        
+        # Use a different port to avoid conflicts
+        test_port = TEST_PORT + 20
+        test_url = f'http://127.0.0.1:{test_port}'
+        
+        # Create client with auto-start enabled and idle timeout
+        client = ServerClient(
+            server_url=test_url,
+            auto_start=True,
+            idle_timeout=300  # 5 minutes
+        )
+        
+        try:
+            # Server should not be running initially
+            assert client.ping() is False
+            
+            # Trigger auto-start by making a request
+            health = client.health_check()
+            assert health['status'] == 'ok'
+            
+            # Server should now be running
+            assert client.ping() is True
+            
+            # Read data should also work
+            df = client.read_data(data_source={'type': 'fake', 'nrows': 5, 'cols': ['name']})
+            assert len(df) == 5
+            
+        finally:
+            client.close()
+            # Give server time to shut down via idle timeout
+            time.sleep(1)
+    
+    def test_auto_start_with_read_data(self):
+        """Test that auto-start works when first operation is read_data"""
+        import time
+        
+        test_port = TEST_PORT + 21
+        test_url = f'http://127.0.0.1:{test_port}'
+        
+        client = ServerClient(
+            server_url=test_url,
+            auto_start=True,
+            idle_timeout=60  # 1 minute
+        )
+        
+        try:
+            # Server should not be running
+            assert client.ping() is False
+            
+            # read_data should auto-start server
+            df = client.read_data(data_source={'type': 'fake', 'nrows': 10, 'cols': ['name', 'email']})
+            assert len(df) == 10
+            
+            # Server should now be available
+            assert client.ping() is True
+            
+        finally:
+            client.close()
+            time.sleep(1)
+    
+    def test_auto_start_fails_gracefully(self):
+        """Test that auto-start fails gracefully with invalid config"""
+        # This test verifies error handling when auto-start fails
+        # (e.g., python not in PATH, invalid port, etc.)
+        
+        # Use an invalid/reserved port that will fail
+        client = ServerClient(
+            server_url='http://127.0.0.1:1',  # Port 1 is restricted
+            auto_start=True
+        )
+        
+        # Should raise RuntimeError when server can't be started
+        with pytest.raises(RuntimeError, match="Server not available"):
+            client.health_check()
+
+
 class TestPhase2Endpoints:
     """Tests for Phase 2 endpoints (write_data, compute, status)"""
     

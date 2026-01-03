@@ -4,11 +4,14 @@ Lynguine Client - HTTP client for lynguine server mode
 This module provides a client interface for connecting to a lynguine server,
 enabling fast repeated access without startup costs.
 
-This is Phase 1: Proof of Concept - minimal implementation for validation.
+Phase 1: Proof of Concept - basic functionality validated
+Phase 2: Core Features - auto-start capability
 """
 
 import json
 import time
+import subprocess
+import urllib.parse
 from typing import Dict, Any, Optional
 import pandas as pd
 
@@ -40,13 +43,17 @@ class ServerClient:
     def __init__(
         self, 
         server_url: str = 'http://127.0.0.1:8765',
-        timeout: float = 30.0
+        timeout: float = 30.0,
+        auto_start: bool = False,
+        idle_timeout: int = 0
     ):
         """
         Initialize the server client
         
         :param server_url: URL of the lynguine server (default: http://127.0.0.1:8765)
         :param timeout: Request timeout in seconds (default: 30.0)
+        :param auto_start: Auto-start server if not running (default: False)
+        :param idle_timeout: Server idle timeout in seconds when auto-starting (0=disabled, default: 0)
         :raises ImportError: If requests library is not installed
         """
         if not HAS_REQUESTS:
@@ -57,9 +64,76 @@ class ServerClient:
         
         self.server_url = server_url.rstrip('/')
         self.timeout = timeout
+        self.auto_start = auto_start
+        self.idle_timeout = idle_timeout
         self._session = requests.Session()
+        self._server_process = None  # Track auto-started server process
         
-        log.debug(f"Initialized ServerClient for {self.server_url}")
+        log.debug(f"Initialized ServerClient for {self.server_url} (auto_start={auto_start})")
+    
+    def _start_server(self) -> bool:
+        """
+        Start a lynguine server as a subprocess
+        
+        :return: True if server started successfully, False otherwise
+        """
+        # Parse server URL to get host and port
+        parsed = urllib.parse.urlparse(self.server_url)
+        host = parsed.hostname or '127.0.0.1'
+        port = parsed.port or 8765
+        
+        log.info(f"Auto-starting lynguine server on {host}:{port}")
+        
+        try:
+            # Build command
+            cmd = [
+                'python', '-m', 'lynguine.server',
+                '--host', host,
+                '--port', str(port)
+            ]
+            
+            if self.idle_timeout > 0:
+                cmd.extend(['--idle-timeout', str(self.idle_timeout)])
+            
+            # Start server as subprocess
+            self._server_process = subprocess.Popen(
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                start_new_session=True  # Detach from parent
+            )
+            
+            # Wait for server to be ready (with retries)
+            max_retries = 20
+            for i in range(max_retries):
+                time.sleep(0.5)
+                if self.ping():
+                    log.info(f"Server started successfully (PID: {self._server_process.pid})")
+                    return True
+            
+            log.error("Server failed to start within timeout")
+            return False
+            
+        except Exception as e:
+            log.error(f"Failed to start server: {e}")
+            return False
+    
+    def _ensure_server_available(self) -> bool:
+        """
+        Ensure server is available, auto-starting if needed
+        
+        :return: True if server is available, False otherwise
+        """
+        # Check if server is already running
+        if self.ping():
+            return True
+        
+        # If auto_start is enabled, try to start the server
+        if self.auto_start:
+            log.info("Server not available, attempting auto-start")
+            return self._start_server()
+        
+        return False
     
     def ping(self) -> bool:
         """
@@ -83,7 +157,11 @@ class ServerClient:
         
         :return: Server health information
         :raises requests.HTTPError: If request fails
+        :raises RuntimeError: If server is not available and auto-start failed
         """
+        if not self._ensure_server_available():
+            raise RuntimeError(f"Server not available at {self.server_url}")
+        
         response = self._session.get(
             f'{self.server_url}/api/health',
             timeout=self.timeout
@@ -110,8 +188,13 @@ class ServerClient:
         :param data_source: Direct data source specification (dict with 'type', 'filename', etc.)
         :return: DataFrame containing the data
         :raises ValueError: If neither interface_file nor data_source is provided
+        :raises RuntimeError: If server is not available and auto-start failed
         :raises requests.HTTPError: If request fails
         """
+        # Ensure server is available
+        if not self._ensure_server_available():
+            raise RuntimeError(f"Server not available at {self.server_url}")
+        
         # Build request
         request_data = {}
         
@@ -161,10 +244,20 @@ class ServerClient:
         return df
     
     def close(self):
-        """Close the client session"""
+        """
+        Close the client session
+        
+        Note: Does NOT stop auto-started servers by design.
+        Auto-started servers remain running for other clients and will
+        shut down via idle timeout if configured.
+        """
         if self._session:
             self._session.close()
             log.debug("Closed ServerClient session")
+        
+        # Note: We intentionally do NOT terminate self._server_process
+        # The server should remain running for other clients and will
+        # shut down via idle timeout if configured
     
     def __enter__(self):
         """Context manager entry"""
