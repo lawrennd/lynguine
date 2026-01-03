@@ -50,6 +50,16 @@ Security
 
    security/index
 
+Server Mode
+-----------
+
+Lynguine Server Mode provides faster repeated access by keeping lynguine loaded in memory.
+
+.. toctree::
+   :maxdepth: 2
+
+   server_mode/index
+
 Contributing
 -----------
 
