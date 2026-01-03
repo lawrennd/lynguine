@@ -54,6 +54,16 @@ def _run_server_with_5sec_timeout():
     run_server(host=TEST_HOST, port=TEST_PORT+12, idle_timeout=5)
 
 
+def _run_retry_test_server():
+    """Module-level function for retry test (must be picklable)"""
+    run_server(host='127.0.0.1', port=TEST_PORT+30)
+
+
+def _run_crash_test_server():
+    """Module-level function for crash recovery test (must be picklable)"""
+    run_server(host='127.0.0.1', port=TEST_PORT+31)
+
+
 @pytest.fixture
 def test_config_file(tmp_path):
     """Create a temporary test configuration file"""
@@ -443,6 +453,162 @@ class TestAutoStart:
         # Should raise RuntimeError when server can't be started
         with pytest.raises(RuntimeError, match="Server not available"):
             client.health_check()
+
+
+class TestRetryLogic:
+    """Tests for Phase 3 retry logic and crash recovery"""
+    
+    def test_retry_disabled_with_zero_retries(self):
+        """Test that retry is disabled when max_retries=0"""
+        client = ServerClient(
+            server_url='http://127.0.0.1:9998',  # Non-existent
+            max_retries=0,
+            auto_start=False
+        )
+        
+        # Should fail immediately without retries
+        with pytest.raises(RuntimeError, match="Server not available"):
+            client.health_check()
+    
+    def test_retry_parameters_configurable(self):
+        """Test that retry parameters are configurable"""
+        client1 = ServerClient(max_retries=0, retry_delay=0.5)
+        assert client1.max_retries == 0
+        assert client1.retry_delay == 0.5
+        
+        client2 = ServerClient(max_retries=5, retry_delay=2.0)
+        assert client2.max_retries == 5
+        assert client2.retry_delay == 2.0
+        
+        client3 = ServerClient()  # Defaults
+        assert client3.max_retries == 3
+        assert client3.retry_delay == 1.0
+    
+    def test_retry_on_connection_error(self, tmp_path):
+        """Test that client retries on connection errors"""
+        import time
+        import multiprocessing
+        
+        test_port = TEST_PORT + 30
+        test_url = f'http://127.0.0.1:{test_port}'
+        
+        # Start server that we'll kill mid-request
+        process = multiprocessing.Process(target=_run_retry_test_server, daemon=True)
+        process.start()
+        time.sleep(2)  # Wait for server to start
+        
+        try:
+            client = ServerClient(
+                server_url=test_url,
+                max_retries=2,
+                retry_delay=0.5,
+                auto_start=False
+            )
+            
+            # Verify server is running
+            assert client.ping()
+            
+            # Kill the server
+            process.terminate()
+            process.join(timeout=2)
+            time.sleep(0.5)
+            
+            # Request should fail after retries
+            with pytest.raises(RuntimeError, match="(failed after 3 attempts|Server not available)"):
+                client.read_data(data_source={'type': 'fake', 'nrows': 5, 'cols': ['name']})
+        
+        finally:
+            if process.is_alive():
+                process.terminate()
+                process.join(timeout=2)
+    
+    def test_auto_restart_on_crash(self):
+        """Test that auto_start enables server restart after crash"""
+        import time
+        import multiprocessing
+        
+        test_port = TEST_PORT + 31
+        test_url = f'http://127.0.0.1:{test_port}'
+        
+        # Start server that we'll kill
+        process = multiprocessing.Process(target=_run_crash_test_server, daemon=True)
+        process.start()
+        time.sleep(2)
+        
+        try:
+            client = ServerClient(
+                server_url=test_url,
+                max_retries=2,
+                retry_delay=0.5,
+                auto_start=True,  # Enable auto-restart
+                idle_timeout=60
+            )
+            
+            # Verify server is running
+            assert client.ping()
+            
+            # Make initial request
+            df1 = client.read_data(data_source={'type': 'fake', 'nrows': 5, 'cols': ['name']})
+            assert len(df1) == 5
+            
+            # Kill the server
+            process.terminate()
+            process.join(timeout=2)
+            time.sleep(0.5)
+            
+            # Request should succeed after auto-restart
+            df2 = client.read_data(data_source={'type': 'fake', 'nrows': 3, 'cols': ['email']})
+            assert len(df2) == 3
+            
+            # Verify new server is running
+            assert client.ping()
+        
+        finally:
+            if process.is_alive():
+                process.terminate()
+                process.join(timeout=2)
+    
+    def test_no_retry_on_4xx_errors(self, server_process):
+        """Test that 4xx client errors don't trigger retry"""
+        import time
+        
+        client = ServerClient(
+            server_url=TEST_URL,
+            max_retries=3,
+            retry_delay=0.1
+        )
+        
+        start_time = time.time()
+        
+        # Invalid request (missing required params) should return 4xx
+        with pytest.raises((requests.HTTPError, ValueError)):
+            client.read_data()  # Missing both interface_file and data_source
+        
+        elapsed = time.time() - start_time
+        
+        # Should fail immediately without retries (< 0.5s)
+        assert elapsed < 0.5, f"4xx error should not retry, but took {elapsed:.2f}s"
+    
+    def test_successful_request_no_retry(self, server_process):
+        """Test that successful requests don't trigger retries"""
+        import time
+        
+        client = ServerClient(
+            server_url=TEST_URL,
+            max_retries=3,
+            retry_delay=1.0  # Long delay to detect if retry happens
+        )
+        
+        start_time = time.time()
+        
+        # Successful request
+        df = client.read_data(data_source={'type': 'fake', 'nrows': 5, 'cols': ['name']})
+        assert len(df) == 5
+        
+        elapsed = time.time() - start_time
+        
+        # Should complete quickly without retries (< 1s)
+        assert elapsed < 1.0, f"Successful request should not retry, but took {elapsed:.2f}s"
 
 
 class TestPhase2Endpoints:
