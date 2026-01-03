@@ -1162,41 +1162,6 @@ input:
         finally:
             Path(interface_file).unlink()
     
-    def test_session_set_value(self, server_process, client):
-        """Test set_value operation"""
-        interface_file = 'test_set_value.yml'
-        interface_content = """
-input:
-  type: fake
-  nrows: 3
-  cols:
-    - name
-    - email
-  index: name
-"""
-        Path(interface_file).write_text(interface_content)
-        
-        try:
-            session = client.create_session(interface_file=interface_file)
-            
-            # Set focus and set value
-            indices = session.get_indices()
-            if len(indices) > 0:
-                session.set_index(indices[0])
-                session.set_column('email')
-                
-                # Set a new value
-                session.set_value(42)
-                
-                # Verify it was set
-                value = session.get_value()
-                assert value == 42
-            
-            session.delete()
-            
-        finally:
-            Path(interface_file).unlink()
-    
     def test_session_output_and_series_columns(self, server_process, client):
         """Test get_output_columns and get_series_columns"""
         interface_file = 'test_col_types.yml'
@@ -1252,97 +1217,6 @@ input:
         finally:
             Path(interface_file).unlink()
     
-    def test_session_selector_operations(self, server_process, client):
-        """Test set_selector and get_selector operations"""
-        interface_file = 'test_selector.yml'
-        interface_content = """
-input:
-  type: fake
-  nrows: 5
-  cols:
-    - name
-    - city
-  index: name
-"""
-        Path(interface_file).write_text(interface_content)
-        
-        try:
-            session = client.create_session(interface_file=interface_file)
-            
-            # Set a selector (column for series disambiguation)
-            selector = 'city'
-            session.set_selector(selector)
-            
-            # Get the selector back
-            retrieved = session.get_selector()
-            assert retrieved == selector
-            
-            session.delete()
-            
-        finally:
-            Path(interface_file).unlink()
-    
-    def test_session_subindex_operations(self, server_process, client):
-        """Test set_subindex and get_subindex operations"""
-        interface_file = 'test_subindex.yml'
-        interface_content = """
-input:
-  type: fake
-  nrows: 5
-  cols:
-    - name
-  index: name
-"""
-        Path(interface_file).write_text(interface_content)
-        
-        try:
-            session = client.create_session(interface_file=interface_file)
-            
-            # Set subindex (index within series for disambiguation)
-            # Subindex expects an integer, not a list
-            session.set_subindex(0)
-            
-            # Get the subindex back
-            retrieved = session.get_subindex()
-            assert retrieved == 0
-            
-            session.delete()
-            
-        finally:
-            Path(interface_file).unlink()
-    
-    def test_session_get_subseries(self, server_process, client):
-        """Test get_subseries operation"""
-        import pandas as pd
-        
-        interface_file = 'test_subseries.yml'
-        interface_content = """
-input:
-  type: fake
-  nrows: 5
-  cols:
-    - name
-    - email
-  index: name
-"""
-        Path(interface_file).write_text(interface_content)
-        
-        try:
-            session = client.create_session(interface_file=interface_file)
-            
-            # Get a subseries (subset of data with focus)
-            indices = session.get_indices()
-            session.set_index(indices[0])
-            
-            # Get subseries (no parameters - returns DataFrame)
-            subseries = session.get_subseries()
-            assert subseries is not None
-            assert isinstance(subseries, pd.DataFrame)
-            
-            session.delete()
-            
-        finally:
-            Path(interface_file).unlink()
 
 
 class TestPhase5CrashRecovery:

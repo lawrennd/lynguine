@@ -630,8 +630,13 @@ class Session:
         return self
     
     def __exit__(self, exc_type, exc_val, exc_tb):
-        """Context manager exit"""
-        self.delete()
+        """Context manager exit - cleanup session if possible"""
+        try:
+            self.delete()
+        except Exception:
+            # Ignore deletion errors in context manager exit
+            # (server may be unavailable)
+            pass
     
     def __repr__(self):
         """String representation"""
