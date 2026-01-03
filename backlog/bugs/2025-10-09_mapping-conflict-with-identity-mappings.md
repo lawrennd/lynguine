@@ -1,18 +1,20 @@
 ---
-id: "2025-10-09_mapping-conflict-with-identity-mappings"
-title: "Mapping conflict when interface mapping overrides auto-generated identity mapping"
-status: "completed"
-priority: "Medium"
-created: "2025-10-09"
-last_updated: "2025-12-21"
-owner: "lawrennd"
+category: bugs
+created: '2025-10-09'
+dependencies: CIP-0003
 github_issue: null
-dependencies: "CIP-0003"
+id: 2025-10-09_mapping-conflict-with-identity-mappings
+last_updated: '2025-12-21'
+owner: lawrennd
+priority: Medium
+related_cips: []
+status: Completed
 tags:
 - backlog
 - bug
 - mapping
 - vstack
+title: Mapping conflict when interface mapping overrides auto-generated identity mapping
 ---
 
 # Task: Fix mapping conflict with identity mappings
@@ -156,4 +158,3 @@ The architectural fix has been completed:
 - Issue completely resolved
 
 **Status**: Marked as "completed" - proper architectural fix implemented.
-

@@ -1,18 +1,20 @@
 ---
-id: "2025-12-22_fix-dataframe-fragmentation-warning"
-title: "Fix DataFrame fragmentation warning in _finalize_df"
-status: "Completed"
-priority: "Medium"
-created: "2025-12-22"
-last_updated: "2025-12-22"
-owner: ""
-github_issue: ""
-dependencies: ""
+category: bugs
+created: '2025-12-22'
+dependencies: ''
+github_issue: ''
+id: 2025-12-22_fix-dataframe-fragmentation-warning
+last_updated: '2025-12-22'
+owner: ''
+priority: Medium
+related_cips: []
+status: Completed
 tags:
 - backlog
 - performance
 - pandas
 - bug
+title: Fix DataFrame fragmentation warning in _finalize_df
 ---
 
 # Task: Fix DataFrame Fragmentation Warning in _finalize_df
@@ -92,4 +94,3 @@ Fixed DataFrame fragmentation issue in `_finalize_df` method:
 - Created comprehensive test suite (`test_finalize_df_missing_columns.py`) with 6 test cases
 - All tests pass with `-W error::pandas.errors.PerformanceWarning` (treats warnings as errors)
 - Existing tests still pass
-

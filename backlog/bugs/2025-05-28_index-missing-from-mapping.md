@@ -1,15 +1,17 @@
 ---
-id: "2025-05-28_index-missing-from-mapping"
-title: "Index column not included in mapping generation"
-status: "Completed"
-priority: "High"
-effort: "Medium"
-type: "bug"
-created: "2025-05-28"
-last_updated: "2025-05-28"
-owner: "lawrennd"
-github_issue: null
+category: bugs
+created: '2025-05-28'
 dependencies: null
+effort: Medium
+github_issue: null
+id: 2025-05-28_index-missing-from-mapping
+last_updated: '2025-05-28'
+owner: lawrennd
+priority: High
+related_cips: []
+status: Completed
+title: Index column not included in mapping generation
+type: bug
 ---
 
 ## Description
@@ -99,4 +101,4 @@ Fixed the issue by:
 2. Adding a comprehensive test case to verify the fix
 3. Running all tests to ensure no regressions
 
-The fix ensures that the index column is always included in the mapping, regardless of whether it's present as a DataFrame column, which was the root cause of the issue. 
+The fix ensures that the index column is always included in the mapping, regardless of whether it's present as a DataFrame column, which was the root cause of the issue.

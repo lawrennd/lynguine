@@ -1,18 +1,20 @@
 ---
-id: "2025-10-09_investigate-mapping-test-failure"
-title: "Investigate why identity mapping bug cannot be minimally reproduced"
-status: "completed"
-priority: "Medium"
-created: "2025-10-09"
-last_updated: "2025-12-21"
-owner: "lawrennd"
-github_issue: null
+category: infrastructure
+created: '2025-10-09'
 dependencies: null
+github_issue: null
+id: 2025-10-09_investigate-mapping-test-failure
+last_updated: '2025-12-21'
+owner: lawrennd
+priority: Medium
+related_cips: []
+status: Completed
 tags:
 - backlog
 - investigation
 - testing
 - mapping
+title: Investigate why identity mapping bug cannot be minimally reproduced
 ---
 
 # Task: Investigate Mapping Bug Reproducibility Failure
@@ -252,4 +254,3 @@ This investigation has been fully completed:
 - All acceptance criteria met
 
 **Status**: Marked as completed. Investigation objective achieved and issue fully resolved.
-

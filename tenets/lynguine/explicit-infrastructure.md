@@ -2,8 +2,11 @@
 id: "explicit-infrastructure"
 title: "Explicit Infrastructure"
 created: "2025-10-10"
-last_updated: "2025-10-10"
+last_updated: "2026-01-03"
 version: "1.0"
+status: "Active"
+last_reviewed: "2026-01-03"
+review_frequency: "Quarterly"
 tags:
 - tenet
 - infrastructure

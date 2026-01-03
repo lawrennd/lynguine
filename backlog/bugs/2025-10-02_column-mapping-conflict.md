@@ -1,18 +1,20 @@
 ---
-id: "2025-10-02_column-mapping-conflict"
-title: "Column Mapping Conflict with Auto-Generated Names"
-status: "Completed"
-priority: "High"
-created: "2025-10-02"
-last_updated: "2025-10-02"
-owner: "AI Assistant"
-github_issue: ""
-dependencies: ""
+category: bugs
+created: '2025-10-02'
+dependencies: ''
+github_issue: ''
+id: 2025-10-02_column-mapping-conflict
+last_updated: '2025-10-02'
+owner: AI Assistant
+priority: High
+related_cips: []
+status: Completed
 tags:
 - backlog
 - bug
 - mapping
 - column-names
+title: Column Mapping Conflict with Auto-Generated Names
 ---
 
 # Task: Column Mapping Conflict with Auto-Generated Names

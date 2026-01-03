@@ -1,18 +1,20 @@
 ---
-id: "2025-12-21_implement-add-column-drop-column"
-title: "Implement add_column() and drop_column() Methods in CustomDataFrame"
-status: "completed"
-priority: "Medium"
-created: "2025-12-21"
-last_updated: "2025-12-21"
-owner: ""
-github_issue: ""
-dependencies: ""
+category: features
+created: '2025-12-21'
+dependencies: ''
+github_issue: ''
+id: 2025-12-21_implement-add-column-drop-column
+last_updated: '2025-12-21'
+owner: ''
+priority: Medium
+related_cips: []
+status: Completed
 tags:
 - backlog
 - api
 - usability
 - features
+title: Implement add_column() and drop_column() Methods in CustomDataFrame
 ---
 
 # Task: Implement add_column() and drop_column() Methods
@@ -156,5 +158,3 @@ def drop_column(self, column_name):
 ### 2025-12-21 - Created
 
 Task created. Identified that `add_column()` and `drop_column()` exist in API but raise `NotImplementedError`, while the functionality already exists via `__setitem__`. Proposed implementation as convenience methods.
-
-

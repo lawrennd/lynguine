@@ -1,15 +1,17 @@
 ---
-id: "2025-05-05_readthedocs-setup"
-title: "Set Up ReadTheDocs Integration for Lynguine"
-status: "completed"
-priority: "Medium"
-effort: "Small"
-type: "documentation"
-created: "2025-05-05"
-last_updated: "2025-12-21"
-owner: "TBD"
-github_issue: null
+category: documentation
+created: '2025-05-05'
 dependencies: null
+effort: Small
+github_issue: null
+id: 2025-05-05_readthedocs-setup
+last_updated: '2025-12-21'
+owner: TBD
+priority: Medium
+related_cips: []
+status: Completed
+title: Set Up ReadTheDocs Integration for Lynguine
+type: documentation
 ---
 
 # Task: Set Up ReadTheDocs Integration
@@ -114,4 +116,4 @@ Successfully completed ReadTheDocs registration and integration:
 
 ### 2025-05-05
 
-Initial backlog item created. The .readthedocs.yml configuration file is already in place, but the project needs to be registered on the ReadTheDocs platform. 
+Initial backlog item created. The .readthedocs.yml configuration file is already in place, but the project needs to be registered on the ReadTheDocs platform.

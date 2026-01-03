@@ -1,19 +1,21 @@
 ---
-id: "2025-10-10_implement-proper-layering-fix"
-title: "Implement proper layering fix for mapping initialization timing conflict"
-status: "completed"
-priority: "Medium"
-created: "2025-10-10"
-last_updated: "2025-12-21"
-owner: "lawrennd"
+category: infrastructure
+created: '2025-10-10'
+dependencies: CIP-0003
 github_issue: null
-dependencies: "CIP-0003"
+id: 2025-10-10_implement-proper-layering-fix
+last_updated: '2025-12-21'
+owner: lawrennd
+priority: Medium
+related_cips: []
+status: Completed
 tags:
 - backlog
 - infrastructure
 - mapping
 - layering
 - cip0003
+title: Implement proper layering fix for mapping initialization timing conflict
 ---
 
 # Task: Implement proper layering fix for mapping initialization timing conflict

@@ -1,19 +1,21 @@
 ---
-id: "2025-12-21_fix-read-files-sourceroot-conflict"
-title: "Fix read_files_extracts_file_type test failure with sourceRoot field conflict"
-status: "completed"
-priority: "Medium"
-created: "2025-12-21"
-last_updated: "2025-12-21"
-owner: "TBD"
-github_issue: ""
-dependencies: ""
+category: bugs
+created: '2025-12-21'
+dependencies: ''
+github_issue: ''
+id: 2025-12-21_fix-read-files-sourceroot-conflict
+last_updated: '2025-12-21'
+owner: TBD
+priority: Medium
+related_cips: []
+status: Completed
 tags:
 - backlog
 - bugs
 - testing
 - file-io
 - field-mapping
+title: Fix read_files_extracts_file_type test failure with sourceRoot field conflict
 ---
 
 # Task: Fix read_files_extracts_file_type test failure with sourceRoot field conflict
@@ -93,4 +95,3 @@ Root cause identified: **Two separate bugs**
 Test `test_read_files_extracts_file_type` now passes ✅
 
 This was a real production bug - files of different types in the same list would all be read using the first file's reader!
-

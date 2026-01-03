@@ -115,3 +115,4 @@ requirements.txt
 lynguine/clone_or_pull.py
 lynguine/replace_linguine.sh
 lynguine/ruby/
+.venv-vibesafe/

@@ -1,18 +1,20 @@
 ---
-id: "2025-12-21_fix-network-error-test-download"
-title: "Fix test_network_errors_in_download_url test failure"
-status: "completed"
-priority: "Medium"
-created: "2025-12-21"
-last_updated: "2025-12-21"
-owner: "TBD"
-github_issue: ""
-dependencies: ""
+category: bugs
+created: '2025-12-21'
+dependencies: ''
+github_issue: ''
+id: 2025-12-21_fix-network-error-test-download
+last_updated: '2025-12-21'
+owner: TBD
+priority: Medium
+related_cips: []
+status: Completed
 tags:
 - backlog
 - bugs
 - testing
 - download
+title: Fix test_network_errors_in_download_url test failure
 ---
 
 # Task: Fix test_network_errors_in_download_url test failure
@@ -82,4 +84,3 @@ The production code in `lynguine/access/download.py` correctly handles HTTPError
 Test `test_network_errors_in_download_url` now passes ✅
 
 The production code was actually correct - only the test needed fixing!
-

@@ -1,18 +1,20 @@
 ---
-id: "2025-12-21_fix-read-files-txt-type"
-title: "Fix read_files failure with unrecognized .txt file type"
-status: "completed"
-priority: "Medium"
-created: "2025-12-21"
-last_updated: "2025-12-21"
-owner: "TBD"
-github_issue: ""
-dependencies: ""
+category: bugs
+created: '2025-12-21'
+dependencies: ''
+github_issue: ''
+id: 2025-12-21_fix-read-files-txt-type
+last_updated: '2025-12-21'
+owner: TBD
+priority: Medium
+related_cips: []
+status: Completed
 tags:
 - backlog
 - bugs
 - testing
 - file-io
+title: Fix read_files failure with unrecognized .txt file type
 ---
 
 # Task: Fix read_files failure with unrecognized .txt file type
@@ -82,4 +84,3 @@ Changes made:
 - Test `test_read_files` now passes ✅
 
 The fix was straightforward: added txt file type recognition and a simple reader that returns file content in a dictionary format, consistent with other file type readers.
-

@@ -1,19 +1,21 @@
 ---
-id: "2025-12-22_os-keychain-master-key-storage"
-title: "Integrate OS-Level Keychain Storage for Master Key"
-status: "Proposed"
-priority: "High"
-created: "2025-12-22"
-last_updated: "2025-12-22"
-owner: "Neil Lawrence"
-github_issue: ""
-dependencies: "CIP-0005"
+category: features
+created: '2025-12-22'
+dependencies: CIP-0005
+github_issue: ''
+id: 2025-12-22_os-keychain-master-key-storage
+last_updated: '2025-12-22'
+owner: Neil Lawrence
+priority: High
+related_cips: []
+status: Proposed
 tags:
 - backlog
 - features
 - security
 - credentials
 - cross-platform
+title: Integrate OS-Level Keychain Storage for Master Key
 ---
 
 # Task: Integrate OS-Level Keychain Storage for Master Key
@@ -531,4 +533,3 @@ Task created. Current credential system requires `LYNGUINE_MASTER_KEY` in enviro
 4. Add comprehensive tests with mocks for all platforms
 5. Set up CI/CD testing on Windows/Linux/macOS
 6. Update documentation with platform-specific guides
-

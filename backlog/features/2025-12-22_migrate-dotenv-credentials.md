@@ -1,19 +1,21 @@
 ---
-id: "2025-12-22_migrate-dotenv-credentials"
-title: "Migrate .env File Credentials to Secure Credential Management"
-status: "Proposed"
-priority: "Medium"
-created: "2025-12-22"
-last_updated: "2025-12-22"
-owner: "Neil Lawrence"
-github_issue: ""
-dependencies: "CIP-0005"
+category: features
+created: '2025-12-22'
+dependencies: CIP-0005
+github_issue: ''
+id: 2025-12-22_migrate-dotenv-credentials
+last_updated: '2025-12-22'
+owner: Neil Lawrence
+priority: Medium
+related_cips: []
+status: Proposed
 tags:
 - backlog
 - features
 - security
 - credentials
 - migration
+title: Migrate .env File Credentials to Secure Credential Management
 ---
 
 # Task: Migrate .env File Credentials to Secure Credential Management
@@ -176,4 +178,3 @@ Task created. Multiple projects identified that use `.env` files for storing cre
 3. Inventory all credentials in `.env` files
 4. Run migration tool with dry-run first
 5. Execute migration and validate
-

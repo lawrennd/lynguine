@@ -1,17 +1,19 @@
 ---
-id: "2025-12-02_read-data-list-type-passes-dict"
-title: "read_data passes dict to read_list instead of extracting filelist"
-status: "Completed"
-priority: "High"
-created: "2025-12-02"
-last_updated: "2025-12-02"
-owner: "Neil Lawrence"
-github_issue: ""
-dependencies: ""
+category: bugs
+created: '2025-12-02'
+dependencies: ''
+github_issue: ''
+id: 2025-12-02_read-data-list-type-passes-dict
+last_updated: '2025-12-02'
+owner: Neil Lawrence
+priority: High
+related_cips: []
+status: Completed
 tags:
 - backlog
 - bug
 - io
+title: read_data passes dict to read_list instead of extracting filelist
 ---
 
 # Task: read_data passes dict to read_list instead of extracting filelist
@@ -110,4 +112,3 @@ Status updated to Ready. Ready for implementation of proposed fix.
 - Fix verified to work as expected without breaking any existing functionality
 
 Status updated to Completed.
-

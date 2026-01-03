@@ -1,18 +1,20 @@
 ---
-id: "2025-12-22_missing-get-compute-index-method"
-title: "Implement missing get_compute_index() method in CustomDataFrame"
-status: "Completed"
-priority: "High"
-created: "2025-12-22"
-last_updated: "2025-12-22"
-owner: ""
-github_issue: ""
-dependencies: ""
+category: bugs
+created: '2025-12-22'
+dependencies: ''
+github_issue: ''
+id: 2025-12-22_missing-get-compute-index-method
+last_updated: '2025-12-22'
+owner: ''
+priority: High
+related_cips: []
+status: Completed
 tags:
 - backlog
 - bug
 - compute
 - critical
+title: Implement missing get_compute_index() method in CustomDataFrame
 ---
 
 # Task: Implement missing get_compute_index() method in CustomDataFrame
@@ -154,4 +156,3 @@ Implemented `get_compute_index()` method in DataObject class:
   - Empty dataframes
   - Series-type dataframes with duplicate indices
   - Integration scenario matching referia usage pattern
-

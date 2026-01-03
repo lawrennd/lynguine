@@ -1,17 +1,19 @@
 ---
-id: "2025-12-03_document-secure-credential-usage"
-title: "Document Secure Credential Management System with Examples and Usage Guide"
-status: "Completed"
-priority: "High"
-created: "2025-12-03"
-last_updated: "2025-12-21"
-owner: "Neil Lawrence"
-github_issue: ""
-dependencies: ""
+category: documentation
+created: '2025-12-03'
+dependencies: ''
+github_issue: ''
+id: 2025-12-03_document-secure-credential-usage
+last_updated: '2025-12-21'
+owner: Neil Lawrence
+priority: High
+related_cips: []
+status: Completed
 tags:
 - backlog
 - documentation
 - security
+title: Document Secure Credential Management System with Examples and Usage Guide
 ---
 
 # Task: Document Secure Credential Management System with Examples and Usage Guide
@@ -173,5 +175,3 @@ Comprehensive review of CIP-0005 implementation confirms:
 ### 2025-12-03
 
 Task created. CIP-0005 is implemented but lacks practical user documentation with examples and usage guides. This is blocking user adoption of the secure credential management system.
-
-

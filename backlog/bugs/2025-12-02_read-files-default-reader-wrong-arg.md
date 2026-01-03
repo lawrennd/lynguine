@@ -1,17 +1,19 @@
 ---
-id: "2025-12-02_read-files-default-reader-wrong-arg"
-title: "read_files passes full filename to default_file_reader instead of file type"
-status: "Completed"
-priority: "High"
-created: "2025-12-02"
-last_updated: "2025-12-02"
-owner: "Neil Lawrence"
-github_issue: ""
-dependencies: ""
+category: bugs
+created: '2025-12-02'
+dependencies: ''
+github_issue: ''
+id: 2025-12-02_read-files-default-reader-wrong-arg
+last_updated: '2025-12-02'
+owner: Neil Lawrence
+priority: High
+related_cips: []
+status: Completed
 tags:
 - backlog
 - bug
 - io
+title: read_files passes full filename to default_file_reader instead of file type
 ---
 
 # Task: read_files passes full filename to default_file_reader instead of file type
@@ -101,4 +103,3 @@ Alternatively, a helper function could be added to derive the type from a filena
 ### 2025-12-02
 
 Task created. Issue discovered when testing `mdlist` publication list generation. The fix for `read_list` (passing dict instead of list) revealed this underlying issue in `read_files`.
-

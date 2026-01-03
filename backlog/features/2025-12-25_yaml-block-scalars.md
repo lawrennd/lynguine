@@ -1,16 +1,19 @@
 ---
-id: 2025-12-25_yaml-block-scalars
-title: "Use block scalars for multiline strings in YAML output"
-status: Completed
-priority: Medium
-created: 2025-12-25
-updated: 2025-12-25
-owner: 
-tags:
-  - yaml
-  - io
-  - formatting
+category: features
+created: &id001 2025-12-25
 dependencies: []
+id: 2025-12-25_yaml-block-scalars
+last_updated: *id001
+owner: null
+priority: Medium
+related_cips: []
+status: Completed
+tags:
+- yaml
+- io
+- formatting
+title: Use block scalars for multiline strings in YAML output
+updated: 2025-12-25
 ---
 
 ## Description
@@ -160,4 +163,3 @@ Implementation completed with the following changes:
 - Unicode support via `allow_unicode=True` parameter
 - Tabs remain escaped as `\t` in YAML (correct behavior)
 - Custom dumper approach works around PyYAML's internal style overriding for long strings
-
