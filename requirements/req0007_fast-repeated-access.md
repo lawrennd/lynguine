@@ -99,6 +99,7 @@ Applications that need to access lynguine functionality multiple times in quick 
 
 ## Acceptance Criteria
 
+### Phase 1-3: Basic Server Mode
 - [ ] Repeated lynguine operations are significantly faster than current approach
 - [ ] Startup overhead amortized across multiple calls
 - [ ] Compatible with existing lynguine API (no breaking changes)
@@ -108,6 +109,16 @@ Applications that need to access lynguine functionality multiple times in quick 
 - [ ] Memory usage remains reasonable with long-running processes
 - [ ] Graceful shutdown and cleanup
 - [ ] Performance metrics documented (startup time, operation time, memory)
+
+### Phase 5: Stateful Sessions (Advanced Use Case)
+- [ ] Support for interactive data exploration with minimal data transfer
+- [ ] Server can load and maintain data in memory (session state)
+- [ ] Clients can send lightweight index/value operations
+- [ ] Only indices and values transfer over HTTP, not full DataFrames
+- [ ] Session isolation (multiple clients, separate sessions)
+- [ ] Session timeout and automatic cleanup
+- [ ] Memory limits and monitoring per session
+- [ ] 100-1000x reduction in data transfer for interactive workflows
 
 ## User Stories
 
@@ -126,6 +137,14 @@ Applications that need to access lynguine functionality multiple times in quick 
 **As an application developer**, I want backward compatibility so that I can adopt the fast-access mode incrementally without rewriting existing code.
 
 **As a user**, I want predictable performance so that I can estimate how long operations will take.
+
+### Stateful Sessions (Advanced Use Case)
+
+**As a data analyst**, I want to explore large datasets interactively without transferring entire DataFrames over HTTP so that I can work efficiently with remote data.
+
+**As a data quality engineer**, I want to check data quality (null counts, duplicates, outliers) without transferring full datasets so that validation is fast and bandwidth-efficient.
+
+**As a data scientist**, I want to filter, slice, and sample large datasets on the server side so that only relevant subsets transfer over the network.
 
 ### Non-Use Cases (for clarity)
 
