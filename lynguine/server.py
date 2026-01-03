@@ -276,6 +276,7 @@ class LynguineHandler(BaseHTTPRequestHandler):
         """Handle POST requests"""
         # Update activity timestamp for idle timeout
         global _idle_timeout_manager
+        global _session_manager
         if _idle_timeout_manager:
             _idle_timeout_manager.update_activity()
         
@@ -305,10 +306,8 @@ class LynguineHandler(BaseHTTPRequestHandler):
                 self.handle_status()
             # Session endpoints
             elif self.path == '/api/sessions':
-                global _session_manager
                 server_session_handlers.handle_create_session(self, _session_manager, request_data)
             elif self.path.startswith('/api/sessions/'):
-                global _session_manager
                 server_session_handlers.handle_session_operation(self, _session_manager, self.path, request_data)
             else:
                 self.send_error_response(
@@ -325,6 +324,7 @@ class LynguineHandler(BaseHTTPRequestHandler):
         """Handle GET requests (health check, ping, status, sessions)"""
         # Update activity timestamp for idle timeout
         global _idle_timeout_manager
+        global _session_manager
         if _idle_timeout_manager:
             _idle_timeout_manager.update_activity()
         
@@ -336,10 +336,8 @@ class LynguineHandler(BaseHTTPRequestHandler):
             elif self.path == '/api/status':
                 self.handle_status()
             elif self.path == '/api/sessions':
-                global _session_manager
                 server_session_handlers.handle_list_sessions(self, _session_manager)
             elif self.path.startswith('/api/sessions/'):
-                global _session_manager
                 server_session_handlers.handle_session_operation(self, _session_manager, self.path, {})
             else:
                 self.send_error_response(
@@ -354,12 +352,12 @@ class LynguineHandler(BaseHTTPRequestHandler):
         """Handle DELETE requests (session deletion)"""
         # Update activity timestamp for idle timeout
         global _idle_timeout_manager
+        global _session_manager
         if _idle_timeout_manager:
             _idle_timeout_manager.update_activity()
         
         try:
             if self.path.startswith('/api/sessions/'):
-                global _session_manager
                 server_session_handlers.handle_delete_session(self, _session_manager, self.path)
             else:
                 self.send_error_response(
