@@ -34,6 +34,11 @@ def _run_test_server():
     run_server(host=TEST_HOST, port=TEST_PORT)
 
 
+def _run_shutdown_test_server():
+    """Module-level function for shutdown test (must be picklable)"""
+    run_server(host=TEST_HOST, port=TEST_PORT + 100)
+
+
 @pytest.fixture
 def test_config_file(tmp_path):
     """Create a temporary test configuration file"""
@@ -300,9 +305,6 @@ class TestServerShutdown:
         """Test that server cleans up resources on shutdown"""
         # Use a different port to avoid conflicts with other tests
         test_port = TEST_PORT + 100
-        
-        def _run_shutdown_test_server():
-            run_server(host=TEST_HOST, port=test_port)
         
         proc = Process(target=_run_shutdown_test_server, daemon=True)
         proc.start()
