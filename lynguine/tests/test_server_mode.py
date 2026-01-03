@@ -39,6 +39,21 @@ def _run_shutdown_test_server():
     run_server(host=TEST_HOST, port=TEST_PORT + 100)
 
 
+def _run_server_with_5min_timeout():
+    """Module-level function for idle timeout test (must be picklable)"""
+    run_server(host=TEST_HOST, port=TEST_PORT+10, idle_timeout=300)
+
+
+def _run_server_with_3sec_timeout():
+    """Module-level function for idle timeout test (must be picklable)"""
+    run_server(host=TEST_HOST, port=TEST_PORT+11, idle_timeout=3)
+
+
+def _run_server_with_5sec_timeout():
+    """Module-level function for idle timeout test (must be picklable)"""
+    run_server(host=TEST_HOST, port=TEST_PORT+12, idle_timeout=5)
+
+
 @pytest.fixture
 def test_config_file(tmp_path):
     """Create a temporary test configuration file"""
@@ -235,6 +250,111 @@ class TestReadDataOperation:
         client = ServerClient(server_url=TEST_URL)
         with pytest.raises(ValueError, match="Must provide either"):
             client.read_data()
+
+
+class TestIdleTimeout:
+    """Tests for idle timeout functionality"""
+    
+    def test_idle_timeout_disabled_by_default(self, server_process):
+        """Test that idle timeout is disabled by default"""
+        response = requests.get(f'{TEST_URL}/api/status')
+        assert response.status_code == 200
+        
+        data = response.json()
+        assert 'idle_timeout' in data
+        assert data['idle_timeout']['enabled'] is False
+    
+    def test_idle_timeout_status_info(self):
+        """Test status endpoint shows idle timeout information when enabled"""
+        import multiprocessing
+        import time
+        
+        # Start server with idle timeout
+        process = multiprocessing.Process(target=_run_server_with_5min_timeout, daemon=True)
+        process.start()
+        time.sleep(2)
+        
+        try:
+            # Check status
+            test_url = f'http://{TEST_HOST}:{TEST_PORT+10}'
+            response = requests.get(f'{test_url}/api/status')
+            assert response.status_code == 200
+            
+            data = response.json()
+            assert 'idle_timeout' in data
+            assert data['idle_timeout']['enabled'] is True
+            assert data['idle_timeout']['timeout_seconds'] == 300
+            assert 'idle_seconds' in data['idle_timeout']
+            assert 'remaining_seconds' in data['idle_timeout']
+            assert data['idle_timeout']['remaining_seconds'] <= 300
+        finally:
+            process.terminate()
+            process.join(timeout=2)
+    
+    def test_idle_timeout_triggers_shutdown(self):
+        """Test that server shuts down after idle timeout"""
+        import multiprocessing
+        import time
+        
+        # Start server with short idle timeout
+        process = multiprocessing.Process(target=_run_server_with_3sec_timeout, daemon=True)
+        process.start()
+        
+        test_url = f'http://{TEST_HOST}:{TEST_PORT+11}'
+        
+        # Wait for server to be ready (with retries)
+        max_retries = 10
+        for i in range(max_retries):
+            try:
+                response = requests.get(f'{test_url}/api/health', timeout=1)
+                if response.status_code == 200:
+                    break
+            except requests.ConnectionError:
+                if i == max_retries - 1:
+                    raise
+                time.sleep(0.5)
+        
+        # Verify server is running
+        response = requests.get(f'{test_url}/api/health')
+        assert response.status_code == 200
+        
+        # Wait for idle timeout (3 seconds idle timeout + check interval ~0.75s + buffer)
+        time.sleep(5)
+        
+        # Server should have shut down
+        with pytest.raises(requests.ConnectionError):
+            requests.get(f'{test_url}/api/health', timeout=1)
+        
+        # Cleanup
+        if process.is_alive():
+            process.terminate()
+        process.join(timeout=2)
+    
+    def test_activity_resets_idle_timer(self):
+        """Test that requests reset the idle timer"""
+        import multiprocessing
+        import time
+        
+        # Start server with short idle timeout
+        process = multiprocessing.Process(target=_run_server_with_5sec_timeout, daemon=True)
+        process.start()
+        time.sleep(1)
+        
+        test_url = f'http://{TEST_HOST}:{TEST_PORT+12}'
+        
+        try:
+            # Make requests every 2 seconds for 8 seconds
+            for _ in range(4):
+                time.sleep(2)
+                response = requests.get(f'{test_url}/api/health')
+                assert response.status_code == 200
+            
+            # Server should still be running because we kept it active
+            response = requests.get(f'{test_url}/api/health')
+            assert response.status_code == 200
+        finally:
+            process.terminate()
+            process.join(timeout=2)
 
 
 class TestPhase2Endpoints:

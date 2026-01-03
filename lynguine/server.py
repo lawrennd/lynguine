@@ -4,7 +4,8 @@ Lynguine Server Mode - HTTP/REST API for fast repeated access
 This module provides a simple HTTP server that keeps lynguine loaded in memory,
 avoiding the startup cost (pandas, numpy, etc.) for repeated operations.
 
-This is Phase 1: Proof of Concept - minimal implementation for validation.
+Phase 1: Proof of Concept - basic functionality validated
+Phase 2: Core Features - production-ready single-user server
 """
 
 import json
@@ -13,8 +14,10 @@ import os
 import socket
 import signal
 import atexit
+import time
+import threading
 from http.server import HTTPServer, BaseHTTPRequestHandler
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 from pathlib import Path
 import traceback
 
@@ -28,6 +31,84 @@ log = Logger(name="lynguine.server", level="info", filename="lynguine-server.log
 
 # Global reference for cleanup
 _lockfile_path = None
+
+# Global idle timeout manager
+_idle_timeout_manager: Optional['IdleTimeoutManager'] = None
+
+
+class IdleTimeoutManager:
+    """
+    Manages idle timeout for server auto-shutdown
+    
+    Monitors server activity and triggers graceful shutdown
+    after a period of inactivity.
+    """
+    
+    def __init__(self, timeout_seconds: int, shutdown_callback):
+        """
+        Initialize idle timeout manager
+        
+        :param timeout_seconds: Seconds of inactivity before shutdown (0 = disabled)
+        :param shutdown_callback: Function to call for shutdown
+        """
+        self.timeout_seconds = timeout_seconds
+        self.shutdown_callback = shutdown_callback
+        self.last_activity = time.time()
+        self._monitor_thread = None
+        self._shutdown_triggered = False
+        self._lock = threading.Lock()
+        
+        if timeout_seconds > 0:
+            self.start()
+    
+    def start(self):
+        """Start the idle timeout monitoring thread"""
+        if self.timeout_seconds <= 0:
+            return
+        
+        self._monitor_thread = threading.Thread(
+            target=self._monitor_idle,
+            daemon=True,
+            name="IdleTimeoutMonitor"
+        )
+        self._monitor_thread.start()
+        log.info(f"Idle timeout enabled: {self.timeout_seconds}s ({self.timeout_seconds/60:.1f} minutes)")
+    
+    def update_activity(self):
+        """Update the last activity timestamp"""
+        with self._lock:
+            self.last_activity = time.time()
+    
+    def get_idle_time(self) -> float:
+        """Get current idle time in seconds"""
+        with self._lock:
+            return time.time() - self.last_activity
+    
+    def _monitor_idle(self):
+        """Background thread that monitors idle time"""
+        # Use adaptive check interval: check every 10s or timeout/4, whichever is smaller
+        # This ensures responsive shutdown for short timeouts
+        check_interval = min(10, max(1, self.timeout_seconds / 4))
+        
+        while not self._shutdown_triggered:
+            time.sleep(check_interval)
+            
+            idle_time = self.get_idle_time()
+            
+            if idle_time >= self.timeout_seconds:
+                log.info(f"Idle timeout reached ({idle_time:.1f}s), shutting down server")
+                with self._lock:
+                    self._shutdown_triggered = True
+                
+                # Trigger shutdown
+                self.shutdown_callback()
+                break
+    
+    def stop(self):
+        """Stop the idle timeout monitoring"""
+        self._shutdown_triggered = True
+        if self._monitor_thread and self._monitor_thread.is_alive():
+            self._monitor_thread.join(timeout=1)
 
 
 def get_lockfile_path(host: str, port: int) -> Path:
@@ -190,6 +271,11 @@ class LynguineHandler(BaseHTTPRequestHandler):
     
     def do_POST(self):
         """Handle POST requests"""
+        # Update activity timestamp for idle timeout
+        global _idle_timeout_manager
+        if _idle_timeout_manager:
+            _idle_timeout_manager.update_activity()
+        
         try:
             # Read request body
             content_length = int(self.headers.get('Content-Length', 0))
@@ -226,6 +312,11 @@ class LynguineHandler(BaseHTTPRequestHandler):
     
     def do_GET(self):
         """Handle GET requests (health check, ping, status)"""
+        # Update activity timestamp for idle timeout
+        global _idle_timeout_manager
+        if _idle_timeout_manager:
+            _idle_timeout_manager.update_activity()
+        
         if self.path == '/api/health':
             self.handle_health()
         elif self.path == '/api/ping':
@@ -435,6 +526,8 @@ class LynguineHandler(BaseHTTPRequestHandler):
         
         Returns detailed information about server state, uptime, and statistics.
         """
+        global _idle_timeout_manager
+        
         try:
             import psutil
             import time
@@ -467,6 +560,17 @@ class LynguineHandler(BaseHTTPRequestHandler):
                 ]
             }
             
+            # Add idle timeout info if enabled
+            if _idle_timeout_manager:
+                status_info['idle_timeout'] = {
+                    'enabled': True,
+                    'timeout_seconds': _idle_timeout_manager.timeout_seconds,
+                    'idle_seconds': _idle_timeout_manager.get_idle_time(),
+                    'remaining_seconds': max(0, _idle_timeout_manager.timeout_seconds - _idle_timeout_manager.get_idle_time())
+                }
+            else:
+                status_info['idle_timeout'] = {'enabled': False}
+            
             self.send_json_response(status_info)
             
         except ImportError:
@@ -478,13 +582,25 @@ class LynguineHandler(BaseHTTPRequestHandler):
                 'pid': os.getpid(),
                 'message': 'Install psutil for detailed diagnostics'
             }
+            
+            # Add idle timeout info if enabled
+            if _idle_timeout_manager:
+                basic_status['idle_timeout'] = {
+                    'enabled': True,
+                    'timeout_seconds': _idle_timeout_manager.timeout_seconds,
+                    'idle_seconds': _idle_timeout_manager.get_idle_time(),
+                    'remaining_seconds': max(0, _idle_timeout_manager.timeout_seconds - _idle_timeout_manager.get_idle_time())
+                }
+            else:
+                basic_status['idle_timeout'] = {'enabled': False}
+            
             self.send_json_response(basic_status)
         except Exception as e:
             log.error(f"Error in handle_status: {e}")
             self.send_error_response(e)
 
 
-def run_server(host: str = '127.0.0.1', port: int = 8765):
+def run_server(host: str = '127.0.0.1', port: int = 8765, idle_timeout: int = 0):
     """
     Start the lynguine HTTP server
     
@@ -493,6 +609,7 @@ def run_server(host: str = '127.0.0.1', port: int = 8765):
     
     :param host: Host address to bind to (default: 127.0.0.1 for localhost only)
     :param port: Port number to listen on (default: 8765)
+    :param idle_timeout: Seconds of inactivity before auto-shutdown (0 = disabled)
     :raises RuntimeError: If port is already in use
     """
     # Check if port is already in use
@@ -533,10 +650,21 @@ def run_server(host: str = '127.0.0.1', port: int = 8765):
     server_address = (host, port)
     httpd = HTTPServer(server_address, LynguineHandler)
     
-    print(f"Lynguine Server Mode (PoC)")
-    print(f"==========================")
+    # Setup idle timeout if enabled
+    global _idle_timeout_manager
+    if idle_timeout > 0:
+        def shutdown_callback():
+            """Callback to trigger server shutdown on idle timeout"""
+            httpd.shutdown()
+        
+        _idle_timeout_manager = IdleTimeoutManager(idle_timeout, shutdown_callback)
+    
+    print(f"Lynguine Server Mode (Phase 2)")
+    print(f"==============================")
     print(f"Server starting on http://{host}:{port}")
     print(f"PID: {os.getpid()}")
+    if idle_timeout > 0:
+        print(f"Idle timeout: {idle_timeout}s ({idle_timeout/60:.1f} minutes)")
     print(f"Press Ctrl+C to stop")
     print()
     print(f"Available endpoints:")
@@ -548,25 +676,31 @@ def run_server(host: str = '127.0.0.1', port: int = 8765):
     print(f"  POST /api/compute     - Run compute operations")
     print()
     
-    log.info(f"Server started on {host}:{port} (PID: {os.getpid()})")
+    log.info(f"Server started on {host}:{port} (PID: {os.getpid()}, idle_timeout: {idle_timeout}s)")
     
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:
         print("\nShutting down server...")
         httpd.shutdown()
+        log.info("Server stopped by user")
+    finally:
+        # Cleanup
+        if _idle_timeout_manager:
+            _idle_timeout_manager.stop()
         cleanup_lockfile()
-        log.info("Server stopped")
         print("Server stopped.")
 
 
 if __name__ == '__main__':
     # Parse command line arguments
     import argparse
-    parser = argparse.ArgumentParser(description='Lynguine Server Mode (PoC)')
+    parser = argparse.ArgumentParser(description='Lynguine Server Mode (Phase 2)')
     parser.add_argument('--host', default='127.0.0.1', help='Host to bind to (default: 127.0.0.1)')
     parser.add_argument('--port', type=int, default=8765, help='Port to listen on (default: 8765)')
+    parser.add_argument('--idle-timeout', type=int, default=0, 
+                        help='Seconds of inactivity before auto-shutdown (0 = disabled, default: 0)')
     args = parser.parse_args()
     
-    run_server(host=args.host, port=args.port)
+    run_server(host=args.host, port=args.port, idle_timeout=args.idle_timeout)
 
