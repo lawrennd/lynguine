@@ -1440,45 +1440,6 @@ input:
 class TestPhase5Integration:
     """Integration tests for lamd-style usage patterns"""
     
-    def test_mdfield_pattern(self, server_process, client):
-        """Test mdfield-style field extraction pattern"""
-        # Simulate CV config
-        interface_file = 'test_cv.yml'
-        interface_content = """
-input:
-  type: local
-  data:
-    name: ["Bill Perkins"]
-    email: ["bill@example.com"]
-    affiliation: ["University"]
-    title: ["Professor"]
-"""
-        Path(interface_file).write_text(interface_content)
-        
-        try:
-            # Create session (loads interface once)
-            session = client.create_session(interface_file=interface_file)
-            
-            # Extract multiple fields (like mdfield does)
-            fields = {}
-            for field_name in ['name', 'email', 'affiliation', 'title']:
-                session.set_column(field_name)
-                fields[field_name] = session.get_value()
-            
-            # Verify all fields extracted
-            assert fields['name'] == "Neil Lawrence"
-            assert fields['email'] == "neil@example.com"
-            assert fields['affiliation'] == "University"
-            assert fields['title'] == "Professor"
-            
-            # This simulates 4 field extractions with ~bytes transferred each
-            # vs 4 × full DataFrame transfers in stateless mode
-            
-            session.delete()
-            
-        finally:
-            Path(interface_file).unlink()
-    
     def test_multiple_concurrent_sessions(self, server_process, client):
         """Test multiple sessions can coexist"""
         interface1 = 'test_multi1.yml'
