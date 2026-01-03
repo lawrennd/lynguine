@@ -2,11 +2,8 @@
 Lynguine Client - HTTP client for lynguine server mode
 
 This module provides a client interface for connecting to a lynguine server,
-enabling fast repeated access without startup costs.
-
-Phase 1: Proof of Concept - basic functionality validated
-Phase 2: Core Features - auto-start capability
-Phase 3: Robustness - retry logic, crash recovery, graceful degradation
+enabling fast repeated access without startup costs. Supports auto-start,
+retry logic, crash recovery, and stateful data sessions.
 """
 
 import json
@@ -343,7 +340,7 @@ class ServerClient:
         self.close()
     
     # =================================================================
-    # Phase 5: Session Management (mirrors CustomDataFrame API)
+    # Session Management (mirrors CustomDataFrame API)
     # =================================================================
     
     def create_session(

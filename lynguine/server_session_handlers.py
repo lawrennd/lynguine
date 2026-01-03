@@ -1,5 +1,5 @@
 """
-Session endpoint handlers for lynguine server (Phase 5)
+Session endpoint handlers for lynguine server
 
 These handlers provide the CustomDataFrame API over HTTP/REST for
 stateful data sessions with crash recovery.

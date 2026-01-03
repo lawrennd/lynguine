@@ -3,9 +3,7 @@ Lynguine Server Mode - HTTP/REST API for fast repeated access
 
 This module provides a simple HTTP server that keeps lynguine loaded in memory,
 avoiding the startup cost (pandas, numpy, etc.) for repeated operations.
-
-Phase 1: Proof of Concept - basic functionality validated
-Phase 2: Core Features - production-ready single-user server
+Supports stateful data sessions with crash recovery.
 """
 
 import json
@@ -37,7 +35,7 @@ _lockfile_path = None
 # Global idle timeout manager
 _idle_timeout_manager: Optional['IdleTimeoutManager'] = None
 
-# Global session manager (Phase 5)
+# Global session manager
 _session_manager: Optional[SessionManager] = None
 
 
@@ -305,7 +303,7 @@ class LynguineHandler(BaseHTTPRequestHandler):
                 self.handle_ping()
             elif self.path == '/api/status':
                 self.handle_status()
-            # Session endpoints (Phase 5)
+            # Session endpoints
             elif self.path == '/api/sessions':
                 global _session_manager
                 server_session_handlers.handle_create_session(self, _session_manager, request_data)
@@ -585,7 +583,7 @@ class LynguineHandler(BaseHTTPRequestHandler):
             status_info = {
                 'status': 'ok',
                 'server': 'lynguine-server',
-                'version': '0.2.0',  # Phase 2
+                'version': '0.2.0',
                 'pid': os.getpid(),
                 'uptime_seconds': uptime_seconds,
                 'memory': {
@@ -702,14 +700,14 @@ def run_server(host: str = '127.0.0.1', port: int = 8765, idle_timeout: int = 0)
         
         _idle_timeout_manager = IdleTimeoutManager(idle_timeout, shutdown_callback)
     
-    # Setup session manager (Phase 5)
+    # Setup session manager
     global _session_manager
     _session_manager = SessionManager()
     _session_manager.start_cleanup_thread()
     log.info("Session manager initialized with crash recovery")
     
-    print(f"Lynguine Server Mode (Phase 5)")
-    print(f"==============================")
+    print(f"Lynguine Server Mode")
+    print(f"====================")
     print(f"Server starting on http://{host}:{port}")
     print(f"PID: {os.getpid()}")
     if idle_timeout > 0:
@@ -725,7 +723,7 @@ def run_server(host: str = '127.0.0.1', port: int = 8765, idle_timeout: int = 0)
     print(f"  POST   /api/write_data                   - Write data via lynguine")
     print(f"  POST   /api/compute                      - Run compute operations")
     print(f"")
-    print(f"  Phase 5: Stateful Sessions (CustomDataFrame API):")
+    print(f"  Stateful Sessions (CustomDataFrame API):")
     print(f"  POST   /api/sessions                     - Create session")
     print(f"  GET    /api/sessions                     - List sessions")
     print(f"  GET    /api/sessions/{{id}}                - Get session info")
@@ -763,7 +761,7 @@ def run_server(host: str = '127.0.0.1', port: int = 8765, idle_timeout: int = 0)
 if __name__ == '__main__':
     # Parse command line arguments
     import argparse
-    parser = argparse.ArgumentParser(description='Lynguine Server Mode (Phase 2)')
+    parser = argparse.ArgumentParser(description='Lynguine Server Mode')
     parser.add_argument('--host', default='127.0.0.1', help='Host to bind to (default: 127.0.0.1)')
     parser.add_argument('--port', type=int, default=8765, help='Port to listen on (default: 8765)')
     parser.add_argument('--idle-timeout', type=int, default=0, 
