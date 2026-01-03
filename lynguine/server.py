@@ -26,6 +26,7 @@ from lynguine.access import io
 from lynguine.log import Logger
 from lynguine.session_manager import SessionManager
 from lynguine import server_session_handlers
+from lynguine import server_interface_handlers
 
 # Create logger instance
 log = Logger(name="lynguine.server", level="info", filename="lynguine-server.log")
@@ -310,6 +311,13 @@ class LynguineHandler(BaseHTTPRequestHandler):
                 server_session_handlers.handle_create_session(self, _session_manager, request_data)
             elif self.path.startswith('/api/sessions/'):
                 server_session_handlers.handle_session_operation(self, _session_manager, self.path, request_data)
+            # Interface and talk field extraction endpoints (lamd integration)
+            elif self.path == '/api/interface/read':
+                result = server_interface_handlers.handle_interface_read(request_data)
+                self.send_json_response(result, 200 if result['status'] == 'success' else 500)
+            elif self.path == '/api/talk/field':
+                result = server_interface_handlers.handle_talk_field(request_data)
+                self.send_json_response(result, 200 if result['status'] == 'success' else 500)
             else:
                 self.send_error_response(
                     ValueError(f"Unknown endpoint: {self.path}"), 

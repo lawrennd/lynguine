@@ -436,6 +436,125 @@ class ServerClient:
             return response.json()
         
         return self._make_request_with_retry(_do_delete, "delete_session")
+    
+    def get_interface_field(
+        self,
+        interface_file: str,
+        field: str,
+        directory: str = '.'
+    ) -> Any:
+        """
+        Extract a field value from an interface configuration file.
+        
+        Loads the interface file and extracts a single field without loading
+        the full CustomDataFrame data. Optimized for lamd's mdfield utility.
+        
+        Args:
+            interface_file: Path to interface YAML file
+            field: Field name to extract (e.g., 'title', 'author')
+            directory: Working directory for resolving paths (default: '.')
+            
+        Returns:
+            Field value (any type) or None if field not found
+            
+        Raises:
+            RuntimeError: If server is not available after retries
+            requests.HTTPError: If request fails
+            
+        Example:
+            >>> client = ServerClient(auto_start=True)
+            >>> title = client.get_interface_field('_lamd.yml', 'title')
+            >>> print(title)
+            'My Document Title'
+        """
+        self._ensure_server_available()
+        
+        request_data = {
+            'interface_file': interface_file,
+            'field': field,
+            'directory': directory
+        }
+        
+        def _do_read_field():
+            response = self._session.post(
+                f'{self.server_url}/api/interface/read',
+                json=request_data,
+                timeout=self.timeout
+            )
+            # Don't raise for 500 errors - handle them gracefully
+            result = response.json()
+            
+            if result['status'] != 'success':
+                log.warning(f"Failed to read interface field: {result.get('error', 'Unknown error')}")
+                return None
+            
+            return result['value']
+        
+        return self._make_request_with_retry(_do_read_field, "get_interface_field")
+    
+    def extract_talk_field(
+        self,
+        field: str,
+        markdown_file: str,
+        config_files: Optional[list] = None
+    ) -> str:
+        """
+        Extract a field from markdown frontmatter with config fallback.
+        
+        Wraps lynguine.util.talk.talk_field() functionality, providing:
+        - Markdown frontmatter parsing
+        - Fallback to interface config files
+        - Array formatting for categories
+        - Environment variable expansion
+        
+        Optimized for lamd's mdfield utility integration.
+        
+        Args:
+            field: Field name to extract (e.g., 'title', 'author', 'venue')
+            markdown_file: Path to markdown file with YAML frontmatter
+            config_files: List of config files for fallback (default: [])
+            
+        Returns:
+            Field value as string (empty string if not found)
+            
+        Raises:
+            RuntimeError: If server is not available after retries
+            requests.HTTPError: If request fails
+            
+        Example:
+            >>> client = ServerClient(auto_start=True)
+            >>> title = client.extract_talk_field(
+            ...     field='title',
+            ...     markdown_file='my-talk.md',
+            ...     config_files=['_lamd.yml']
+            ... )
+            >>> print(title)
+            'My Talk Title'
+        """
+        self._ensure_server_available()
+        
+        request_data = {
+            'field': field,
+            'markdown_file': markdown_file,
+            'config_files': config_files or []
+        }
+        
+        def _do_extract_field():
+            response = self._session.post(
+                f'{self.server_url}/api/talk/field',
+                json=request_data,
+                timeout=self.timeout
+            )
+            response.raise_for_status()
+            result = response.json()
+            
+            if result['status'] != 'success':
+                log.warning(f"Failed to extract talk field: {result.get('error', 'Unknown error')}")
+                return ""
+            
+            return result['value']
+        
+        return self._make_request_with_retry(_do_extract_field, "extract_talk_field")
 
 
 class Session:

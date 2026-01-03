@@ -1368,3 +1368,145 @@ input:
             Path(interface1).unlink()
             Path(interface2).unlink()
 
+
+class TestLamdIntegration:
+    """Tests for lamd integration endpoints (interface/talk field extraction)"""
+    
+    def test_interface_field_extraction(self, server_process, client):
+        """Test extracting field from interface file"""
+        interface_file = 'test_interface_field.yml'
+        interface_content = """
+title: "Test Document"
+author: "Test Author"
+date: "2026-01-03"
+input:
+  type: fake
+  nrows: 2
+  cols:
+    - name
+  index: name
+"""
+        Path(interface_file).write_text(interface_content)
+        
+        try:
+            # Extract various fields
+            title = client.get_interface_field(interface_file, 'title')
+            author = client.get_interface_field(interface_file, 'author')
+            date = client.get_interface_field(interface_file, 'date')
+            missing = client.get_interface_field(interface_file, 'nonexistent')
+            
+            assert title == "Test Document"
+            assert author == "Test Author"
+            assert date == "2026-01-03"
+            assert missing is None
+            
+        finally:
+            Path(interface_file).unlink()
+    
+    def test_interface_field_missing_file(self, server_process, client):
+        """Test interface field extraction with missing file"""
+        result = client.get_interface_field('nonexistent.yml', 'title')
+        assert result is None
+    
+    def test_talk_field_from_frontmatter(self, server_process, client):
+        """Test extracting field from markdown frontmatter"""
+        markdown_file = 'test_talk.md'
+        markdown_content = """---
+title: "My Talk Title"
+author: "Talk Speaker"
+venue: "Conference 2026"
+date: "2026-01-03"
+---
+
+# Talk Content
+
+This is my talk.
+"""
+        Path(markdown_file).write_text(markdown_content)
+        
+        try:
+            # Extract fields from frontmatter
+            title = client.extract_talk_field('title', markdown_file)
+            author = client.extract_talk_field('author', markdown_file)
+            venue = client.extract_talk_field('venue', markdown_file)
+            missing = client.extract_talk_field('missing_field', markdown_file)
+            
+            assert title == "My Talk Title"
+            assert author == "Talk Speaker"
+            assert venue == "Conference 2026"
+            assert missing == ""
+            
+        finally:
+            Path(markdown_file).unlink()
+    
+    def test_talk_field_with_config_fallback(self, server_process, client):
+        """Test talk field extraction with config file fallback"""
+        # Create markdown without title
+        markdown_file = 'test_talk_no_title.md'
+        markdown_content = """---
+author: "Talk Speaker"
+---
+
+# Content
+"""
+        Path(markdown_file).write_text(markdown_content)
+        
+        # Create config with title
+        config_file = 'test_config.yml'
+        config_content = """
+title: "Config Title"
+default_author: "Config Author"
+input:
+  type: fake
+  nrows: 1
+  cols:
+    - name
+  index: name
+"""
+        Path(config_file).write_text(config_content)
+        
+        try:
+            # Title should fall back to config
+            title = client.extract_talk_field('title', markdown_file, [config_file])
+            # Author should come from markdown
+            author = client.extract_talk_field('author', markdown_file, [config_file])
+            # Missing field should be empty
+            missing = client.extract_talk_field('missing', markdown_file, [config_file])
+            
+            assert title == "Config Title"
+            assert author == "Talk Speaker"
+            assert missing == ""
+            
+        finally:
+            Path(markdown_file).unlink()
+            Path(config_file).unlink()
+    
+    def test_talk_field_missing_files(self, server_process, client):
+        """Test talk field extraction with missing markdown and config"""
+        # Both files missing should return empty string
+        result = client.extract_talk_field('title', 'nonexistent.md', ['nonexistent.yml'])
+        assert result == ""
+    
+    def test_talk_field_categories_formatting(self, server_process, client):
+        """Test categories field formatting as array string"""
+        markdown_file = 'test_categories.md'
+        markdown_content = """---
+title: "Talk with Categories"
+categories:
+  - AI
+  - Machine Learning
+  - Python
+---
+
+# Content
+"""
+        Path(markdown_file).write_text(markdown_content)
+        
+        try:
+            categories = client.extract_talk_field('categories', markdown_file)
+            # Should be formatted as string array
+            assert categories == "['AI', 'Machine Learning', 'Python']"
+            
+        finally:
+            Path(markdown_file).unlink()
+
