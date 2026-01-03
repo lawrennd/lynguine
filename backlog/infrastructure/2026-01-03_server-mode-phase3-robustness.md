@@ -118,20 +118,19 @@ Phase 3 backlog item created. Waiting for Phase 2 completion.
 - ✅ Covers: retry config, connection errors, crash recovery, 4xx no-retry, successful no-retry
 - ✅ All tests passing
 
-**Documentation**:
-- ✅ Migration Guide (MIGRATION_GUIDE.md) - 400+ lines
-  - Who should use server mode
-  - Step-by-step migration patterns
-  - Code examples for all use cases
-  - Configuration guidance (dev/CI/CD/production)
-  - lamd/referia-specific advice
-  
-- ✅ Troubleshooting Guide (TROUBLESHOOTING.md) - 550+ lines
-  - 10 problem categories with solutions
-  - Detailed diagnosis commands
-  - Quick fix reference tables
-  - Debug logging tips
-  - Common commands reference
+**Documentation** (Sphinx/ReadTheDocs):
+- ✅ Complete Sphinx documentation in `docs/server_mode/`:
+  - index.rst: Overview, quick start, performance tables
+  - quickstart.rst: Installation, usage patterns, configuration
+  - migration.rst: Complete migration guide from direct mode
+  - api.rst: Full API reference for server and client
+  - troubleshooting.rst: Common issues and solutions
+  - examples.rst: Code examples for all use cases
+- ✅ Integrated into main docs/index.rst
+- ✅ Follows VibeSafe documentation lifecycle:
+  - Phase 1 (Design): CIPs/requirements/backlog ✅
+  - Phase 2 (Implementation): Self-documenting code ✅
+  - Phase 3 (Finalization): Sphinx/formal docs ✅
 
 **Performance**: 156.3x speedup maintained (documented in CIP-0008)
 
