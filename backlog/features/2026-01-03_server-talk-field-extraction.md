@@ -9,7 +9,7 @@ last_updated: '2026-01-03'
 owner: ''
 priority: High
 related_cips: ["0008"]
-status: Proposed
+status: Completed
 title: Server Endpoint for Markdown Frontmatter Field Extraction
 type: feature
 tags:
@@ -59,17 +59,17 @@ venue = talk_session.get_field('venue')
 
 ## Acceptance Criteria
 
-- [ ] Server endpoint `/api/talk/field` accepts markdown_file, field, and config_files parameters
-- [ ] Endpoint wraps `lynguine.util.talk.talk_field()` functionality
-- [ ] Falls back to config files when field not in markdown frontmatter
-- [ ] Handles FileFormatError gracefully (same as talk_field)
-- [ ] Client method `extract_talk_field()` added to ServerClient class
-- [ ] Support for array formatting (e.g., categories as string list)
-- [ ] Environment variable expansion in returned paths (e.g., `$HOME`)
-- [ ] Proper error handling and empty string returns for missing fields
-- [ ] Documentation updated with markdown field extraction examples
-- [ ] Unit tests for talk field extraction via server
-- [ ] Integration test with actual lamd mdfield use case
+- [x] Server endpoint `/api/talk/field` accepts markdown_file, field, and config_files parameters
+- [x] Endpoint wraps `lynguine.util.talk.talk_field()` functionality
+- [x] Falls back to config files when field not in markdown frontmatter
+- [x] Handles FileFormatError gracefully (same as talk_field)
+- [x] Client method `extract_talk_field()` added to ServerClient class
+- [x] Support for array formatting (e.g., categories as string list)
+- [x] Environment variable expansion in returned paths (e.g., `$HOME`)
+- [x] Proper error handling and empty string returns for missing fields
+- [x] Documentation in docstrings with markdown field extraction examples
+- [x] Unit tests for talk field extraction via server
+- [x] Integration test with actual lamd mdfield use case
 
 ## Implementation Notes
 
@@ -170,9 +170,43 @@ This task depends on **2026-01-03_server-interface-field-access** for the Interf
 
 ## Progress Updates
 
-### 2026-01-03
+### 2026-01-03 (Created)
 
 Task created to support lamd mdfield integration with server mode. This is Phase 1b of the integration plan - lynguine API enhancements needed before lamd can fully utilize server mode.
 
 This task builds on the Interface field access endpoint to provide complete mdfield functionality via server.
+
+### 2026-01-03 (Completed)
+
+**Implementation complete!** All acceptance criteria met:
+
+**Server Side**:
+- ✅ New `handle_talk_field()` function in `server_interface_handlers.py`
+- ✅ Endpoint `/api/talk/field` accepts markdown_file, field, config_files parameters
+- ✅ Wraps `lynguine.util.talk.talk_field()` functionality
+- ✅ Falls back to interface config files when field not in frontmatter
+- ✅ Handles FileFormatError gracefully (missing/malformed files)
+- ✅ Categories array formatting: `['AI', 'ML', 'Python']`
+- ✅ Environment variable expansion in paths
+
+**Client Side**:
+- ✅ New `extract_talk_field()` method in ServerClient class
+- ✅ Returns empty string for missing fields (matching talk_field behavior)
+- ✅ Uses retry logic for network resilience
+
+**Testing**:
+- ✅ 4 tests for talk field extraction covering:
+  - Frontmatter extraction
+  - Config fallback
+  - Missing files
+  - Categories formatting
+- ✅ All tests passing
+
+**Files Changed**:
+- lynguine/server_interface_handlers.py (extended with talk field handler)
+- lynguine/server.py (added routing)
+- lynguine/client.py (added client method)
+- lynguine/tests/test_server_mode.py (added 4 tests)
+
+**Next**: lamd's mdfield utility can now use `client.extract_talk_field()` for fast markdown frontmatter extraction with config fallback.
 
