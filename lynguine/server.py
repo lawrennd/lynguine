@@ -50,7 +50,7 @@ def get_lockfile_path(host: str, port: int) -> Path:
     return temp_dir / lockfile_name
 
 
-def check_server_running(host: str, port: int) -> bool:
+def check_server_running(host: str, port: int) -> tuple[bool, str]:
     """
     Check if a lynguine server is already running on the specified host:port
     
@@ -60,8 +60,10 @@ def check_server_running(host: str, port: int) -> bool:
     
     :param host: Host address to check
     :param port: Port number to check
-    :return: True if server is running, False otherwise
+    :return: Tuple of (is_running: bool, type: str) where type is 'lynguine', 'other', or 'none'
     """
+    port_in_use = False
+    
     # Method 1: Check if port is in use
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     try:
@@ -69,9 +71,9 @@ def check_server_running(host: str, port: int) -> bool:
         sock.settimeout(1)
         result = sock.connect_ex((host, port))
         if result == 0:
-            # Port is in use - likely a server is running
+            # Port is in use
+            port_in_use = True
             log.debug(f"Port {port} is in use on {host}")
-            return True
     except socket.error:
         pass
     finally:
@@ -79,6 +81,8 @@ def check_server_running(host: str, port: int) -> bool:
     
     # Method 2: Check for lockfile
     lockfile = get_lockfile_path(host, port)
+    has_lockfile = False
+    
     if lockfile.exists():
         # Lockfile exists - check if process is still alive
         try:
@@ -89,12 +93,12 @@ def check_server_running(host: str, port: int) -> bool:
             try:
                 os.kill(pid, 0)  # Signal 0 doesn't kill, just checks existence
                 log.debug(f"Lockfile exists for PID {pid} which is still running")
-                return True
+                has_lockfile = True
             except OSError:
                 # Process doesn't exist - stale lockfile
                 log.warning(f"Stale lockfile found for PID {pid}, cleaning up")
                 lockfile.unlink()
-                return False
+                has_lockfile = False
         except (ValueError, IOError):
             # Invalid lockfile
             log.warning(f"Invalid lockfile at {lockfile}, removing")
@@ -102,9 +106,15 @@ def check_server_running(host: str, port: int) -> bool:
                 lockfile.unlink()
             except:
                 pass
-            return False
+            has_lockfile = False
     
-    return False
+    # Determine what's running
+    if has_lockfile and port_in_use:
+        return (True, 'lynguine')
+    elif port_in_use:
+        return (True, 'other')
+    else:
+        return (False, 'none')
 
 
 def create_lockfile(host: str, port: int) -> Path:
@@ -325,19 +335,32 @@ def run_server(host: str = '127.0.0.1', port: int = 8765):
     
     :param host: Host address to bind to (default: 127.0.0.1 for localhost only)
     :param port: Port number to listen on (default: 8765)
-    :raises RuntimeError: If server is already running on this host:port
+    :raises RuntimeError: If port is already in use
     """
-    # Check if server is already running
-    if check_server_running(host, port):
-        error_msg = (
-            f"A lynguine server is already running on http://{host}:{port}\n"
-            f"To connect to the existing server:\n"
-            f"  from lynguine.client import ServerClient\n"
-            f"  client = ServerClient('http://{host}:{port}')\n"
-            f"\n"
-            f"To start a new server on a different port:\n"
-            f"  python -m lynguine.server --port {port + 1}"
-        )
+    # Check if port is already in use
+    is_running, server_type = check_server_running(host, port)
+    
+    if is_running:
+        if server_type == 'lynguine':
+            error_msg = (
+                f"A lynguine server is already running on http://{host}:{port}\n"
+                f"\n"
+                f"To connect to the existing server:\n"
+                f"  from lynguine.client import ServerClient\n"
+                f"  client = ServerClient('http://{host}:{port}')\n"
+                f"\n"
+                f"To start a new server on a different port:\n"
+                f"  python -m lynguine.server --port {port + 1}"
+            )
+        else:  # server_type == 'other'
+            error_msg = (
+                f"Port {port} is already in use by another application on {host}\n"
+                f"\n"
+                f"To start lynguine server on a different port:\n"
+                f"  python -m lynguine.server --port {port + 1}\n"
+                f"\n"
+                f"Or stop the other application using port {port}"
+            )
         print(f"ERROR: {error_msg}")
         raise RuntimeError(error_msg)
     

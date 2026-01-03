@@ -93,17 +93,54 @@ class TestServerInstanceChecking:
     def test_check_server_not_running(self):
         """Test checking when server is not running"""
         # Use unusual port that's unlikely to be in use
-        assert not check_server_running(TEST_HOST, 59999)
+        is_running, server_type = check_server_running(TEST_HOST, 59999)
+        assert not is_running
+        assert server_type == 'none'
     
     def test_check_server_running(self, server_process):
         """Test checking when server is running"""
-        assert check_server_running(TEST_HOST, TEST_PORT)
+        is_running, server_type = check_server_running(TEST_HOST, TEST_PORT)
+        assert is_running
+        assert server_type == 'lynguine'
     
     def test_prevent_duplicate_server_start(self, server_process):
         """Test that starting a duplicate server fails gracefully"""
         # Server is already running via fixture
         # Attempting to start another should fail or warn
-        assert check_server_running(TEST_HOST, TEST_PORT)
+        is_running, server_type = check_server_running(TEST_HOST, TEST_PORT)
+        assert is_running
+        assert server_type == 'lynguine'
+    
+    def test_detect_non_lynguine_port_usage(self):
+        """Test detecting when a non-lynguine application is using the port"""
+        # Start a basic HTTP server (not lynguine)
+        from http.server import HTTPServer, BaseHTTPRequestHandler
+        import threading
+        
+        test_port = 58888  # Unusual port for testing
+        
+        class SimpleHandler(BaseHTTPRequestHandler):
+            def do_GET(self):
+                self.send_response(200)
+                self.end_headers()
+            def log_message(self, format, *args):
+                pass  # Suppress logging
+        
+        # Start non-lynguine server in background thread
+        server = HTTPServer(('127.0.0.1', test_port), SimpleHandler)
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        
+        time.sleep(0.5)  # Wait for server to start
+        
+        try:
+            # Check if our detection correctly identifies it as "other"
+            is_running, server_type = check_server_running('127.0.0.1', test_port)
+            assert is_running
+            assert server_type == 'other'  # Not lynguine!
+        finally:
+            server.shutdown()
+            thread.join(timeout=1)
 
 
 class TestServerBasics:
@@ -312,12 +349,15 @@ class TestServerShutdown:
         # Wait for startup
         max_wait = 5
         for _ in range(max_wait * 10):
-            if check_server_running(TEST_HOST, test_port):
+            is_running, _ = check_server_running(TEST_HOST, test_port)
+            if is_running:
                 break
             time.sleep(0.1)
         
         # Verify running
-        assert check_server_running(TEST_HOST, test_port)
+        is_running, server_type = check_server_running(TEST_HOST, test_port)
+        assert is_running
+        assert server_type == 'lynguine'
         
         # Shutdown
         proc.terminate()
