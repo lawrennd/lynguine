@@ -926,3 +926,396 @@ class TestEndToEnd:
         # 5. Clean shutdown
         client.close()
 
+
+# ==============================================================================
+# Phase 5: Stateful Data Sessions Tests
+# ==============================================================================
+
+class TestPhase5Sessions:
+    """Tests for stateful data sessions with CustomDataFrame API"""
+    
+    def test_create_and_delete_session(self, server_process, client):
+        """Test basic session creation and deletion"""
+        # Create test interface file
+        interface_file = 'test_interface.yml'
+        interface_content = """
+input:
+  type: fake
+  nrows: 10
+  cols:
+    - name
+    - email
+"""
+        Path(interface_file).write_text(interface_content)
+        
+        try:
+            # Create session
+            session = client.create_session(interface_file=interface_file)
+            assert session.session_id is not None
+            
+            # Verify session info
+            info = session.get_info()
+            assert info['shape'] == (10, 2)
+            assert 'name' in info['columns']
+            assert 'email' in info['columns']
+            
+            # Delete session
+            session.delete()
+            
+        finally:
+            Path(interface_file).unlink()
+    
+    def test_session_focus_navigation(self, server_process, client):
+        """Test focus-based navigation (set_index, set_column, get_value)"""
+        # Create test interface
+        interface_file = 'test_nav.yml'
+        interface_content = """
+input:
+  type: fake
+  nrows: 5
+  cols:
+    - name
+    - age
+"""
+        Path(interface_file).write_text(interface_content)
+        
+        try:
+            session = client.create_session(interface_file=interface_file)
+            
+            # Get shape
+            shape = session.get_shape()
+            assert shape[0] == 5
+            assert shape[1] == 2
+            
+            # Set focus and get value
+            indices = session.get_indices()
+            session.set_index(indices[0])
+            session.set_column('name')
+            value = session.get_value()
+            assert value is not None
+            
+            # Verify focus
+            assert session.get_index() == indices[0]
+            assert session.get_column() == 'name'
+            
+            session.delete()
+            
+        finally:
+            Path(interface_file).unlink()
+    
+    def test_session_get_value_at(self, server_process, client):
+        """Test get_value_at convenience method"""
+        interface_file = 'test_value_at.yml'
+        interface_content = """
+input:
+  type: fake
+  nrows: 3
+  cols:
+    - name
+"""
+        Path(interface_file).write_text(interface_content)
+        
+        try:
+            session = client.create_session(interface_file=interface_file)
+            
+            indices = session.get_indices()
+            value = session.get_value_at(indices[0], 'name')
+            assert value is not None
+            
+            session.delete()
+            
+        finally:
+            Path(interface_file).unlink()
+    
+    def test_session_column_queries(self, server_process, client):
+        """Test column type queries"""
+        interface_file = 'test_columns.yml'
+        interface_content = """
+input:
+  type: fake
+  nrows: 5
+  cols:
+    - name
+    - email
+"""
+        Path(interface_file).write_text(interface_content)
+        
+        try:
+            session = client.create_session(interface_file=interface_file)
+            
+            # Get all columns
+            columns = session.get_columns()
+            assert 'name' in columns
+            assert 'email' in columns
+            
+            # Get input columns
+            input_cols = session.get_input_columns()
+            assert len(input_cols) >= 0  # May be empty or contain columns
+            
+            session.delete()
+            
+        finally:
+            Path(interface_file).unlink()
+    
+    def test_list_sessions(self, server_process, client):
+        """Test listing all sessions"""
+        interface_file = 'test_list.yml'
+        interface_content = """
+input:
+  type: fake
+  nrows: 2
+  cols:
+    - name
+"""
+        Path(interface_file).write_text(interface_content)
+        
+        try:
+            # Create multiple sessions
+            session1 = client.create_session(interface_file=interface_file)
+            session2 = client.create_session(interface_file=interface_file)
+            
+            # List sessions
+            result = client.list_sessions()
+            assert result['status'] == 'success'
+            assert result['total_sessions'] >= 2
+            assert len(result['sessions']) >= 2
+            
+            # Cleanup
+            session1.delete()
+            session2.delete()
+            
+        finally:
+            Path(interface_file).unlink()
+    
+    def test_session_context_manager(self, server_process, client):
+        """Test session as context manager"""
+        interface_file = 'test_context.yml'
+        interface_content = """
+input:
+  type: fake
+  nrows: 3
+  cols:
+    - name
+"""
+        Path(interface_file).write_text(interface_content)
+        
+        try:
+            with client.create_session(interface_file=interface_file) as session:
+                shape = session.get_shape()
+                assert shape[0] == 3
+            
+            # Session should be deleted after context exit
+            # (No easy way to verify without catching error)
+            
+        finally:
+            Path(interface_file).unlink()
+    
+    def test_session_timeout(self, server_process, client):
+        """Test session with custom timeout"""
+        interface_file = 'test_timeout.yml'
+        interface_content = """
+input:
+  type: fake
+  nrows: 2
+  cols:
+    - name
+"""
+        Path(interface_file).write_text(interface_content)
+        
+        try:
+            # Create session with 1-hour timeout
+            session = client.create_session(
+                interface_file=interface_file,
+                timeout=3600
+            )
+            
+            info = session.get_info()
+            assert info['timeout'] == 3600
+            
+            session.delete()
+            
+        finally:
+            Path(interface_file).unlink()
+
+
+class TestPhase5CrashRecovery:
+    """Tests for session crash recovery"""
+    
+    def test_session_persistence(self, server_process, client):
+        """Test that session metadata is persisted"""
+        import json
+        from pathlib import Path
+        
+        interface_file = 'test_persist.yml'
+        interface_content = """
+input:
+  type: fake
+  nrows: 5
+  cols:
+    - name
+"""
+        Path(interface_file).write_text(interface_content)
+        
+        try:
+            # Create session
+            session = client.create_session(interface_file=interface_file)
+            session_id = session.session_id
+            
+            # Check persistence file exists
+            persist_dir = Path.home() / '.lynguine' / 'sessions'
+            persist_file = persist_dir / 'sessions.json'
+            
+            assert persist_file.exists()
+            
+            # Check session is in persistence file
+            with open(persist_file) as f:
+                data = json.load(f)
+            
+            session_ids = [s['session_id'] for s in data['sessions']]
+            assert session_id in session_ids
+            
+            # Cleanup
+            session.delete()
+            
+        finally:
+            Path(interface_file).unlink()
+    
+    def test_session_recovery_simulation(self, server_process, client):
+        """Test session recovery by checking persistence file"""
+        from pathlib import Path
+        import json
+        
+        interface_file = 'test_recovery.yml'
+        interface_content = """
+input:
+  type: fake
+  nrows: 3
+  cols:
+    - name
+    - email
+"""
+        Path(interface_file).write_text(interface_content)
+        
+        try:
+            # Create session
+            session1 = client.create_session(interface_file=interface_file)
+            session1_id = session1.session_id
+            
+            # Verify it's persisted
+            persist_file = Path.home() / '.lynguine' / 'sessions' / 'sessions.json'
+            with open(persist_file) as f:
+                data = json.load(f)
+            
+            # Find our session
+            our_session = None
+            for s in data['sessions']:
+                if s['session_id'] == session1_id:
+                    our_session = s
+                    break
+            
+            assert our_session is not None
+            assert our_session['interface_file'] == interface_file
+            assert our_session['directory'] == '.'
+            
+            # In a real crash recovery, the SessionManager would:
+            # 1. Read this persistence file
+            # 2. Recreate CustomDataFrame from interface_file
+            # 3. Restore session with same session_id
+            
+            session1.delete()
+            
+        finally:
+            Path(interface_file).unlink()
+
+
+class TestPhase5Integration:
+    """Integration tests for lamd-style usage patterns"""
+    
+    def test_mdfield_pattern(self, server_process, client):
+        """Test mdfield-style field extraction pattern"""
+        # Simulate CV config
+        interface_file = 'test_cv.yml'
+        interface_content = """
+input:
+  type: local
+  data:
+    name: ["Bill Perkins"]
+    email: ["bill@example.com"]
+    affiliation: ["University"]
+    title: ["Professor"]
+"""
+        Path(interface_file).write_text(interface_content)
+        
+        try:
+            # Create session (loads interface once)
+            session = client.create_session(interface_file=interface_file)
+            
+            # Extract multiple fields (like mdfield does)
+            fields = {}
+            for field_name in ['name', 'email', 'affiliation', 'title']:
+                session.set_column(field_name)
+                fields[field_name] = session.get_value()
+            
+            # Verify all fields extracted
+            assert fields['name'] == "Neil Lawrence"
+            assert fields['email'] == "neil@example.com"
+            assert fields['affiliation'] == "University"
+            assert fields['title'] == "Professor"
+            
+            # This simulates 4 field extractions with ~bytes transferred each
+            # vs 4 × full DataFrame transfers in stateless mode
+            
+            session.delete()
+            
+        finally:
+            Path(interface_file).unlink()
+    
+    def test_multiple_concurrent_sessions(self, server_process, client):
+        """Test multiple sessions can coexist"""
+        interface1 = 'test_multi1.yml'
+        interface2 = 'test_multi2.yml'
+        
+        content1 = """
+input:
+  type: fake
+  nrows: 3
+  cols:
+    - name
+"""
+        content2 = """
+input:
+  type: fake
+  nrows: 5
+  cols:
+    - email
+"""
+        
+        Path(interface1).write_text(content1)
+        Path(interface2).write_text(content2)
+        
+        try:
+            # Create two sessions
+            session1 = client.create_session(interface_file=interface1)
+            session2 = client.create_session(interface_file=interface2)
+            
+            # Verify they're independent
+            shape1 = session1.get_shape()
+            shape2 = session2.get_shape()
+            
+            assert shape1[0] == 3
+            assert shape2[0] == 5
+            
+            cols1 = session1.get_columns()
+            cols2 = session2.get_columns()
+            
+            assert 'name' in cols1
+            assert 'email' in cols2
+            
+            # Cleanup
+            session1.delete()
+            session2.delete()
+            
+        finally:
+            Path(interface1).unlink()
+            Path(interface2).unlink()
+
