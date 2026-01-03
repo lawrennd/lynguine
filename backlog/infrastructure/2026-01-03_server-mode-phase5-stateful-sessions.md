@@ -91,41 +91,91 @@ filtered = session.filter(column='status', value='active')  # Transfer only filt
 
 ### Data Operations
 
-Stateful operations on session data:
+Based on lynguine's existing `DataObject` API (which lamd's `mdfield`/`mdlist` tools use):
 
-- **get_value(index, column)**: Get single value
+**Navigation & Focus**:
+- **set_index(index)**: Set current row focus
+- **set_column(column)**: Set current column focus
+- **get_index()**: Get current row focus
+- **get_column()**: Get current column focus
+
+**Data Access** (at current focus):
+- **get_value()**: Get value at current (index, column) focus
+- **set_value(value)**: Set value at current focus
+- **get_value_at(index, column)**: Get specific value without changing focus
+
+**Bulk Operations**:
 - **get_slice(start, end, columns)**: Get row slice
-- **get_column(column)**: Get entire column
+- **get_column_data(column)**: Get entire column as list
+- **get_row_data(index)**: Get entire row as dict
 - **filter(column, operator, value)**: Filter rows
-- **sort(column, ascending)**: Sort data
-- **get_unique(column)**: Get unique values
-- **get_stats(column)**: Get column statistics
+- **get_shape()**: Get (rows, cols) dimensions
+
+**Series Operations** (for series columns):
+- **set_selector(column)**: Set selector column for series
+- **set_subindex(value)**: Set subindex within series
+- **get_subseries()**: Get subseries data
+
+**Metadata**:
+- **get_columns()**: Get list of all columns
+- **get_indices()**: Get list of all indices
+- **get_info()**: Session info (shape, memory, columns, etc.)
 
 ### Client API
+
+**Pattern 1: Focus-based access (mirrors `DataObject` API, for `mdfield`-style usage)**:
 
 ```python
 from lynguine.client import ServerClient
 
 client = ServerClient(auto_start=True)
 
-# Create session
-session = client.create_session(
-    interface_file='large_data.yml',
-    session_name='my_exploration'
-)
+# Create session (loads interface file once)
+session = client.create_session(interface_file='cv_config.yml')
 
-# Use session
-value = session.get_value(index=100, column='name')
-slice_df = session.get_slice(start=0, end=100)
+# Navigate to specific value (like mdfield does)
+session.set_index('person_1')
+session.set_column('name')
+value = session.get_value()  # Returns just the value, ~bytes over HTTP
+print(value)  # "Neil Lawrence"
+
+# Or use convenience method
+value = session.get_value_at(index='person_1', column='email')
+
+# Cleanup
+session.delete()
+```
+
+**Pattern 2: Bulk operations (for data exploration)**:
+
+```python
+# Create session
+session = client.create_session(interface_file='large_data.yml')
+
+# Get slices
+slice_df = session.get_slice(start=0, end=100)  # Only slice transfers
 filtered = session.filter(column='age', operator='>', value=30)
 
+# Get column
+ages = session.get_column_data('age')  # Just the column, not whole DataFrame
+
 # Session info
-info = session.info()
+info = session.get_info()
 print(f"Shape: {info['shape']}, Memory: {info['memory_mb']}MB")
 
 # Cleanup
 session.delete()
-# Or: client.delete_session(session.id)
+```
+
+**Pattern 3: Series navigation (for complex data)**:
+
+```python
+# For series columns (lists within cells)
+session.set_index('person_1')
+session.set_column('publications')  # This is a series column
+session.set_selector('year')
+session.set_subindex(2023)
+pub_2023 = session.get_value()  # Gets 2023 publication for person_1
 ```
 
 ### Server Implementation
@@ -174,40 +224,104 @@ Proposed (stateful):
 
 ## Use Cases
 
-### Interactive Data Exploration
+### 1. lamd's `mdfield` Tool (Primary Use Case)
+
+**Current (stateless)**: Every field extraction pays full startup + transfers entire DataFrame
+
+```python
+# Each mdfield call (38 times per CV build):
+# 1. Start Python process (1.9s startup)
+# 2. Import lynguine
+# 3. Read interface file → full DataFrame
+# 4. Extract one field
+# 5. Exit
+
+# Result: 72s startup overhead + unnecessary data transfer
+```
+
+**With Phase 5 (stateful)**: Load once, extract fields via focus-based API
+
+```python
+from lynguine.client import ServerClient
+
+client = ServerClient(auto_start=True)
+
+# Create session once (loads CV config)
+session = client.create_session(interface_file='neil-lawrence.yml')
+
+# Extract 27 fields (like mdfield does) - minimal transfer per field
+fields = {}
+for field in ['name', 'email', 'affiliation', 'title', 'phone', ...]:
+    session.set_column(field)
+    fields[field] = session.get_value()  # Transfer: ~bytes per field
+
+# Result: 1.9s startup + minimal transfer (27 × ~bytes instead of 27 × full DataFrame)
+```
+
+**Savings for lamd**:
+- **Before**: 38 calls × (1.9s startup + DataFrame transfer) = 72s + data overhead
+- **After**: 1 session + 38 lightweight operations = 1.9s + ~bytes
+- **Improvement**: ~35-40x faster
+
+### 2. lamd's `mdlist` Tool
+
+```python
+# Generate publication list from multiple markdown files
+session = client.create_session(interface_file='publications.yml')
+
+# Get filtered slice
+session.set_column('year')
+pubs_2023 = session.filter(column='year', operator='==', value=2023)
+
+# Get specific fields from slice
+pub_list = []
+for idx in range(len(pubs_2023)):
+    session.set_index(idx)
+    pub_list.append({
+        'title': session.get_value_at(idx, 'title'),
+        'venue': session.get_value_at(idx, 'venue'),
+        'authors': session.get_value_at(idx, 'authors')
+    })
+```
+
+### 3. Interactive Data Exploration
 
 ```python
 # Load large dataset once
 session = client.create_session('sales_data.yml')  # 1GB dataset
 
-# Explore interactively (fast!)
-stats = session.get_stats('revenue')
-top_sellers = session.filter('revenue', '>', 100000).get_slice(0, 10)
-unique_regions = session.get_unique('region')
+# Navigate interactively (minimal transfer)
+session.set_index(0)
+session.set_column('revenue')
+first_revenue = session.get_value()  # ~bytes
+
+# Get slice
+top_10 = session.get_slice(start=0, end=10)  # Only 10 rows transfer
 
 session.delete()
 ```
 
-### Data Quality Checks
+### 4. Data Quality Checks
 
 ```python
 # Check data quality without transferring entire dataset
 session = client.create_session('user_data.yml')
 
-null_count = session.count_nulls('email')
-duplicates = session.find_duplicates('user_id')
-outliers = session.get_outliers('age', std_devs=3)
+# Get column for analysis
+emails = session.get_column_data('email')  # Just one column
+null_count = sum(1 for e in emails if e is None)
 
 session.delete()
 ```
 
-### Iterative Processing
+### 5. Iterative Processing
 
 ```python
 # Process data in chunks
 session = client.create_session('large_file.yml')
 
-total_rows = session.info()['shape'][0]
+shape = session.get_shape()
+total_rows = shape[0]
 chunk_size = 1000
 
 for start in range(0, total_rows, chunk_size):
@@ -221,68 +335,138 @@ session.delete()
 
 ### REST Endpoints
 
+**Session Management**:
 ```
-POST   /api/sessions                 Create session
-GET    /api/sessions                 List all sessions
-GET    /api/sessions/{id}            Get session info
-DELETE /api/sessions/{id}            Delete session
+POST   /api/sessions                  Create session
+GET    /api/sessions                  List all sessions
+GET    /api/sessions/{id}             Get session info
+DELETE /api/sessions/{id}             Delete session
+```
 
-POST   /api/sessions/{id}/get_value  Get single value
-POST   /api/sessions/{id}/get_slice  Get row slice
-POST   /api/sessions/{id}/get_column Get column
-POST   /api/sessions/{id}/filter     Filter rows
-POST   /api/sessions/{id}/sort       Sort data
-POST   /api/sessions/{id}/stats      Get statistics
+**Focus Operations** (mirrors DataObject API):
+```
+POST   /api/sessions/{id}/set_index    Set current row focus
+POST   /api/sessions/{id}/set_column   Set current column focus
+GET    /api/sessions/{id}/get_index    Get current row focus
+GET    /api/sessions/{id}/get_column   Get current column focus
+GET    /api/sessions/{id}/get_value    Get value at current focus
+POST   /api/sessions/{id}/set_value    Set value at current focus
+```
+
+**Bulk Operations**:
+```
+POST   /api/sessions/{id}/get_value_at    Get specific value (index, column)
+POST   /api/sessions/{id}/get_slice       Get row slice
+POST   /api/sessions/{id}/get_column_data Get entire column
+POST   /api/sessions/{id}/get_row_data    Get entire row
+POST   /api/sessions/{id}/filter          Filter rows
+GET    /api/sessions/{id}/get_shape       Get dimensions
+```
+
+**Series Operations**:
+```
+POST   /api/sessions/{id}/set_selector   Set selector for series
+POST   /api/sessions/{id}/set_subindex   Set subindex for series
+GET    /api/sessions/{id}/get_subseries  Get subseries data
+```
+
+**Metadata**:
+```
+GET    /api/sessions/{id}/get_columns    Get all column names
+GET    /api/sessions/{id}/get_indices    Get all index values
+GET    /api/sessions/{id}/get_info       Get session metadata
 ```
 
 ### Client API
 
 ```python
 class Session:
-    """Represents a stateful data session"""
+    """Represents a stateful data session (mirrors DataObject API)"""
     
     def __init__(self, client, session_id, metadata):
         ...
     
-    def get_value(self, index, column) -> Any:
-        """Get single value"""
+    # Focus-based navigation (like DataObject)
+    def set_index(self, index) -> None:
+        """Set current row focus"""
     
+    def set_column(self, column) -> None:
+        """Set current column focus"""
+    
+    def get_index(self) -> Any:
+        """Get current row focus"""
+    
+    def get_column(self) -> str:
+        """Get current column focus"""
+    
+    # Data access at current focus
+    def get_value(self) -> Any:
+        """Get value at current (index, column) focus"""
+    
+    def set_value(self, value) -> None:
+        """Set value at current focus"""
+    
+    # Convenience methods
+    def get_value_at(self, index, column) -> Any:
+        """Get specific value without changing focus"""
+    
+    # Bulk operations
     def get_slice(self, start, end, columns=None) -> pd.DataFrame:
         """Get row slice"""
     
-    def get_column(self, column) -> pd.Series:
-        """Get entire column"""
+    def get_column_data(self, column) -> List:
+        """Get entire column as list"""
+    
+    def get_row_data(self, index) -> Dict:
+        """Get entire row as dict"""
     
     def filter(self, column, operator, value) -> pd.DataFrame:
         """Filter rows"""
     
-    def sort(self, column, ascending=True):
-        """Sort data (in-place on server)"""
+    def get_shape(self) -> Tuple[int, int]:
+        """Get (rows, cols) dimensions"""
     
-    def get_stats(self, column) -> Dict:
-        """Get column statistics"""
+    # Series operations
+    def set_selector(self, column) -> None:
+        """Set selector column for series"""
     
-    def get_unique(self, column) -> List:
-        """Get unique values"""
+    def set_subindex(self, value) -> None:
+        """Set subindex within series"""
     
-    def info(self) -> Dict:
-        """Get session metadata"""
+    def get_subseries(self) -> pd.DataFrame:
+        """Get subseries data"""
+    
+    # Metadata
+    def get_columns(self) -> List[str]:
+        """Get all column names"""
+    
+    def get_indices(self) -> List[Any]:
+        """Get all index values"""
+    
+    def get_info(self) -> Dict:
+        """Get session metadata (shape, memory, columns, etc.)"""
     
     def delete(self):
         """Delete session"""
 
 class ServerClient:
-    def create_session(self, interface_file, session_name=None, timeout=3600):
-        """Create new session"""
-        # Returns Session object
+    def create_session(
+        self, 
+        interface_file: str,
+        directory: str = '.',
+        interface_field: Optional[str] = None,
+        session_name: Optional[str] = None,
+        timeout: int = 3600
+    ) -> Session:
+        """Create new session by loading interface file"""
     
     def list_sessions(self) -> List[Dict]:
         """List all sessions"""
     
-    def get_session(self, session_id) -> Session:
+    def get_session(self, session_id: str) -> Session:
         """Get existing session"""
     
-    def delete_session(self, session_id):
+    def delete_session(self, session_id: str):
         """Delete session"""
 ```
 
