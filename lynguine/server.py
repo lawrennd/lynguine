@@ -25,6 +25,8 @@ import traceback
 from lynguine.config.interface import Interface
 from lynguine.access import io
 from lynguine.log import Logger
+from lynguine.session_manager import SessionManager
+from lynguine import server_session_handlers
 
 # Create logger instance
 log = Logger(name="lynguine.server", level="info", filename="lynguine-server.log")
@@ -34,6 +36,9 @@ _lockfile_path = None
 
 # Global idle timeout manager
 _idle_timeout_manager: Optional['IdleTimeoutManager'] = None
+
+# Global session manager (Phase 5)
+_session_manager: Optional[SessionManager] = None
 
 
 class IdleTimeoutManager:
@@ -279,12 +284,13 @@ class LynguineHandler(BaseHTTPRequestHandler):
         try:
             # Read request body
             content_length = int(self.headers.get('Content-Length', 0))
-            if content_length == 0:
-                self.send_error_response(ValueError("Empty request body"), 400)
-                return
             
-            body = self.rfile.read(content_length)
-            request_data = json.loads(body.decode('utf-8'))
+            # Some endpoints don't require body
+            body = b''
+            request_data = {}
+            if content_length > 0:
+                body = self.rfile.read(content_length)
+                request_data = json.loads(body.decode('utf-8'))
             
             # Route to appropriate handler
             if self.path == '/api/read_data':
@@ -299,6 +305,13 @@ class LynguineHandler(BaseHTTPRequestHandler):
                 self.handle_ping()
             elif self.path == '/api/status':
                 self.handle_status()
+            # Session endpoints (Phase 5)
+            elif self.path == '/api/sessions':
+                global _session_manager
+                server_session_handlers.handle_create_session(self, _session_manager, request_data)
+            elif self.path.startswith('/api/sessions/'):
+                global _session_manager
+                server_session_handlers.handle_session_operation(self, _session_manager, self.path, request_data)
             else:
                 self.send_error_response(
                     ValueError(f"Unknown endpoint: {self.path}"), 
@@ -311,23 +324,53 @@ class LynguineHandler(BaseHTTPRequestHandler):
             self.send_error_response(e, 500)
     
     def do_GET(self):
-        """Handle GET requests (health check, ping, status)"""
+        """Handle GET requests (health check, ping, status, sessions)"""
         # Update activity timestamp for idle timeout
         global _idle_timeout_manager
         if _idle_timeout_manager:
             _idle_timeout_manager.update_activity()
         
-        if self.path == '/api/health':
-            self.handle_health()
-        elif self.path == '/api/ping':
-            self.handle_ping()
-        elif self.path == '/api/status':
-            self.handle_status()
-        else:
-            self.send_error_response(
-                ValueError(f"GET not supported for: {self.path}"), 
-                405
-            )
+        try:
+            if self.path == '/api/health':
+                self.handle_health()
+            elif self.path == '/api/ping':
+                self.handle_ping()
+            elif self.path == '/api/status':
+                self.handle_status()
+            elif self.path == '/api/sessions':
+                global _session_manager
+                server_session_handlers.handle_list_sessions(self, _session_manager)
+            elif self.path.startswith('/api/sessions/'):
+                global _session_manager
+                server_session_handlers.handle_session_operation(self, _session_manager, self.path, {})
+            else:
+                self.send_error_response(
+                    ValueError(f"GET not supported for: {self.path}"), 
+                    405
+                )
+        except Exception as e:
+            log.error(f"Error handling GET request: {e}")
+            self.send_error_response(e, 500)
+    
+    def do_DELETE(self):
+        """Handle DELETE requests (session deletion)"""
+        # Update activity timestamp for idle timeout
+        global _idle_timeout_manager
+        if _idle_timeout_manager:
+            _idle_timeout_manager.update_activity()
+        
+        try:
+            if self.path.startswith('/api/sessions/'):
+                global _session_manager
+                server_session_handlers.handle_delete_session(self, _session_manager, self.path)
+            else:
+                self.send_error_response(
+                    ValueError(f"DELETE not supported for: {self.path}"), 
+                    405
+                )
+        except Exception as e:
+            log.error(f"Error handling DELETE request: {e}")
+            self.send_error_response(e, 500)
     
     def handle_ping(self):
         """Simple ping endpoint for connectivity testing"""
@@ -659,21 +702,44 @@ def run_server(host: str = '127.0.0.1', port: int = 8765, idle_timeout: int = 0)
         
         _idle_timeout_manager = IdleTimeoutManager(idle_timeout, shutdown_callback)
     
-    print(f"Lynguine Server Mode (Phase 2)")
+    # Setup session manager (Phase 5)
+    global _session_manager
+    _session_manager = SessionManager()
+    _session_manager.start_cleanup_thread()
+    log.info("Session manager initialized with crash recovery")
+    
+    print(f"Lynguine Server Mode (Phase 5)")
     print(f"==============================")
     print(f"Server starting on http://{host}:{port}")
     print(f"PID: {os.getpid()}")
     if idle_timeout > 0:
         print(f"Idle timeout: {idle_timeout}s ({idle_timeout/60:.1f} minutes)")
+    print(f"Session recovery: enabled")
     print(f"Press Ctrl+C to stop")
     print()
     print(f"Available endpoints:")
-    print(f"  GET  /api/health      - Health check")
-    print(f"  GET  /api/ping        - Connectivity test")
-    print(f"  GET  /api/status      - Server status and diagnostics")
-    print(f"  POST /api/read_data   - Read data via lynguine")
-    print(f"  POST /api/write_data  - Write data via lynguine")
-    print(f"  POST /api/compute     - Run compute operations")
+    print(f"  GET    /api/health                       - Health check")
+    print(f"  GET    /api/ping                         - Connectivity test")
+    print(f"  GET    /api/status                       - Server status and diagnostics")
+    print(f"  POST   /api/read_data                    - Read data via lynguine")
+    print(f"  POST   /api/write_data                   - Write data via lynguine")
+    print(f"  POST   /api/compute                      - Run compute operations")
+    print(f"")
+    print(f"  Phase 5: Stateful Sessions (CustomDataFrame API):")
+    print(f"  POST   /api/sessions                     - Create session")
+    print(f"  GET    /api/sessions                     - List sessions")
+    print(f"  GET    /api/sessions/{{id}}                - Get session info")
+    print(f"  DELETE /api/sessions/{{id}}                - Delete session")
+    print(f"  POST   /api/sessions/{{id}}/set_index      - Set current row focus")
+    print(f"  GET    /api/sessions/{{id}}/get_index      - Get current row focus")
+    print(f"  POST   /api/sessions/{{id}}/set_column     - Set current column focus")
+    print(f"  GET    /api/sessions/{{id}}/get_column     - Get current column focus")
+    print(f"  GET    /api/sessions/{{id}}/get_value      - Get value at focus")
+    print(f"  POST   /api/sessions/{{id}}/set_value      - Set value at focus")
+    print(f"  POST   /api/sessions/{{id}}/get_value_at   - Get value at (index, column)")
+    print(f"  GET    /api/sessions/{{id}}/get_shape      - Get DataFrame shape")
+    print(f"  GET    /api/sessions/{{id}}/get_columns    - Get all columns")
+    print(f"  ... (see docs for full CustomDataFrame API)")
     print()
     
     log.info(f"Server started on {host}:{port} (PID: {os.getpid()}, idle_timeout: {idle_timeout}s)")
@@ -688,6 +754,8 @@ def run_server(host: str = '127.0.0.1', port: int = 8765, idle_timeout: int = 0)
         # Cleanup
         if _idle_timeout_manager:
             _idle_timeout_manager.stop()
+        if _session_manager:
+            _session_manager.shutdown()
         cleanup_lockfile()
         print("Server stopped.")
 

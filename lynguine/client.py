@@ -341,6 +341,304 @@ class ServerClient:
     def __del__(self):
         """Cleanup on deletion"""
         self.close()
+    
+    # =================================================================
+    # Phase 5: Session Management (mirrors CustomDataFrame API)
+    # =================================================================
+    
+    def create_session(
+        self,
+        interface_file: str,
+        directory: str = '.',
+        interface_field: Optional[str] = None,
+        timeout: int = 3600
+    ) -> 'Session':
+        """Create a stateful session by loading interface file.
+        
+        Args:
+            interface_file: Path to lynguine interface YAML file
+            directory: Directory for resolving relative paths
+            interface_field: Optional field within interface
+            timeout: Session timeout in seconds (0 = no timeout)
+        
+        Returns:
+            Session object
+        """
+        self._ensure_server_available()
+        
+        request_data = {
+            'interface_file': interface_file,
+            'directory': directory,
+            'timeout': timeout
+        }
+        if interface_field:
+            request_data['interface_field'] = interface_field
+        
+        def _do_create():
+            response = self._session.post(
+                f'{self.server_url}/api/sessions',
+                json=request_data,
+                timeout=self.timeout
+            )
+            response.raise_for_status()
+            result = response.json()
+            
+            if result['status'] != 'success':
+                raise ValueError(f"Failed to create session: {result}")
+            
+            session_data = result['session']
+            return Session(self, session_data['session_id'], session_data)
+        
+        return self._make_request_with_retry(_do_create, "create_session")
+    
+    def list_sessions(self):
+        """List all sessions"""
+        self._ensure_server_available()
+        
+        def _do_list():
+            response = self._session.get(
+                f'{self.server_url}/api/sessions',
+                timeout=self.timeout
+            )
+            response.raise_for_status()
+            return response.json()
+        
+        return self._make_request_with_retry(_do_list, "list_sessions")
+    
+    def get_session(self, session_id: str) -> 'Session':
+        """Get an existing session by ID"""
+        self._ensure_server_available()
+        
+        def _do_get():
+            response = self._session.get(
+                f'{self.server_url}/api/sessions/{session_id}',
+                timeout=self.timeout
+            )
+            response.raise_for_status()
+            result = response.json()
+            
+            if result['status'] != 'success':
+                raise ValueError(f"Failed to get session: {result}")
+            
+            session_data = result['session']
+            return Session(self, session_id, session_data)
+        
+        return self._make_request_with_retry(_do_get, "get_session")
+    
+    def delete_session(self, session_id: str):
+        """Delete a session"""
+        self._ensure_server_available()
+        
+        def _do_delete():
+            import requests as req_module
+            response = req_module.delete(
+                f'{self.server_url}/api/sessions/{session_id}',
+                timeout=self.timeout
+            )
+            response.raise_for_status()
+            return response.json()
+        
+        return self._make_request_with_retry(_do_delete, "delete_session")
+
+
+class Session:
+    """Stateful data session that mirrors CustomDataFrame API.
+    
+    Provides focus-based navigation and data access over HTTP,
+    mirroring the lynguine.assess.data.CustomDataFrame interface.
+    
+    Example:
+        session = client.create_session(interface_file='config.yml')
+        session.set_index('person_1')
+        session.set_column('name')
+        value = session.get_value()  # Transfers ~bytes, not full DataFrame
+        session.delete()
+    """
+    
+    def __init__(self, client: ServerClient, session_id: str, metadata: Dict[str, Any]):
+        self.client = client
+        self.session_id = session_id
+        self._metadata = metadata
+    
+    def _post(self, operation: str, data: Optional[Dict] = None):
+        """POST request to session endpoint"""
+        url = f'{self.client.server_url}/api/sessions/{self.session_id}/{operation}'
+        response = self.client._session.post(url, json=data or {}, timeout=self.client.timeout)
+        response.raise_for_status()
+        return response.json()
+    
+    def _get(self, operation: Optional[str] = None):
+        """GET request to session endpoint"""
+        url = f'{self.client.server_url}/api/sessions/{self.session_id}'
+        if operation:
+            url = f'{url}/{operation}'
+        response = self.client._session.get(url, timeout=self.client.timeout)
+        response.raise_for_status()
+        return response.json()
+    
+    # Focus-based navigation (mirrors CustomDataFrame)
+    
+    def set_index(self, index):
+        """Set current row focus"""
+        result = self._post('set_index', {'index': index})
+        if result['status'] != 'success':
+            raise ValueError(f"Failed to set index: {result}")
+    
+    def get_index(self):
+        """Get current row focus"""
+        result = self._get('get_index')
+        if result['status'] != 'success':
+            raise ValueError(f"Failed to get index: {result}")
+        return result['index']
+    
+    def set_column(self, column: str):
+        """Set current column focus"""
+        result = self._post('set_column', {'column': column})
+        if result['status'] != 'success':
+            raise ValueError(f"Failed to set column: {result}")
+    
+    def get_column(self) -> str:
+        """Get current column focus"""
+        result = self._get('get_column')
+        if result['status'] != 'success':
+            raise ValueError(f"Failed to get column: {result}")
+        return result['column']
+    
+    def get_value(self):
+        """Get value at current (index, column) focus"""
+        result = self._get('get_value')
+        if result['status'] != 'success':
+            raise ValueError(f"Failed to get value: {result}")
+        return result['value']
+    
+    def set_value(self, value):
+        """Set value at current focus"""
+        result = self._post('set_value', {'value': value})
+        if result['status'] != 'success':
+            raise ValueError(f"Failed to set value: {result}")
+    
+    # Convenience methods
+    
+    def get_value_at(self, index, column):
+        """Get specific value without changing focus"""
+        result = self._post('get_value_at', {'index': index, 'column': column})
+        if result['status'] != 'success':
+            raise ValueError(f"Failed to get value at ({index}, {column}): {result}")
+        return result['value']
+    
+    # Shape and metadata
+    
+    def get_shape(self) -> tuple:
+        """Get (rows, cols) dimensions"""
+        result = self._get('get_shape')
+        if result['status'] != 'success':
+            raise ValueError(f"Failed to get shape: {result}")
+        return tuple(result['shape'])
+    
+    def get_columns(self):
+        """Get all column names"""
+        result = self._get('get_columns')
+        if result['status'] != 'success':
+            raise ValueError(f"Failed to get columns: {result}")
+        return result['columns']
+    
+    def get_indices(self):
+        """Get all index values"""
+        result = self._get('get_indices')
+        if result['status'] != 'success':
+            raise ValueError(f"Failed to get indices: {result}")
+        return result['indices']
+    
+    # Column type queries (mirrors CustomDataFrame)
+    
+    def get_input_columns(self):
+        """Get input-typed columns"""
+        result = self._get('get_input_columns')
+        if result['status'] != 'success':
+            raise ValueError(f"Failed to get input columns: {result}")
+        return result['columns']
+    
+    def get_output_columns(self):
+        """Get output-typed columns"""
+        result = self._get('get_output_columns')
+        if result['status'] != 'success':
+            raise ValueError(f"Failed to get output columns: {result}")
+        return result['columns']
+    
+    def get_series_columns(self):
+        """Get series-typed columns"""
+        result = self._get('get_series_columns')
+        if result['status'] != 'success':
+            raise ValueError(f"Failed to get series columns: {result}")
+        return result['columns']
+    
+    def get_column_type(self, column: str):
+        """Get column specification type"""
+        result = self._post('get_column_type', {'column': column})
+        if result['status'] != 'success':
+            raise ValueError(f"Failed to get column type: {result}")
+        return result['column_type']
+    
+    # Series operations (for complex data)
+    
+    def set_selector(self, column: str):
+        """Set selector column for series"""
+        result = self._post('set_selector', {'column': column})
+        if result['status'] != 'success':
+            raise ValueError(f"Failed to set selector: {result}")
+    
+    def get_selector(self):
+        """Get selector column"""
+        result = self._get('get_selector')
+        if result['status'] != 'success':
+            raise ValueError(f"Failed to get selector: {result}")
+        return result['selector']
+    
+    def set_subindex(self, value):
+        """Set subindex within series"""
+        result = self._post('set_subindex', {'value': value})
+        if result['status'] != 'success':
+            raise ValueError(f"Failed to set subindex: {result}")
+    
+    def get_subindex(self):
+        """Get subindex within series"""
+        result = self._get('get_subindex')
+        if result['status'] != 'success':
+            raise ValueError(f"Failed to get subindex: {result}")
+        return result['subindex']
+    
+    def get_subseries(self) -> pd.DataFrame:
+        """Get subseries data"""
+        result = self._get('get_subseries')
+        if result['status'] != 'success':
+            raise ValueError(f"Failed to get subseries: {result}")
+        subseries_data = result['subseries']
+        return pd.DataFrame.from_records(subseries_data['records'])
+    
+    # Session management
+    
+    def get_info(self) -> Dict[str, Any]:
+        """Get session metadata"""
+        result = self._get()
+        if result['status'] != 'success':
+            raise ValueError(f"Failed to get session info: {result}")
+        return result['session']
+    
+    def delete(self):
+        """Delete this session"""
+        self.client.delete_session(self.session_id)
+    
+    def __enter__(self):
+        """Context manager entry"""
+        return self
+    
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Context manager exit"""
+        self.delete()
+    
+    def __repr__(self):
+        """String representation"""
+        return f"Session(id='{self.session_id[:8]}...', shape={self._metadata.get('shape')})"
 
 
 # Convenience function for quick usage
