@@ -6,7 +6,7 @@ last_updated: "2026-01-03"
 status: "Ready"
 priority: "Medium"
 owner: "lawrennd"
-stakeholders: "Review applications, Data analysts, Researchers"
+stakeholders: "Application developers (referia, lamd), Lynguine integrators"
 related_tenets:
 - explicit-infrastructure
 - flow-based-processing
@@ -51,15 +51,15 @@ The compute framework needs AI/LLM integration to enable intelligent text analys
 
 ## User Stories
 
-**As a reviewer**, I want AI analysis of review quality so that I can identify constructive vs unhelpful reviews automatically.
+**As a referia developer**, I want LLM integration in lynguine so that I can add AI-powered review analysis without implementing LLM infrastructure myself.
 
-**As a researcher**, I want contextual summarization so that I can generate summaries that consider specific aspects of papers.
+**As an application developer**, I want provider abstraction so that I can switch between OpenAI, Anthropic, and local models without changing my application code.
 
-**As a data analyst**, I want classification capabilities so that I can tag content into categories without training custom models.
+**As a lamd maintainer**, I want cost tracking built into lynguine so that I can provide budget controls to my users without implementing cost management myself.
 
-**As a developer**, I want provider abstraction so that I can switch between OpenAI, Anthropic, and local models without code changes.
+**As an integrator**, I want YAML-configurable LLM operations so that users can customize AI behavior without modifying Python code.
 
-**As a project manager**, I want cost tracking so that I can monitor and control LLM API expenses.
+**As an application developer**, I want comprehensive documentation and examples so that I can quickly integrate LLM features into my lynguine-based application.
 
 ## Constraints
 
