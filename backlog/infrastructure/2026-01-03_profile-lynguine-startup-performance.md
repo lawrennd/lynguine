@@ -3,7 +3,7 @@ id: "2026-01-03_profile-lynguine-startup-performance"
 title: "Profile Lynguine Startup Performance and Usage Patterns"
 created: "2026-01-03"
 last_updated: "2026-01-03"
-status: "Proposed"
+status: "Completed"
 priority: "High"
 category: "infrastructure"
 owner: "lawrennd"
@@ -177,13 +177,15 @@ Create a report documenting:
 
 ### 2026-01-03
 
-Task created. Profiling work needed before CIP-0008 can be properly evaluated.
+Task created and completed.
 
-**Next Steps**:
-1. Create profiling scripts
-2. Run on representative systems
-3. Analyze lamd usage patterns
-4. Document findings
-5. Share results with team
-6. Update CIP-0008 based on findings
+**Profiling Results** (documented in CIP-0008):
+- Startup time: 1.947s (pandas 1.223s + lynguine 0.548s + other 0.176s)
+- Memory: 132 MB total (117 MB from pandas/numpy)
+- Performance impact: 95% overhead for repeated calls
+- Improvement potential: 10-20x with server mode
+
+**Conclusion**: Server mode (CIP-0008) is strongly justified.
+
+**CIP-0008 Status**: Investigation complete, ready for implementation decision.
 
