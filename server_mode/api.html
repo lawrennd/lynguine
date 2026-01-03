@@ -1281,6 +1281,86 @@ shut down via idle timeout if configured.</p>
 </dl>
 </dd></dl>
 
+<dl class="py method">
+<dt class="sig sig-object py" id="lynguine.client.ServerClient.get_interface_field">
+<span class="sig-name descname"><span class="pre">get_interface_field</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">interface_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">field</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">directory</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'.'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lynguine/client.html#ServerClient.get_interface_field"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lynguine.client.ServerClient.get_interface_field" title="Link to this definition"></a></dt>
+<dd><p>Extract a field value from an interface configuration file.</p>
+<p>Loads the interface file and extracts a single field without loading
+the full CustomDataFrame data. Optimized for lamd’s mdfield utility.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>interface_file</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Path to interface YAML file</p></li>
+<li><p><strong>field</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Field name to extract (e.g., ‘title’, ‘author’)</p></li>
+<li><p><strong>directory</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Working directory for resolving paths (default: ‘.’)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Field value (any type) or None if field not found</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#RuntimeError" title="(in Python v3.14)"><strong>RuntimeError</strong></a> – If server is not available after retries</p></li>
+<li><p><strong>requests.HTTPError</strong> – If request fails</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><em>Any</em></a></p>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">client</span> <span class="o">=</span> <span class="n">ServerClient</span><span class="p">(</span><span class="n">auto_start</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">title</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">get_interface_field</span><span class="p">(</span><span class="s1">&#39;_lamd.yml&#39;</span><span class="p">,</span> <span class="s1">&#39;title&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">title</span><span class="p">)</span>
+<span class="go">&#39;My Document Title&#39;</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="lynguine.client.ServerClient.extract_talk_field">
+<span class="sig-name descname"><span class="pre">extract_talk_field</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">field</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">markdown_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config_files</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lynguine/client.html#ServerClient.extract_talk_field"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lynguine.client.ServerClient.extract_talk_field" title="Link to this definition"></a></dt>
+<dd><p>Extract a field from markdown frontmatter with config fallback.</p>
+<p>Wraps lynguine.util.talk.talk_field() functionality, providing:
+- Markdown frontmatter parsing
+- Fallback to interface config files
+- Array formatting for categories
+- Environment variable expansion</p>
+<p>Optimized for lamd’s mdfield utility integration.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>field</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Field name to extract (e.g., ‘title’, ‘author’, ‘venue’)</p></li>
+<li><p><strong>markdown_file</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Path to markdown file with YAML frontmatter</p></li>
+<li><p><strong>config_files</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><em>list</em></a><em> | </em><em>None</em>) – List of config files for fallback (default: [])</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Field value as string (empty string if not found)</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#RuntimeError" title="(in Python v3.14)"><strong>RuntimeError</strong></a> – If server is not available after retries</p></li>
+<li><p><strong>requests.HTTPError</strong> – If request fails</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)">str</a></p>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">client</span> <span class="o">=</span> <span class="n">ServerClient</span><span class="p">(</span><span class="n">auto_start</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">title</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">extract_talk_field</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="n">field</span><span class="o">=</span><span class="s1">&#39;title&#39;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">markdown_file</span><span class="o">=</span><span class="s1">&#39;my-talk.md&#39;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">config_files</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;_lamd.yml&#39;</span><span class="p">]</span>
+<span class="gp">... </span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">title</span><span class="p">)</span>
+<span class="go">&#39;My Talk Title&#39;</span>
+</pre></div>
+</div>
+</dd></dl>
+
 </dd></dl>
 
 <section id="methods">

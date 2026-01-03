@@ -1523,6 +1523,131 @@
             <span class="k">return</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
         
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_make_request_with_retry</span><span class="p">(</span><span class="n">_do_delete</span><span class="p">,</span> <span class="s2">&quot;delete_session&quot;</span><span class="p">)</span></div>
+
+    
+<div class="viewcode-block" id="ServerClient.get_interface_field">
+<a class="viewcode-back" href="../../server_mode/api.html#lynguine.client.ServerClient.get_interface_field">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_interface_field</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">interface_file</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">field</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">directory</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;.&#39;</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Extract a field value from an interface configuration file.</span>
+<span class="sd">        </span>
+<span class="sd">        Loads the interface file and extracts a single field without loading</span>
+<span class="sd">        the full CustomDataFrame data. Optimized for lamd&#39;s mdfield utility.</span>
+<span class="sd">        </span>
+<span class="sd">        Args:</span>
+<span class="sd">            interface_file: Path to interface YAML file</span>
+<span class="sd">            field: Field name to extract (e.g., &#39;title&#39;, &#39;author&#39;)</span>
+<span class="sd">            directory: Working directory for resolving paths (default: &#39;.&#39;)</span>
+<span class="sd">            </span>
+<span class="sd">        Returns:</span>
+<span class="sd">            Field value (any type) or None if field not found</span>
+<span class="sd">            </span>
+<span class="sd">        Raises:</span>
+<span class="sd">            RuntimeError: If server is not available after retries</span>
+<span class="sd">            requests.HTTPError: If request fails</span>
+<span class="sd">            </span>
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; client = ServerClient(auto_start=True)</span>
+<span class="sd">            &gt;&gt;&gt; title = client.get_interface_field(&#39;_lamd.yml&#39;, &#39;title&#39;)</span>
+<span class="sd">            &gt;&gt;&gt; print(title)</span>
+<span class="sd">            &#39;My Document Title&#39;</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_ensure_server_available</span><span class="p">()</span>
+        
+        <span class="n">request_data</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;interface_file&#39;</span><span class="p">:</span> <span class="n">interface_file</span><span class="p">,</span>
+            <span class="s1">&#39;field&#39;</span><span class="p">:</span> <span class="n">field</span><span class="p">,</span>
+            <span class="s1">&#39;directory&#39;</span><span class="p">:</span> <span class="n">directory</span>
+        <span class="p">}</span>
+        
+        <span class="k">def</span><span class="w"> </span><span class="nf">_do_read_field</span><span class="p">():</span>
+            <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">post</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">server_url</span><span class="si">}</span><span class="s1">/api/interface/read&#39;</span><span class="p">,</span>
+                <span class="n">json</span><span class="o">=</span><span class="n">request_data</span><span class="p">,</span>
+                <span class="n">timeout</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">timeout</span>
+            <span class="p">)</span>
+            <span class="c1"># Don&#39;t raise for 500 errors - handle them gracefully</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+            
+            <span class="k">if</span> <span class="n">result</span><span class="p">[</span><span class="s1">&#39;status&#39;</span><span class="p">]</span> <span class="o">!=</span> <span class="s1">&#39;success&#39;</span><span class="p">:</span>
+                <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Failed to read interface field: </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;error&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;Unknown error&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="k">return</span> <span class="kc">None</span>
+            
+            <span class="k">return</span> <span class="n">result</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">]</span>
+        
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_make_request_with_retry</span><span class="p">(</span><span class="n">_do_read_field</span><span class="p">,</span> <span class="s2">&quot;get_interface_field&quot;</span><span class="p">)</span></div>
+
+    
+<div class="viewcode-block" id="ServerClient.extract_talk_field">
+<a class="viewcode-back" href="../../server_mode/api.html#lynguine.client.ServerClient.extract_talk_field">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">extract_talk_field</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">field</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">markdown_file</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">config_files</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Extract a field from markdown frontmatter with config fallback.</span>
+<span class="sd">        </span>
+<span class="sd">        Wraps lynguine.util.talk.talk_field() functionality, providing:</span>
+<span class="sd">        - Markdown frontmatter parsing</span>
+<span class="sd">        - Fallback to interface config files</span>
+<span class="sd">        - Array formatting for categories</span>
+<span class="sd">        - Environment variable expansion</span>
+<span class="sd">        </span>
+<span class="sd">        Optimized for lamd&#39;s mdfield utility integration.</span>
+<span class="sd">        </span>
+<span class="sd">        Args:</span>
+<span class="sd">            field: Field name to extract (e.g., &#39;title&#39;, &#39;author&#39;, &#39;venue&#39;)</span>
+<span class="sd">            markdown_file: Path to markdown file with YAML frontmatter</span>
+<span class="sd">            config_files: List of config files for fallback (default: [])</span>
+<span class="sd">            </span>
+<span class="sd">        Returns:</span>
+<span class="sd">            Field value as string (empty string if not found)</span>
+<span class="sd">            </span>
+<span class="sd">        Raises:</span>
+<span class="sd">            RuntimeError: If server is not available after retries</span>
+<span class="sd">            requests.HTTPError: If request fails</span>
+<span class="sd">            </span>
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; client = ServerClient(auto_start=True)</span>
+<span class="sd">            &gt;&gt;&gt; title = client.extract_talk_field(</span>
+<span class="sd">            ...     field=&#39;title&#39;,</span>
+<span class="sd">            ...     markdown_file=&#39;my-talk.md&#39;,</span>
+<span class="sd">            ...     config_files=[&#39;_lamd.yml&#39;]</span>
+<span class="sd">            ... )</span>
+<span class="sd">            &gt;&gt;&gt; print(title)</span>
+<span class="sd">            &#39;My Talk Title&#39;</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_ensure_server_available</span><span class="p">()</span>
+        
+        <span class="n">request_data</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;field&#39;</span><span class="p">:</span> <span class="n">field</span><span class="p">,</span>
+            <span class="s1">&#39;markdown_file&#39;</span><span class="p">:</span> <span class="n">markdown_file</span><span class="p">,</span>
+            <span class="s1">&#39;config_files&#39;</span><span class="p">:</span> <span class="n">config_files</span> <span class="ow">or</span> <span class="p">[]</span>
+        <span class="p">}</span>
+        
+        <span class="k">def</span><span class="w"> </span><span class="nf">_do_extract_field</span><span class="p">():</span>
+            <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">post</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">server_url</span><span class="si">}</span><span class="s1">/api/talk/field&#39;</span><span class="p">,</span>
+                <span class="n">json</span><span class="o">=</span><span class="n">request_data</span><span class="p">,</span>
+                <span class="n">timeout</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">timeout</span>
+            <span class="p">)</span>
+            <span class="n">response</span><span class="o">.</span><span class="n">raise_for_status</span><span class="p">()</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+            
+            <span class="k">if</span> <span class="n">result</span><span class="p">[</span><span class="s1">&#39;status&#39;</span><span class="p">]</span> <span class="o">!=</span> <span class="s1">&#39;success&#39;</span><span class="p">:</span>
+                <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Failed to extract talk field: </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;error&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;Unknown error&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="k">return</span> <span class="s2">&quot;&quot;</span>
+            
+            <span class="k">return</span> <span class="n">result</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">]</span>
+        
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_make_request_with_retry</span><span class="p">(</span><span class="n">_do_extract_field</span><span class="p">,</span> <span class="s2">&quot;extract_talk_field&quot;</span><span class="p">)</span></div>
 </div>
 
 
