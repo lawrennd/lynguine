@@ -8,6 +8,10 @@ from typing import Dict, Any
 import pandas as pd
 import numpy as np
 
+from lynguine.log import Logger
+
+log = Logger(name="lynguine.server.sessions", level="info", filename="lynguine-server.log")
+
 
 def parse_session_path(path: str) -> tuple:
     """Parse session ID and operation from path.
@@ -69,7 +73,7 @@ def handle_create_session(handler, session_manager, request_data: Dict[str, Any]
         })
         
     except Exception as e:
-        handler.log.error(f"Error creating session: {e}")
+        log.error(f"Error creating session: {e}")
         handler.send_error_response(e, 500)
 
 
@@ -88,7 +92,7 @@ def handle_list_sessions(handler, session_manager):
             'total_memory_mb': session_manager.get_total_memory()
         })
     except Exception as e:
-        handler.log.error(f"Error listing sessions: {e}")
+        log.error(f"Error listing sessions: {e}")
         handler.send_error_response(e, 500)
 
 
@@ -112,7 +116,7 @@ def handle_delete_session(handler, session_manager, path: str):
     except KeyError as e:
         handler.send_error_response(e, 404)
     except Exception as e:
-        handler.log.error(f"Error deleting session: {e}")
+        log.error(f"Error deleting session: {e}")
         handler.send_error_response(e, 500)
 
 
@@ -298,7 +302,7 @@ def handle_session_operation(handler, session_manager, path: str, request_data: 
     except KeyError as e:
         handler.send_error_response(e, 404)
     except Exception as e:
-        handler.log.error(f"Error in session operation '{operation}': {e}")
+        log.error(f"Error in session operation '{operation}': {e}")
         import traceback
         traceback.print_exc()
         handler.send_error_response(e, 500)

@@ -951,6 +951,7 @@ input:
   cols:
     - name
     - email
+  index: name
 """
         Path(interface_file).write_text(interface_content)
         
@@ -961,8 +962,10 @@ input:
             
             # Verify session info
             info = session.get_info()
-            assert info['shape'] == (10, 2)
-            assert 'name' in info['columns']
+            shape = info['shape']
+            assert shape[0] == 10  # 10 rows
+            assert shape[1] == 1  # 1 column (email, name is index)
+            # name is the index, email is a column
             assert 'email' in info['columns']
             
             # Delete session
@@ -982,6 +985,7 @@ input:
   cols:
     - name
     - age
+  index: name
 """
         Path(interface_file).write_text(interface_content)
         
@@ -1018,6 +1022,7 @@ input:
   nrows: 3
   cols:
     - name
+  index: name
 """
         Path(interface_file).write_text(interface_content)
         
@@ -1043,6 +1048,7 @@ input:
   cols:
     - name
     - email
+  index: name
 """
         Path(interface_file).write_text(interface_content)
         
@@ -1072,6 +1078,7 @@ input:
   nrows: 2
   cols:
     - name
+  index: name
 """
         Path(interface_file).write_text(interface_content)
         
@@ -1102,6 +1109,7 @@ input:
   nrows: 3
   cols:
     - name
+  index: name
 """
         Path(interface_file).write_text(interface_content)
         
@@ -1125,6 +1133,7 @@ input:
   nrows: 2
   cols:
     - name
+  index: name
 """
         Path(interface_file).write_text(interface_content)
         
@@ -1153,6 +1162,7 @@ input:
   cols:
     - name
     - count
+  index: name
 """
         Path(interface_file).write_text(interface_content)
         
@@ -1186,6 +1196,7 @@ input:
   nrows: 2
   cols:
     - name
+  index: name
 """
         Path(interface_file).write_text(interface_content)
         
@@ -1214,6 +1225,7 @@ input:
   nrows: 2
   cols:
     - name
+  index: name
 """
         Path(interface_file).write_text(interface_content)
         
@@ -1239,6 +1251,7 @@ input:
   cols:
     - name
     - category
+  index: name
 """
         Path(interface_file).write_text(interface_content)
         
@@ -1267,6 +1280,7 @@ input:
   nrows: 5
   cols:
     - name
+  index: name
 """
         Path(interface_file).write_text(interface_content)
         
@@ -1297,6 +1311,7 @@ input:
   cols:
     - name
     - values
+  index: name
 """
         Path(interface_file).write_text(interface_content)
         
@@ -1332,6 +1347,7 @@ input:
   nrows: 5
   cols:
     - name
+  index: name
 """
         Path(interface_file).write_text(interface_content)
         
@@ -1372,6 +1388,7 @@ input:
   cols:
     - name
     - email
+  index: name
 """
         Path(interface_file).write_text(interface_content)
         
