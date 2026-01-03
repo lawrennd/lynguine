@@ -750,6 +750,9 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../modules/lynguine.util.html#lynguine.util.fake.Generate.address"><code class="docutils literal notranslate"><span class="pre">Generate.address()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../modules/lynguine.util.html#lynguine.util.fake.Generate.email"><code class="docutils literal notranslate"><span class="pre">Generate.email()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../modules/lynguine.util.html#lynguine.util.fake.Generate.date"><code class="docutils literal notranslate"><span class="pre">Generate.date()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../modules/lynguine.util.html#lynguine.util.fake.Generate.birthdate"><code class="docutils literal notranslate"><span class="pre">Generate.birthdate()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../modules/lynguine.util.html#lynguine.util.fake.Generate.age"><code class="docutils literal notranslate"><span class="pre">Generate.age()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../modules/lynguine.util.html#lynguine.util.fake.Generate.phone"><code class="docutils literal notranslate"><span class="pre">Generate.phone()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -1828,6 +1831,32 @@
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">date</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="Generate.birthdate">
+<a class="viewcode-back" href="../../../modules/lynguine.util.html#lynguine.util.fake.Generate.birthdate">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">birthdate</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">person</span><span class="o">.</span><span class="n">birthdate</span><span class="p">(</span><span class="n">min_year</span><span class="o">=</span><span class="mi">1934</span><span class="p">,</span> <span class="n">max_year</span><span class="o">=</span><span class="mi">2006</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Generate.age">
+<a class="viewcode-back" href="../../../modules/lynguine.util.html#lynguine.util.fake.Generate.age">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">age</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="c1"># Calculate age from birthdate for consistency</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
+        <span class="n">bd</span> <span class="o">=</span> <span class="n">person</span><span class="o">.</span><span class="n">birthdate</span><span class="p">(</span><span class="n">min_year</span><span class="o">=</span><span class="mi">1934</span><span class="p">,</span> <span class="n">max_year</span><span class="o">=</span><span class="mi">2006</span><span class="p">)</span>
+        <span class="n">age</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">year</span> <span class="o">-</span> <span class="n">bd</span><span class="o">.</span><span class="n">year</span>
+        <span class="c1"># Adjust if birthday hasn&#39;t occurred yet this year</span>
+        <span class="n">today</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">today</span><span class="o">.</span><span class="n">month</span><span class="p">,</span> <span class="n">today</span><span class="o">.</span><span class="n">day</span><span class="p">)</span> <span class="o">&lt;</span> <span class="p">(</span><span class="n">bd</span><span class="o">.</span><span class="n">month</span><span class="p">,</span> <span class="n">bd</span><span class="o">.</span><span class="n">day</span><span class="p">):</span>
+            <span class="n">age</span> <span class="o">-=</span> <span class="mi">1</span>
+        <span class="k">return</span> <span class="n">age</span></div>
+
+<div class="viewcode-block" id="Generate.phone">
+<a class="viewcode-back" href="../../../modules/lynguine.util.html#lynguine.util.fake.Generate.phone">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">phone</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">person</span><span class="o">.</span><span class="n">telephone</span><span class="p">()</span></div>
 </div>
 
 </pre></div>
