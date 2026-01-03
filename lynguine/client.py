@@ -6,13 +6,14 @@ enabling fast repeated access without startup costs.
 
 Phase 1: Proof of Concept - basic functionality validated
 Phase 2: Core Features - auto-start capability
+Phase 3: Robustness - retry logic, crash recovery, graceful degradation
 """
 
 import json
 import time
 import subprocess
 import urllib.parse
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, Callable
 import pandas as pd
 
 try:
@@ -45,7 +46,9 @@ class ServerClient:
         server_url: str = 'http://127.0.0.1:8765',
         timeout: float = 30.0,
         auto_start: bool = False,
-        idle_timeout: int = 0
+        idle_timeout: int = 0,
+        max_retries: int = 3,
+        retry_delay: float = 1.0
     ):
         """
         Initialize the server client
@@ -54,6 +57,8 @@ class ServerClient:
         :param timeout: Request timeout in seconds (default: 30.0)
         :param auto_start: Auto-start server if not running (default: False)
         :param idle_timeout: Server idle timeout in seconds when auto-starting (0=disabled, default: 0)
+        :param max_retries: Maximum number of retries for failed requests (default: 3)
+        :param retry_delay: Base delay between retries in seconds, uses exponential backoff (default: 1.0)
         :raises ImportError: If requests library is not installed
         """
         if not HAS_REQUESTS:
@@ -66,10 +71,12 @@ class ServerClient:
         self.timeout = timeout
         self.auto_start = auto_start
         self.idle_timeout = idle_timeout
+        self.max_retries = max_retries
+        self.retry_delay = retry_delay
         self._session = requests.Session()
         self._server_process = None  # Track auto-started server process
         
-        log.debug(f"Initialized ServerClient for {self.server_url} (auto_start={auto_start})")
+        log.debug(f"Initialized ServerClient for {self.server_url} (auto_start={auto_start}, max_retries={max_retries})")
     
     def _start_server(self) -> bool:
         """
@@ -135,6 +142,71 @@ class ServerClient:
         
         return False
     
+    def _make_request_with_retry(
+        self,
+        request_func: Callable,
+        operation_name: str = "request"
+    ) -> Any:
+        """
+        Make a request with automatic retry logic and crash recovery
+        
+        :param request_func: Function that makes the actual request
+        :param operation_name: Name of the operation for logging
+        :return: Result from request_func
+        :raises RuntimeError: If all retries exhausted and server still unavailable
+        """
+        last_exception = None
+        
+        for attempt in range(self.max_retries + 1):
+            try:
+                # Ensure server is available before making request
+                if not self._ensure_server_available():
+                    raise RuntimeError(f"Server not available at {self.server_url}")
+                
+                # Make the request
+                return request_func()
+                
+            except (requests.ConnectionError, requests.Timeout) as e:
+                last_exception = e
+                
+                if attempt < self.max_retries:
+                    # Exponential backoff: delay * 2^attempt
+                    delay = self.retry_delay * (2 ** attempt)
+                    log.warning(
+                        f"{operation_name} failed (attempt {attempt + 1}/{self.max_retries + 1}): {e}. "
+                        f"Retrying in {delay:.1f}s..."
+                    )
+                    time.sleep(delay)
+                    
+                    # If auto_start is enabled, try to restart the server
+                    if self.auto_start:
+                        log.info("Attempting to restart server after connection failure")
+                        self._start_server()
+                else:
+                    log.error(f"{operation_name} failed after {self.max_retries + 1} attempts")
+            
+            except requests.HTTPError as e:
+                # HTTP errors (4xx, 5xx) shouldn't trigger retry unless it's a 5xx server error
+                if e.response is not None and e.response.status_code >= 500 and attempt < self.max_retries:
+                    last_exception = e
+                    delay = self.retry_delay * (2 ** attempt)
+                    log.warning(
+                        f"{operation_name} returned server error (attempt {attempt + 1}/{self.max_retries + 1}): "
+                        f"{e.response.status_code}. Retrying in {delay:.1f}s..."
+                    )
+                    time.sleep(delay)
+                else:
+                    # Client errors (4xx) or final server error - don't retry, raise immediately
+                    raise
+        
+        # All retries exhausted
+        if last_exception:
+            raise RuntimeError(
+                f"{operation_name} failed after {self.max_retries + 1} attempts: {last_exception}"
+            ) from last_exception
+        
+        raise RuntimeError(f"{operation_name} failed for unknown reason")
+    
     def ping(self) -> bool:
         """
         Test connectivity to the server
@@ -153,21 +225,21 @@ class ServerClient:
     
     def health_check(self) -> Dict[str, Any]:
         """
-        Get server health status
+        Get server health status (with automatic retry on failure)
         
         :return: Server health information
         :raises requests.HTTPError: If request fails
-        :raises RuntimeError: If server is not available and auto-start failed
+        :raises RuntimeError: If server is not available after retries
         """
-        if not self._ensure_server_available():
-            raise RuntimeError(f"Server not available at {self.server_url}")
+        def _do_health_check():
+            response = self._session.get(
+                f'{self.server_url}/api/health',
+                timeout=self.timeout
+            )
+            response.raise_for_status()
+            return response.json()
         
-        response = self._session.get(
-            f'{self.server_url}/api/health',
-            timeout=self.timeout
-        )
-        response.raise_for_status()
-        return response.json()
+        return self._make_request_with_retry(_do_health_check, "health_check")
     
     def read_data(
         self,
@@ -177,7 +249,7 @@ class ServerClient:
         data_source: Optional[Dict[str, Any]] = None
     ) -> pd.DataFrame:
         """
-        Read data via the lynguine server
+        Read data via the lynguine server (with automatic retry on failure)
         
         Either provide interface_file (to load from a lynguine interface config)
         or provide data_source (to read directly from a data source).
@@ -188,13 +260,9 @@ class ServerClient:
         :param data_source: Direct data source specification (dict with 'type', 'filename', etc.)
         :return: DataFrame containing the data
         :raises ValueError: If neither interface_file nor data_source is provided
-        :raises RuntimeError: If server is not available and auto-start failed
+        :raises RuntimeError: If server is not available after retries
         :raises requests.HTTPError: If request fails
         """
-        # Ensure server is available
-        if not self._ensure_server_available():
-            raise RuntimeError(f"Server not available at {self.server_url}")
-        
         # Build request
         request_data = {}
         
@@ -210,38 +278,41 @@ class ServerClient:
                 "Must provide either interface_file or data_source"
             )
         
-        # Send request
-        start_time = time.time()
-        response = self._session.post(
-            f'{self.server_url}/api/read_data',
-            json=request_data,
-            timeout=self.timeout
-        )
-        request_time = time.time() - start_time
+        def _do_read_data():
+            # Send request
+            start_time = time.time()
+            response = self._session.post(
+                f'{self.server_url}/api/read_data',
+                json=request_data,
+                timeout=self.timeout
+            )
+            request_time = time.time() - start_time
+            
+            # Check for errors
+            if response.status_code != 200:
+                error_data = response.json()
+                error_msg = error_data.get('error_message', 'Unknown error')
+                log.error(f"Server error: {error_msg}")
+                response.raise_for_status()
+            
+            # Parse response
+            result = response.json()
+            
+            if result['status'] != 'success':
+                raise ValueError(f"Server returned error: {result}")
+            
+            # Convert back to DataFrame
+            data = result['data']
+            df = pd.DataFrame.from_records(data['records'])
+            
+            log.debug(
+                f"read_data completed in {request_time:.3f}s, "
+                f"shape={data['shape']}"
+            )
+            
+            return df
         
-        # Check for errors
-        if response.status_code != 200:
-            error_data = response.json()
-            error_msg = error_data.get('error_message', 'Unknown error')
-            log.error(f"Server error: {error_msg}")
-            response.raise_for_status()
-        
-        # Parse response
-        result = response.json()
-        
-        if result['status'] != 'success':
-            raise ValueError(f"Server returned error: {result}")
-        
-        # Convert back to DataFrame
-        data = result['data']
-        df = pd.DataFrame.from_records(data['records'])
-        
-        log.debug(
-            f"read_data completed in {request_time:.3f}s, "
-            f"shape={data['shape']}"
-        )
-        
-        return df
+        return self._make_request_with_retry(_do_read_data, "read_data")
     
     def close(self):
         """
