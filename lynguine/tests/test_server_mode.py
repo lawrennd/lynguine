@@ -994,7 +994,7 @@ input:
   nrows: 5
   cols:
     - name
-    - age
+    - city
   index: name
 """
         Path(interface_file).write_text(interface_content)
@@ -1005,7 +1005,7 @@ input:
             # Get shape
             shape = session.get_shape()
             assert shape[0] == 5
-            assert shape[1] == 2
+            assert shape[1] == 1  # Only 'city' column (name is index)
             
             # Set focus and get value
             indices = session.get_indices()
@@ -1065,10 +1065,10 @@ input:
         try:
             session = client.create_session(interface_file=interface_file)
             
-            # Get all columns
+            # Get all columns (name is index, not a column)
             columns = session.get_columns()
-            assert 'name' in columns
             assert 'email' in columns
+            assert len(columns) == 1
             
             # Get input columns
             input_cols = session.get_input_columns()
@@ -1171,7 +1171,7 @@ input:
   nrows: 3
   cols:
     - name
-    - count
+    - email
   index: name
 """
         Path(interface_file).write_text(interface_content)
@@ -1183,7 +1183,7 @@ input:
             indices = session.get_indices()
             if len(indices) > 0:
                 session.set_index(indices[0])
-                session.set_column('count')
+                session.set_column('email')
                 
                 # Set a new value
                 session.set_value(42)
@@ -1235,6 +1235,7 @@ input:
   nrows: 2
   cols:
     - name
+    - email
   index: name
 """
         Path(interface_file).write_text(interface_content)
@@ -1242,8 +1243,8 @@ input:
         try:
             session = client.create_session(interface_file=interface_file)
             
-            # Get type of a column
-            col_type = session.get_column_type('name')
+            # Get type of a column (email is a column, name is index)
+            col_type = session.get_column_type('email')
             assert col_type is not None
             
             session.delete()
@@ -1260,7 +1261,7 @@ input:
   nrows: 5
   cols:
     - name
-    - category
+    - city
   index: name
 """
         Path(interface_file).write_text(interface_content)
@@ -1269,7 +1270,7 @@ input:
             session = client.create_session(interface_file=interface_file)
             
             # Set a selector (filter/query on data)
-            selector = {'category': 'A'}
+            selector = {'city': 'NYC'}
             session.set_selector(selector)
             
             # Get the selector back
@@ -1320,7 +1321,7 @@ input:
   nrows: 5
   cols:
     - name
-    - values
+    - email
   index: name
 """
         Path(interface_file).write_text(interface_content)

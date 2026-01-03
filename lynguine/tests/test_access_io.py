@@ -977,6 +977,130 @@ def test_read_fake_nonexistent_generator(valid_details, mock_generate):
         read_fake(valid_details)
 
 
+# test for new age and phone columns
+@pytest.fixture
+def valid_details_with_age_phone():
+    return {
+        'nrows': 5,
+        'cols': {
+            'name': 'name',
+            'age': 'age',
+            'phone': 'phone',
+        }
+    }
+
+@pytest.fixture
+def valid_details_list_with_age_phone():
+    return {
+        'nrows': 5,
+        'cols': ['name', 'age', 'phone']
+    }
+
+@pytest.fixture
+def mock_generate_age_phone(mocker):
+    mocker.patch.object(lynguine.util.fake.Generate, 'name', return_value='John Doe')
+    mocker.patch.object(lynguine.util.fake.Generate, 'age', return_value=35)
+    mocker.patch.object(lynguine.util.fake.Generate, 'phone', return_value='+1-555-123-4567')
+
+def test_read_fake_with_age_column(mock_generate_age_phone, valid_details_with_age_phone):
+    """Test that age column is generated correctly"""
+    df = read_fake(valid_details_with_age_phone)
+    assert isinstance(df, pd.DataFrame)
+    assert df.shape == (5, 3)  # 5 rows and 3 columns
+    assert 'age' in df.columns
+    assert all(df['age'] == 35)  # All should be mocked value
+
+def test_read_fake_with_phone_column(mock_generate_age_phone, valid_details_with_age_phone):
+    """Test that phone column is generated correctly"""
+    df = read_fake(valid_details_with_age_phone)
+    assert isinstance(df, pd.DataFrame)
+    assert df.shape == (5, 3)
+    assert 'phone' in df.columns
+    assert all(df['phone'] == '+1-555-123-4567')  # All should be mocked value
+
+def test_read_fake_with_age_phone_list_format(mock_generate_age_phone, valid_details_list_with_age_phone):
+    """Test that age and phone columns work with list format"""
+    df = read_fake(valid_details_list_with_age_phone)
+    assert isinstance(df, pd.DataFrame)
+    assert df.shape == (5, 3)
+    assert all(col in df.columns for col in ['name', 'age', 'phone'])
+    assert all(df['age'] == 35)
+    assert all(df['phone'] == '+1-555-123-4567')
+
+def test_read_fake_age_phone_combined_with_existing(mocker):
+    """Test that age and phone work alongside existing columns"""
+    mocker.patch.object(lynguine.util.fake.Generate, 'givenName', return_value='Jane')
+    mocker.patch.object(lynguine.util.fake.Generate, 'familyName', return_value='Smith')
+    mocker.patch.object(lynguine.util.fake.Generate, 'age', return_value=42)
+    mocker.patch.object(lynguine.util.fake.Generate, 'phone', return_value='+44-20-1234-5678')
+    mocker.patch.object(lynguine.util.fake.Generate, 'email', return_value='jane@example.com')
+    
+    details = {
+        'nrows': 3,
+        'cols': {
+            'given': 'givenName',
+            'family': 'familyName',
+            'age': 'age',
+            'phone': 'phone',
+            'email': 'email'
+        }
+    }
+    
+    df = read_fake(details)
+    assert isinstance(df, pd.DataFrame)
+    assert df.shape == (3, 5)
+    assert list(df.columns) == ['given', 'family', 'age', 'phone', 'email']
+    assert all(df['age'] == 42)
+    assert all(df['phone'] == '+44-20-1234-5678')
+
+def test_read_fake_with_birthdate_column(mocker):
+    """Test that birthdate column is generated correctly"""
+    from datetime import datetime
+    test_birthdate = datetime(1990, 5, 15)
+    mocker.patch.object(lynguine.util.fake.Generate, 'name', return_value='John Doe')
+    mocker.patch.object(lynguine.util.fake.Generate, 'birthdate', return_value=test_birthdate)
+    
+    details = {
+        'nrows': 5,
+        'cols': {
+            'name': 'name',
+            'birthdate': 'birthdate'
+        }
+    }
+    
+    df = read_fake(details)
+    assert isinstance(df, pd.DataFrame)
+    assert df.shape == (5, 2)
+    assert 'birthdate' in df.columns
+    assert all(df['birthdate'] == test_birthdate)
+
+def test_read_fake_age_derived_from_birthdate(mocker):
+    """Test that age is calculated correctly from birthdate"""
+    from datetime import datetime
+    # Mock birthdate to return a specific date
+    test_birthdate = datetime(1990, 6, 15)
+    expected_age = datetime.now().year - test_birthdate.year
+    # Adjust for birthday not yet occurred this year
+    today = datetime.now()
+    if (today.month, today.day) < (test_birthdate.month, test_birthdate.day):
+        expected_age -= 1
+    
+    mocker.patch.object(lynguine.util.fake.person, 'birthdate', return_value=test_birthdate)
+    
+    details = {
+        'nrows': 3,
+        'cols': {
+            'age': 'age'
+        }
+    }
+    
+    df = read_fake(details)
+    assert isinstance(df, pd.DataFrame)
+    assert df.shape == (3, 1)
+    # All ages should match the expected age calculated from the mocked birthdate
+    assert all(df['age'] == expected_age)
+
+
 # test for read_gsheet
 def test_read_gsheet(sample_context, mocker):
     if GSPREAD_AVAILABLE:

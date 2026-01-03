@@ -711,3 +711,20 @@ class Generate:
     @classmethod
     def date(cls):
         return datetime.datetime()
+    @classmethod
+    def birthdate(cls):
+        return person.birthdate(min_year=1934, max_year=2006)
+    @classmethod
+    def age(cls):
+        # Calculate age from birthdate for consistency
+        from datetime import datetime
+        bd = person.birthdate(min_year=1934, max_year=2006)
+        age = datetime.now().year - bd.year
+        # Adjust if birthday hasn't occurred yet this year
+        today = datetime.now()
+        if (today.month, today.day) < (bd.month, bd.day):
+            age -= 1
+        return age
+    @classmethod
+    def phone(cls):
+        return person.telephone()
