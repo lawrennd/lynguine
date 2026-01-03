@@ -110,15 +110,46 @@ Applications that need to access lynguine functionality multiple times in quick 
 - [ ] Graceful shutdown and cleanup
 - [ ] Performance metrics documented (startup time, operation time, memory)
 
-### Phase 5: Stateful Sessions (Advanced Use Case)
-- [ ] Support for interactive data exploration with minimal data transfer
-- [ ] Server can load and maintain data in memory (session state)
-- [ ] Clients can send lightweight index/value operations
-- [ ] Only indices and values transfer over HTTP, not full DataFrames
+### Phase 5: Stateful Sessions (Advanced Use Case - Mirrors CustomDataFrame API)
+
+**Session Management**:
+- [ ] Server can load interface files and maintain CustomDataFrame state in memory
+- [ ] Create, list, retrieve, and delete sessions
 - [ ] Session isolation (multiple clients, separate sessions)
 - [ ] Session timeout and automatic cleanup
 - [ ] Memory limits and monitoring per session
+
+**Focus-Based Navigation** (mirrors `CustomDataFrame` API):
+- [ ] `set_index(index)` - Set current row focus
+- [ ] `set_column(column)` - Set current column focus
+- [ ] `get_index()` - Get current row focus
+- [ ] `get_column()` - Get current column focus
+- [ ] `get_value()` - Get value at current (index, column) focus
+- [ ] `set_value(value)` - Set value at current focus
+
+**Bulk Operations**:
+- [ ] `get_value_at(index, column)` - Direct value access without changing focus
+- [ ] `get_slice(start, end, columns)` - Get row slice
+- [ ] `get_column_data(column)` - Get entire column as list
+- [ ] `get_row_data(index)` - Get entire row as dict
+- [ ] `filter(column, operator, value)` - Server-side filtering
+- [ ] `get_shape()` - Get (rows, cols) dimensions
+
+**Series Operations** (for complex data):
+- [ ] `set_selector(column)` - Set selector column for series
+- [ ] `set_subindex(value)` - Set subindex within series
+- [ ] `get_subseries()` - Get subseries data
+
+**Metadata**:
+- [ ] `get_columns()` - Get all column names
+- [ ] `get_indices()` - Get all index values
+- [ ] `get_input_columns()`, `get_output_columns()`, `get_series_columns()` - Get typed columns
+- [ ] `get_column_type(column)` - Get column specification type
+
+**Performance**:
+- [ ] Only indices and values transfer over HTTP, not full DataFrames
 - [ ] 100-1000x reduction in data transfer for interactive workflows
+- [ ] 35-40x improvement for lamd's field extraction pattern
 
 ## User Stories
 
@@ -138,13 +169,19 @@ Applications that need to access lynguine functionality multiple times in quick 
 
 **As a user**, I want predictable performance so that I can estimate how long operations will take.
 
-### Stateful Sessions (Advanced Use Case)
+### Stateful Sessions (Advanced Use Case - Focus-Based Navigation)
 
-**As a data analyst**, I want to explore large datasets interactively without transferring entire DataFrames over HTTP so that I can work efficiently with remote data.
+**As a lamd developer**, I want to use focus-based navigation (`set_index`, `set_column`, `get_value`) to extract fields from CV configs so that I don't transfer the entire DataFrame 38 times per build (reducing 72s to 2s).
 
-**As a data quality engineer**, I want to check data quality (null counts, duplicates, outliers) without transferring full datasets so that validation is fast and bandwidth-efficient.
+**As an mdfield tool user**, I want the server to load my interface file once and let me navigate to specific (index, column) positions to extract individual values so that each field extraction takes ~10ms instead of 1.9s.
 
-**As a data scientist**, I want to filter, slice, and sample large datasets on the server side so that only relevant subsets transfer over the network.
+**As an mdlist tool user**, I want to use server-side filtering and slicing to generate publication lists without transferring all publications over HTTP so that list generation is fast even for large datasets.
+
+**As a data analyst**, I want to navigate through datasets using `set_index`/`set_column`/`get_value` just like I do with `CustomDataFrame` locally so that remote data exploration feels identical to local exploration.
+
+**As a data quality engineer**, I want to check data quality by navigating to specific cells and columns without transferring full datasets so that validation is fast and bandwidth-efficient.
+
+**As a developer using series columns**, I want to use `set_selector` and `set_subindex` to navigate complex nested data structures so that I can extract specific subseries values without transferring entire series.
 
 ### Non-Use Cases (for clarity)
 
@@ -184,6 +221,57 @@ A CIP addressing this requirement should include:
    - Phased approach if needed
    - Backward compatibility strategy
    - Testing and validation approach
+
+### Phase 5: Mirroring CustomDataFrame Interface
+
+**Design Principle**: Phase 5 stateful sessions must mirror lynguine's existing `CustomDataFrame` interface to ensure:
+
+1. **API Consistency**:
+   - Server sessions expose the same methods as `CustomDataFrame`
+   - `set_index()`, `set_column()`, `get_value()` work identically
+   - Series operations (`set_selector`, `set_subindex`) preserved
+   - Column type queries (`get_input_columns`, `get_series_columns`) available
+
+2. **Minimal Learning Curve**:
+   - lamd's `mdfield`/`mdlist` already use `CustomDataFrame` API
+   - No API translation needed for integration
+   - Developers familiar with `CustomDataFrame` can immediately use sessions
+
+3. **Implementation Approach**:
+   - Server maintains `CustomDataFrame` instances (created via `from_flow()`)
+   - Session operations delegate to underlying `CustomDataFrame` methods
+   - HTTP/REST endpoints wrap `CustomDataFrame` API
+   - Focus state (current index, column, selector, subindex) maintained per session
+
+**Example - Local vs Remote**:
+
+```python
+# Local (current)
+from lynguine.config.interface import Interface
+from lynguine.assess.data import CustomDataFrame
+
+interface = Interface.from_file('cv_config.yml', directory='.')
+cdf = CustomDataFrame.from_flow(interface)
+cdf.set_index('person_1')
+cdf.set_column('name')
+value = cdf.get_value()
+
+# Remote (Phase 5) - Same API via session
+from lynguine.client import ServerClient
+
+client = ServerClient(auto_start=True)
+session = client.create_session(interface_file='cv_config.yml', directory='.')
+session.set_index('person_1')
+session.set_column('name')
+value = session.get_value()  # Same method, transfers ~bytes over HTTP
+```
+
+**Key Methods to Mirror** (from `CustomDataFrame`):
+- Focus navigation: `set_index()`, `get_index()`, `set_column()`, `get_column()`
+- Data access: `get_value()`, `set_value()`
+- Series operations: `set_selector()`, `get_selector()`, `set_subindex()`, `get_subindex()`, `get_subseries()`
+- Metadata: `get_shape()`, `get_columns()`, `get_indices()`
+- Column types: `get_input_columns()`, `get_output_columns()`, `get_series_columns()`, `get_column_type()`
 
 ### Tenet Alignment
 
