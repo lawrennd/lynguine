@@ -1269,8 +1269,8 @@ input:
         try:
             session = client.create_session(interface_file=interface_file)
             
-            # Set a selector (filter/query on data)
-            selector = {'city': 'NYC'}
+            # Set a selector (column for series disambiguation)
+            selector = 'city'
             session.set_selector(selector)
             
             # Get the selector back
@@ -1298,14 +1298,13 @@ input:
         try:
             session = client.create_session(interface_file=interface_file)
             
-            # Set subindex (subset of indices)
-            indices = session.get_indices()
-            subindex = indices[:2]  # Take first 2
-            session.set_subindex(subindex)
+            # Set subindex (index within series for disambiguation)
+            # Subindex expects an integer, not a list
+            session.set_subindex(0)
             
             # Get the subindex back
             retrieved = session.get_subindex()
-            assert retrieved == subindex
+            assert retrieved == 0
             
             session.delete()
             
@@ -1314,6 +1313,8 @@ input:
     
     def test_session_get_subseries(self, server_process, client):
         """Test get_subseries operation"""
+        import pandas as pd
+        
         interface_file = 'test_subseries.yml'
         interface_content = """
 input:
@@ -1333,9 +1334,10 @@ input:
             indices = session.get_indices()
             session.set_index(indices[0])
             
-            # Get subseries for a column (may return dict or similar)
-            subseries = session.get_subseries('name')
+            # Get subseries (no parameters - returns DataFrame)
+            subseries = session.get_subseries()
             assert subseries is not None
+            assert isinstance(subseries, pd.DataFrame)
             
             session.delete()
             
