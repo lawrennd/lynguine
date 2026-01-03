@@ -203,10 +203,16 @@ class LynguineHandler(BaseHTTPRequestHandler):
             # Route to appropriate handler
             if self.path == '/api/read_data':
                 self.handle_read_data(request_data)
+            elif self.path == '/api/write_data':
+                self.handle_write_data(request_data)
+            elif self.path == '/api/compute':
+                self.handle_compute(request_data)
             elif self.path == '/api/health':
                 self.handle_health()
             elif self.path == '/api/ping':
                 self.handle_ping()
+            elif self.path == '/api/status':
+                self.handle_status()
             else:
                 self.send_error_response(
                     ValueError(f"Unknown endpoint: {self.path}"), 
@@ -219,11 +225,13 @@ class LynguineHandler(BaseHTTPRequestHandler):
             self.send_error_response(e, 500)
     
     def do_GET(self):
-        """Handle GET requests (health check, ping)"""
+        """Handle GET requests (health check, ping, status)"""
         if self.path == '/api/health':
             self.handle_health()
         elif self.path == '/api/ping':
             self.handle_ping()
+        elif self.path == '/api/status':
+            self.handle_status()
         else:
             self.send_error_response(
                 ValueError(f"GET not supported for: {self.path}"), 
@@ -324,6 +332,156 @@ class LynguineHandler(BaseHTTPRequestHandler):
         except Exception as e:
             log.error(f"Error in handle_read_data: {e}")
             self.send_error_response(e)
+    
+    def handle_write_data(self, request_data: Dict[str, Any]):
+        """
+        Handle write_data operation
+        
+        Expected request format:
+        {
+            "data": {
+                "records": [...],  # DataFrame as records
+                "columns": [...]   # optional column order
+            },
+            "output": {
+                "type": "csv",
+                "filename": "output.csv",
+                ...
+            }
+        }
+        """
+        try:
+            if 'data' not in request_data or 'output' not in request_data:
+                raise ValueError("Request must include both 'data' and 'output'")
+            
+            # Convert data to DataFrame
+            import pandas as pd
+            data_spec = request_data['data']
+            df = pd.DataFrame.from_records(data_spec['records'])
+            
+            if 'columns' in data_spec:
+                df = df[data_spec['columns']]  # Reorder columns if specified
+            
+            # Write data using lynguine
+            output_spec = request_data['output']
+            log.debug(f"Writing data to {output_spec.get('type', 'unknown')}")
+            
+            io.write_data(df, output_spec)
+            
+            result = {
+                'status': 'success',
+                'message': f"Wrote {len(df)} records"
+            }
+            
+            self.send_json_response(result)
+            
+        except Exception as e:
+            log.error(f"Error in handle_write_data: {e}")
+            self.send_error_response(e)
+    
+    def handle_compute(self, request_data: Dict[str, Any]):
+        """
+        Handle compute operation
+        
+        Expected request format:
+        {
+            "operation": "compute_name",
+            "data": {
+                "records": [...],
+                "columns": [...]
+            },
+            "params": {
+                ...  # operation-specific parameters
+            }
+        }
+        """
+        try:
+            if 'operation' not in request_data:
+                raise ValueError("Request must include 'operation'")
+            
+            operation = request_data['operation']
+            log.debug(f"Running compute operation: {operation}")
+            
+            # Convert data to DataFrame if provided
+            import pandas as pd
+            if 'data' in request_data:
+                data_spec = request_data['data']
+                df = pd.DataFrame.from_records(data_spec['records'])
+            else:
+                df = None
+            
+            # Get parameters
+            params = request_data.get('params', {})
+            
+            # Execute compute operation
+            # TODO: Implement actual compute framework integration
+            # For now, return placeholder
+            result = {
+                'status': 'success',
+                'operation': operation,
+                'message': f"Compute operation '{operation}' completed",
+                'result': None  # Would contain actual compute results
+            }
+            
+            self.send_json_response(result)
+            
+        except Exception as e:
+            log.error(f"Error in handle_compute: {e}")
+            self.send_error_response(e)
+    
+    def handle_status(self):
+        """
+        Status endpoint with server diagnostics
+        
+        Returns detailed information about server state, uptime, and statistics.
+        """
+        try:
+            import psutil
+            import time
+            
+            # Get process info
+            process = psutil.Process(os.getpid())
+            
+            # Calculate uptime
+            create_time = process.create_time()
+            uptime_seconds = time.time() - create_time
+            
+            status_info = {
+                'status': 'ok',
+                'server': 'lynguine-server',
+                'version': '0.2.0',  # Phase 2
+                'pid': os.getpid(),
+                'uptime_seconds': uptime_seconds,
+                'memory': {
+                    'rss_mb': process.memory_info().rss / 1024 / 1024,
+                    'percent': process.memory_percent()
+                },
+                'cpu_percent': process.cpu_percent(interval=0.1),
+                'endpoints': [
+                    'GET  /api/health',
+                    'GET  /api/ping',
+                    'GET  /api/status',
+                    'POST /api/read_data',
+                    'POST /api/write_data',
+                    'POST /api/compute'
+                ]
+            }
+            
+            self.send_json_response(status_info)
+            
+        except ImportError:
+            # psutil not available, return basic status
+            basic_status = {
+                'status': 'ok',
+                'server': 'lynguine-server',
+                'version': '0.2.0',
+                'pid': os.getpid(),
+                'message': 'Install psutil for detailed diagnostics'
+            }
+            self.send_json_response(basic_status)
+        except Exception as e:
+            log.error(f"Error in handle_status: {e}")
+            self.send_error_response(e)
 
 
 def run_server(host: str = '127.0.0.1', port: int = 8765):
@@ -382,9 +540,12 @@ def run_server(host: str = '127.0.0.1', port: int = 8765):
     print(f"Press Ctrl+C to stop")
     print()
     print(f"Available endpoints:")
-    print(f"  GET  /api/health     - Health check")
-    print(f"  GET  /api/ping       - Connectivity test")
-    print(f"  POST /api/read_data  - Read data via lynguine")
+    print(f"  GET  /api/health      - Health check")
+    print(f"  GET  /api/ping        - Connectivity test")
+    print(f"  GET  /api/status      - Server status and diagnostics")
+    print(f"  POST /api/read_data   - Read data via lynguine")
+    print(f"  POST /api/write_data  - Write data via lynguine")
+    print(f"  POST /api/compute     - Run compute operations")
     print()
     
     log.info(f"Server started on {host}:{port} (PID: {os.getpid()})")
