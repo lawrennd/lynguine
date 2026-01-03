@@ -1325,13 +1325,17 @@ input:
   nrows: 3
   cols:
     - name
+    - email
+  index: name
 """
         content2 = """
 input:
   type: fake
   nrows: 5
   cols:
+    - name
     - email
+  index: name
 """
         
         Path(interface1).write_text(content1)
@@ -1349,10 +1353,11 @@ input:
             assert shape1[0] == 3
             assert shape2[0] == 5
             
+            # Both sessions should have their own data
             cols1 = session1.get_columns()
             cols2 = session2.get_columns()
             
-            assert 'name' in cols1
+            assert 'email' in cols1
             assert 'email' in cols2
             
             # Cleanup
