@@ -3,10 +3,10 @@ id: "REQ-0007"
 title: "Fast Repeated Access to Lynguine Functionality"
 created: "2026-01-03"
 last_updated: "2026-01-03"
-status: "Proposed"
+status: "In Progress"
 priority: "High"
 owner: "lawrennd"
-stakeholders: "Application developers (lamd, referia), CLI tool developers"
+stakeholders: "lamd developers (primary), CLI tool developers"
 related_tenets:
 - explicit-infrastructure
 - flow-based-processing
@@ -37,6 +37,66 @@ Applications that need to access lynguine functionality multiple times in quick 
 - Works seamlessly with existing application patterns
 - No breaking changes to current API
 
+## Applicability: When This Requirement Applies
+
+### ✅ Applications That Need This (Subprocess Pattern)
+
+**Pattern**: Applications that make **repeated subprocess calls** to lynguine functionality
+
+**Characteristics**:
+- Multiple independent process launches from shell/make/scripts
+- Each call: start Python → import lynguine → execute → exit
+- Short-lived processes with no state persistence
+- Startup overhead dominates execution time
+
+**Concrete Examples**:
+1. **lamd (primary use case)** - Investigated 2026-01-03:
+   - Builds CVs using make with 38+ subprocess calls per build
+   - Each `mdfield` call: new process to extract one field from config
+   - Each `mdlist` call: new process to generate one markdown list
+   - **Current cost**: ~72 seconds startup overhead per CV build
+   - **Impact**: 95% of execution time is startup overhead
+
+2. **CLI batch processing**:
+   - Scripts processing multiple files with separate lynguine calls
+   - Automated workflows with repeated configuration access
+
+3. **CI/CD pipelines**:
+   - Multiple validation steps each importing lynguine
+
+### ❌ Applications That Don't Need This (Long-Running Pattern)
+
+**Pattern**: Applications with **long-running Python processes** that already amortize startup
+
+**Characteristics**:
+- Single Python process that stays loaded
+- Imports done once at process start
+- Modules cached in memory for entire session
+- Startup cost already amortized
+
+**Examples**:
+1. **referia (Jupyter notebooks)**:
+   - Jupyter kernel runs continuously during session
+   - Startup paid once when kernel starts
+   - pandas/lynguine stay loaded and cached
+   - **Does NOT need this requirement** - already fast
+   - If slow: Different causes (I/O, data processing, not startup)
+
+2. **Web applications**: Django/Flask apps with process pools
+
+3. **Long-running Python scripts**: Single script with internal loops
+
+### Investigation Results (2026-01-03)
+
+**lamd analysis**:
+- 27 `mdfield` calls per typical CV build (field extraction)
+- 11 `mdlist` calls per typical CV build (list generation)
+- **Total**: 38 subprocess calls × 1.9s startup = 72s overhead
+- Actual work: ~5s
+- **Startup represents 93% of total time**
+
+**Conclusion**: This requirement specifically addresses the subprocess pattern. Long-running applications like referia do not have this problem and should continue using direct imports.
+
 ## Acceptance Criteria
 
 - [ ] Repeated lynguine operations are significantly faster than current approach
@@ -51,15 +111,27 @@ Applications that need to access lynguine functionality multiple times in quick 
 
 ## User Stories
 
-**As a lamd developer**, I want to access multiple lynguine-managed files quickly so that my application doesn't spend most of its time waiting for lynguine to start up.
+### Subprocess Pattern (Primary Use Case)
 
-**As a CLI tool developer**, I want to process batches of files without paying startup overhead for each file so that my tool is practical for large datasets.
+**As a lamd maintainer**, I want to reduce CV build times from 72s to <5s so that users don't wait unnecessarily for repeated subprocess calls to complete.
 
-**As a script author**, I want to call lynguine repeatedly in a loop so that I can process data iteratively without prohibitive performance costs.
+**As a make/shell workflow author**, I want to call lynguine utilities (like `mdfield`) multiple times without paying 1.9s startup per call so that my workflows are practical.
+
+**As a CLI tool developer**, I want to process batches of files by calling lynguine for each file without prohibitive startup costs so that my tool scales to large datasets.
+
+**As a CI/CD pipeline author**, I want to run multiple lynguine validation steps quickly so that my pipeline completes in reasonable time.
+
+### General
 
 **As an application developer**, I want backward compatibility so that I can adopt the fast-access mode incrementally without rewriting existing code.
 
 **As a user**, I want predictable performance so that I can estimate how long operations will take.
+
+### Non-Use Cases (for clarity)
+
+**As a referia user (Jupyter)**, I do NOT need this optimization because my kernel stays loaded and startup is already amortized.
+
+**As a web app developer**, I do NOT need this optimization because my application server keeps modules loaded.
 
 ## Constraints
 
@@ -162,4 +234,57 @@ Requirement created based on lamd performance issues.
 - ✅ Cross-platform: HTTP works on all platforms
 
 **All acceptance criteria addressed by CIP-0008.**
+
+### 2026-01-03 - lamd Investigation and Applicability Clarification
+
+**lamd Use Case Analysis**:
+- Analyzed actual lamd usage pattern: 38 subprocess calls per CV build
+- 27 `mdfield` calls (field extraction) + 11 `mdlist` calls (list generation)
+- Each call: new Python process → import lynguine → execute → exit
+- Measured: 1.9s startup × 38 calls = 72s overhead per build
+- Actual work: ~5s
+- **Startup represents 93% of total execution time**
+
+**Applicability Refinement**:
+Added clear distinction between two patterns:
+
+1. **✅ Subprocess Pattern** (NEEDS this optimization):
+   - lamd (primary use case): Multiple make/shell calls
+   - CLI batch tools
+   - CI/CD pipelines with multiple steps
+   - **Problem**: Repeated startup overhead
+
+2. **❌ Long-Running Pattern** (does NOT need this):
+   - referia (Jupyter notebooks): Single kernel stays loaded
+   - Web applications: Process pools keep modules loaded
+   - Long Python scripts: Single process with internal loops
+   - **No problem**: Startup already amortized
+
+**User Stories Updated**: More specific to subprocess pattern; added non-use case examples
+
+**Stakeholders Updated**: "lamd developers (primary)" reflecting main use case
+
+**Status Updated**: Proposed → In Progress (PoC validated)
+
+### 2026-01-03 - Phase 1 PoC Complete
+
+**Implementation**:
+- ✅ HTTP/REST server (lynguine/server.py)
+- ✅ Client library (lynguine/client.py)
+- ✅ Instance checking (singleton with lockfiles)
+- ✅ Comprehensive tests (23 tests covering all aspects)
+- ✅ Example configurations and benchmarks
+
+**Performance Results** (realistic subprocess benchmark):
+- Subprocess mode: 1.476s per operation (cold start each time)
+- Server mode: 0.009s per operation (server stays loaded)
+- **Speedup: 156x** (far exceeds 5x target)
+- HTTP overhead: 9.4ms (acceptable vs 1476ms startup)
+
+**Decision**: ✅ **GO for Phase 2** - Core Features
+
+**Next Steps**:
+- Phase 2: Additional endpoints, enhanced error handling
+- Integration examples for lamd (mdfield/mdlist wrappers)
+- Cross-platform testing (Windows, Linux)
 
