@@ -237,6 +237,154 @@ class TestReadDataOperation:
             client.read_data()
 
 
+class TestPhase2Endpoints:
+    """Tests for Phase 2 endpoints (write_data, compute, status)"""
+    
+    def test_status_endpoint(self, server_process):
+        """Test status endpoint returns server diagnostics"""
+        response = requests.get(f'{TEST_URL}/api/status')
+        assert response.status_code == 200
+        
+        data = response.json()
+        assert data['status'] == 'ok'
+        assert data['server'] == 'lynguine-server'
+        assert data['version'] == '0.2.0'
+        assert 'pid' in data
+        assert 'uptime_seconds' in data
+        
+        # Check if psutil is available for detailed diagnostics
+        if 'memory' in data:
+            assert 'rss_mb' in data['memory']
+            assert 'percent' in data['memory']
+            assert 'cpu_percent' in data
+        
+        # Check endpoints list
+        assert 'endpoints' in data
+        assert len(data['endpoints']) >= 6  # Should have all Phase 2 endpoints
+    
+    def test_write_data_csv(self, server_process, tmp_path):
+        """Test writing data to CSV"""
+        import pandas as pd
+        
+        # Create test data
+        test_data = pd.DataFrame({
+            'name': ['Alice', 'Bob', 'Charlie'],
+            'age': [25, 30, 35],
+            'city': ['NYC', 'LA', 'Chicago']
+        })
+        
+        output_file = tmp_path / "test_output.csv"
+        
+        # Make write request
+        response = requests.post(
+            f'{TEST_URL}/api/write_data',
+            json={
+                'data': {
+                    'records': test_data.to_dict('records'),
+                    'columns': list(test_data.columns)
+                },
+                'output': {
+                    'type': 'csv',
+                    'filename': str(output_file)
+                }
+            }
+        )
+        
+        assert response.status_code == 200
+        result = response.json()
+        assert result['status'] == 'success'
+        assert 'Wrote 3 records' in result['message']
+        
+        # Verify file was created
+        assert output_file.exists()
+        
+        # Verify data integrity
+        written_df = pd.read_csv(output_file)
+        assert len(written_df) == 3
+        assert list(written_df.columns) == ['name', 'age', 'city']
+    
+    def test_write_data_json(self, server_process, tmp_path):
+        """Test writing data to JSON"""
+        import pandas as pd
+        
+        test_data = pd.DataFrame({
+            'id': [1, 2, 3],
+            'value': [10, 20, 30]
+        })
+        
+        output_file = tmp_path / "test_output.json"
+        
+        response = requests.post(
+            f'{TEST_URL}/api/write_data',
+            json={
+                'data': {
+                    'records': test_data.to_dict('records')
+                },
+                'output': {
+                    'type': 'json',
+                    'filename': str(output_file)
+                }
+            }
+        )
+        
+        assert response.status_code == 200
+        result = response.json()
+        assert result['status'] == 'success'
+        
+        # Verify file was created
+        assert output_file.exists()
+    
+    def test_write_data_missing_parameters(self, server_process):
+        """Test write_data with missing parameters"""
+        response = requests.post(
+            f'{TEST_URL}/api/write_data',
+            json={'data': {'records': []}}  # Missing 'output'
+        )
+        
+        assert response.status_code == 500
+        result = response.json()
+        assert result['status'] == 'error'
+    
+    def test_compute_operation(self, server_process):
+        """Test compute operation endpoint"""
+        import pandas as pd
+        
+        test_data = pd.DataFrame({
+            'x': [1, 2, 3],
+            'y': [4, 5, 6]
+        })
+        
+        response = requests.post(
+            f'{TEST_URL}/api/compute',
+            json={
+                'operation': 'test_compute',
+                'data': {
+                    'records': test_data.to_dict('records')
+                },
+                'params': {
+                    'param1': 'value1'
+                }
+            }
+        )
+        
+        assert response.status_code == 200
+        result = response.json()
+        assert result['status'] == 'success'
+        assert result['operation'] == 'test_compute'
+        assert 'completed' in result['message']
+    
+    def test_compute_missing_operation(self, server_process):
+        """Test compute endpoint with missing operation parameter"""
+        response = requests.post(
+            f'{TEST_URL}/api/compute',
+            json={'params': {}}  # Missing 'operation'
+        )
+        
+        assert response.status_code == 500
+        result = response.json()
+        assert result['status'] == 'error'
+
+
 class TestErrorHandling:
     """Tests for error handling"""
     
