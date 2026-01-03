@@ -7,6 +7,9 @@ status: "Validated"
 priority: "High"
 owner: "lawrennd"
 stakeholders: "Development team, Contributors, Users"
+related_tenets:
+- explicit-infrastructure
+- flow-based-processing
 tags:
 - requirement
 - quality

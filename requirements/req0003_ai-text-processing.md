@@ -7,6 +7,9 @@ status: "Ready"
 priority: "Medium"
 owner: "lawrennd"
 stakeholders: "Review applications, Data analysts, Researchers"
+related_tenets:
+- explicit-infrastructure
+- flow-based-processing
 tags:
 - requirement
 - llm

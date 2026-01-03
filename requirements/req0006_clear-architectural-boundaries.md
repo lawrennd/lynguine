@@ -7,6 +7,9 @@ status: "Proposed"
 priority: "High"
 owner: "lawrennd"
 stakeholders: "Development team, Application developers, Users"
+related_tenets:
+- explicit-infrastructure
+- flow-based-processing
 tags:
 - requirement
 - architecture

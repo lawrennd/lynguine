@@ -7,6 +7,9 @@ status: "Validated"
 priority: "High"
 owner: "lawrennd"
 stakeholders: "Security team, Users, Compliance officers"
+related_tenets:
+- explicit-infrastructure
+- flow-based-processing
 tags:
 - requirement
 - security

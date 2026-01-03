@@ -7,6 +7,9 @@ status: "Ready"
 priority: "Medium"
 owner: "lawrennd"
 stakeholders: "Configuration authors, Maintainers, Application users"
+related_tenets:
+- explicit-infrastructure
+- flow-based-processing
 tags:
 - requirement
 - configuration
