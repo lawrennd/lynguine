@@ -1052,11 +1052,8 @@
 <span class="sd">Lynguine Client - HTTP client for lynguine server mode</span>
 
 <span class="sd">This module provides a client interface for connecting to a lynguine server,</span>
-<span class="sd">enabling fast repeated access without startup costs.</span>
-
-<span class="sd">Phase 1: Proof of Concept - basic functionality validated</span>
-<span class="sd">Phase 2: Core Features - auto-start capability</span>
-<span class="sd">Phase 3: Robustness - retry logic, crash recovery, graceful degradation</span>
+<span class="sd">enabling fast repeated access without startup costs. Supports auto-start,</span>
+<span class="sd">retry logic, crash recovery, and stateful data sessions.</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
@@ -1416,7 +1413,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
     
     <span class="c1"># =================================================================</span>
-    <span class="c1"># Phase 5: Session Management (mirrors CustomDataFrame API)</span>
+    <span class="c1"># Session Management (mirrors CustomDataFrame API)</span>
     <span class="c1"># =================================================================</span>
     
 <div class="viewcode-block" id="ServerClient.create_session">
