@@ -1070,6 +1070,7 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">traceback</span>
 
 <span class="c1"># Import lynguine components</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">lynguine</span><span class="w"> </span><span class="kn">import</span> <span class="n">__version__</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">lynguine.config.interface</span><span class="w"> </span><span class="kn">import</span> <span class="n">Interface</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">lynguine.access</span><span class="w"> </span><span class="kn">import</span> <span class="n">io</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">lynguine.log</span><span class="w"> </span><span class="kn">import</span> <span class="n">Logger</span>
@@ -1433,7 +1434,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">send_json_response</span><span class="p">({</span>
             <span class="s1">&#39;status&#39;</span><span class="p">:</span> <span class="s1">&#39;ok&#39;</span><span class="p">,</span>
             <span class="s1">&#39;server&#39;</span><span class="p">:</span> <span class="s1">&#39;lynguine-server-poc&#39;</span><span class="p">,</span>
-            <span class="s1">&#39;version&#39;</span><span class="p">:</span> <span class="s1">&#39;0.1.0&#39;</span>
+            <span class="s1">&#39;version&#39;</span><span class="p">:</span> <span class="n">__version__</span>
         <span class="p">})</span>
     
     <span class="k">def</span><span class="w"> </span><span class="nf">handle_read_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request_data</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]):</span>
@@ -1634,7 +1635,7 @@
             <span class="n">status_info</span> <span class="o">=</span> <span class="p">{</span>
                 <span class="s1">&#39;status&#39;</span><span class="p">:</span> <span class="s1">&#39;ok&#39;</span><span class="p">,</span>
                 <span class="s1">&#39;server&#39;</span><span class="p">:</span> <span class="s1">&#39;lynguine-server&#39;</span><span class="p">,</span>
-                <span class="s1">&#39;version&#39;</span><span class="p">:</span> <span class="s1">&#39;0.2.0&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;version&#39;</span><span class="p">:</span> <span class="n">__version__</span><span class="p">,</span>
                 <span class="s1">&#39;pid&#39;</span><span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">getpid</span><span class="p">(),</span>
                 <span class="s1">&#39;uptime_seconds&#39;</span><span class="p">:</span> <span class="n">uptime_seconds</span><span class="p">,</span>
                 <span class="s1">&#39;memory&#39;</span><span class="p">:</span> <span class="p">{</span>
@@ -1670,7 +1671,7 @@
             <span class="n">basic_status</span> <span class="o">=</span> <span class="p">{</span>
                 <span class="s1">&#39;status&#39;</span><span class="p">:</span> <span class="s1">&#39;ok&#39;</span><span class="p">,</span>
                 <span class="s1">&#39;server&#39;</span><span class="p">:</span> <span class="s1">&#39;lynguine-server&#39;</span><span class="p">,</span>
-                <span class="s1">&#39;version&#39;</span><span class="p">:</span> <span class="s1">&#39;0.2.0&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;version&#39;</span><span class="p">:</span> <span class="n">__version__</span><span class="p">,</span>
                 <span class="s1">&#39;pid&#39;</span><span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">getpid</span><span class="p">(),</span>
                 <span class="s1">&#39;message&#39;</span><span class="p">:</span> <span class="s1">&#39;Install psutil for detailed diagnostics&#39;</span>
             <span class="p">}</span>
