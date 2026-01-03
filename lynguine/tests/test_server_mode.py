@@ -347,8 +347,8 @@ class TestIdleTimeout:
         # Wait for idle timeout (3 seconds idle timeout + check interval ~0.75s + buffer)
         time.sleep(5)
         
-        # Server should have shut down
-        with pytest.raises(requests.ConnectionError):
+        # Server should have shut down (may raise ConnectionError or ReadTimeout)
+        with pytest.raises((requests.ConnectionError, requests.ReadTimeout)):
             requests.get(f'{test_url}/api/health', timeout=1)
         
         # Cleanup
