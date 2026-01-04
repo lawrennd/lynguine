@@ -7,6 +7,7 @@ optimized for lamd's mdfield utility integration.
 
 import os
 import json
+import datetime
 from typing import Any, Dict, List, Optional
 from pathlib import Path
 
@@ -17,6 +18,28 @@ from lynguine.log import Logger
 
 # Create logger instance
 log = Logger(name="lynguine.server_interface_handlers", level="info")
+
+
+def _make_json_serializable(value: Any) -> Any:
+    """
+    Convert value to JSON-serializable format.
+    
+    Handles datetime/date objects by converting to ISO format strings.
+    
+    Args:
+        value: Value to convert
+        
+    Returns:
+        JSON-serializable value
+    """
+    if isinstance(value, (datetime.datetime, datetime.date)):
+        return value.isoformat()
+    elif isinstance(value, list):
+        return [_make_json_serializable(v) for v in value]
+    elif isinstance(value, dict):
+        return {k: _make_json_serializable(v) for k, v in value.items()}
+    else:
+        return value
 
 
 def handle_interface_read(request_data: Dict[str, Any]) -> Dict[str, Any]:
@@ -60,6 +83,9 @@ def handle_interface_read(request_data: Dict[str, Any]) -> Dict[str, Any]:
         else:
             value = None
             log.warning(f"Field '{field}' not found in interface")
+        
+        # Ensure value is JSON-serializable
+        value = _make_json_serializable(value)
         
         return {
             'status': 'success',
@@ -159,6 +185,9 @@ def handle_talk_field(request_data: Dict[str, Any]) -> Dict[str, Any]:
         except Exception as e:
             log.warning(f"Error extracting field, returning empty: {e}")
             value = ""
+        
+        # Convert to JSON-serializable format first
+        value = _make_json_serializable(value)
         
         # Handle formatting (categories, env vars, etc.)
         if isinstance(value, list) and field == 'categories':
