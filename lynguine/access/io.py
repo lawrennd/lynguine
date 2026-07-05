@@ -1724,6 +1724,15 @@ def finalize_data(df : pd.DataFrame, interface : Interface) -> tuple[pd.DataFram
         df = df.loc[:, interface["select_columns"]]
         del interface["select_columns"]
 
+    # Add missing columns declared in "columns" before compute runs,
+    # so that row_args referencing sparse or all-NaN columns don't KeyError.
+    # (_finalize_df in data.py does the same, but runs after compute.)
+    if "columns" in interface:
+        missing = [col for col in interface["columns"] if col not in df.columns]
+        if missing:
+            missing_df = pd.DataFrame({col: None for col in missing}, index=df.index)
+            df = pd.concat([df, missing_df], axis=1)
+
     if "compute" in interface:
             compute = Compute.from_flow(interface)
             for comp in compute.computes:
