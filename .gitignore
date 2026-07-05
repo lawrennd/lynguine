@@ -116,3 +116,7 @@ lynguine/clone_or_pull.py
 lynguine/replace_linguine.sh
 lynguine/ruby/
 .venv-vibesafe/
+.github/copilot-instructions.md
+CLAUDE.md
+AGENTS.md
+scripts/validate_vibesafe_structure.py
