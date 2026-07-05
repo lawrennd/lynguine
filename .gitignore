@@ -93,8 +93,6 @@ test.markdown
 *.bak
 *~
 
-# Poetry
-poetry.lock
 
 # Documentation builds
 docs/_build/
