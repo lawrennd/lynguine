@@ -13,6 +13,27 @@ from ..assess.compute import Compute
 
 """Wrapper classes for data objects"""
 
+
+def _set_value_with_coercion(data, row_label, col_label, value):
+    """Set a value in a DataFrame, coercing column dtype when necessary.
+
+    When a column is inferred as float64 (e.g. because some rows were blank on
+    load) and the incoming value is a bool, pandas refuses the assignment with
+    ``raise_on_upcast=True``.  Excel stores booleans as 0/1 numbers, so
+    converting ``True`` → ``1.0`` / ``False`` → ``0.0`` preserves round-trip
+    fidelity and keeps ``visible_if`` truthiness evaluation correct.  For other
+    type mismatches the column is upcast to ``object`` as a fallback.
+    """
+    try:
+        data.at[row_label, col_label] = value
+    except (TypeError, ValueError):
+        if isinstance(value, bool) and pd.api.types.is_float_dtype(data[col_label]):
+            data.at[row_label, col_label] = float(value)
+        else:
+            data[col_label] = data[col_label].astype(object)
+            data.at[row_label, col_label] = value
+
+
 ctxt = Context()
 log = Logger(
     name=__name__,
@@ -2685,12 +2706,12 @@ class CustomDataFrame(DataObject):
             data_modified = False
             for typ, data in self._data_object._d.items():
                 if row_label in data.index and col_label in data.columns:
-                    data.at[row_label, col_label] = value
+                    _set_value_with_coercion(data, row_label, col_label, value)
                     data_modified = True
                     break
                 if row_label not in data.index and typ not in self._data_object.types["parameters"]:
                     # Add row indexed by row_label to pd.DataFrame data
-                    data.at[row_label, col_label] = value
+                    _set_value_with_coercion(data, row_label, col_label, value)
                     data_modified = True
                     break
                 elif typ in self._data_object.types["parameters"]:
