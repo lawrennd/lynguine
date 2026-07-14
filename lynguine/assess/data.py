@@ -564,6 +564,13 @@ class DataObject:
         
         if not self.isseries(col):
             self.at[index, col] = value
+            # Keep the sub-DataFrame in sync with the main DataFrame.
+            # `self.at` writes to pandas' internal blocks but not to
+            # `self._d[typ]` (a separate object created by _distribute_data).
+            # Without this, save_flows reads stale values from self._d.
+            typ = self._col_source(col)
+            if typ is not None and typ in self._d and isinstance(self._d[typ], pd.DataFrame):
+                self._d[typ].at[index, col] = value
         else:
             if self._selector is None:
                 raise ValueError("A set_value() attempted when selector not set for a series column.")
