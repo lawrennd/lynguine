@@ -1,6 +1,6 @@
 # Version is the single source of truth for the package version
 # This should match the version in pyproject.toml
-__version__ = "0.1.1"
+__version__ = "0.1.2"
 
 from .util import yaml
 from .util import talk
