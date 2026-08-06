@@ -1,4 +1,4 @@
-name: Documentation and Test Coverage
+name: Documentation
 
 on:
   push:
@@ -8,55 +8,52 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-and-deploy:
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+
       - name: Install system dependencies
         run: sudo apt-get install -y graphviz
+
       - name: Install Poetry
         uses: snok/install-poetry@v1
         with:
           version: 1.8.5
+
       - name: Install dependencies
         run: poetry install --with docs
+
       - name: Test documentation build
         run: |
           cd docs
           poetry run python test_build.py
-      - name: Build documentation
-        run: |
-          cd docs
-          poetry run sphinx-build -b html . _build/html
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./docs/_build/html
-        if: github.ref == 'refs/heads/main'
 
-  test-coverage:
+      - name: Build documentation
+        run: poetry run sphinx-build -b html docs/ docs/_build/html
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs/_build/html
+
+  deploy:
+    needs: build
+    # Only deploy on pushes to main, not on PRs
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - uses: actions/checkout@v4
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
-        with:
-          version: 1.8.5
-      - name: Install dependencies
-        run: poetry install
-      - name: Run tests with coverage
-        run: poetry run pytest --cov=lynguine --cov-report=xml
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v3
-        with:
-          file: ./coverage.xml
-          fail_ci_if_error: false
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5
