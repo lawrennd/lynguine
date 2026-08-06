@@ -580,25 +580,15 @@ class LynguineHandler(BaseHTTPRequestHandler):
         global _idle_timeout_manager
         
         try:
-            import psutil
             import time
-            
-            uptime_seconds = time.time() - _server_start_time
-            
-            # Get process info
-            process = psutil.Process(os.getpid())
-            
+
+            # Fields that are always present regardless of psutil availability
             status_info = {
                 'status': 'ok',
                 'server': 'lynguine-server',
                 'version': __version__,
                 'pid': os.getpid(),
-                'uptime_seconds': uptime_seconds,
-                'memory': {
-                    'rss_mb': process.memory_info().rss / 1024 / 1024,
-                    'percent': process.memory_percent()
-                },
-                'cpu_percent': process.cpu_percent(interval=0.1),
+                'uptime_seconds': time.time() - _server_start_time,
                 'endpoints': [
                     'GET  /api/health',
                     'GET  /api/ping',
@@ -608,8 +598,8 @@ class LynguineHandler(BaseHTTPRequestHandler):
                     'POST /api/compute'
                 ]
             }
-            
-            # Add idle timeout info if enabled
+
+            # Add idle timeout info
             if _idle_timeout_manager:
                 status_info['idle_timeout'] = {
                     'enabled': True,
@@ -619,33 +609,21 @@ class LynguineHandler(BaseHTTPRequestHandler):
                 }
             else:
                 status_info['idle_timeout'] = {'enabled': False}
-            
-            self.send_json_response(status_info)
-            
-        except ImportError:
-            import time
-            # psutil not available, return basic status
-            basic_status = {
-                'status': 'ok',
-                'server': 'lynguine-server',
-                'version': __version__,
-                'pid': os.getpid(),
-                'uptime_seconds': time.time() - _server_start_time,
-                'message': 'Install psutil for detailed diagnostics'
-            }
-            
-            # Add idle timeout info if enabled
-            if _idle_timeout_manager:
-                basic_status['idle_timeout'] = {
-                    'enabled': True,
-                    'timeout_seconds': _idle_timeout_manager.timeout_seconds,
-                    'idle_seconds': _idle_timeout_manager.get_idle_time(),
-                    'remaining_seconds': max(0, _idle_timeout_manager.timeout_seconds - _idle_timeout_manager.get_idle_time())
+
+            # Augment with psutil diagnostics when available
+            try:
+                import psutil
+                process = psutil.Process(os.getpid())
+                status_info['memory'] = {
+                    'rss_mb': process.memory_info().rss / 1024 / 1024,
+                    'percent': process.memory_percent()
                 }
-            else:
-                basic_status['idle_timeout'] = {'enabled': False}
-            
-            self.send_json_response(basic_status)
+                status_info['cpu_percent'] = process.cpu_percent(interval=0.1)
+            except ImportError:
+                status_info['message'] = 'Install psutil for detailed diagnostics'
+
+            self.send_json_response(status_info)
+
         except Exception as e:
             log.error(f"Error in handle_status: {e}")
             self.send_error_response(e)
