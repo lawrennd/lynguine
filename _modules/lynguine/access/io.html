@@ -15,7 +15,7 @@
   
         <script src="../../../_static/jquery.js?v=5d32c60e"></script>
         <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-        <script src="../../../_static/documentation_options.js?v=a58bc63e"></script>
+        <script src="../../../_static/documentation_options.js?v=92734c54"></script>
         <script src="../../../_static/doctools.js?v=9a2dae69"></script>
         <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/js/theme.js"></script>
@@ -2955,6 +2955,15 @@
     <span class="k">if</span> <span class="s2">&quot;select_columns&quot;</span> <span class="ow">in</span> <span class="n">interface</span><span class="p">:</span>
         <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="n">interface</span><span class="p">[</span><span class="s2">&quot;select_columns&quot;</span><span class="p">]]</span>
         <span class="k">del</span> <span class="n">interface</span><span class="p">[</span><span class="s2">&quot;select_columns&quot;</span><span class="p">]</span>
+
+    <span class="c1"># Add missing columns declared in &quot;columns&quot; before compute runs,</span>
+    <span class="c1"># so that row_args referencing sparse or all-NaN columns don&#39;t KeyError.</span>
+    <span class="c1"># (_finalize_df in data.py does the same, but runs after compute.)</span>
+    <span class="k">if</span> <span class="s2">&quot;columns&quot;</span> <span class="ow">in</span> <span class="n">interface</span><span class="p">:</span>
+        <span class="n">missing</span> <span class="o">=</span> <span class="p">[</span><span class="n">col</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">interface</span><span class="p">[</span><span class="s2">&quot;columns&quot;</span><span class="p">]</span> <span class="k">if</span> <span class="n">col</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">missing</span><span class="p">:</span>
+            <span class="n">missing_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="n">col</span><span class="p">:</span> <span class="kc">None</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">missing</span><span class="p">},</span> <span class="n">index</span><span class="o">=</span><span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+            <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">df</span><span class="p">,</span> <span class="n">missing_df</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="s2">&quot;compute&quot;</span> <span class="ow">in</span> <span class="n">interface</span><span class="p">:</span>
             <span class="n">compute</span> <span class="o">=</span> <span class="n">Compute</span><span class="o">.</span><span class="n">from_flow</span><span class="p">(</span><span class="n">interface</span><span class="p">)</span>
