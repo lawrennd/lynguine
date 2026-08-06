@@ -34,6 +34,9 @@ log = Logger(name="lynguine.server", level="info", filename="lynguine-server.log
 # Global reference for cleanup
 _lockfile_path = None
 
+# Server start time (set at module import; used for uptime calculation)
+_server_start_time: float = __import__('time').time()
+
 # Global idle timeout manager
 _idle_timeout_manager: Optional['IdleTimeoutManager'] = None
 
@@ -580,12 +583,10 @@ class LynguineHandler(BaseHTTPRequestHandler):
             import psutil
             import time
             
+            uptime_seconds = time.time() - _server_start_time
+            
             # Get process info
             process = psutil.Process(os.getpid())
-            
-            # Calculate uptime
-            create_time = process.create_time()
-            uptime_seconds = time.time() - create_time
             
             status_info = {
                 'status': 'ok',
@@ -622,12 +623,14 @@ class LynguineHandler(BaseHTTPRequestHandler):
             self.send_json_response(status_info)
             
         except ImportError:
+            import time
             # psutil not available, return basic status
             basic_status = {
                 'status': 'ok',
                 'server': 'lynguine-server',
                 'version': __version__,
                 'pid': os.getpid(),
+                'uptime_seconds': time.time() - _server_start_time,
                 'message': 'Install psutil for detailed diagnostics'
             }
             
