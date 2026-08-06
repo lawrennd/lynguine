@@ -21,6 +21,7 @@ from pathlib import Path
 
 from lynguine.server import run_server, check_server_running, get_lockfile_path
 from lynguine.client import ServerClient
+from lynguine import __version__
 
 
 # Test configuration
@@ -638,7 +639,7 @@ class TestPhase2Endpoints:
         data = response.json()
         assert data['status'] == 'ok'
         assert data['server'] == 'lynguine-server'
-        assert data['version'] == '0.2.0'
+        assert data['version'] == __version__
         assert 'pid' in data
         assert 'uptime_seconds' in data
         
