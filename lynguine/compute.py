@@ -1,6 +1,6 @@
-import .log
-import .context
-import .settings
+from . import log
+from .config import context
+from .config import interface as settings
 
 class Compute():
     def __init__(self, data, user_file=None, directory=None):
