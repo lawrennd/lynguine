@@ -365,7 +365,7 @@ pytest lynguine/tests/test_security_credentials.py --cov=lynguine.security
 - PyYAML
 
 ### Optional:
-- cryptography >= 3.0 (for encrypted file storage)
+- cryptography >= 50.0 (for encrypted file storage; addresses CVE-2026-69247)
 
 ## License
 
