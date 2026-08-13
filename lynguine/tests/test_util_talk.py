@@ -124,3 +124,27 @@ def test_extract_diagrams_with_files(mocker):
     result = talk.extract_diagrams('sample_talk.md', diagrams_dir='/diagrams', snippets_path='/snippets', absolute_path=False)
     assert 'diagram1.svg' in result
     assert 'diagram2.svg' in result
+
+
+def test_extract_diagrams_expands_macro_paths(mocker):
+    snippet = (
+        "\\define{\\basisfunction}{quadratic_basis}\n"
+        "\\includediagram{\\diagramsDir/ml/\\concat{\\basisfunction}{000}}\n"
+        "\\includediagram{\\diagramsDir/ml/quadratic_function000}\n"
+    )
+    mocker.patch('os.path.exists', return_value=True)
+    mocker.patch('lynguine.util.talk.extract_inputs', return_value=[])
+    mocker.patch('builtins.open', mocker.mock_open(read_data=snippet))
+
+    result = talk.extract_diagrams(
+        'sample_talk.md',
+        diagrams_dir='./slides/diagrams',
+        snippets_path='.',
+        absolute_path=False,
+    )
+
+    assert './slides/diagrams/ml/quadratic_basis000.svg' in result
+    assert './slides/diagrams/ml/quadratic_basis000.emf' in result
+    assert './slides/diagrams/ml/quadratic_function000.svg' in result
+    assert './slides/diagrams/ml/quadratic_function000.emf' in result
+    assert not any('\\concat' in path for path in result)

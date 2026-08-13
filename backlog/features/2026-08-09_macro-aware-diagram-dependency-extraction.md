@@ -1,7 +1,7 @@
 ---
 id: "2026-08-09_macro-aware-diagram-dependency-extraction"
 title: "Macro-aware diagram dependency extraction"
-status: "Proposed"
+status: "In Progress"
 priority: "High"
 created: "2026-08-09"
 last_updated: "2026-08-09"
@@ -76,6 +76,7 @@ This affects multiple snippets that share the animation pattern: `quadratic-basi
 
 ## Related
 
+- **Requirement**: [REQ-0008: Complete Diagram Dependency Extraction](../../requirements/req0008_complete-diagram-dependency-extraction.md)
 - Consumer: lamd `dependencies` / `dependencies batch` → `PPTXDEPS` in `make-talk-flags.mk`
 - Example source: `snippets/_ml/includes/quadratic-basis.md` (macro vs literal `\includediagram` in same file)
 - Related lamd context: CIP-0005 (validation / dependency visibility); lamd backlog `2026-01-04_optimize-dependency-scanning` (batch extraction — already uses lynguine; benefits from correct diagram list)
@@ -85,3 +86,7 @@ This affects multiple snippets that share the animation pattern: `quadratic-basi
 ### 2026-08-09
 
 Task created after diagnosing missing `quadratic_basis*.emf` in mlfc pptx build: SVG present, dependency scanner dropped macro-built paths.
+
+### 2026-08-09
+
+Implemented bounded macro expansion in lynguine (`collect_define_macros`, `expand_diagram_path`, balanced-brace `\includediagram` parsing). Unit tests added; pending validation against lamd build.

@@ -159,12 +159,15 @@ def extract_diagrams(filename,
             lines = f.readlines()
             f.close()
 
+        define_macros = latex.collect_define_macros(lines)
+
         for ext in ['png', 'jpg', 'gif']:
             diagrams = latex.extract_diagrams(lines, ext)
             diag_list = []
             for i, diag_str in enumerate(diagrams):
                 if diagrams_dir is not None: # Substitute if diagrams_dir exists
                     diag_str = diag_str.replace('\\diagramsDir', diagrams_dir)
+                diag_str = latex.expand_diagram_path(diag_str, define_macros)
                 if "\\" not in diag_str: # Ignore remaining tex macros
                     diag_list.append(diag_str + '.' + ext)
             listdiagrams.extend(diag_list)
@@ -175,6 +178,7 @@ def extract_diagrams(filename,
         for i, diag_str in enumerate(diagrams):
             if diagrams_dir is not None: # Substitute if diagrams_dir exists
                 diag_str = diag_str.replace('\\diagramsDir', diagrams_dir)
+            diag_str = latex.expand_diagram_path(diag_str, define_macros)
             if "\\" not in diag_str: # Ignore remaining tex macros
                 for ext in diagram_exts:
                      diag_dict[ext].append(diag_str + '.' + ext)

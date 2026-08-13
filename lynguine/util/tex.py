@@ -203,6 +203,158 @@ def extract_inputs(text):
     return inp_list
 
 
+_DEFINE_MACRO_RE = re.compile(r"""\\define\{([^}]*)\}\{([^}]*)}""")
+_CONCAT_MACRO_RE = re.compile(r"""\\concat\{([^}]*)\}\{([^}]*)}""")
+
+
+def _extract_balanced_brace_content(text, open_brace_index):
+    """
+    Return the content inside balanced braces starting at ``open_brace_index``.
+
+    :param text: Source text.
+    :type text: str
+    :param open_brace_index: Index of the opening ``{``.
+    :type open_brace_index: int
+    :return: Inner content without the surrounding braces, or None.
+    :rtype: str or None
+    """
+    if open_brace_index >= len(text) or text[open_brace_index] != "{":
+        return None
+
+    depth = 0
+    for index in range(open_brace_index, len(text)):
+        if text[index] == "{":
+            depth += 1
+        elif text[index] == "}":
+            depth -= 1
+            if depth == 0:
+                return text[open_brace_index + 1 : index]
+    return None
+
+
+def _extract_braced_command_arguments(line, command):
+    """
+    Extract first braced arguments for each ``command`` occurrence on a line.
+
+    Optional ``[...]`` and ``<...>`` modifiers between the command and the
+    opening brace are skipped.
+    """
+    arguments = []
+    start = 0
+    while True:
+        index = line.find(command, start)
+        if index == -1:
+            break
+
+        pos = index + len(command)
+        while pos < len(line) and line[pos] in " \t":
+            pos += 1
+        if pos < len(line) and line[pos] == "[":
+            closing = line.find("]", pos)
+            if closing == -1:
+                start = index + 1
+                continue
+            pos = closing + 1
+            while pos < len(line) and line[pos] in " \t":
+                pos += 1
+        if pos < len(line) and line[pos] == "<":
+            closing = line.find(">", pos)
+            if closing == -1:
+                start = index + 1
+                continue
+            pos = closing + 1
+            while pos < len(line) and line[pos] in " \t":
+                pos += 1
+            if pos < len(line) and line[pos] == "[":
+                closing = line.find("]", pos)
+                if closing == -1:
+                    start = index + 1
+                    continue
+                pos = closing + 1
+                while pos < len(line) and line[pos] in " \t":
+                    pos += 1
+
+        if pos < len(line) and line[pos] == "{":
+            content = _extract_balanced_brace_content(line, pos)
+            if content is not None:
+                arguments.append(content)
+
+        start = index + 1
+
+    return arguments
+
+
+def collect_define_macros(lines):
+    """
+    Collect gpp-style ``\\define{name}{value}`` macros from file lines.
+
+    Supports ``\\define{\\name}{value}`` and ``\\define{name}{value}``.
+    Later definitions in the same file override earlier ones.
+
+    :param lines: File lines or a single string.
+    :type lines: list or str
+    :return: Mapping from macro name (without leading backslash) to value.
+    :rtype: dict
+    """
+    if isinstance(lines, str):
+        text = lines
+    else:
+        text = "".join(lines)
+
+    macros = {}
+    for match in _DEFINE_MACRO_RE.finditer(text):
+        name = match.group(1).strip()
+        if name.startswith("\\"):
+            name = name[1:]
+        macros[name] = match.group(2).strip()
+    return macros
+
+
+def expand_diagram_path(path, macros, max_depth=20):
+    """
+    Expand a bounded subset of gpp macros used in diagram paths.
+
+    Supported forms:
+
+    - ``\\name`` substitution using macros from :func:`collect_define_macros`
+    - ``\\concat{left}{right}`` (including nested ``\\concat``)
+
+    This is not a general gpp preprocessor. Paths that still contain
+    unsupported ``\\`` tokens after expansion are left unchanged so callers
+    can skip them. Nested ``\\concat`` inside a ``\\concat`` argument is
+    not supported; use a single ``\\concat`` with ``\\define`` macros instead.
+
+    :param path: Diagram path string, typically from :func:`extract_diagrams`.
+    :type path: str
+    :param macros: Macro name to replacement value mapping.
+    :type macros: dict
+    :param max_depth: Maximum ``\\concat`` expansion iterations.
+    :type max_depth: int
+    :return: Path with supported macros expanded.
+    :rtype: str
+    """
+    if not macros and "\\concat" not in path:
+        return path
+
+    if max_depth <= 0:
+        return path
+
+    def substitute_names(fragment):
+        result = fragment
+        for name, value in sorted(macros.items(), key=lambda item: len(item[0]), reverse=True):
+            result = result.replace("\\" + name, value)
+        return result
+
+    path = substitute_names(path)
+    match = _CONCAT_MACRO_RE.search(path)
+    if match:
+        left = expand_diagram_path(match.group(1), macros, max_depth - 1)
+        right = expand_diagram_path(match.group(2), macros, max_depth - 1)
+        path = path[: match.start()] + left + right + path[match.end() :]
+        return expand_diagram_path(path, macros, max_depth - 1)
+    return path
+
+
 def extract_diagrams(lines, type="all"):
     """
     Extract all the diagrams listed in the file.
@@ -218,34 +370,24 @@ def extract_diagrams(lines, type="all"):
 
     rebases = {}
     rebases["diagram"] = [
-        r"\\includediagram",
-        r"\\includediagramclass",
-        r"\\inlinediagram",
-        r"\\inputdiagram",
+        r"\includediagram",
+        r"\includediagramclass",
+        r"\inlinediagram",
+        r"\inputdiagram",
     ]
-    rebases["img"] = [r"\\includeimg"]
-    rebases["png"] = [r"\\includepng"]
-    rebases["gif"] = [r"\\includegif"]
-    rebases["jpg"] = [r"\\includejpg"]
+    rebases["img"] = [r"\includeimg"]
+    rebases["png"] = [r"\includepng"]
+    rebases["gif"] = [r"\includegif"]
+    rebases["jpg"] = [r"\includejpg"]
     all_val = []
     for key in rebases:
         all_val += rebases[key]
     rebases["all"] = all_val
 
-    retails = [
-        r" *\[[^\]]*\] *{([^}]*)}",
-        r"<[^>]*>{([^}]*)}",
-        r"<[^>]*>\[[^\]]*\]{([^}]*)}",
-        r"{([^}]*)}",
-    ]
     for rebase in rebases[type]:
-        for retail in retails:
-            match_diagram = re.compile(rebase + retail)
-            for line in lines:
-                line_diagram = match_diagram.findall(line)
-                if line_diagram:
-                    for diagram in line_diagram:
-                        diagram_list += diagram.split(",")
+        for line in lines:
+            for argument in _extract_braced_command_arguments(line, rebase):
+                diagram_list += argument.split(",")
 
     return diagram_list
 

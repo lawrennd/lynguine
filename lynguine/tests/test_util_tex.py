@@ -79,11 +79,55 @@ def test_extract_citations():
     (["\\includediagram{diagram1}"], "diagram", ["diagram1"]),
     (["\\includeimg{image1}"], "img", ["image1"]),
     (["\\includepng{image2}"], "png", ["image2"]),
-    # Add more combinations as needed
+    (
+        ["\\includediagram{\\diagramsDir/ml/\\concat{\\basisfunction}{000}}"],
+        "diagram",
+        ["\\diagramsDir/ml/\\concat{\\basisfunction}{000}"],
+    ),
 ])
 def test_extract_diagrams(lines, type, expected):
     result = tex.extract_diagrams(lines, type=type)
     assert result == expected
+
+
+def test_collect_define_macros():
+    lines = [
+        "\\define{\\basisfunction}{quadratic_basis}\n",
+        "\\define{other}{value}\n",
+    ]
+    assert tex.collect_define_macros(lines) == {
+        "basisfunction": "quadratic_basis",
+        "other": "value",
+    }
+
+
+@pytest.mark.parametrize(
+    "path, macros, expected",
+    [
+        (
+            "\\diagramsDir/ml/\\concat{\\basisfunction}{000}",
+            {"basisfunction": "quadratic_basis"},
+            "\\diagramsDir/ml/quadratic_basis000",
+        ),
+        (
+            "./slides/diagrams/ml/quadratic_function000",
+            {},
+            "./slides/diagrams/ml/quadratic_function000",
+        ),
+        (
+            "\\concat{\\basisfunction}{000}",
+            {"basisfunction": "quadratic_basis"},
+            "quadratic_basis000",
+        ),
+        (
+            "\\unknown{macro}",
+            {},
+            "\\unknown{macro}",
+        ),
+    ],
+)
+def test_expand_diagram_path(path, macros, expected):
+    assert tex.expand_diagram_path(path, macros) == expected
 
 # Test for create_bib_file_given_tex
 def test_create_bib_file_given_tex(mock_settings_file, mocker):
