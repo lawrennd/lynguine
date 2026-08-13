@@ -1,7 +1,7 @@
 ---
 id: "2026-08-13_dependabot-pytest-bump"
 title: "Upgrade pytest dev dependency for tmpdir CVE (alerts #11, #24)"
-status: "Proposed"
+status: "Completed"
 priority: "Medium"
 created: "2026-08-13"
 last_updated: "2026-08-13"
@@ -35,11 +35,11 @@ test-suite adjustments (deprecated APIs, tmpdir/`tmp_path` usage, warning filter
 
 ## Acceptance Criteria
 
-- [ ] `pyproject.toml` requires `pytest >= 9.0.3` (or `^9.0.3`)
-- [ ] `pytest-cov` and `pytest-mock` versions compatible with pytest 9.x
-- [ ] `poetry.lock` refreshed; Dependabot alerts #11 and #24 closable
-- [ ] Full test suite passes (or pre-existing failures documented separately)
-- [ ] CI workflow (`.github/workflows/python-tests.yml`) unchanged or updated if needed
+- [x] `pyproject.toml` requires `pytest >= 9.0.3` (or `^9.0.3`)
+- [x] `pytest-cov` and `pytest-mock` versions compatible with pytest 9.x
+- [x] `poetry.lock` refreshed; Dependabot alerts #11 and #24 closable
+- [x] Full test suite passes (or pre-existing failures documented separately)
+- [x] CI workflow (`.github/workflows/python-tests.yml`) unchanged or updated if needed
 
 ## Implementation Notes
 
@@ -72,3 +72,11 @@ Check for:
 
 Task created. Pytest bump deferred during initial Dependabot remediation (GitPython, cryptography,
 transitive lock refresh). Native lynguine alerts: 2 medium pytest tmpdir issues.
+
+### 2026-08-13 (implementation)
+
+- `pyproject.toml`: `pytest ^9.0.3`, `pytest-cov ^6.0.0`, `pytest-mock ^3.14.0`
+- `poetry.lock`: pytest **9.1.1**, pytest-cov **6.3.0**, pytest-mock **3.15.1**
+- Core suite: **595 passed** (excluding pre-existing `test_server_mode.py` failures)
+- CI workflow unchanged (`poetry install` + `pytest`)
+- Follow-up (optional): migrate legacy `tmpdir` fixtures to `tmp_path` in test files
