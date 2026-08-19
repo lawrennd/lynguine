@@ -150,7 +150,7 @@ This CIP's implementation work is (cluster A dismissals) plus whichever of B/C/D
 
 - [x] Inventory remaining `py/path-injection` alerts into clusters A–D
 - [x] Document cluster A primitives as trusted-caller I/O
-- [ ] Dismiss GitHub CodeQL alerts 23–33 with the documented rationale
+- [x] Dismiss GitHub CodeQL alerts 23–33 with the documented rationale
 - [x] Accepted treatment for B/C: inherit isolation (`from_cwd_file`, not `from_file`)
 - [x] Accepted treatment for D: split unbounded off HTTP `create_session`
 - [ ] Re-scan; leftover alerts all have recorded rationale
@@ -178,4 +178,4 @@ In Progress. Cluster A accepted as: keep primitives sharp; document the trusted-
 
 ### 2026-08-19 (B/C/D)
 
-Inherit from a cwd-sandboxed Interface uses `from_cwd_file`, not `from_file`. HTTP `create_session` refuses unbounded managers; operator/CLI uses `create_session_unbounded`.
+Inherit from a cwd-sandboxed Interface uses `from_cwd_file`, not `from_file`. HTTP `create_session` refuses unbounded managers; operator/CLI uses `create_session_unbounded`. GitHub alerts 23–33 dismissed as trusted-caller I/O.
