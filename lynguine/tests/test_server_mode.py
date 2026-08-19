@@ -66,8 +66,9 @@ def _run_crash_test_server():
 
 
 @pytest.fixture
-def test_config_file(tmp_path):
-    """Create a temporary test configuration file"""
+def test_config_file():
+    """Create a test configuration file under the process cwd (server jail)."""
+    config_file = Path("test_config.yml")
     config_content = """input:
   type: fake
   nrows: 10
@@ -76,9 +77,12 @@ def test_config_file(tmp_path):
     - email
   index: name
 """
-    config_file = tmp_path / "test_config.yml"
     config_file.write_text(config_content)
-    return config_file
+    try:
+        yield config_file
+    finally:
+        if config_file.exists():
+            config_file.unlink()
 
 
 @pytest.fixture

@@ -14,6 +14,30 @@ from ..assess.compute import Compute
 """Wrapper classes for data objects"""
 
 
+def _stamp_path_roots(details, interface):
+    """Copy Interface path roots onto access-stage details (CIP-000A).
+
+    YAML keys ``allowed_roots`` / ``unbounded_paths`` are stripped so a
+    config file cannot enlarge the jail.
+    """
+    if not isinstance(interface, Interface):
+        return
+    if isinstance(details, list):
+        for entry in details:
+            _stamp_path_roots(entry, interface)
+        return
+    if not isinstance(details, dict):
+        return
+    details.pop("allowed_roots", None)
+    details.pop("unbounded_paths", None)
+    if getattr(interface, "unbounded_paths", False):
+        details["unbounded_paths"] = True
+    elif getattr(interface, "allowed_roots", None):
+        details["allowed_roots"] = list(interface.allowed_roots)
+    if "specifications" in details:
+        _stamp_path_roots(details["specifications"], interface)
+
+
 def _set_value_with_coercion(data, row_label, col_label, value):
     """Set a value in a DataFrame, coercing column dtype when necessary.
 
@@ -1082,7 +1106,18 @@ class DataObject:
             # Check if the interface key is a valid data key
             if key in cls.valid_data_types: # input, output, cache, parameters
                 # Augment the item with base_directory if it's not already present
-                if "base_directory" not in item:
+                if isinstance(item, dict):
+                    if "base_directory" not in item:
+                        if "base_directory" in interface:
+                            item["base_directory"] = interface["base_directory"]
+                        else:   
+                            errmsg = "Base directory not found in interface or item."
+                            log.error(errmsg)
+                            raise ValueError(errmsg)
+                    _stamp_path_roots(item, interface)
+                elif isinstance(item, list):
+                    _stamp_path_roots(item, interface)
+                elif "base_directory" not in item:
                     if "base_directory" in interface:
                         item["base_directory"] = interface["base_directory"]
                     else:   

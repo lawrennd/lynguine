@@ -3,7 +3,7 @@ author: "Neil D. Lawrence"
 created: "2026-08-19"
 id: "000A"
 last_updated: "2026-08-19"
-status: "Accepted"
+status: "In Progress"
 compressed: false
 related_requirements: ["000A", "0002", "0009"]
 related_cips: ["0008", "0009"]
@@ -25,7 +25,7 @@ title: "Explicit path confinement in the access flow"
 
 - [x] Proposed - Initial idea documented
 - [x] Accepted - Approved, ready to start work
-- [ ] In Progress - Actively being implemented
+- [x] In Progress - Actively being implemented
 - [ ] Implemented - Work complete, awaiting verification
 - [ ] Closed - Verified and complete
 - [ ] Rejected - Will not be implemented (add reason, use superseded_by if replaced)
@@ -94,7 +94,7 @@ Behaviour:
 `Interface` and `SessionManager` store `allowed_roots` on the object so later access-stage reads use the same list. Default when the caller omits it:
 
 - `Interface.from_file`: `[expanded_directory]` (the directory already used to join the config file)
-- `SessionManager.create_session`: the session `directory` argument, plus any extra roots passed into the manager at construction
+- `SessionManager.create_session`: roots captured at manager construction (process cwd unless the operator passes `allowed_roots`). The request `directory` is resolved under those roots; it is not itself a root (a client sending `directory=/` must not enlarge the jail).
 
 That default matches how paths are already joined today, so local referia/lamd use stays working, while `interface_file="../etc/passwd"` relative to a session directory is rejected.
 
@@ -116,7 +116,7 @@ A caller that truly needs unbounded paths passes `allowed_roots=None` or `unboun
 
 ### CodeQL
 
-GitHub's `py/path-injection` query treats a realpath-plus-prefix check as a sanitizer when the prefix is not itself tainted. Using `allowed_roots` from `SessionManager` construction (operator config) rather than from the interface file keeps the prefix untainted. That should clear alerts 20–22 and 34. Alerts 23–33 may remain on primitives; dismiss after the flow checks exist.
+GitHub's `py/path-injection` query treats a realpath-plus-prefix check as a sanitizer when the prefix is not itself tainted. Using `allowed_roots` from `SessionManager` construction (cwd / operator config) rather than from the request `directory` or the interface file keeps the prefix untainted. That should clear alerts 20–22, 34, and 40. Alerts 23–33 may remain on primitives; dismiss after the flow checks exist.
 
 ### Alternatives considered
 
@@ -138,8 +138,8 @@ GitHub's `py/path-injection` query treats a realpath-plus-prefix check as a sani
    - Resolve config filename before `open`
 
 3. **Wire `SessionManager.create_session`**
-   - Resolve `interface_file` under session directory
-   - Pass roots into `Interface.from_file`
+   - Resolve `interface_file` under operator roots (construction-time, not request directory)
+   - Load via `Interface.from_cwd_file` so HTTP taint never enters `from_file`
 
 4. **Wire access-stage configured paths**
    - Resolve filenames from interface details before primitive readers/writers
@@ -175,10 +175,10 @@ GitHub's `py/path-injection` query treats a realpath-plus-prefix check as a sani
 
 ## Implementation Status
 
-- [ ] Path helper and tests
-- [ ] Interface.from_file confinement
-- [ ] SessionManager confinement
-- [ ] Access-stage configured path confinement
+- [x] Path helper and tests
+- [x] Interface.from_file confinement
+- [x] SessionManager confinement
+- [x] Access-stage configured path confinement
 - [ ] CodeQL re-check and recorded dismissals for primitives
 - [ ] Release-note note on absolute paths outside the interface directory
 
@@ -198,3 +198,11 @@ Proposed from CodeQL `py/path-injection` alerts 20–34.
 ### 2026-08-19 (later)
 
 Accepted. Default roots = interface/session directory; unbounded paths are an explicit opt-out. Primitive I/O helpers stay trusted-caller APIs.
+
+### 2026-08-19 (implementation)
+
+In Progress. Helper `lynguine.access.paths.resolve_under_roots`, wired at `Interface.from_file`, `SessionManager.create_session`, and access-stage `extract_full_filename` / directory list paths. `from_flow` overwrites YAML `allowed_roots` so a config file cannot enlarge the jail. HTTP and session loaders use `Interface.from_cwd_file`, which joins request names to `os.getcwd()` (an untainted prefix) so CodeQL's `py/path-injection` sanitizer can see the check. `from_file` remains the local/CLI loader and is not called from HTTP-facing code.
+
+### 2026-08-19 (CodeQL follow-up)
+
+Server `from_file` call sites were still tainted from `LynguineHandler.do_POST`. Added `Interface.from_cwd_file` and switched `server.py`, `server_interface_handlers.py`, and `SessionManager.create_session` to it. Unbounded session loads construct `Interface` directly so HTTP taint never enters `from_file`.

@@ -74,7 +74,10 @@ def handle_interface_read(request_data: Dict[str, Any]) -> Dict[str, Any]:
         log.info(f"Reading field '{field}' from interface '{interface_file}'")
         
         # Load interface (fast, no data loading)
-        iface = Interface.from_file(user_file=[interface_file], directory=directory)
+        iface = Interface.from_cwd_file(
+            user_file=[interface_file],
+            directory=directory,
+        )
         
         # Extract field
         if field in iface:
@@ -161,7 +164,10 @@ def handle_talk_field(request_data: Dict[str, Any]) -> Dict[str, Any]:
             log.info(f"Markdown parse error, falling back to config files: {e}")
             try:
                 if config_files:
-                    iface = Interface.from_file(user_file=config_files, directory='.')
+                    iface = Interface.from_cwd_file(
+                        user_file=config_files,
+                        directory='.',
+                    )
                     value = iface[field] if field in iface else ""
                     if value:
                         log.info(f"Field '{field}' found in config: {value}")
@@ -176,7 +182,10 @@ def handle_talk_field(request_data: Dict[str, Any]) -> Dict[str, Any]:
             log.warning(f"Markdown file not found, trying config: {e}")
             try:
                 if config_files:
-                    iface = Interface.from_file(user_file=config_files, directory='.')
+                    iface = Interface.from_cwd_file(
+                        user_file=config_files,
+                        directory='.',
+                    )
                     value = iface[field] if field in iface else ""
             except Exception as config_error:
                 log.warning(f"Config fallback failed: {config_error}")

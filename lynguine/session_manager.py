@@ -10,10 +10,12 @@ import time
 import uuid
 import pickle
 import json
+import yaml
 from typing import Dict, List, Optional, Any, Tuple
 from pathlib import Path
 import threading
 
+from .access.paths import DEFAULT_ROOTS, resolve_under_roots
 from .config.interface import Interface
 from .assess.data import CustomDataFrame
 from .log import Logger
@@ -112,11 +114,24 @@ class SessionManager:
         max_sessions: int = 100,
         max_memory_mb: int = 10000,  # 10GB default
         cleanup_interval: int = 60,  # Check every minute
+        allowed_roots=DEFAULT_ROOTS,
+        unbounded_paths: bool = False,
     ):
         self.sessions: Dict[str, Session] = {}
         self.max_sessions = max_sessions
         self.max_memory_mb = max_memory_mb
         self.cleanup_interval = cleanup_interval
+        # Construction-time roots are operator config (cwd unless overridden).
+        # Do not take extra roots from per-request directory or interface YAML.
+        if unbounded_paths or allowed_roots is None:
+            self._allowed_roots = None
+            self.unbounded_paths = True
+        elif allowed_roots is DEFAULT_ROOTS:
+            self._allowed_roots = [os.getcwd()]
+            self.unbounded_paths = False
+        else:
+            self._allowed_roots = [str(root) for root in allowed_roots]
+            self.unbounded_paths = False
         
         # Setup persistence directory
         if persistence_dir is None:
@@ -283,13 +298,51 @@ class SessionManager:
             if session_id is None:
                 session_id = str(uuid.uuid4())
             
-            # Load interface and create CustomDataFrame
-            full_path = os.path.join(directory, interface_file)
-            if not os.path.exists(full_path):
-                raise FileNotFoundError(f"Interface file not found: {full_path}")
-            
+            # Load interface and create CustomDataFrame.
+            # Roots are construction-time operator config, never the request
+            # directory (that would let a client set directory="/" and escape).
+            expanded_directory = os.path.expandvars(os.path.expanduser(directory))
+            unbounded = self.unbounded_paths or self._allowed_roots is None
+            session_roots = None if unbounded else list(self._allowed_roots)
+
+            if not unbounded:
+                expanded_directory = resolve_under_roots(
+                    expanded_directory, session_roots
+                )
+            full_path = os.path.join(expanded_directory, interface_file)
+            if not unbounded:
+                resolve_under_roots(full_path, session_roots)
+
             log.info(f"Loading interface from {full_path}")
-            interface = Interface.from_file(interface_file, directory=directory)
+            if unbounded:
+                # Do not call Interface.from_file: HTTP taint on this method
+                # would mark every exists/open in from_file as path injection.
+                if not os.path.exists(full_path):
+                    raise FileNotFoundError(
+                        f"Interface file not found: {full_path}"
+                    )
+                with open(full_path, "r") as stream:
+                    data = yaml.safe_load(stream) or {}
+                interface = Interface(
+                    data,
+                    directory=expanded_directory,
+                    user_file=interface_file,
+                    unbounded_paths=True,
+                )
+            else:
+                # HTTP-facing: confine to process cwd (untainted prefix).
+                # Operator roots already applied via resolve_under_roots above.
+                try:
+                    interface = Interface.from_cwd_file(
+                        user_file=interface_file,
+                        directory=expanded_directory,
+                    )
+                except ValueError as exc:
+                    if "No configuration file found" in str(exc):
+                        raise FileNotFoundError(
+                            f"Interface file not found: {full_path}"
+                        ) from exc
+                    raise
             
             # Create CustomDataFrame from interface
             cdf = CustomDataFrame.from_flow(interface)
