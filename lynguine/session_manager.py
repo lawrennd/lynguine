@@ -120,8 +120,17 @@ class SessionManager:
         self.max_sessions = max_sessions
         self.max_memory_mb = max_memory_mb
         self.cleanup_interval = cleanup_interval
-        self._allowed_roots = allowed_roots
-        self.unbounded_paths = unbounded_paths
+        # Construction-time roots are operator config (cwd unless overridden).
+        # Do not take extra roots from per-request directory or interface YAML.
+        if unbounded_paths or allowed_roots is None:
+            self._allowed_roots = None
+            self.unbounded_paths = True
+        elif allowed_roots is DEFAULT_ROOTS:
+            self._allowed_roots = [os.getcwd()]
+            self.unbounded_paths = False
+        else:
+            self._allowed_roots = [str(root) for root in allowed_roots]
+            self.unbounded_paths = False
         
         # Setup persistence directory
         if persistence_dir is None:
@@ -289,20 +298,16 @@ class SessionManager:
                 session_id = str(uuid.uuid4())
             
             # Load interface and create CustomDataFrame.
-            # Roots come from the manager plus this session directory; never
-            # from the interface YAML (that would let a file enlarge the jail).
+            # Roots are construction-time operator config, never the request
+            # directory (that would let a client set directory="/" and escape).
             expanded_directory = os.path.expandvars(os.path.expanduser(directory))
-            if self.unbounded_paths or self._allowed_roots is None:
-                session_roots = None
-                unbounded = True
-            else:
-                unbounded = False
-                session_roots = [
-                    os.path.realpath(expanded_directory)
-                ]
-                if self._allowed_roots is not DEFAULT_ROOTS:
-                    session_roots.extend(str(root) for root in self._allowed_roots)
+            unbounded = self.unbounded_paths or self._allowed_roots is None
+            session_roots = None if unbounded else list(self._allowed_roots)
 
+            if not unbounded:
+                expanded_directory = resolve_under_roots(
+                    expanded_directory, session_roots
+                )
             full_path = os.path.join(expanded_directory, interface_file)
             if not unbounded:
                 full_path = resolve_under_roots(full_path, session_roots)
@@ -312,7 +317,7 @@ class SessionManager:
             log.info(f"Loading interface from {full_path}")
             interface = Interface.from_file(
                 interface_file,
-                directory=directory,
+                directory=expanded_directory,
                 allowed_roots=session_roots,
                 unbounded_paths=unbounded,
             )

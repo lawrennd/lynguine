@@ -102,9 +102,31 @@ def test_yaml_cannot_enlarge_jail_via_stamp(tmp_path):
 def test_session_manager_rejects_interface_outside_directory(tmp_path):
     from lynguine.session_manager import SessionManager
 
+    jail = tmp_path / "jail"
+    jail.mkdir()
+    mgr = SessionManager(
+        persistence_dir=str(tmp_path / "sessions"),
+        allowed_roots=[str(jail)],
+    )
+    (tmp_path / "secret.yml").write_text("leaked: true\n")
+    with pytest.raises(PathEscapeError):
+        mgr.create_session(interface_file="../secret.yml", directory=str(jail))
+
+
+def test_session_manager_rejects_request_directory_outside_cwd(tmp_path):
+    """Per-request directory must not become the jail (CodeQL alert 40)."""
+    from lynguine.session_manager import SessionManager
+
     mgr = SessionManager(persistence_dir=str(tmp_path / "sessions"))
+    with pytest.raises(PathEscapeError):
+        mgr.create_session(interface_file="passwd", directory="/etc")
+
+
+def test_from_file_list_rejects_escape(tmp_path):
+    from lynguine.config.interface import Interface
+
     jail = tmp_path / "jail"
     jail.mkdir()
     (tmp_path / "secret.yml").write_text("leaked: true\n")
     with pytest.raises(PathEscapeError):
-        mgr.create_session(interface_file="../secret.yml", directory=str(jail))
+        Interface.from_file(user_file=["../secret.yml"], directory=str(jail))

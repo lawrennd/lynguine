@@ -425,7 +425,8 @@ class LynguineHandler(BaseHTTPRequestHandler):
                 interface = Interface.from_file(
                     user_file=interface_file,
                     directory=directory,
-                    field=field
+                    field=field,
+                    allowed_roots=[os.getcwd()],
                 )
                 
                 # Read data from the interface's input configuration

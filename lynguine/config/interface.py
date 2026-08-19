@@ -852,23 +852,20 @@ c        Expand the environment variables in the configuration.
             expanded_directory, allowed_roots, unbounded_paths
         )
 
-        def _resolve_config_path(name):
-            candidate = os.path.join(expanded_directory, name)
-            if unbounded:
-                return candidate
-            return resolve_under_roots(candidate, roots)
-
-        # If the user_file is a list, check existence of each file in order.
-        if type(user_file) is list:
-            chosen = None
-            for ufile in user_file:
-                candidate = _resolve_config_path(ufile)
-                if os.path.exists(candidate):
-                    chosen = candidate
-                    break
-            fname = chosen if chosen is not None else _resolve_config_path(ufile)
-        else:
-            fname = _resolve_config_path(ufile)
+        names = user_file if type(user_file) is list else [ufile]
+        fname = None
+        for ufile in names:
+            candidate = os.path.join(expanded_directory, ufile)
+            if not unbounded:
+                candidate = resolve_under_roots(candidate, roots)
+            if os.path.exists(candidate):
+                fname = candidate
+                break
+        if fname is None:
+            ufile = names[-1] if names else cls.default_config_file()
+            fname = os.path.join(expanded_directory, ufile)
+            if not unbounded:
+                fname = resolve_under_roots(fname, roots)
         data = {}
         log.debug(f"Attempting to open file \"{fname}\".")
         if os.path.exists(fname):

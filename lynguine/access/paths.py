@@ -73,6 +73,8 @@ def resolve_under_roots(path: str, roots: Iterable[str]) -> str:
     """Expand, resolve, and require ``path`` to sit under one of ``roots``.
 
     The caller passes ``roots``; there is no process-global default.
+    The startswith check is on the same ``fullpath`` value that is returned
+    so path-injection analysis can see the sanitizer at the use site.
 
     :param path: Path to resolve (relative or absolute)
     :type path: str
@@ -89,9 +91,13 @@ def resolve_under_roots(path: str, roots: Iterable[str]) -> str:
     if not root_list:
         raise PathEscapeError(path, root_list)
 
-    resolved = _realpath(path)
+    fullpath = os.path.normpath(
+        os.path.realpath(os.path.expanduser(os.path.expandvars(str(path))))
+    )
     for root in root_list:
-        resolved_root = _realpath(root)
-        if resolved == resolved_root or resolved.startswith(resolved_root + os.sep):
-            return resolved
+        base_path = os.path.normpath(
+            os.path.realpath(os.path.expanduser(os.path.expandvars(str(root))))
+        )
+        if fullpath == base_path or fullpath.startswith(base_path + os.sep):
+            return fullpath
     raise PathEscapeError(path, root_list)

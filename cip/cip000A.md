@@ -94,7 +94,7 @@ Behaviour:
 `Interface` and `SessionManager` store `allowed_roots` on the object so later access-stage reads use the same list. Default when the caller omits it:
 
 - `Interface.from_file`: `[expanded_directory]` (the directory already used to join the config file)
-- `SessionManager.create_session`: the session `directory` argument, plus any extra roots passed into the manager at construction
+- `SessionManager.create_session`: roots captured at manager construction (process cwd unless the operator passes `allowed_roots`). The request `directory` is resolved under those roots; it is not itself a root (a client sending `directory=/` must not enlarge the jail).
 
 That default matches how paths are already joined today, so local referia/lamd use stays working, while `interface_file="../etc/passwd"` relative to a session directory is rejected.
 
@@ -116,7 +116,7 @@ A caller that truly needs unbounded paths passes `allowed_roots=None` or `unboun
 
 ### CodeQL
 
-GitHub's `py/path-injection` query treats a realpath-plus-prefix check as a sanitizer when the prefix is not itself tainted. Using `allowed_roots` from `SessionManager` construction (operator config) rather than from the interface file keeps the prefix untainted. That should clear alerts 20–22 and 34. Alerts 23–33 may remain on primitives; dismiss after the flow checks exist.
+GitHub's `py/path-injection` query treats a realpath-plus-prefix check as a sanitizer when the prefix is not itself tainted. Using `allowed_roots` from `SessionManager` construction (cwd / operator config) rather than from the request `directory` or the interface file keeps the prefix untainted. That should clear alerts 20–22, 34, and 40. Alerts 23–33 may remain on primitives; dismiss after the flow checks exist.
 
 ### Alternatives considered
 
@@ -201,4 +201,4 @@ Accepted. Default roots = interface/session directory; unbounded paths are an ex
 
 ### 2026-08-19 (implementation)
 
-In Progress. Helper `lynguine.access.paths.resolve_under_roots`, wired at `Interface.from_file`, `SessionManager.create_session`, and access-stage `extract_full_filename` / directory list paths. `from_flow` overwrites YAML `allowed_roots` so a config file cannot enlarge the jail.
+In Progress. Helper `lynguine.access.paths.resolve_under_roots`, wired at `Interface.from_file`, `SessionManager.create_session`, and access-stage `extract_full_filename` / directory list paths. `from_flow` overwrites YAML `allowed_roots` so a config file cannot enlarge the jail. SessionManager and server `from_file` calls use construction-time roots (`os.getcwd()` unless the operator passes `allowed_roots`); the request `directory` is confined under those roots rather than becoming the jail.
