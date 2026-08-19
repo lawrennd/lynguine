@@ -1,7 +1,7 @@
 ---
 id: "2026-08-19_least-privilege-github-actions"
 title: "Declare least-privilege GITHUB_TOKEN permissions on workflows"
-status: "Ready"
+status: "Completed"
 priority: "Medium"
 created: "2026-08-19"
 last_updated: "2026-08-19"
@@ -31,24 +31,30 @@ This task implements [REQ-000B](../../requirements/req000B_least-privilege-autom
 
 ## Acceptance Criteria
 
-- [ ] `python-tests.yml` has an explicit `permissions` block (contents read is enough for checkout, tests, and Codecov upload via `CODECOV_TOKEN`)
-- [ ] Docs **build** job has an explicit `permissions` block; include `pages: write` only if `upload-pages-artifact` requires it, otherwise contents read plus whatever the action documents
-- [ ] Docs **deploy** job keeps its existing write scopes and does not gain contents write
+- [x] `python-tests.yml` has an explicit `permissions` block (contents read is enough for checkout, tests, and Codecov upload via `CODECOV_TOKEN`)
+- [x] Docs **build** job has an explicit `permissions` block; include `pages: write` only if `upload-pages-artifact` requires it, otherwise contents read plus whatever the action documents
+- [x] Docs **deploy** job keeps its existing write scopes and does not gain contents write
 - [ ] CodeQL alerts 35 and 36 close after the default branch scan
-- [ ] Future workflows copied from these files start from least privilege
+- [x] Future workflows copied from these files start from least privilege
 
 ## Implementation Notes
 
-Minimal starting point from CodeQL:
+Per-job permissions (deploy already had its own block):
 
 ```yaml
+# python-tests.yml build job
 permissions:
   contents: read
+
+# docs.yml build job
+permissions:
+  contents: read
+  actions: write  # upload-pages-artifact (actions: none would block artifact upload)
 ```
 
-Place it at workflow level or per job. Per-job is clearer when deploy needs extra scopes.
+Docs deploy is unchanged: `pages: write` and `id-token: write` only.
 
-`actions/upload-pages-artifact` may need `pages: write` on the **build** job; check the action docs when implementing. Do not give the test job write access to contents.
+`upload-pages-artifact` does not require `pages: write` on the build job; that scope stays on deploy only.
 
 ## Related
 
@@ -61,3 +67,7 @@ Place it at workflow level or per job. Per-job is clearer when deploy needs extr
 ### 2026-08-19
 
 Task created at Ready after REQ-000B was accepted without a CIP.
+
+### 2026-08-19 (later)
+
+Implemented. Tests job is contents-read only. Docs build adds `actions: write` so the Pages artifact can upload. CodeQL closure waits for a scan after this reaches the default branch.

@@ -1,7 +1,7 @@
 ---
 id: "000B"
 title: "Least-Privilege Repository Automation"
-status: "In Progress"
+status: "Implemented"
 priority: "Medium"
 created: "2026-08-19"
 last_updated: "2026-08-19"
@@ -33,9 +33,9 @@ CodeQL reports two medium `actions/missing-workflow-permissions` findings: `.git
 
 ## Acceptance Criteria
 
-- [ ] Every workflow job has an explicit `permissions` block
-- [ ] Jobs that only checkout and test or build have no write access to repository contents
-- [ ] Jobs that deploy (GitHub Pages or similar) declare only the write scopes they use
+- [x] Every workflow job has an explicit `permissions` block
+- [x] Jobs that only checkout and test or build have no write access to repository contents
+- [x] Jobs that deploy (GitHub Pages or similar) declare only the write scopes they use
 - [ ] CodeQL `actions/missing-workflow-permissions` alerts for this repository are resolved
 
 ## Notes
@@ -57,3 +57,7 @@ Requirement proposed from CodeQL workflow-permissions alerts.
 ### 2026-08-19 (later)
 
 Accepted. No CIP; tracked as backlog `2026-08-19_least-privilege-github-actions`. Status moved to In Progress.
+
+### 2026-08-19 (implementation)
+
+Workflows now declare per-job permissions. Tests: `contents: read`. Docs build: `contents: read` plus `actions: write` for `upload-pages-artifact`. Docs deploy unchanged (`pages: write`, `id-token: write`, no contents write). Status Implemented; CodeQL alerts 35 and 36 need a scan on the default branch to close.
