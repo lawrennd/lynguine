@@ -10,16 +10,14 @@ Tests cover:
 - Performance characteristics
 """
 
-import os
+import sys
 import time
-import tempfile
+import subprocess
 import pytest
 import requests
-import socket
-from multiprocessing import Process
 from pathlib import Path
 
-from lynguine.server import run_server, check_server_running, get_lockfile_path
+from lynguine.server import check_server_running, get_lockfile_path
 from lynguine.client import ServerClient
 from lynguine import __version__
 
@@ -28,41 +26,64 @@ from lynguine import __version__
 TEST_PORT = 8766  # Different from default to avoid conflicts
 TEST_HOST = '127.0.0.1'
 TEST_URL = f'http://{TEST_HOST}:{TEST_PORT}'
+SERVER_START_TIMEOUT = 20.0
 
 
-def _run_test_server():
-    """Module-level function for multiprocessing (must be picklable)"""
-    run_server(host=TEST_HOST, port=TEST_PORT)
+def _start_lynguine_server(port, idle_timeout=0):
+    """Start a lynguine server in a subprocess using this interpreter.
+
+    Tests used to use ``multiprocessing.Process``. On macOS the default start
+    method is ``spawn``, which re-imports the whole package in the child and
+    is slow and flaky under pytest. ``sys.executable -m lynguine.server`` is
+    how the client auto-starts the server, and it inherits the caller's venv.
+    """
+    lockfile = get_lockfile_path(TEST_HOST, port)
+    if lockfile.exists():
+        lockfile.unlink()
+    cmd = [
+        sys.executable, '-m', 'lynguine.server',
+        '--host', TEST_HOST,
+        '--port', str(port),
+    ]
+    if idle_timeout > 0:
+        cmd.extend(['--idle-timeout', str(idle_timeout)])
+    return subprocess.Popen(
+        cmd,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
 
 
-def _run_shutdown_test_server():
-    """Module-level function for shutdown test (must be picklable)"""
-    run_server(host=TEST_HOST, port=TEST_PORT + 100)
+def _wait_for_server(url, proc=None, timeout=SERVER_START_TIMEOUT):
+    """Block until ``GET {url}/api/health`` succeeds, or raise."""
+    deadline = time.time() + timeout
+    last_err = None
+    while time.time() < deadline:
+        if proc is not None and proc.poll() is not None:
+            raise RuntimeError(
+                f"Server at {url} exited with {proc.returncode} before becoming ready."
+            )
+        try:
+            response = requests.get(f'{url}/api/health', timeout=1)
+            if response.status_code == 200:
+                return
+        except Exception as exc:
+            last_err = exc
+        time.sleep(0.1)
+    raise RuntimeError(
+        f"Server at {url} did not become ready within {timeout}s: {last_err}"
+    )
 
 
-def _run_server_with_5min_timeout():
-    """Module-level function for idle timeout test (must be picklable)"""
-    run_server(host=TEST_HOST, port=TEST_PORT+10, idle_timeout=300)
-
-
-def _run_server_with_3sec_timeout():
-    """Module-level function for idle timeout test (must be picklable)"""
-    run_server(host=TEST_HOST, port=TEST_PORT+11, idle_timeout=3)
-
-
-def _run_server_with_5sec_timeout():
-    """Module-level function for idle timeout test (must be picklable)"""
-    run_server(host=TEST_HOST, port=TEST_PORT+12, idle_timeout=5)
-
-
-def _run_retry_test_server():
-    """Module-level function for retry test (must be picklable)"""
-    run_server(host='127.0.0.1', port=TEST_PORT+30)
-
-
-def _run_crash_test_server():
-    """Module-level function for crash recovery test (must be picklable)"""
-    run_server(host='127.0.0.1', port=TEST_PORT+31)
+def _stop_server(proc, timeout=3):
+    """Terminate a server subprocess, escalating to kill if needed."""
+    if proc.poll() is None:
+        proc.terminate()
+        try:
+            proc.wait(timeout=timeout)
+        except subprocess.TimeoutExpired:
+            proc.kill()
+            proc.wait(timeout=2)
 
 
 @pytest.fixture
@@ -85,38 +106,30 @@ def test_config_file():
             config_file.unlink()
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def server_process():
-    """Start a test server in a separate process"""
-    # Clean up any leftover lockfile first
+    """Start one test server for the module.
+
+    Function-scoped start/stop was flaky on macOS: spawn/Popen after many
+    cycles hits TIME_WAIT and subprocess FD limits. Tests that need a
+    private server (idle timeout, crash recovery) still start their own.
+    """
     lockfile = get_lockfile_path(host=TEST_HOST, port=TEST_PORT)
     if lockfile.exists():
         lockfile.unlink()
     
-    proc = Process(target=_run_test_server, daemon=True)
-    proc.start()
-    
-    # Wait for server to start
-    max_wait = 5
-    start_time = time.time()
-    while time.time() - start_time < max_wait:
-        try:
-            response = requests.get(f'{TEST_URL}/api/health', timeout=1)
-            if response.status_code == 200:
-                break
-        except:
-            time.sleep(0.1)
+    proc = _start_lynguine_server(TEST_PORT)
+    try:
+        _wait_for_server(TEST_URL, proc)
+    except Exception:
+        _stop_server(proc)
+        raise RuntimeError(
+            f"Test server failed to start on {TEST_URL} (exit={proc.returncode})."
+        ) from None
     
     yield proc
     
-    # Cleanup
-    proc.terminate()
-    proc.join(timeout=2)
-    if proc.is_alive():
-        proc.kill()
-        proc.join()
-    
-    # Clean up lockfile
+    _stop_server(proc)
     if lockfile.exists():
         lockfile.unlink()
 
@@ -297,17 +310,10 @@ class TestIdleTimeout:
     
     def test_idle_timeout_status_info(self):
         """Test status endpoint shows idle timeout information when enabled"""
-        import multiprocessing
-        import time
-        
-        # Start server with idle timeout
-        process = multiprocessing.Process(target=_run_server_with_5min_timeout, daemon=True)
-        process.start()
-        time.sleep(2)
-        
+        process = _start_lynguine_server(TEST_PORT + 10, idle_timeout=300)
+        test_url = f'http://{TEST_HOST}:{TEST_PORT+10}'
         try:
-            # Check status
-            test_url = f'http://{TEST_HOST}:{TEST_PORT+10}'
+            _wait_for_server(test_url, process)
             response = requests.get(f'{test_url}/api/status')
             assert response.status_code == 200
             
@@ -319,61 +325,34 @@ class TestIdleTimeout:
             assert 'remaining_seconds' in data['idle_timeout']
             assert data['idle_timeout']['remaining_seconds'] <= 300
         finally:
-            process.terminate()
-            process.join(timeout=2)
+            _stop_server(process)
     
     def test_idle_timeout_triggers_shutdown(self):
         """Test that server shuts down after idle timeout"""
-        import multiprocessing
-        import time
-        
-        # Start server with short idle timeout
-        process = multiprocessing.Process(target=_run_server_with_3sec_timeout, daemon=True)
-        process.start()
-        
+        process = _start_lynguine_server(TEST_PORT + 11, idle_timeout=3)
         test_url = f'http://{TEST_HOST}:{TEST_PORT+11}'
         
-        # Wait for server to be ready (with retries)
-        max_retries = 10
-        for i in range(max_retries):
-            try:
-                response = requests.get(f'{test_url}/api/health', timeout=1)
-                if response.status_code == 200:
-                    break
-            except requests.ConnectionError:
-                if i == max_retries - 1:
-                    raise
-                time.sleep(0.5)
-        
-        # Verify server is running
-        response = requests.get(f'{test_url}/api/health')
-        assert response.status_code == 200
-        
-        # Wait for idle timeout (3 seconds idle timeout + check interval ~0.75s + buffer)
-        time.sleep(5)
-        
-        # Server should have shut down (may raise ConnectionError or ReadTimeout)
-        with pytest.raises((requests.ConnectionError, requests.ReadTimeout)):
-            requests.get(f'{test_url}/api/health', timeout=1)
-        
-        # Cleanup
-        if process.is_alive():
-            process.terminate()
-        process.join(timeout=2)
+        try:
+            _wait_for_server(test_url, process)
+            response = requests.get(f'{test_url}/api/health')
+            assert response.status_code == 200
+            
+            # Wait for idle timeout (3 seconds idle timeout + check interval ~0.75s + buffer)
+            time.sleep(5)
+            
+            # Server should have shut down (may raise ConnectionError or ReadTimeout)
+            with pytest.raises((requests.ConnectionError, requests.ReadTimeout)):
+                requests.get(f'{test_url}/api/health', timeout=1)
+        finally:
+            _stop_server(process)
     
     def test_activity_resets_idle_timer(self):
         """Test that requests reset the idle timer"""
-        import multiprocessing
-        import time
-        
-        # Start server with short idle timeout
-        process = multiprocessing.Process(target=_run_server_with_5sec_timeout, daemon=True)
-        process.start()
-        time.sleep(1)
-        
+        process = _start_lynguine_server(TEST_PORT + 12, idle_timeout=5)
         test_url = f'http://{TEST_HOST}:{TEST_PORT+12}'
         
         try:
+            _wait_for_server(test_url, process)
             # Make requests every 2 seconds for 8 seconds
             for _ in range(4):
                 time.sleep(2)
@@ -384,8 +363,7 @@ class TestIdleTimeout:
             response = requests.get(f'{test_url}/api/health')
             assert response.status_code == 200
         finally:
-            process.terminate()
-            process.join(timeout=2)
+            _stop_server(process)
 
 
 class TestAutoStart:
@@ -428,9 +406,9 @@ class TestAutoStart:
             assert len(df) == 5
             
         finally:
+            if getattr(client, '_server_process', None) is not None:
+                _stop_server(client._server_process)
             client.close()
-            # Give server time to shut down via idle timeout
-            time.sleep(1)
     
     def test_auto_start_with_read_data(self):
         """Test that auto-start works when first operation is read_data"""
@@ -457,8 +435,9 @@ class TestAutoStart:
             assert client.ping() is True
             
         finally:
+            if getattr(client, '_server_process', None) is not None:
+                _stop_server(client._server_process)
             client.close()
-            time.sleep(1)
     
     def test_auto_start_fails_gracefully(self):
         """Test that auto-start fails gracefully with invalid config"""
@@ -507,18 +486,12 @@ class TestRetryLogic:
     
     def test_retry_on_connection_error(self, tmp_path):
         """Test that client retries on connection errors"""
-        import time
-        import multiprocessing
-        
         test_port = TEST_PORT + 30
         test_url = f'http://127.0.0.1:{test_port}'
         
-        # Start server that we'll kill mid-request
-        process = multiprocessing.Process(target=_run_retry_test_server, daemon=True)
-        process.start()
-        time.sleep(2)  # Wait for server to start
-        
+        process = _start_lynguine_server(test_port)
         try:
+            _wait_for_server(test_url, process)
             client = ServerClient(
                 server_url=test_url,
                 max_retries=2,
@@ -530,8 +503,7 @@ class TestRetryLogic:
             assert client.ping()
             
             # Kill the server
-            process.terminate()
-            process.join(timeout=2)
+            _stop_server(process)
             time.sleep(0.5)
             
             # Request should fail after retries
@@ -539,24 +511,17 @@ class TestRetryLogic:
                 client.read_data(data_source={'type': 'fake', 'nrows': 5, 'cols': ['name']})
         
         finally:
-            if process.is_alive():
-                process.terminate()
-                process.join(timeout=2)
+            _stop_server(process)
     
     def test_auto_restart_on_crash(self):
         """Test that auto_start enables server restart after crash"""
-        import time
-        import multiprocessing
-        
         test_port = TEST_PORT + 31
         test_url = f'http://127.0.0.1:{test_port}'
         
-        # Start server that we'll kill
-        process = multiprocessing.Process(target=_run_crash_test_server, daemon=True)
-        process.start()
-        time.sleep(2)
-        
+        process = _start_lynguine_server(test_port)
+        client = None
         try:
+            _wait_for_server(test_url, process)
             client = ServerClient(
                 server_url=test_url,
                 max_retries=2,
@@ -573,8 +538,7 @@ class TestRetryLogic:
             assert len(df1) == 5
             
             # Kill the server
-            process.terminate()
-            process.join(timeout=2)
+            _stop_server(process)
             time.sleep(0.5)
             
             # Request should succeed after auto-restart
@@ -585,9 +549,11 @@ class TestRetryLogic:
             assert client.ping()
         
         finally:
-            if process.is_alive():
-                process.terminate()
-                process.join(timeout=2)
+            _stop_server(process)
+            if client is not None:
+                if getattr(client, '_server_process', None) is not None:
+                    _stop_server(client._server_process)
+                client.close()
     
     def test_no_retry_on_4xx_errors(self, server_process):
         """Test that 4xx client errors don't trigger retry"""
@@ -885,38 +851,23 @@ class TestServerShutdown:
         """Test that server cleans up resources on shutdown"""
         # Use a different port to avoid conflicts with other tests
         test_port = TEST_PORT + 100
+        test_url = f'http://{TEST_HOST}:{test_port}'
         
-        proc = Process(target=_run_shutdown_test_server, daemon=True)
-        proc.start()
-        
-        # Wait for startup
-        max_wait = 5
-        for _ in range(max_wait * 10):
-            is_running, _ = check_server_running(TEST_HOST, test_port)
-            if is_running:
-                break
-            time.sleep(0.1)
-        
-        # Verify running
-        is_running, server_type = check_server_running(TEST_HOST, test_port)
-        assert is_running
-        assert server_type == 'lynguine'
-        
-        # Shutdown
-        proc.terminate()
-        proc.join(timeout=3)
-        if proc.is_alive():
-            proc.kill()
-            proc.join()
-        
-        # Give time for cleanup
-        time.sleep(1)
-        
-        # Verify lockfile is cleaned up
-        lockfile = get_lockfile_path(TEST_HOST, test_port)
-        # Note: Lockfile cleanup happens on graceful shutdown (SIGTERM)
-        # If process is killed (SIGKILL), lockfile may remain
-        # The check_server_running function handles stale lockfiles
+        proc = _start_lynguine_server(test_port)
+        try:
+            _wait_for_server(test_url, proc)
+            
+            is_running, server_type = check_server_running(TEST_HOST, test_port)
+            assert is_running
+            assert server_type == 'lynguine'
+            
+            _stop_server(proc)
+            time.sleep(1)
+            
+            # Lockfile cleanup happens on graceful shutdown (SIGTERM).
+            # check_server_running handles stale lockfiles if SIGKILL was used.
+        finally:
+            _stop_server(proc)
 
 
 # Integration test
