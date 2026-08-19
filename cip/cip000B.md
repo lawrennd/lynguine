@@ -72,7 +72,7 @@ def redact_credential_identifier(key: str) -> str:
 
 Keep the existing `_sanitize_credential_key` behaviour (short keys become `***`; longer keys become `abcd***wxyz`) or switch to a truncated SHA-256 hex digest. Prefer hashing if we want CodeQL to treat the result as sanitized; prefix/suffix redaction is nicer for operators but often still taints.
 
-**Accepted decision:** hash credential identifiers for audit file and debug logs. Prefix/suffix redaction only if hashing still taints and we add a CodeQL sanitizer model. Do not log raw keys at any level.
+**Accepted decision:** fingerprint credential identifiers with HMAC-SHA256 (domain-separated) for audit file and debug logs. Do not use a password hash (Argon2/bcrypt/PBKDF2): these are names, not passwords, and those algorithms are too slow for every log line. Do not log raw keys at any level.
 
 Secret **values** continue to be handled by `SanitizingFormatter` pattern redaction. They must never be passed into log f-strings (today they mostly are not; the alerts are about keys).
 
@@ -156,3 +156,7 @@ Accepted. Credential identifiers are hashed in logs and the audit file; raw keys
 ### 2026-08-19 (implementation)
 
 Started on branch `cip000B-credential-log-sanitization`: `redact_credential_identifier`, hashed audit JSON, secure loggers in credentials/access_control, sanitizing `lynguine.log.Logger`.
+
+### 2026-08-19 (CodeQL py/weak-sensitive-data-hashing)
+
+Bare SHA-256 on `credential_key` was flagged as a weak *password* hash. Switched to `hmac.digest(..., "sha256")` with a public domain-separation key. That is identifier fingerprinting, not password storage.

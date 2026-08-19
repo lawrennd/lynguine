@@ -5,22 +5,30 @@ This module provides utilities to prevent credential leakage in logs and
 error messages while maintaining useful debugging information.
 """
 
-import hashlib
+import hmac
 import logging
 import re
 import traceback
 from typing import Any, Dict, List, Optional, Pattern
 import sys
 
-# Truncated SHA-256 hex length for log-safe credential identifiers (CIP-000B).
+# Truncated hex length for log-safe credential identifiers (CIP-000B).
 IDENTIFIER_HASH_LENGTH = 12
+
+# Public domain separator, not a secret. Distinguishes identifier
+# fingerprints from password hashing (see hmac.digest, not hashlib.sha256).
+_IDENTIFIER_HMAC_KEY = b"lynguine.credential-identifier.v1"
 
 
 def redact_credential_identifier(key: Optional[str]) -> str:
-    """Return a log-safe hash of a credential name, never the raw key.
+    """Return a log-safe fingerprint of a credential name, never the raw key.
 
-    Uses SHA-256 so static analysis can treat the result as sanitized.
-    Empty string is hashed; ``None`` becomes ``id:none``.
+    This is identifier fingerprinting for logs and audit records, not password
+    storage. HMAC-SHA256 with a fixed domain-separation key is the right
+    primitive: it is stable, one-way for logging, and is not a password hash
+    (Argon2/bcrypt/PBKDF2 would be wrong and too slow on every log line).
+
+    Empty string is fingerprinted; ``None`` becomes ``id:none``.
 
     :param key: Credential identifier, or None
     :type key: str or None
@@ -31,8 +39,12 @@ def redact_credential_identifier(key: Optional[str]) -> str:
         return "id:none"
     if not isinstance(key, str):
         key = str(key)
-    digest = hashlib.sha256(key.encode("utf-8")).hexdigest()[:IDENTIFIER_HASH_LENGTH]
-    return f"id:{digest}"
+    digest = hmac.digest(
+        _IDENTIFIER_HMAC_KEY,
+        key.encode("utf-8"),
+        "sha256",
+    )
+    return f"id:{digest.hex()[:IDENTIFIER_HASH_LENGTH]}"
 
 
 # Patterns that might indicate sensitive information

@@ -503,7 +503,7 @@ class TestSecureLogging:
     """Tests for secure logging."""
     
     def test_redact_credential_identifier(self):
-        """Hashed identifiers are stable, distinct, and never the raw key."""
+        """Fingerprinted identifiers are stable, distinct, and never the raw key."""
         key = "google_sheets_token"
         redacted = redact_credential_identifier(key)
         assert redacted == redact_credential_identifier(key)
