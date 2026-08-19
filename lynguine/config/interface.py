@@ -4,7 +4,7 @@ import numpy as np
 import yaml
 
 from . import context
-from ..access.paths import DEFAULT_ROOTS, effective_roots, resolve_under_roots
+from ..access.paths import DEFAULT_ROOTS, PathEscapeError, effective_roots
 from ..log import Logger
 
 
@@ -853,19 +853,62 @@ c        Expand the environment variables in the configuration.
         )
 
         names = user_file if type(user_file) is list else [ufile]
+        if unbounded:
+            fname = None
+            for ufile in names:
+                candidate = os.path.join(expanded_directory, ufile)
+                if os.path.exists(candidate):
+                    fname = candidate
+                    break
+            if fname is None:
+                ufile = names[-1] if names else cls.default_config_file()
+                fname = os.path.join(expanded_directory, ufile)
+            data = cls._read_yaml_or_empty(fname, field, raise_error_if_not_found)
+            return cls(
+                data,
+                directory=expanded_directory,
+                user_file=ufile,
+                allowed_roots=roots,
+                unbounded_paths=True,
+            )
+
+        # Confine before every exists/open. This branch is separate from the
+        # unbounded early-return so request-controlled paths cannot skip the
+        # prefix check and still reach a shared open().
         fname = None
         for ufile in names:
-            candidate = os.path.join(expanded_directory, ufile)
-            if not unbounded:
-                candidate = resolve_under_roots(candidate, roots)
+            candidate = os.path.normpath(
+                os.path.realpath(
+                    os.path.expanduser(os.path.join(expanded_directory, ufile))
+                )
+            )
+            confined = False
+            for root in roots:
+                base_path = os.path.normpath(os.path.realpath(root))
+                if candidate == base_path or candidate.startswith(base_path + os.sep):
+                    confined = True
+                    break
+            if not confined:
+                raise PathEscapeError(ufile, list(roots))
             if os.path.exists(candidate):
                 fname = candidate
                 break
         if fname is None:
             ufile = names[-1] if names else cls.default_config_file()
-            fname = os.path.join(expanded_directory, ufile)
-            if not unbounded:
-                fname = resolve_under_roots(fname, roots)
+            fname = os.path.normpath(
+                os.path.realpath(
+                    os.path.expanduser(os.path.join(expanded_directory, ufile))
+                )
+            )
+            confined = False
+            for root in roots:
+                base_path = os.path.normpath(os.path.realpath(root))
+                if fname == base_path or fname.startswith(base_path + os.sep):
+                    confined = True
+                    break
+            if not confined:
+                raise PathEscapeError(ufile, list(roots))
+
         data = {}
         log.debug(f"Attempting to open file \"{fname}\".")
         if os.path.exists(fname):
@@ -898,17 +941,51 @@ c        Expand the environment variables in the configuration.
             errmsg = f'No data found in "{fname}".'
             log.error(errmsg)
             raise ValueError(errmsg)
-        
-        
-        interface = cls(
+
+        return cls(
             data,
             directory=expanded_directory,
             user_file=ufile,
             allowed_roots=roots,
-            unbounded_paths=unbounded,
+            unbounded_paths=False,
         )
+
+    @classmethod
+    def _read_yaml_or_empty(cls, fname, field, raise_error_if_not_found):
+        """Read YAML from an already-resolved path, or return empty data."""
+        data = {}
+        log.debug(f"Attempting to open file \"{fname}\".")
+        if os.path.exists(fname):
+            with open(fname, "r") as stream:
+                try:
+                    log.debug(f'Reading yaml file "{fname}"')
+                    data = yaml.safe_load(stream)
+                except yaml.YAMLError as exc:
+                    errmsg = f'Error reading yaml file "{fname}", error: {exc}'
+                    log.error(errmsg)
+                    raise ValueError(errmsg)
+                    
+                    data = {}
+            if field is not None:
+                if field in data:
+                    data = data[field]
+                else:
+                    raise ValueError(
+                        f'Field "{field}" specified but not found in file "{fname}"'
+                    )
+        else:
+            errmsg = f'No configuration file found at "{fname}".'
+            if raise_error_if_not_found:
+                log.error(errmsg)
+                raise ValueError(errmsg)
+            else:
+                log.info(f'{errmsg} creating empty interface.')
         
-        return interface
+        if data == {} and raise_error_if_not_found:
+            errmsg = f'No data found in "{fname}".'
+            log.error(errmsg)
+            raise ValueError(errmsg)
+        return data
 
         
     @classmethod
