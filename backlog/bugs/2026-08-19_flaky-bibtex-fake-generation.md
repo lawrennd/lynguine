@@ -1,7 +1,7 @@
 ---
 id: "2026-08-19_flaky-bibtex-fake-generation"
 title: "Fake BibTeX generation fails CI on unromanized locale names"
-status: "Ready"
+status: "Completed"
 priority: "High"
 created: "2026-08-19"
 last_updated: "2026-08-19"
@@ -50,11 +50,11 @@ FAILED lynguine/tests/test_access_io.py::test_write_read_bibtex
 
 ## Acceptance Criteria
 
-- [ ] `test_write_read_bibtex` is deterministic or otherwise not locale-flake-prone
-- [ ] Names from any mimesis locale can pass through `to_bibtex()` without raising
-- [ ] Unencodable characters are handled explicitly (romanize / ASCII-fold / drop), not by relying on pylatexenc warnings
-- [ ] Existing bibtex read/write assertions still pass
-- [ ] The test is run enough times locally to show the previous flake is gone
+- [x] `test_write_read_bibtex` is deterministic or otherwise not locale-flake-prone
+- [x] Names from any mimesis locale can pass through `to_bibtex()` without raising
+- [x] Unencodable characters are handled explicitly (romanize / ASCII-fold / drop), not by relying on pylatexenc warnings
+- [x] Existing bibtex read/write assertions still pass
+- [x] The test is run enough times locally to show the previous flake is gone
 
 ## Implementation Notes
 
@@ -78,3 +78,10 @@ Do not disable or skip `test_write_read_bibtex`. Do not couple this to the Sphin
 ### 2026-08-19
 
 Task created after PR #21 CI failed four times on `test_write_read_bibtex`. Diagnosed as flaky fake-data generation, not credential hashing.
+
+### 2026-08-19 (implementation)
+
+- `author_editor()` ASCII-folds names that are not Latin-1 after the existing locale romanization.
+- `to_bibtex()` / `to_bibtex_author()` fold name fields and call pylatexenc with `unknown_char_warning=False`.
+- `test_write_read_bibtex` is seeded. Added regression tests for Thai/Hebrew names and Latin-1 accents.
+- 800 `to_bibtex()` conversions across 8 seeds passed locally.
