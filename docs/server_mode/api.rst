@@ -149,7 +149,7 @@ Starting the Server
 ~~~~~~~~~~~~~~~~~~~
 
 Command Line
-""""""""""""
+^^^^^^^^^^^^
 
 .. code-block:: bash
 
@@ -163,7 +163,7 @@ Command Line
    python -m lynguine.server --idle-timeout 300  # 5 minutes
 
 Programmatic
-""""""""""""
+^^^^^^^^^^^^
 
 .. autofunction:: lynguine.server.run_server
 
@@ -192,7 +192,7 @@ Server Endpoints
 The server provides the following HTTP/REST API endpoints:
 
 Health Check
-""""""""""""
+^^^^^^^^^^^^
 
 **GET** ``/api/health``
 
@@ -207,7 +207,7 @@ Returns server health status.
    }
 
 Ping
-""""
+^^^^
 
 **GET** ``/api/ping``
 
@@ -222,7 +222,7 @@ Tests server connectivity.
    }
 
 Status
-""""""
+^^^^^^
 
 **GET** or **POST** ``/api/status``
 
@@ -260,7 +260,7 @@ Returns detailed server diagnostics.
    }
 
 Read Data
-"""""""""
+^^^^^^^^^
 
 **POST** ``/api/read_data``
 
@@ -296,13 +296,13 @@ Or with direct data source:
    {
      "status": "success",
      "data": {
-       "records": [...],
+       "records": [],
        "shape": [10, 2]
      }
    }
 
 Write Data
-""""""""""
+^^^^^^^^^^
 
 **POST** ``/api/write_data``
 
@@ -314,7 +314,7 @@ Writes data via lynguine.
 
    {
      "data": {
-       "records": [...],
+       "records": [],
        "columns": ["name", "age"]
      },
      "output": {
@@ -333,7 +333,7 @@ Writes data via lynguine.
    }
 
 Compute
-"""""""
+^^^^^^^
 
 **POST** ``/api/compute``
 
@@ -346,7 +346,7 @@ Runs compute operations (placeholder for compute framework integration).
    {
      "operation": "test_compute",
      "data": {
-       "records": [...]
+       "records": []
      },
      "params": {
        "param1": "value1"

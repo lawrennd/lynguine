@@ -48,7 +48,19 @@ autoclass_content = 'both'  # Include both class and __init__ docstrings
 autodoc_inherit_docstrings = True  # Show docstrings of inherited methods
 
 templates_path = ['_templates']
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', '.ipynb_checkpoints']
+exclude_patterns = [
+    '_build',
+    'Thumbs.db',
+    '.DS_Store',
+    '.ipynb_checkpoints',
+    # Duplicate Markdown copies of the RST security docs; they are not in a toctree.
+    'security/SECURE_CREDENTIALS.md',
+    'security/USER_GUIDE.md',
+    'security/IMPLEMENTATION_SUMMARY.md',
+    # VibeSafe helper docs; not part of the lynguine Sphinx site.
+    'whats_next_script.md',
+    'yaml_frontmatter_examples.md',
+]
 
 # MyST settings for Markdown support
 myst_enable_extensions = [
@@ -56,6 +68,9 @@ myst_enable_extensions = [
     'deflist',
 ]
 source_suffix = ['.rst', '.md']
+
+# Generate heading anchors so included Markdown TOCs resolve.
+myst_heading_anchors = 3
 
 # -- Options for HTML output -------------------------------------------------
 

@@ -1,5 +1,5 @@
 lynguine.access
-==============
+===============
 
 The `access` module provides functionality for accessing data from various sources, including local files, web resources, and databases.
 
@@ -15,7 +15,7 @@ IO Module
    :show-inheritance:
 
 Download Module
---------------
+---------------
 
 .. automodule:: lynguine.access.download
    :members:

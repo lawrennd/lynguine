@@ -230,6 +230,7 @@ class Interface(_HConfig):
     computations, parameters, and other components of a data processing pipeline.
     
     Key features:
+
     - Hierarchical inheritance: An interface can inherit from a parent interface,
       allowing for composition and reuse of configurations.
     - Input/output management: Defines how data is read from and written to various sources.

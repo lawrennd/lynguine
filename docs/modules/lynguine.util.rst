@@ -1,5 +1,5 @@
 lynguine.util
-============
+=============
 
 The `util` module provides various utility functions for working with data, files, and text.
 
@@ -7,7 +7,7 @@ The `util` module provides various utility functions for working with data, file
    :maxdepth: 1
 
 DataFrame Utilities
-------------------
+-------------------
 
 .. automodule:: lynguine.util.dataframe
    :members:
@@ -15,7 +15,7 @@ DataFrame Utilities
    :show-inheritance:
 
 File Utilities
--------------
+--------------
 
 .. automodule:: lynguine.util.files
    :members:
@@ -23,7 +23,7 @@ File Utilities
    :show-inheritance:
 
 YAML Utilities
--------------
+--------------
 
 .. automodule:: lynguine.util.yaml
    :members:
@@ -31,7 +31,7 @@ YAML Utilities
    :show-inheritance:
 
 Liquid Template Utilities
-------------------------
+-------------------------
 
 .. automodule:: lynguine.util.liquid
    :members:
@@ -39,7 +39,7 @@ Liquid Template Utilities
    :show-inheritance:
 
 Miscellaneous Utilities
-----------------------
+-----------------------
 
 .. automodule:: lynguine.util.misc
    :members:
@@ -47,7 +47,7 @@ Miscellaneous Utilities
    :show-inheritance:
 
 Text Utilities
--------------
+--------------
 
 .. automodule:: lynguine.util.text
    :members:
@@ -55,7 +55,7 @@ Text Utilities
    :show-inheritance:
 
 TeX Utilities
-------------
+-------------
 
 .. automodule:: lynguine.util.tex
    :members:
@@ -63,7 +63,7 @@ TeX Utilities
    :show-inheritance:
 
 Talk Utilities
--------------
+--------------
 
 .. automodule:: lynguine.util.talk
    :members:
@@ -71,7 +71,7 @@ Talk Utilities
    :show-inheritance:
 
 Fake Data Generation
-------------------
+--------------------
 
 .. automodule:: lynguine.util.fake
    :members:
@@ -79,7 +79,7 @@ Fake Data Generation
    :show-inheritance:
 
 HTML Utilities
--------------
+--------------
 
 .. automodule:: lynguine.util.html
    :members:

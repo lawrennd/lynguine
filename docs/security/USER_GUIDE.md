@@ -1227,9 +1227,9 @@ print(f"Available credentials: {keys}")
 
 ## Related Documentation
 
-- [CIP-0005: Secure Credential Management System](../../cip/cip0005.md) - Full technical design
-- [IMPLEMENTATION_SUMMARY.md](IMPLEMENTATION_SUMMARY.md) - Implementation details
-- [SECURE_CREDENTIALS.md](SECURE_CREDENTIALS.md) - API documentation
+- [Implementation Summary](implementation_summary) - Implementation details
+- [API Reference](api_reference) - API documentation
+- CIP-0005 is in ``cip/cip0005.md`` in the repository
 
 ---
 

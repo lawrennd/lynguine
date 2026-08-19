@@ -1,5 +1,5 @@
 Welcome to Lynguine Documentation
-===============================
+=================================
 
 .. toctree::
    :maxdepth: 2
@@ -11,7 +11,7 @@ Overview
 Lynguine is a Python library for data-oriented architecture (DOA), providing capabilities for managing data flows, accessing various data sources, and applying computations to data. Lynguine follows the access-assess-address pattern, with modules that handle different aspects of data processing.
 
 Key Features
------------
+------------
 
 * Data-oriented architecture framework
 * Interface definitions for input/output flows
@@ -21,7 +21,7 @@ Key Features
 * Custom DataFrame extensions
 
 Getting Started
---------------
+---------------
 
 .. toctree::
    :maxdepth: 1
@@ -30,9 +30,10 @@ Getting Started
    getting_started/quickstart
    getting_started/column_management
    getting_started/examples
+   compute_framework
 
 Modules Documentation
--------------------
+---------------------
 
 .. toctree::
    :maxdepth: 2
@@ -61,7 +62,7 @@ Lynguine Server Mode provides faster repeated access by keeping lynguine loaded 
    server_mode/index
 
 Contributing
------------
+------------
 
 .. toctree::
    :maxdepth: 1
@@ -71,16 +72,8 @@ Contributing
    contributing/setup
    contributing/testing
 
-Improvement Plan
----------------
-
-.. toctree::
-   :maxdepth: 1
-
-   improvement_plan
-
 Indices and Tables
-=================
+==================
 
 * :ref:`genindex`
 * :ref:`modindex`

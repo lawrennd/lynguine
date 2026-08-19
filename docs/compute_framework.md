@@ -1325,7 +1325,7 @@ class MyCompute(Compute):
 
 ## See Also
 
-- [CustomDataFrame Documentation](./data_frame.md)
-- [Interface Configuration](./configuration.md)
+- [CustomDataFrame](modules/lynguine.assess)
+- [Interface configuration](modules/lynguine.config)
 - [Liquid Templates](https://shopify.github.io/liquid/)
 
