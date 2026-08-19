@@ -11,11 +11,12 @@ import abc
 import json
 import base64
 import hashlib
-import logging
 from typing import Dict, Any, Optional, List, Callable
 from datetime import datetime, timedelta
 from pathlib import Path
 import threading
+
+from .secure_logging import get_secure_logger, redact_credential_identifier
 
 # Optional dependencies for encryption
 try:
@@ -64,7 +65,7 @@ class CredentialProvider(abc.ABC):
         :type name: str
         """
         self.name = name or self.__class__.__name__
-        self.logger = logging.getLogger(f"{__name__}.{self.name}")
+        self.logger = get_secure_logger(f"{__name__}.{self.name}")
     
     @abc.abstractmethod
     def get_credential(self, key: str, **kwargs) -> Optional[Dict[str, Any]]:
@@ -191,7 +192,7 @@ class EnvironmentCredentialProvider(CredentialProvider):
             value = os.environ.get(key)
         
         if value is None:
-            self.logger.debug(f"Credential not found: {key}")
+            self.logger.debug(f"Credential not found: {redact_credential_identifier(key)}")
             return None
         
         # Try to parse as JSON, fallback to string value
@@ -202,7 +203,7 @@ class EnvironmentCredentialProvider(CredentialProvider):
         except (json.JSONDecodeError, TypeError):
             credential = {"value": value}
         
-        self.logger.debug(f"Retrieved credential: {key}")
+        self.logger.debug(f"Retrieved credential: {redact_credential_identifier(key)}")
         return credential
     
     def set_credential(self, key: str, value: Dict[str, Any], **kwargs) -> None:
@@ -221,7 +222,7 @@ class EnvironmentCredentialProvider(CredentialProvider):
         
         env_key = self._get_env_key(key)
         os.environ[env_key] = json.dumps(value)
-        self.logger.info(f"Stored credential in environment: {key}")
+        self.logger.info(f"Stored credential in environment: {redact_credential_identifier(key)}")
     
     def delete_credential(self, key: str, **kwargs) -> None:
         """
@@ -233,7 +234,7 @@ class EnvironmentCredentialProvider(CredentialProvider):
         env_key = self._get_env_key(key)
         if env_key in os.environ:
             del os.environ[env_key]
-            self.logger.info(f"Deleted credential from environment: {key}")
+            self.logger.info(f"Deleted credential from environment: {redact_credential_identifier(key)}")
     
     def list_credentials(self, **kwargs) -> List[str]:
         """
@@ -356,7 +357,7 @@ class EncryptedFileCredentialProvider(CredentialProvider):
         cred_path = self._get_credential_path(key)
         
         if not cred_path.exists():
-            self.logger.debug(f"Credential file not found: {key}")
+            self.logger.debug(f"Credential file not found: {redact_credential_identifier(key)}")
             return None
         
         try:
@@ -367,10 +368,10 @@ class EncryptedFileCredentialProvider(CredentialProvider):
             decrypted_data = fernet.decrypt(encrypted_data)
             credential = json.loads(decrypted_data.decode())
             
-            self.logger.debug(f"Retrieved and decrypted credential: {key}")
+            self.logger.debug(f"Retrieved and decrypted credential: {redact_credential_identifier(key)}")
             return credential
         except Exception as e:
-            self.logger.error(f"Failed to retrieve credential {key}: {e}")
+            self.logger.error(f"Failed to retrieve credential {redact_credential_identifier(key)}: {e}")
             raise CredentialEncryptionError(f"Failed to decrypt credential: {key}") from e
     
     def set_credential(self, key: str, value: Dict[str, Any], **kwargs) -> None:
@@ -406,9 +407,9 @@ class EncryptedFileCredentialProvider(CredentialProvider):
                 f.write(encrypted_data)
             os.chmod(cred_path, 0o600)
             
-            self.logger.info(f"Stored encrypted credential: {key}")
+            self.logger.info(f"Stored encrypted credential: {redact_credential_identifier(key)}")
         except Exception as e:
-            self.logger.error(f"Failed to store credential {key}: {e}")
+            self.logger.error(f"Failed to store credential {redact_credential_identifier(key)}: {e}")
             raise CredentialEncryptionError(f"Failed to encrypt credential: {key}") from e
     
     def delete_credential(self, key: str, **kwargs) -> None:
@@ -421,7 +422,7 @@ class EncryptedFileCredentialProvider(CredentialProvider):
         cred_path = self._get_credential_path(key)
         if cred_path.exists():
             cred_path.unlink()
-            self.logger.info(f"Deleted credential file: {key}")
+            self.logger.info(f"Deleted credential file: {redact_credential_identifier(key)}")
     
     def list_credentials(self, **kwargs) -> List[str]:
         """
@@ -462,7 +463,7 @@ class CredentialCache:
         self._cache: Dict[str, Dict[str, Any]] = {}
         self._lock = threading.Lock()
         self.default_ttl = default_ttl
-        self.logger = logging.getLogger(f"{__name__}.CredentialCache")
+        self.logger = get_secure_logger(f"{__name__}.CredentialCache")
     
     def get(self, key: str) -> Optional[Dict[str, Any]]:
         """
@@ -477,12 +478,12 @@ class CredentialCache:
             if key in self._cache:
                 entry = self._cache[key]
                 if datetime.utcnow() < entry["expires_at"]:
-                    self.logger.debug(f"Cache hit: {key}")
+                    self.logger.debug(f"Cache hit: {redact_credential_identifier(key)}")
                     return entry["value"]
                 else:
                     # Expired, remove from cache
                     del self._cache[key]
-                    self.logger.debug(f"Cache expired: {key}")
+                    self.logger.debug(f"Cache expired: {redact_credential_identifier(key)}")
         return None
     
     def set(self, key: str, value: Dict[str, Any], ttl: int = None) -> None:
@@ -504,7 +505,7 @@ class CredentialCache:
                 "value": value,
                 "expires_at": expires_at
             }
-            self.logger.debug(f"Cached credential: {key} (TTL: {ttl}s)")
+            self.logger.debug(f"Cached credential: {redact_credential_identifier(key)} (TTL: {ttl}s)")
     
     def invalidate(self, key: str) -> None:
         """
@@ -516,7 +517,7 @@ class CredentialCache:
         with self._lock:
             if key in self._cache:
                 del self._cache[key]
-                self.logger.debug(f"Invalidated cache: {key}")
+                self.logger.debug(f"Invalidated cache: {redact_credential_identifier(key)}")
     
     def clear(self) -> None:
         """Clear all cached credentials."""
@@ -549,7 +550,7 @@ class CredentialManager:
         :param enable_cache: Whether to enable credential caching
         :type enable_cache: bool
         """
-        self.logger = logging.getLogger(f"{__name__}.CredentialManager")
+        self.logger = get_secure_logger(f"{__name__}.CredentialManager")
         self.providers = providers or []
         self.enable_cache = enable_cache
         self.cache = CredentialCache(default_ttl=cache_ttl) if enable_cache else None
@@ -642,7 +643,7 @@ class CredentialManager:
                         credential, credential_type
                     ):
                         self.logger.warning(
-                            f"Credential {key} failed type validation: {credential_type}"
+                            f"Credential {redact_credential_identifier(key)} failed type validation: {credential_type}"
                         )
                         continue
                     
@@ -651,17 +652,17 @@ class CredentialManager:
                         self.cache.set(key, credential)
                     
                     self.logger.info(
-                        f"Retrieved credential '{key}' from provider: {provider.name}"
+                        f"Retrieved credential '{redact_credential_identifier(key)}' from provider: {provider.name}"
                     )
                     return credential
             except CredentialError as e:
                 self.logger.warning(
-                    f"Provider {provider.name} failed to get credential {key}: {e}"
+                    f"Provider {provider.name} failed to get credential {redact_credential_identifier(key)}: {e}"
                 )
                 continue
         
         # Not found in any provider
-        self.logger.error(f"Credential not found: {key}")
+        self.logger.error(f"Credential not found: {redact_credential_identifier(key)}")
         raise CredentialNotFoundError(f"Credential not found: {key}")
     
     def set_credential(
@@ -710,7 +711,7 @@ class CredentialManager:
         if self.cache:
             self.cache.invalidate(key)
         
-        self.logger.info(f"Stored credential '{key}' using provider: {provider.name}")
+        self.logger.info(f"Stored credential '{redact_credential_identifier(key)}' using provider: {provider.name}")
     
     def delete_credential(
         self,
@@ -742,7 +743,7 @@ class CredentialManager:
         if self.cache:
             self.cache.invalidate(key)
         
-        self.logger.info(f"Deleted credential: {key}")
+        self.logger.info(f"Deleted credential: {redact_credential_identifier(key)}")
     
     def list_credentials(self, provider_name: str = None) -> List[str]:
         """
@@ -857,7 +858,7 @@ def _create_default_manager() -> CredentialManager:
     :return: Configured credential manager
     :rtype: CredentialManager
     """
-    logger = logging.getLogger(f"{__name__}._create_default_manager")
+    logger = get_secure_logger(f"{__name__}._create_default_manager")
     
     providers = []
     

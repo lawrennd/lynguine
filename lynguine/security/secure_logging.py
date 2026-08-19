@@ -5,11 +5,34 @@ This module provides utilities to prevent credential leakage in logs and
 error messages while maintaining useful debugging information.
 """
 
+import hashlib
 import logging
 import re
 import traceback
 from typing import Any, Dict, List, Optional, Pattern
 import sys
+
+# Truncated SHA-256 hex length for log-safe credential identifiers (CIP-000B).
+IDENTIFIER_HASH_LENGTH = 12
+
+
+def redact_credential_identifier(key: Optional[str]) -> str:
+    """Return a log-safe hash of a credential name, never the raw key.
+
+    Uses SHA-256 so static analysis can treat the result as sanitized.
+    Empty string is hashed; ``None`` becomes ``id:none``.
+
+    :param key: Credential identifier, or None
+    :type key: str or None
+    :return: ``id:<hex>`` or ``id:none``
+    :rtype: str
+    """
+    if key is None:
+        return "id:none"
+    if not isinstance(key, str):
+        key = str(key)
+    digest = hashlib.sha256(key.encode("utf-8")).hexdigest()[:IDENTIFIER_HASH_LENGTH]
+    return f"id:{digest}"
 
 
 # Patterns that might indicate sensitive information

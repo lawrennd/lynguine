@@ -49,6 +49,7 @@ from lynguine.security.secure_logging import (
     SecureLogger,
     sanitize_dict,
     secure_repr,
+    redact_credential_identifier,
 )
 
 from lynguine.security.migration import (
@@ -422,6 +423,8 @@ class TestAccessControl:
         assert "event_type" in event_dict
         assert "credential_key" in event_dict
         assert "timestamp" in event_dict
+        assert event_dict["credential_key"] == redact_credential_identifier("test")
+        assert "test" not in event_dict["credential_key"]
     
     def test_audit_logger(self):
         """Test audit logger."""
@@ -431,7 +434,7 @@ class TestAccessControl:
             
             event = AuditEvent(
                 event_type=AuditEventType.CREDENTIAL_ACCESS,
-                credential_key="test",
+                credential_key="raw_secret_identifier",
                 user="testuser"
             )
             
@@ -442,6 +445,7 @@ class TestAccessControl:
             with open(log_path, 'r') as f:
                 content = f.read()
                 assert "CREDENTIAL_ACCESS" in content or "credential_access" in content
+                assert "raw_secret_identifier" not in content
     
     def test_access_policy(self):
         """Test access policy."""
@@ -498,6 +502,19 @@ class TestAccessControl:
 class TestSecureLogging:
     """Tests for secure logging."""
     
+    def test_redact_credential_identifier(self):
+        """Hashed identifiers are stable, distinct, and never the raw key."""
+        key = "google_sheets_token"
+        redacted = redact_credential_identifier(key)
+        assert redacted == redact_credential_identifier(key)
+        assert redacted != redact_credential_identifier("other_key")
+        assert key not in redacted
+        assert redacted.startswith("id:")
+        assert redact_credential_identifier(None) == "id:none"
+        empty = redact_credential_identifier("")
+        assert empty.startswith("id:")
+        assert empty != "id:none"
+
     def test_sanitizing_formatter(self):
         """Test sanitizing formatter."""
         formatter = SanitizingFormatter()
@@ -543,6 +560,14 @@ class TestSecureLogging:
         logger.debug("Test debug")
         logger.warning("Test warning")
         logger.error("Test error")
+
+    def test_application_logger_sanitizes_password_text(self):
+        """lynguine.log.Logger redacts password patterns before logging."""
+        from lynguine.log import _sanitize_log_message
+
+        sanitized = _sanitize_log_message("password=mysecretpass123")
+        assert "mysecretpass123" not in sanitized
+        assert "***PASSWORD***" in sanitized
 
 
 class TestMigration:

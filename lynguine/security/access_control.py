@@ -14,6 +14,12 @@ import json
 from pathlib import Path
 import os
 
+from .secure_logging import (
+    get_secure_logger,
+    redact_credential_identifier,
+    SanitizingFormatter,
+)
+
 
 class AccessLevel(Enum):
     """Access levels for credential operations."""
@@ -96,7 +102,7 @@ class AuditEvent:
         """
         return {
             "event_type": self.event_type.value,
-            "credential_key": self.credential_key,
+            "credential_key": redact_credential_identifier(self.credential_key),
             "user": self.user,
             "context": self.context,
             "success": self.success,
@@ -155,6 +161,14 @@ class AuditLogger:
         # Set up file logging if enabled
         if self.enable_file:
             self._setup_file_logging()
+        if self.enable_console:
+            console = logging.StreamHandler()
+            console.setLevel(logging.INFO)
+            console.setFormatter(SanitizingFormatter(
+                '%(asctime)s - %(levelname)s - %(message)s',
+                datefmt='%Y-%m-%d %H:%M:%S'
+            ))
+            self.logger.addHandler(console)
         
         self.logger.info("Audit logger initialized")
     
@@ -163,7 +177,7 @@ class AuditLogger:
         # Create a dedicated file handler for audit logs
         handler = logging.FileHandler(str(self.log_path), mode='a')
         handler.setLevel(logging.INFO)
-        formatter = logging.Formatter(
+        formatter = SanitizingFormatter(
             '%(asctime)s - %(levelname)s - %(message)s',
             datefmt='%Y-%m-%d %H:%M:%S'
         )
@@ -182,9 +196,7 @@ class AuditLogger:
         """
         with self._lock:
             event_json = event.to_json()
-            
-            # Sanitize credential key to prevent information disclosure
-            sanitized_key = self._sanitize_credential_key(event.credential_key)
+            sanitized_key = redact_credential_identifier(event.credential_key)
             
             log_msg = (
                 f"AUDIT: {event.event_type.value} | "
@@ -199,28 +211,10 @@ class AuditLogger:
             else:
                 self.logger.warning(log_msg)
             
-            # Write detailed JSON to file
+            # Write detailed JSON to file (credential_key already hashed in to_json)
             if self.enable_file:
                 with open(self.log_path, 'a') as f:
                     f.write(event_json + '\n')
-            
-            # Console output if enabled
-            if self.enable_console:
-                print(f"[AUDIT] {log_msg}")
-    
-    def _sanitize_credential_key(self, key: str) -> str:
-        """
-        Sanitize credential key for logging.
-        
-        :param key: The credential key
-        :type key: str
-        :return: Sanitized key
-        :rtype: str
-        """
-        # Show first and last few characters
-        if len(key) <= 8:
-            return "***"
-        return f"{key[:4]}***{key[-4:]}"
     
     def query_events(
         self,
@@ -287,7 +281,7 @@ class AccessPolicy:
     
     def __init__(self):
         """Initialize the access policy."""
-        self.logger = logging.getLogger(f"{__name__}.AccessPolicy")
+        self.logger = get_secure_logger(f"{__name__}.AccessPolicy")
         self._rules: List[Dict[str, Any]] = []
         self._lock = threading.Lock()
         
@@ -356,7 +350,7 @@ class AccessPolicy:
                             granted_level = rule["access_level"]
                             if granted_level.value >= operation.value:
                                 self.logger.debug(
-                                    f"Access granted for {user} on {credential_key}"
+                                    f"Access granted for {user} on {redact_credential_identifier(credential_key)}"
                                 )
                                 return True
         
@@ -364,11 +358,11 @@ class AccessPolicy:
         allowed = self.default_access_level.value >= operation.value
         if allowed:
             self.logger.debug(
-                f"Access granted by default policy for {user} on {credential_key}"
+                f"Access granted by default policy for {user} on {redact_credential_identifier(credential_key)}"
             )
         else:
             self.logger.warning(
-                f"Access denied for {user} on {credential_key}"
+                f"Access denied for {user} on {redact_credential_identifier(credential_key)}"
             )
         return allowed
     
@@ -417,7 +411,7 @@ class RateLimiter:
         :param time_window: Time window in seconds
         :type time_window: int
         """
-        self.logger = logging.getLogger(f"{__name__}.RateLimiter")
+        self.logger = get_secure_logger(f"{__name__}.RateLimiter")
         self.max_requests = max_requests
         self.time_window = time_window
         self._requests: Dict[str, List[datetime]] = {}
@@ -458,7 +452,7 @@ class RateLimiter:
             # Check if limit exceeded
             if len(self._requests[limit_key]) >= self.max_requests:
                 self.logger.warning(
-                    f"Rate limit exceeded for {user} on {key}"
+                    f"Rate limit exceeded for {user} on {redact_credential_identifier(key)}"
                 )
                 return False
             
@@ -490,7 +484,7 @@ class CredentialAccessController:
         :param rate_limiter: Rate limiter instance
         :type rate_limiter: RateLimiter
         """
-        self.logger = logging.getLogger(f"{__name__}.CredentialAccessController")
+        self.logger = get_secure_logger(f"{__name__}.CredentialAccessController")
         self.audit_logger = audit_logger or AuditLogger()
         self.access_policy = access_policy or AccessPolicy()
         self.rate_limiter = rate_limiter or RateLimiter()
@@ -569,7 +563,7 @@ class CredentialAccessController:
         self.audit_logger.log_event(event)
         
         self.logger.debug(
-            f"Authorized {operation.name} access for {user} on {credential_key}"
+            f"Authorized {operation.name} access for {user} on {redact_credential_identifier(credential_key)}"
         )
 
 

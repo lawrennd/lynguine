@@ -3,7 +3,7 @@ author: "Neil D. Lawrence"
 created: "2026-08-19"
 id: "000B"
 last_updated: "2026-08-19"
-status: "Accepted"
+status: "In Progress"
 compressed: false
 related_requirements: ["0004"]
 related_cips: ["0005"]
@@ -25,7 +25,7 @@ title: "Make credential logging and audit storage actually secret-safe"
 
 - [x] Proposed - Initial idea documented
 - [x] Accepted - Approved, ready to start work
-- [ ] In Progress - Actively being implemented
+- [x] In Progress - Actively being implemented
 - [ ] Implemented - Work complete, awaiting verification
 - [ ] Closed - Verified and complete
 - [ ] Rejected - Will not be implemented (add reason, use superseded_by if replaced)
@@ -130,10 +130,10 @@ Secret **values** continue to be handled by `SanitizingFormatter` pattern redact
 
 ## Implementation Status
 
-- [ ] Shared identifier redaction helper and tests
-- [ ] Audit file and log lines use helper
-- [ ] Security modules use secure logger
-- [ ] `lynguine.log.Logger` sanitizing formatter
+- [x] Shared identifier redaction helper and tests
+- [x] Audit file and log lines use helper
+- [x] Security modules use secure logger
+- [x] `lynguine.log.Logger` sanitizing formatter
 - [ ] CodeQL re-check of alerts 3–19
 - [ ] REQ-0004 status reconciled after verification
 
@@ -152,3 +152,7 @@ Proposed from CodeQL alerts 3–19.
 ### 2026-08-19 (later)
 
 Accepted. Credential identifiers are hashed in logs and the audit file; raw keys are not logged at any level.
+
+### 2026-08-19 (implementation)
+
+Started on branch `cip000B-credential-log-sanitization`: `redact_credential_identifier`, hashed audit JSON, secure loggers in credentials/access_control, sanitizing `lynguine.log.Logger`.
