@@ -66,6 +66,18 @@ def test_extract_full_filename():
     expected = "/path/to/dir/file.txt"
     assert extract_full_filename(sample_details) == expected
 
+
+def test_extract_full_filename_rejects_escape(tmp_path):
+    from lynguine.access.paths import PathEscapeError
+
+    details = {
+        "directory": str(tmp_path),
+        "filename": os.path.join("..", "..", "etc", "passwd"),
+        "allowed_roots": [str(tmp_path)],
+    }
+    with pytest.raises(PathEscapeError):
+        extract_full_filename(details)
+
 # Testing extract_root_directory
 @pytest.fixture
 def setup_environment(monkeypatch):

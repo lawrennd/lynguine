@@ -4,6 +4,7 @@ import numpy as np
 import yaml
 
 from . import context
+from ..access.paths import DEFAULT_ROOTS, effective_roots, resolve_under_roots
 from ..log import Logger
 
 
@@ -230,6 +231,7 @@ class Interface(_HConfig):
     computations, parameters, and other components of a data processing pipeline.
     
     Key features:
+
     - Hierarchical inheritance: An interface can inherit from a parent interface,
       allowing for composition and reuse of configurations.
     - Input/output management: Defines how data is read from and written to various sources.
@@ -271,7 +273,7 @@ class Interface(_HConfig):
         return mapping, columns
                 
     
-    def __init__(self, data : dict=None, directory : str=None, user_file : str=None) -> None:
+    def __init__(self, data : dict=None, directory : str=None, user_file : str=None, allowed_roots=DEFAULT_ROOTS, unbounded_paths : bool=False) -> None:
         """
         Initialize a new Interface instance with the provided configuration data.
         
@@ -297,6 +299,10 @@ class Interface(_HConfig):
         :type directory: str
         :param user_file: Filename of the configuration file
         :type user_file: str
+        :param allowed_roots: Directories that later configured paths must sit under.
+            Omit to use ``directory``. Pass ``None`` to opt out of confinement.
+        :param unbounded_paths: If True, do not confine configured paths (explicit opt-out).
+        :type unbounded_paths: bool
         :return: None
         :raises ValueError: If required arguments are missing or if inheritance configuration is invalid
         """
@@ -326,6 +332,9 @@ class Interface(_HConfig):
 
         self.directory = directory
         self.user_file = user_file
+        self.allowed_roots, self.unbounded_paths = effective_roots(
+            directory, allowed_roots, unbounded_paths
+        )
         
         self._parent = None
         self._input = []
@@ -357,8 +366,14 @@ class Interface(_HConfig):
 
             # TK Establish if path is relative from current directory and set it to relative location.
             
-            # Load parent interface
-            self._parent = self.__class__.from_file(user_file=filename, directory=inherit_directory)
+            # Load parent interface under the same roots; do not default
+            # the parent jail to inherit_directory (that would enlarge it).
+            self._parent = self.__class__.from_file(
+                user_file=filename,
+                directory=inherit_directory,
+                allowed_roots=self.allowed_roots,
+                unbounded_paths=self.unbounded_paths,
+            )
             
             # Set it not to be writable (convert output to input,
             # series to input, parameters to constants))
@@ -793,7 +808,7 @@ c        Expand the environment variables in the configuration.
         return "_lynguine.yml"
     
     @classmethod
-    def from_file(cls, user_file=None, directory=".", field=None, raise_error_if_not_found=True):
+    def from_file(cls, user_file=None, directory=".", field=None, raise_error_if_not_found=True, allowed_roots=DEFAULT_ROOTS, unbounded_paths=False):
         """
         Construct an Interface instance by loading configuration from a YAML file.
         
@@ -816,10 +831,15 @@ c        Expand the environment variables in the configuration.
         :param raise_error_if_not_found: Whether to raise an error if the file is not found or empty,
                                         defaults to True. If False, an empty interface will be created.
         :type raise_error_if_not_found: bool
+        :param allowed_roots: Directories the config file must sit under. Omit to use
+            ``directory``. Pass ``None`` to opt out of confinement.
+        :param unbounded_paths: If True, do not confine the config path (explicit opt-out).
+        :type unbounded_paths: bool
         :return: A new Interface instance loaded from the specified file.
         :rtype: Interface
         :raises ValueError: If the file is not found or empty (and raise_error_if_not_found is True),
                            or if the YAML cannot be parsed, or if a specified field is not found.
+        :raises lynguine.access.paths.PathEscapeError: If the config path is outside allowed roots.
         """
         
         if user_file is None:
@@ -828,12 +848,27 @@ c        Expand the environment variables in the configuration.
             ufile = user_file
             
         expanded_directory = os.path.expandvars(directory)
+        roots, unbounded = effective_roots(
+            expanded_directory, allowed_roots, unbounded_paths
+        )
+
+        def _resolve_config_path(name):
+            candidate = os.path.join(expanded_directory, name)
+            if unbounded:
+                return candidate
+            return resolve_under_roots(candidate, roots)
+
         # If the user_file is a list, check existence of each file in order.
         if type(user_file) is list:
+            chosen = None
             for ufile in user_file:
-                if os.path.exists(os.path.join(expanded_directory, ufile)):
+                candidate = _resolve_config_path(ufile)
+                if os.path.exists(candidate):
+                    chosen = candidate
                     break
-        fname = os.path.join(expanded_directory, ufile)
+            fname = chosen if chosen is not None else _resolve_config_path(ufile)
+        else:
+            fname = _resolve_config_path(ufile)
         data = {}
         log.debug(f"Attempting to open file \"{fname}\".")
         if os.path.exists(fname):
@@ -868,7 +903,13 @@ c        Expand the environment variables in the configuration.
             raise ValueError(errmsg)
         
         
-        interface = cls(data, directory=expanded_directory, user_file=ufile)
+        interface = cls(
+            data,
+            directory=expanded_directory,
+            user_file=ufile,
+            allowed_roots=roots,
+            unbounded_paths=unbounded,
+        )
         
         return interface
 

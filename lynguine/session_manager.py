@@ -14,6 +14,7 @@ from typing import Dict, List, Optional, Any, Tuple
 from pathlib import Path
 import threading
 
+from .access.paths import DEFAULT_ROOTS, resolve_under_roots
 from .config.interface import Interface
 from .assess.data import CustomDataFrame
 from .log import Logger
@@ -112,11 +113,15 @@ class SessionManager:
         max_sessions: int = 100,
         max_memory_mb: int = 10000,  # 10GB default
         cleanup_interval: int = 60,  # Check every minute
+        allowed_roots=DEFAULT_ROOTS,
+        unbounded_paths: bool = False,
     ):
         self.sessions: Dict[str, Session] = {}
         self.max_sessions = max_sessions
         self.max_memory_mb = max_memory_mb
         self.cleanup_interval = cleanup_interval
+        self._allowed_roots = allowed_roots
+        self.unbounded_paths = unbounded_paths
         
         # Setup persistence directory
         if persistence_dir is None:
@@ -283,13 +288,34 @@ class SessionManager:
             if session_id is None:
                 session_id = str(uuid.uuid4())
             
-            # Load interface and create CustomDataFrame
-            full_path = os.path.join(directory, interface_file)
+            # Load interface and create CustomDataFrame.
+            # Roots come from the manager plus this session directory; never
+            # from the interface YAML (that would let a file enlarge the jail).
+            expanded_directory = os.path.expandvars(os.path.expanduser(directory))
+            if self.unbounded_paths or self._allowed_roots is None:
+                session_roots = None
+                unbounded = True
+            else:
+                unbounded = False
+                session_roots = [
+                    os.path.realpath(expanded_directory)
+                ]
+                if self._allowed_roots is not DEFAULT_ROOTS:
+                    session_roots.extend(str(root) for root in self._allowed_roots)
+
+            full_path = os.path.join(expanded_directory, interface_file)
+            if not unbounded:
+                full_path = resolve_under_roots(full_path, session_roots)
             if not os.path.exists(full_path):
                 raise FileNotFoundError(f"Interface file not found: {full_path}")
             
             log.info(f"Loading interface from {full_path}")
-            interface = Interface.from_file(interface_file, directory=directory)
+            interface = Interface.from_file(
+                interface_file,
+                directory=directory,
+                allowed_roots=session_roots,
+                unbounded_paths=unbounded,
+            )
             
             # Create CustomDataFrame from interface
             cdf = CustomDataFrame.from_flow(interface)

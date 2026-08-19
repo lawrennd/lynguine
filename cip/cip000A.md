@@ -3,7 +3,7 @@ author: "Neil D. Lawrence"
 created: "2026-08-19"
 id: "000A"
 last_updated: "2026-08-19"
-status: "Accepted"
+status: "In Progress"
 compressed: false
 related_requirements: ["000A", "0002", "0009"]
 related_cips: ["0008", "0009"]
@@ -25,7 +25,7 @@ title: "Explicit path confinement in the access flow"
 
 - [x] Proposed - Initial idea documented
 - [x] Accepted - Approved, ready to start work
-- [ ] In Progress - Actively being implemented
+- [x] In Progress - Actively being implemented
 - [ ] Implemented - Work complete, awaiting verification
 - [ ] Closed - Verified and complete
 - [ ] Rejected - Will not be implemented (add reason, use superseded_by if replaced)
@@ -175,10 +175,10 @@ GitHub's `py/path-injection` query treats a realpath-plus-prefix check as a sani
 
 ## Implementation Status
 
-- [ ] Path helper and tests
-- [ ] Interface.from_file confinement
-- [ ] SessionManager confinement
-- [ ] Access-stage configured path confinement
+- [x] Path helper and tests
+- [x] Interface.from_file confinement
+- [x] SessionManager confinement
+- [x] Access-stage configured path confinement
 - [ ] CodeQL re-check and recorded dismissals for primitives
 - [ ] Release-note note on absolute paths outside the interface directory
 
@@ -198,3 +198,7 @@ Proposed from CodeQL `py/path-injection` alerts 20–34.
 ### 2026-08-19 (later)
 
 Accepted. Default roots = interface/session directory; unbounded paths are an explicit opt-out. Primitive I/O helpers stay trusted-caller APIs.
+
+### 2026-08-19 (implementation)
+
+In Progress. Helper `lynguine.access.paths.resolve_under_roots`, wired at `Interface.from_file`, `SessionManager.create_session`, and access-stage `extract_full_filename` / directory list paths. `from_flow` overwrites YAML `allowed_roots` so a config file cannot enlarge the jail.
