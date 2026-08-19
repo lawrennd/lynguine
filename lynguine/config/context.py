@@ -11,6 +11,7 @@ try:
         CredentialNotFoundError,
         CredentialValidationError
     )
+    from ..security.secure_logging import redact_credential_identifier
     SECURE_CREDENTIALS_AVAILABLE = True
 except ImportError:
     SECURE_CREDENTIALS_AVAILABLE = False
@@ -274,12 +275,13 @@ class Context(_Config):
                     raise CredentialNotFoundError(
                         f"Credential '{credential_key}' has no value"
                     )
-            except (CredentialNotFoundError, CredentialValidationError) as e:
-                # Log warning but don't fail - return the original reference
+            except (CredentialNotFoundError, CredentialValidationError):
+                # Log a fingerprinted identifier, not the raw key or exception text
                 import logging
                 logger = logging.getLogger(__name__)
                 logger.warning(
-                    f"Failed to resolve credential reference '{credential_key}': {e}"
+                    "Failed to resolve credential reference "
+                    f"'{redact_credential_identifier(credential_key)}'"
                 )
                 return match.group(0)
         
