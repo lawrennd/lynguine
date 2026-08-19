@@ -151,8 +151,8 @@ This CIP's implementation work is (cluster A dismissals) plus whichever of B/C/D
 - [x] Inventory remaining `py/path-injection` alerts into clusters A–D
 - [x] Document cluster A primitives as trusted-caller I/O
 - [ ] Dismiss GitHub CodeQL alerts 23–33 with the documented rationale
-- [ ] Accepted treatment for B/C (inherit isolation vs models-as-data vs dismiss)
-- [ ] Accepted treatment for D (split unbounded vs dismiss)
+- [x] Accepted treatment for B/C: inherit isolation (`from_cwd_file`, not `from_file`)
+- [x] Accepted treatment for D: split unbounded off HTTP `create_session`
 - [ ] Re-scan; leftover alerts all have recorded rationale
 
 ## References
@@ -175,3 +175,7 @@ Accepted. Cluster A dismissals first. Treatment for B/C (inherit isolation vs mo
 ### 2026-08-19 (cluster A)
 
 In Progress. Cluster A accepted as: keep primitives sharp; document the trusted-caller contract on `lynguine.access.io` and `extract_full_filename`. GitHub dismissals of alerts 23–33 use that same rationale when applied.
+
+### 2026-08-19 (B/C/D)
+
+Inherit from a cwd-sandboxed Interface uses `from_cwd_file`, not `from_file`. HTTP `create_session` refuses unbounded managers; operator/CLI uses `create_session_unbounded`.

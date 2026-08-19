@@ -273,7 +273,7 @@ class Interface(_HConfig):
         return mapping, columns
                 
     
-    def __init__(self, data : dict=None, directory : str=None, user_file : str=None, allowed_roots=DEFAULT_ROOTS, unbounded_paths : bool=False) -> None:
+    def __init__(self, data : dict=None, directory : str=None, user_file : str=None, allowed_roots=DEFAULT_ROOTS, unbounded_paths : bool=False, cwd_sandbox : bool=False) -> None:
         """
         Initialize a new Interface instance with the provided configuration data.
         
@@ -303,6 +303,10 @@ class Interface(_HConfig):
             Omit to use ``directory``. Pass ``None`` to opt out of confinement.
         :param unbounded_paths: If True, do not confine configured paths (explicit opt-out).
         :type unbounded_paths: bool
+        :param cwd_sandbox: If True, this interface was loaded under process cwd
+            (``from_cwd_file``). Parent inherit must use ``from_cwd_file`` so
+            HTTP taint never enters ``from_file`` (CIP-000D).
+        :type cwd_sandbox: bool
         :return: None
         :raises ValueError: If required arguments are missing or if inheritance configuration is invalid
         """
@@ -335,6 +339,7 @@ class Interface(_HConfig):
         self.allowed_roots, self.unbounded_paths = effective_roots(
             directory, allowed_roots, unbounded_paths
         )
+        self.cwd_sandbox = bool(cwd_sandbox)
         
         self._parent = None
         self._input = []
@@ -366,14 +371,27 @@ class Interface(_HConfig):
 
             # TK Establish if path is relative from current directory and set it to relative location.
             
-            # Load parent interface under the same roots; do not default
-            # the parent jail to inherit_directory (that would enlarge it).
-            self._parent = self.__class__.from_file(
-                user_file=filename,
-                directory=inherit_directory,
-                allowed_roots=self.allowed_roots,
-                unbounded_paths=self.unbounded_paths,
-            )
+            # Load parent under the same jail. HTTP/cwd-sandbox interfaces
+            # must not call from_file: that taints every exists/open there
+            # for CodeQL py/path-injection (CIP-000D).
+            if self.unbounded_paths:
+                self._parent = self.__class__.from_file(
+                    user_file=filename,
+                    directory=inherit_directory,
+                    unbounded_paths=True,
+                )
+            elif self.cwd_sandbox:
+                self._parent = self.__class__.from_cwd_file(
+                    user_file=filename,
+                    directory=inherit_directory,
+                )
+            else:
+                self._parent = self.__class__.from_file(
+                    user_file=filename,
+                    directory=inherit_directory,
+                    allowed_roots=self.allowed_roots,
+                    unbounded_paths=False,
+                )
             
             # Set it not to be writable (convert output to input,
             # series to input, parameters to constants))
@@ -1043,6 +1061,7 @@ c        Expand the environment variables in the configuration.
             user_file=ufile,
             allowed_roots=[base_path],
             unbounded_paths=False,
+            cwd_sandbox=True,
         )
 
     @classmethod

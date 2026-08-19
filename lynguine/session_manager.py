@@ -194,12 +194,17 @@ class SessionManager:
             for session_data in metadata.get('sessions', []):
                 try:
                     # Recreate session by reloading interface file
-                    session = self.create_session(
+                    loader = (
+                        self.create_session_unbounded
+                        if (self.unbounded_paths or self._allowed_roots is None)
+                        else self.create_session
+                    )
+                    session = loader(
                         interface_file=session_data['interface_file'],
                         directory=session_data['directory'],
                         interface_field=session_data.get('interface_field'),
                         timeout=session_data['timeout'],
-                        session_id=session_data['session_id'],  # Preserve original ID
+                        session_id=session_data['session_id'],
                         created_time=session_data['created_time'],
                     )
                     recovered_count += 1
@@ -297,78 +302,139 @@ class SessionManager:
             # Generate session ID if not provided
             if session_id is None:
                 session_id = str(uuid.uuid4())
-            
+
+            if self.unbounded_paths or self._allowed_roots is None:
+                raise ValueError(
+                    "HTTP create_session refuses unbounded_paths. "
+                    "Use create_session_unbounded from trusted operator or CLI "
+                    "code (CIP-000D)."
+                )
+
             # Load interface and create CustomDataFrame.
             # Roots are construction-time operator config, never the request
             # directory (that would let a client set directory="/" and escape).
             expanded_directory = os.path.expandvars(os.path.expanduser(directory))
-            unbounded = self.unbounded_paths or self._allowed_roots is None
-            session_roots = None if unbounded else list(self._allowed_roots)
-
-            if not unbounded:
-                expanded_directory = resolve_under_roots(
-                    expanded_directory, session_roots
-                )
+            session_roots = list(self._allowed_roots)
+            expanded_directory = resolve_under_roots(
+                expanded_directory, session_roots
+            )
             full_path = os.path.join(expanded_directory, interface_file)
-            if not unbounded:
-                resolve_under_roots(full_path, session_roots)
+            resolve_under_roots(full_path, session_roots)
 
             log.info(f"Loading interface from {full_path}")
-            if unbounded:
-                # Do not call Interface.from_file: HTTP taint on this method
-                # would mark every exists/open in from_file as path injection.
-                if not os.path.exists(full_path):
+            try:
+                interface = Interface.from_cwd_file(
+                    user_file=interface_file,
+                    directory=expanded_directory,
+                )
+            except ValueError as exc:
+                if "No configuration file found" in str(exc):
                     raise FileNotFoundError(
                         f"Interface file not found: {full_path}"
-                    )
-                with open(full_path, "r") as stream:
-                    data = yaml.safe_load(stream) or {}
-                interface = Interface(
-                    data,
-                    directory=expanded_directory,
-                    user_file=interface_file,
-                    unbounded_paths=True,
-                )
-            else:
-                # HTTP-facing: confine to process cwd (untainted prefix).
-                # Operator roots already applied via resolve_under_roots above.
-                try:
-                    interface = Interface.from_cwd_file(
-                        user_file=interface_file,
-                        directory=expanded_directory,
-                    )
-                except ValueError as exc:
-                    if "No configuration file found" in str(exc):
-                        raise FileNotFoundError(
-                            f"Interface file not found: {full_path}"
-                        ) from exc
-                    raise
-            
-            # Create CustomDataFrame from interface
-            cdf = CustomDataFrame.from_flow(interface)
-            
-            # Create session
-            session = Session(
+                    ) from exc
+                raise
+
+            return self._store_loaded_session(
+                interface,
                 session_id=session_id,
-                cdf=cdf,
                 interface_file=interface_file,
                 directory=directory,
                 interface_field=interface_field,
                 timeout=timeout,
                 created_time=created_time,
             )
-            
-            self.sessions[session_id] = session
-            
-            # Save metadata for crash recovery
-            self._save_metadata()
-            
-            log.info(
-                f"Created session {session_id}: "
-                f"shape={session.cdf.get_shape()}, memory={session.memory_mb:.2f}MB"
+
+    def create_session_unbounded(
+        self,
+        interface_file: str,
+        directory: str = '.',
+        interface_field: Optional[str] = None,
+        timeout: int = 3600,
+        session_id: Optional[str] = None,
+        created_time: Optional[float] = None,
+    ) -> Session:
+        """Create a session without path confinement.
+
+        Not used by HTTP handlers. Operator/CLI code that constructed
+        SessionManager with ``unbounded_paths=True`` calls this instead of
+        ``create_session`` so CodeQL does not treat the unbounded
+        ``exists``/``open`` as an HTTP sink (CIP-000D cluster D).
+        """
+        with self.lock:
+            if len(self.sessions) >= self.max_sessions:
+                raise ValueError(
+                    f"Maximum number of sessions ({self.max_sessions}) reached. "
+                    "Delete existing sessions or increase limit."
+                )
+
+            total_memory = sum(s.memory_mb for s in self.sessions.values())
+            if total_memory >= self.max_memory_mb:
+                raise ValueError(
+                    f"Maximum memory limit ({self.max_memory_mb}MB) reached. "
+                    f"Current: {total_memory:.1f}MB. Delete sessions to free memory."
+                )
+
+            if session_id is None:
+                session_id = str(uuid.uuid4())
+
+            if not (self.unbounded_paths or self._allowed_roots is None):
+                raise ValueError(
+                    "SessionManager is confined; use create_session, "
+                    "not create_session_unbounded."
+                )
+
+            expanded_directory = os.path.expandvars(os.path.expanduser(directory))
+            full_path = os.path.join(expanded_directory, interface_file)
+            log.info(f"Loading unbounded interface from {full_path}")
+            if not os.path.exists(full_path):
+                raise FileNotFoundError(
+                    f"Interface file not found: {full_path}"
+                )
+            with open(full_path, "r") as stream:
+                data = yaml.safe_load(stream) or {}
+            interface = Interface(
+                data,
+                directory=expanded_directory,
+                user_file=interface_file,
+                unbounded_paths=True,
             )
-            
-            return session
+            return self._store_loaded_session(
+                interface,
+                session_id=session_id,
+                interface_file=interface_file,
+                directory=directory,
+                interface_field=interface_field,
+                timeout=timeout,
+                created_time=created_time,
+            )
+
+    def _store_loaded_session(
+        self,
+        interface,
+        session_id: str,
+        interface_file: str,
+        directory: str,
+        interface_field: Optional[str],
+        timeout: int,
+        created_time: Optional[float],
+    ) -> Session:
+        cdf = CustomDataFrame.from_flow(interface)
+        session = Session(
+            session_id=session_id,
+            cdf=cdf,
+            interface_file=interface_file,
+            directory=directory,
+            interface_field=interface_field,
+            timeout=timeout,
+            created_time=created_time,
+        )
+        self.sessions[session_id] = session
+        self._save_metadata()
+        log.info(
+            f"Created session {session_id}: "
+            f"shape={session.cdf.get_shape()}, memory={session.memory_mb:.2f}MB"
+        )
+        return session
     
     def get_session(self, session_id: str) -> Session:
         """Get session by ID.
