@@ -72,7 +72,7 @@ def redact_credential_identifier(key: str) -> str:
 
 Keep the existing `_sanitize_credential_key` behaviour (short keys become `***`; longer keys become `abcd***wxyz`) or switch to a truncated SHA-256 hex digest. Prefer hashing if we want CodeQL to treat the result as sanitized; prefix/suffix redaction is nicer for operators but often still taints.
 
-**Accepted decision:** fingerprint credential identifiers with HMAC-SHA256 (domain-separated) for audit file and debug logs. Do not use a password hash (Argon2/bcrypt/PBKDF2): these are names, not passwords, and those algorithms are too slow for every log line. Do not log raw keys at any level.
+**Accepted decision:** fingerprint credential identifiers for audit file and debug logs; never log the raw key. CodeQL classifies `credential_key` as a password, so a fast hash (SHA-256, HMAC-SHA256) is flagged as a weak password hash. Use stdlib `hashlib.pbkdf2_hmac` with a public domain-separation salt and a modest iteration count (1000): that satisfies the query's "computationally expensive" requirement without Argon2/bcrypt on every log line. This is still a log fingerprint, not password storage.
 
 Secret **values** continue to be handled by `SanitizingFormatter` pattern redaction. They must never be passed into log f-strings (today they mostly are not; the alerts are about keys).
 
@@ -159,4 +159,4 @@ Started on branch `cip000B-credential-log-sanitization`: `redact_credential_iden
 
 ### 2026-08-19 (CodeQL py/weak-sensitive-data-hashing)
 
-Bare SHA-256 on `credential_key` was flagged as a weak *password* hash. Switched to `hmac.digest(..., "sha256")` with a public domain-separation key. That is identifier fingerprinting, not password storage.
+Bare SHA-256 on `credential_key` was flagged as a weak *password* hash. HMAC-SHA256 was flagged the same way (CodeQL still sees SHA-256 on password-classified taint). Switched to `hashlib.pbkdf2_hmac` with a public salt and 1000 iterations.
