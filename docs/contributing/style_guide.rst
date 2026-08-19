@@ -1,4 +1,4 @@
-.. _contributing:
+.. _style-guide:
 
 Python Style Guide
 ==================

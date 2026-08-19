@@ -213,7 +213,7 @@ Getting Help
 Related Documentation
 ---------------------
 
-* :doc:`../cip/cip0005` - CIP-0005: Secure Credential Management System (design document)
+* CIP-0005: Secure Credential Management System (``cip/cip0005.md`` in the repository)
 * :doc:`user_guide` - Practical user guide with examples
 * :doc:`implementation_summary` - Technical implementation details
 * :doc:`api_reference` - Complete API documentation

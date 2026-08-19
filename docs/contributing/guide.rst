@@ -1,7 +1,7 @@
 .. _contributing:
 
 Contributing to lynguine
-=====================
+========================
 
 First off, thank you for considering contributing to lynguine! It's people like you that make ndlpy such a great tool.
 
@@ -67,7 +67,7 @@ Style Guides
 ------------
 
 Git Commit Messages
-^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~
 
 - Use the present tense ("Add feature" not "Added feature")
 - Use the imperative mood ("Move cursor to..." not "Moves cursor to...")
@@ -75,7 +75,7 @@ Git Commit Messages
 - Reference issues and pull requests liberally after the first line
 
 Python Style Guide
-^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~
 
 All Python code should adhere to the `PEP 8 <https://www.python.org/dev/peps/pep-0008/>`_ style guide.
 

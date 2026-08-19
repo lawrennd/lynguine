@@ -1,5 +1,5 @@
 lynguine.assess
-==============
+===============
 
 The `assess` module provides functionality for processing and analysing data, including custom DataFrame implementations and computation capabilities.
 
@@ -7,7 +7,7 @@ The `assess` module provides functionality for processing and analysing data, in
    :maxdepth: 1
 
 Data Module
-----------
+-----------
 
 .. automodule:: lynguine.assess.data
    :members:
@@ -15,7 +15,7 @@ Data Module
    :show-inheritance:
 
 Compute Module
--------------
+--------------
 
 .. automodule:: lynguine.assess.compute
    :members:
@@ -23,7 +23,7 @@ Compute Module
    :show-inheritance:
 
 Display Module
--------------
+--------------
 
 .. automodule:: lynguine.assess.display
    :members:

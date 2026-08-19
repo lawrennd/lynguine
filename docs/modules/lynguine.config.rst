@@ -1,5 +1,5 @@
 lynguine.config
-==============
+===============
 
 The `config` module provides functionality for configuration management, including context and interface definitions.
 
@@ -7,7 +7,7 @@ The `config` module provides functionality for configuration management, includi
    :maxdepth: 1
 
 Context Module
--------------
+--------------
 
 .. automodule:: lynguine.config.context
    :members:
@@ -15,7 +15,7 @@ Context Module
    :show-inheritance:
 
 Interface Module
----------------
+----------------
 
 .. automodule:: lynguine.config.interface
    :members:

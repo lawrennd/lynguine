@@ -17,40 +17,63 @@ import os
 import subprocess
 import sys
 import pytest
-import shutil
 from pathlib import Path
 
-# Check if sphinx-build is available in the path
-sphinx_available = shutil.which('sphinx-build') is not None
+try:
+    import sphinx  # noqa: F401
 
-@pytest.mark.skipif(not sphinx_available, reason="sphinx-build not available in PATH")
-def test_sphinx_build():
-    """Test that the Sphinx documentation builds correctly."""
+    sphinx_available = True
+except ImportError:
+    sphinx_available = False
+
+
+def _sphinx_command(docs_dir, build_dir):
+    return [
+        sys.executable,
+        "-m",
+        "sphinx",
+        "-W",  # Treat warnings as errors
+        "--keep-going",
+        "-b",
+        "html",
+        "-d",
+        str(build_dir / "doctrees"),
+        str(docs_dir),
+        str(build_dir / "html"),
+    ]
+
+
+def _run_sphinx():
     docs_dir = Path(__file__).parent
     build_dir = docs_dir / "_build" / "test"
-    
-    # Make sure the build directory exists
     os.makedirs(build_dir, exist_ok=True)
-    
-    # Run Sphinx build
-    cmd = [
-        "sphinx-build",
-        # "-W",  # Treat warnings as errors - removed to allow build to succeed with warnings
-        "-b", "html",  # Build HTML output
-        "-d", str(build_dir / "doctrees"),  # Doctree directory
-        str(docs_dir),  # Source directory
-        str(build_dir / "html")  # Output directory
-    ]
-    
-    try:
-        subprocess.run(cmd, check=True, capture_output=True)
-        print("Documentation build succeeded!")
-        return 0
-    except subprocess.CalledProcessError as e:
-        print(f"Documentation build failed with return code {e.returncode}")
-        print(f"STDOUT: {e.stdout.decode('utf-8')}")
-        print(f"STDERR: {e.stderr.decode('utf-8')}")
-        return e.returncode
+    return subprocess.run(
+        _sphinx_command(docs_dir, build_dir),
+        capture_output=True,
+        text=True,
+    )
+
+
+@pytest.mark.skipif(not sphinx_available, reason="sphinx is not installed")
+def test_sphinx_build():
+    """Test that the Sphinx documentation builds correctly."""
+    result = _run_sphinx()
+    if result.returncode != 0:
+        pytest.fail(
+            "sphinx-build failed with return code "
+            f"{result.returncode}\nSTDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}"
+        )
+
 
 if __name__ == "__main__":
-    sys.exit(test_sphinx_build()) 
+    if not sphinx_available:
+        print("sphinx is not installed in this Python environment")
+        sys.exit(1)
+    result = _run_sphinx()
+    if result.returncode == 0:
+        print("Documentation build succeeded!")
+    else:
+        print(f"Documentation build failed with return code {result.returncode}")
+        print(f"STDOUT: {result.stdout}")
+        print(f"STDERR: {result.stderr}")
+    sys.exit(result.returncode)

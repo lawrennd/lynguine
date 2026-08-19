@@ -214,5 +214,5 @@ Related Documentation
 * :class:`lynguine.assess.data.CustomDataFrame` - Full API documentation
 * :meth:`lynguine.assess.data.CustomDataFrame.add_column` - Add column method
 * :meth:`lynguine.assess.data.CustomDataFrame.drop_column` - Drop column method
-* :doc:`compute_framework` - Using columns with compute operations
+* :doc:`/compute_framework` - Using columns with compute operations
 

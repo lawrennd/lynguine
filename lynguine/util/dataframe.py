@@ -42,7 +42,10 @@ def reorder_dataframe(df, order):
 
     :param df: The DataFrame to reorder.
     :type df: pd.DataFrame or lynguine.data.CustomDataFrame
-    :
+    :param order: Column names to place first, in this order.
+    :type order: list
+    :return: The reordered DataFrame.
+    :rtype: pd.DataFrame or lynguine.data.CustomDataFrame
     """
     # Remove any columns from order that are not in the dataframe
     order = [column for column in order if column in df.columns]

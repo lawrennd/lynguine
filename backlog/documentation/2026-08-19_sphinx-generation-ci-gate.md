@@ -1,7 +1,7 @@
 ---
 id: "2026-08-19_sphinx-generation-ci-gate"
 title: "Make Sphinx documentation generation fail CI on real errors"
-status: "Proposed"
+status: "Completed"
 priority: "Medium"
 created: "2026-08-19"
 last_updated: "2026-08-19"
@@ -41,14 +41,14 @@ This is repair of CIP-0001’s build, not a new documentation architecture. Keep
 
 ## Acceptance Criteria
 
-- [ ] `test_sphinx_build` asserts success (does not `return` an exit code)
-- [ ] Sphinx is run so real errors fail CI; restore `-W` once the existing warnings are cleared, or fail on error-level messages until then
-- [ ] `docs/_static` exists or is removed from `html_static_path`
-- [ ] RST title underlines match title length
-- [ ] `docs/index.rst` toctree targets exist, or the dangling `improvement_plan` entry is removed
-- [ ] Broken MyST/Sphinx cross-references listed above are fixed or removed
-- [ ] Orphan docs (`compute_framework.md`, `SECURE_CREDENTIALS.md`) are in a toctree or explicitly excluded
-- [ ] `Interface` docstring (and any other autodoc indentation errors) parse as RST
+- [x] `test_sphinx_build` asserts success (does not `return` an exit code)
+- [x] Sphinx is run so real errors fail CI; restore `-W` once the existing warnings are cleared, or fail on error-level messages until then
+- [x] `docs/_static` exists or is removed from `html_static_path`
+- [x] RST title underlines match title length
+- [x] `docs/index.rst` toctree targets exist, or the dangling `improvement_plan` entry is removed
+- [x] Broken MyST/Sphinx cross-references listed above are fixed or removed
+- [x] Orphan docs (`compute_framework.md`, `SECURE_CREDENTIALS.md`) are in a toctree or explicitly excluded
+- [x] `Interface` docstring (and any other autodoc indentation errors) parse as RST
 
 ## Implementation Notes
 
@@ -75,3 +75,10 @@ Adding autodoc pages for `security` and `log` is optional follow-up, not require
 ### 2026-08-19
 
 Task created after PR #21 docs CI passed while Sphinx still reported generation errors. Separate from the flaky BibTeX fixture.
+
+### 2026-08-19 (implementation)
+
+- `docs/test_build.py` now asserts and runs `python -m sphinx -W --keep-going`.
+- RST underlines, heading levels, `Interface` / `reorder_dataframe` docstrings, and dangling toctree/xrefs fixed.
+- Duplicate Markdown security files and VibeSafe helper docs excluded; `compute_framework.md` added to the Getting Started toctree.
+- Clean `sphinx-build -W` succeeds locally.
