@@ -1,8 +1,12 @@
 """Explicit path confinement for lynguine's access flow (CIP-000A).
 
 Configured or caller-supplied paths are resolved and required to sit
-under one or more allowed roots. Primitive I/O helpers do not use this
-module; they remain trusted-caller APIs.
+under one or more allowed roots. Primitive I/O helpers in
+``lynguine.access.io`` (``read_yaml_file``, ``read_json_file``, and the
+other ``*_file`` functions) do not use this module; they remain
+trusted-caller APIs. Untrusted names belong at flow boundaries
+(``extract_full_filename``, ``from_file``, ``from_cwd_file``,
+``SessionManager``), not in those primitives (CIP-000D cluster A).
 """
 
 from __future__ import annotations

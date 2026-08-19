@@ -161,3 +161,66 @@ def test_from_cwd_file_rejects_parent_escape(tmp_path, monkeypatch):
     monkeypatch.chdir(jail)
     with pytest.raises(PathEscapeError):
         Interface.from_cwd_file(user_file="../secret.yml", directory=".")
+
+
+def test_from_cwd_file_inherit_cannot_leave_cwd(tmp_path, monkeypatch):
+    from lynguine.config.interface import Interface
+
+    jail = tmp_path / "jail"
+    jail.mkdir()
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    (outside / "parent.yml").write_text("parent_only: true\n")
+    (jail / "child.yml").write_text(
+        "inherit:\n  directory: ../outside\n  filename: parent.yml\nchild: 1\n"
+    )
+    monkeypatch.chdir(jail)
+    with pytest.raises(PathEscapeError):
+        Interface.from_cwd_file(user_file="child.yml", directory=".")
+
+
+def test_create_session_refuses_unbounded_manager(tmp_path):
+    from lynguine.session_manager import SessionManager
+
+    mgr = SessionManager(
+        persistence_dir=str(tmp_path / "sessions"),
+        unbounded_paths=True,
+    )
+    with pytest.raises(ValueError, match="unbounded_paths"):
+        mgr.create_session(interface_file="iface.yml", directory=str(tmp_path))
+
+
+def test_create_session_unbounded_loads_outside_cwd(tmp_path, monkeypatch):
+    from lynguine.session_manager import SessionManager
+
+    cwd = tmp_path / "cwd"
+    cwd.mkdir()
+    monkeypatch.chdir(cwd)
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    (outside / "iface.yml").write_text(
+        "input:\n  type: fake\n  nrows: 2\n  cols:\n    - name\n  index: name\n"
+    )
+    mgr = SessionManager(
+        persistence_dir=str(tmp_path / "sessions"),
+        unbounded_paths=True,
+    )
+    session = mgr.create_session_unbounded(
+        interface_file="iface.yml",
+        directory=str(outside),
+    )
+    assert session.cdf.get_shape()[0] == 2
+
+
+def test_http_handlers_do_not_call_from_file_or_unbounded_session():
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[1]
+    for name in (
+        "server.py",
+        "server_interface_handlers.py",
+        "server_session_handlers.py",
+    ):
+        text = (root / name).read_text()
+        assert "Interface.from_file" not in text
+        assert "create_session_unbounded" not in text

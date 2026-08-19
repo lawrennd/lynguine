@@ -1,3 +1,17 @@
+"""Access-stage I/O for lynguine.
+
+Flow-level readers (``read_data``, ``write_data``, directory globs) confine
+configured paths with ``extract_full_filename`` / ``confine_configured_path``
+before calling into file helpers (CIP-000A).
+
+The filename helpers below (``read_yaml_file``, ``read_json_file``, and the
+other ``*_file`` functions) are trusted-caller primitives: they ``open()``
+the path they are given and do not apply ``allowed_roots``. Untrusted or
+config-supplied names must be confined at the flow boundary first, not
+passed in raw from HTTP or interface YAML. CodeQL ``py/path-injection``
+on those ``open()`` sites is a trusted-caller primitive, not a missing
+jail (CIP-000D cluster A).
+"""
 import os
 import glob
 
@@ -533,6 +547,9 @@ def read_list(filelist):
     """
     Read from a list of files.
 
+    Trusted-caller API: entries in ``filelist`` are not confined here.
+    Directory-glob flow paths confine before calling ``read_files``.
+
     :param filelist: The list of files to be read.
     :type filelist: list
     :return: The data read from the files.
@@ -544,6 +561,10 @@ def read_list(filelist):
 def read_files(filelist, store_fields=None, filereader=None, filereader_args=None):
     """
     Read files from a given list.
+
+    Trusted-caller API: this function does not apply ``allowed_roots``.
+    Callers that have configuration or request-derived names must confine
+    each path first (CIP-000A).
 
     :param filelist: The list of files to be read.
     :type filelist: list
@@ -668,6 +689,9 @@ def read_json_file(filename):
     """
     Read a json file and return a python dictionary.
 
+    Trusted-caller I/O: does not confine ``filename``. Configured or
+    untrusted names must go through ``extract_full_filename`` first (CIP-000A).
+
     :param filename: The filename of the json file.
     :type filename: str
     :return: The data read from the file.
@@ -684,7 +708,10 @@ def read_json_file(filename):
 
 
 def write_json_file(data, filename):
-    """Write a json file from a python dicitonary."""
+    """Write a json file from a python dictionary.
+
+    Trusted-caller I/O: does not confine ``filename`` (CIP-000A).
+    """
     with open(filename, "w") as stream:
         try:
             log.debug(f'Writing json file "{filename}".')
@@ -694,7 +721,10 @@ def write_json_file(data, filename):
 
 
 def read_txt_file(filename):
-    """Read a text file and return a dictionary with the content."""
+    """Read a text file and return a dictionary with the content.
+
+    Trusted-caller I/O: does not confine ``filename`` (CIP-000A).
+    """
     with open(filename, 'r') as f:
         content = f.read()
     return {"content": content}
@@ -754,7 +784,11 @@ def read_file(filename):
 
 
 def read_yaml_file(filename):
-    """Read a yaml file and return a python dictionary."""
+    """Read a yaml file and return a python dictionary.
+
+    Trusted-caller I/O: does not confine ``filename``. Configured or
+    untrusted names must go through ``extract_full_filename`` first (CIP-000A).
+    """
     with open(filename, "r") as stream:
         try:
             log.debug(f'Reading yaml file "{filename}"')
@@ -767,7 +801,9 @@ def read_yaml_file(filename):
 
 def read_bibtex_file(filename):
     """
-    Red a bibtex file and return a python dictionary.
+    Read a bibtex file and return a python dictionary.
+
+    Trusted-caller I/O: does not confine ``filename`` (CIP-000A).
 
     :param filename: The filename of the bibtex file.
     :type filename: str
@@ -809,6 +845,8 @@ def write_bibtex_file(data, filename):
     """
     Write a bibtex file from a python dictionary.
 
+    Trusted-caller I/O: does not confine ``filename`` (CIP-000A).
+
     :param data: The data to be written.
     :type data: dict
     :param filename: The filename of the bibtex file.
@@ -846,6 +884,8 @@ def write_bibtex_file(data, filename):
 def write_yaml_file(data, filename):
     """
     Write a yaml file from a python dictionary.
+
+    Trusted-caller I/O: does not confine ``filename`` (CIP-000A).
 
     :param data: The data to be written.
     :type data: dict
@@ -896,6 +936,8 @@ def write_yaml_meta_file(data, filename):
 def read_markdown_file(filename, include_content=True):
     """
     Read a markdown file and return a python dictionary.
+
+    Trusted-caller I/O: does not confine ``filename`` (CIP-000A).
 
     :param filename: The filename of the markdown file.
     :type filename: str
@@ -990,6 +1032,8 @@ def write_url_file(data, filename, content, include_content=True):
 def write_markdown_file(data, filename, content=None, include_content=True):
     """
     Write a markdown file from a python dictionary
+
+    Trusted-caller I/O: does not confine ``filename`` (CIP-000A).
 
     :param data: The data to be written.
     :type data: dict
@@ -1392,6 +1436,10 @@ def write_excel(df, details):
 def write_csv(df, details):
     """
     Write data to an csv spreadsheet.
+
+    The path is confined via ``extract_full_filename`` (CIP-000A). The
+    following ``open()`` is still a trusted-caller primitive as far as
+    CodeQL is concerned (CIP-000D cluster A).
 
     :param df: The data to be written.
     :type df: pandas.DataFrame or lynguine.data.CustomDataFrame

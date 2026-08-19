@@ -6,7 +6,7 @@ last_updated: "2026-08-19"
 status: "In Progress"
 compressed: false
 related_requirements: ["000A", "0002", "0009"]
-related_cips: ["0008", "0009"]
+related_cips: ["0008", "0009", "000D"]
 tags:
 - cip
 - security
@@ -179,7 +179,7 @@ GitHub's `py/path-injection` query treats a realpath-plus-prefix check as a sani
 - [x] Interface.from_file confinement
 - [x] SessionManager confinement
 - [x] Access-stage configured path confinement
-- [ ] CodeQL re-check and recorded dismissals for primitives
+- [ ] CodeQL re-check and recorded dismissals — moved to [CIP-000D](cip000D.md)
 - [ ] Release-note note on absolute paths outside the interface directory
 
 ## References
@@ -206,3 +206,7 @@ In Progress. Helper `lynguine.access.paths.resolve_under_roots`, wired at `Inter
 ### 2026-08-19 (CodeQL follow-up)
 
 Server `from_file` call sites were still tainted from `LynguineHandler.do_POST`. Added `Interface.from_cwd_file` and switched `server.py`, `server_interface_handlers.py`, and `SessionManager.create_session` to it. Unbounded session loads construct `Interface` directly so HTTP taint never enters `from_file`.
+
+### 2026-08-19 (after merge)
+
+Merged as PR #22. Remaining `py/path-injection` alerts are an analyzer-modeling problem, not a missing jail. Follow-on: [CIP-000D](cip000D.md).

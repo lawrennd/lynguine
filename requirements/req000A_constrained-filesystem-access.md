@@ -65,3 +65,7 @@ Requirement proposed after reviewing 34 open CodeQL alerts (15 of them `py/path-
 ### 2026-08-19 (later)
 
 Accepted. CIP-000A accepted as the implementation plan. Status moved to In Progress.
+
+### 2026-08-19 (CIP-000D cluster A)
+
+Primitive I/O helpers stay trusted-caller APIs. That contract is documented on `lynguine.access.io` and `extract_full_filename` (CIP-000D).
