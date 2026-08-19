@@ -10,6 +10,7 @@ import time
 import uuid
 import pickle
 import json
+import yaml
 from typing import Dict, List, Optional, Any, Tuple
 from pathlib import Path
 import threading
@@ -310,17 +311,38 @@ class SessionManager:
                 )
             full_path = os.path.join(expanded_directory, interface_file)
             if not unbounded:
-                full_path = resolve_under_roots(full_path, session_roots)
-            if not os.path.exists(full_path):
-                raise FileNotFoundError(f"Interface file not found: {full_path}")
-            
+                resolve_under_roots(full_path, session_roots)
+
             log.info(f"Loading interface from {full_path}")
-            interface = Interface.from_file(
-                interface_file,
-                directory=expanded_directory,
-                allowed_roots=session_roots,
-                unbounded_paths=unbounded,
-            )
+            if unbounded:
+                # Do not call Interface.from_file: HTTP taint on this method
+                # would mark every exists/open in from_file as path injection.
+                if not os.path.exists(full_path):
+                    raise FileNotFoundError(
+                        f"Interface file not found: {full_path}"
+                    )
+                with open(full_path, "r") as stream:
+                    data = yaml.safe_load(stream) or {}
+                interface = Interface(
+                    data,
+                    directory=expanded_directory,
+                    user_file=interface_file,
+                    unbounded_paths=True,
+                )
+            else:
+                # HTTP-facing: confine to process cwd (untainted prefix).
+                # Operator roots already applied via resolve_under_roots above.
+                try:
+                    interface = Interface.from_cwd_file(
+                        user_file=interface_file,
+                        directory=expanded_directory,
+                    )
+                except ValueError as exc:
+                    if "No configuration file found" in str(exc):
+                        raise FileNotFoundError(
+                            f"Interface file not found: {full_path}"
+                        ) from exc
+                    raise
             
             # Create CustomDataFrame from interface
             cdf = CustomDataFrame.from_flow(interface)

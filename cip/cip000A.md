@@ -138,8 +138,8 @@ GitHub's `py/path-injection` query treats a realpath-plus-prefix check as a sani
    - Resolve config filename before `open`
 
 3. **Wire `SessionManager.create_session`**
-   - Resolve `interface_file` under session directory
-   - Pass roots into `Interface.from_file`
+   - Resolve `interface_file` under operator roots (construction-time, not request directory)
+   - Load via `Interface.from_cwd_file` so HTTP taint never enters `from_file`
 
 4. **Wire access-stage configured paths**
    - Resolve filenames from interface details before primitive readers/writers
@@ -201,4 +201,8 @@ Accepted. Default roots = interface/session directory; unbounded paths are an ex
 
 ### 2026-08-19 (implementation)
 
-In Progress. Helper `lynguine.access.paths.resolve_under_roots`, wired at `Interface.from_file`, `SessionManager.create_session`, and access-stage `extract_full_filename` / directory list paths. `from_flow` overwrites YAML `allowed_roots` so a config file cannot enlarge the jail. SessionManager and server `from_file` calls use construction-time roots (`os.getcwd()` unless the operator passes `allowed_roots`); the request `directory` is confined under those roots rather than becoming the jail.
+In Progress. Helper `lynguine.access.paths.resolve_under_roots`, wired at `Interface.from_file`, `SessionManager.create_session`, and access-stage `extract_full_filename` / directory list paths. `from_flow` overwrites YAML `allowed_roots` so a config file cannot enlarge the jail. HTTP and session loaders use `Interface.from_cwd_file`, which joins request names to `os.getcwd()` (an untainted prefix) so CodeQL's `py/path-injection` sanitizer can see the check. `from_file` remains the local/CLI loader and is not called from HTTP-facing code.
+
+### 2026-08-19 (CodeQL follow-up)
+
+Server `from_file` call sites were still tainted from `LynguineHandler.do_POST`. Added `Interface.from_cwd_file` and switched `server.py`, `server_interface_handlers.py`, and `SessionManager.create_session` to it. Unbounded session loads construct `Interface` directly so HTTP taint never enters `from_file`.

@@ -130,3 +130,34 @@ def test_from_file_list_rejects_escape(tmp_path):
     (tmp_path / "secret.yml").write_text("leaked: true\n")
     with pytest.raises(PathEscapeError):
         Interface.from_file(user_file=["../secret.yml"], directory=str(jail))
+
+
+def test_from_cwd_file_loads_under_cwd(tmp_path, monkeypatch):
+    from lynguine.config.interface import Interface
+
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "ok.yml").write_text("a: 1\n")
+    interface = Interface.from_cwd_file(user_file="ok.yml", directory=".")
+    assert interface["a"] == 1
+    assert os.path.realpath(str(tmp_path)) in {
+        os.path.realpath(root) for root in interface.allowed_roots
+    }
+
+
+def test_from_cwd_file_rejects_absolute_escape(tmp_path, monkeypatch):
+    from lynguine.config.interface import Interface
+
+    monkeypatch.chdir(tmp_path)
+    with pytest.raises(PathEscapeError):
+        Interface.from_cwd_file(user_file="passwd", directory="/etc")
+
+
+def test_from_cwd_file_rejects_parent_escape(tmp_path, monkeypatch):
+    from lynguine.config.interface import Interface
+
+    jail = tmp_path / "jail"
+    jail.mkdir()
+    (tmp_path / "secret.yml").write_text("leaked: true\n")
+    monkeypatch.chdir(jail)
+    with pytest.raises(PathEscapeError):
+        Interface.from_cwd_file(user_file="../secret.yml", directory=".")

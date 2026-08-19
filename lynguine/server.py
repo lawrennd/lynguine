@@ -422,11 +422,10 @@ class LynguineHandler(BaseHTTPRequestHandler):
                 field = request_data.get('interface_field', None)
                 
                 log.debug(f"Loading interface from {interface_file} in {directory}")
-                interface = Interface.from_file(
+                interface = Interface.from_cwd_file(
                     user_file=interface_file,
                     directory=directory,
                     field=field,
-                    allowed_roots=[os.getcwd()],
                 )
                 
                 # Read data from the interface's input configuration
