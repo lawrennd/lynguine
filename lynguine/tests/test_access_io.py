@@ -1324,7 +1324,31 @@ def letter_suffix(n : int) -> str:
     else:
         return letter_suffix(n // 26 - 1) + letter_suffix(n % 26)
     
+def test_to_bibtex_folds_non_latin1_names():
+    """Names outside Latin-1 must convert to BibTeX without raising."""
+    entry = {
+        "ENTRYTYPE": "book",
+        "ID": "thai-test20",
+        "title": "A Book",
+        "year": 2020,
+        "author": [{"family": "สมชาย", "given": "ใจดี"}],
+        "editor": [{"family": "עברית", "given": "שם"}],
+    }
+    converted = lynguine.util.fake.to_bibtex(entry)
+    converted["author"].encode("ascii")
+    converted["editor"].encode("ascii")
+
+
+def test_to_bibtex_keeps_latin1_accents():
+    """Latin-1 names stay available for pylatexenc rather than being stripped."""
+    entry = {"author": [{"family": "Müller", "given": "René"}]}
+    authors = lynguine.util.fake.to_bibtex_author(entry)
+    assert "Ren" in authors
+    assert "M" in authors and "ller" in authors
+
+
 def test_write_read_bibtex(tmpdir):
+    lynguine.util.fake.random.seed(20260819)
     details = {
         "filename": "test.bib",
         "directory": str(tmpdir),

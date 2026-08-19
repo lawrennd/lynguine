@@ -4,6 +4,7 @@ import numpy as np
 import yaml
 
 from . import context
+from ..access.paths import DEFAULT_ROOTS, PathEscapeError, effective_roots
 from ..log import Logger
 
 
@@ -272,7 +273,7 @@ class Interface(_HConfig):
         return mapping, columns
                 
     
-    def __init__(self, data : dict=None, directory : str=None, user_file : str=None) -> None:
+    def __init__(self, data : dict=None, directory : str=None, user_file : str=None, allowed_roots=DEFAULT_ROOTS, unbounded_paths : bool=False) -> None:
         """
         Initialize a new Interface instance with the provided configuration data.
         
@@ -298,6 +299,10 @@ class Interface(_HConfig):
         :type directory: str
         :param user_file: Filename of the configuration file
         :type user_file: str
+        :param allowed_roots: Directories that later configured paths must sit under.
+            Omit to use ``directory``. Pass ``None`` to opt out of confinement.
+        :param unbounded_paths: If True, do not confine configured paths (explicit opt-out).
+        :type unbounded_paths: bool
         :return: None
         :raises ValueError: If required arguments are missing or if inheritance configuration is invalid
         """
@@ -327,6 +332,9 @@ class Interface(_HConfig):
 
         self.directory = directory
         self.user_file = user_file
+        self.allowed_roots, self.unbounded_paths = effective_roots(
+            directory, allowed_roots, unbounded_paths
+        )
         
         self._parent = None
         self._input = []
@@ -358,8 +366,14 @@ class Interface(_HConfig):
 
             # TK Establish if path is relative from current directory and set it to relative location.
             
-            # Load parent interface
-            self._parent = self.__class__.from_file(user_file=filename, directory=inherit_directory)
+            # Load parent interface under the same roots; do not default
+            # the parent jail to inherit_directory (that would enlarge it).
+            self._parent = self.__class__.from_file(
+                user_file=filename,
+                directory=inherit_directory,
+                allowed_roots=self.allowed_roots,
+                unbounded_paths=self.unbounded_paths,
+            )
             
             # Set it not to be writable (convert output to input,
             # series to input, parameters to constants))
@@ -794,7 +808,7 @@ c        Expand the environment variables in the configuration.
         return "_lynguine.yml"
     
     @classmethod
-    def from_file(cls, user_file=None, directory=".", field=None, raise_error_if_not_found=True):
+    def from_file(cls, user_file=None, directory=".", field=None, raise_error_if_not_found=True, allowed_roots=DEFAULT_ROOTS, unbounded_paths=False):
         """
         Construct an Interface instance by loading configuration from a YAML file.
         
@@ -817,10 +831,15 @@ c        Expand the environment variables in the configuration.
         :param raise_error_if_not_found: Whether to raise an error if the file is not found or empty,
                                         defaults to True. If False, an empty interface will be created.
         :type raise_error_if_not_found: bool
+        :param allowed_roots: Directories the config file must sit under. Omit to use
+            ``directory``. Pass ``None`` to opt out of confinement.
+        :param unbounded_paths: If True, do not confine the config path (explicit opt-out).
+        :type unbounded_paths: bool
         :return: A new Interface instance loaded from the specified file.
         :rtype: Interface
         :raises ValueError: If the file is not found or empty (and raise_error_if_not_found is True),
                            or if the YAML cannot be parsed, or if a specified field is not found.
+        :raises lynguine.access.paths.PathEscapeError: If the config path is outside allowed roots.
         """
         
         if user_file is None:
@@ -829,12 +848,67 @@ c        Expand the environment variables in the configuration.
             ufile = user_file
             
         expanded_directory = os.path.expandvars(directory)
-        # If the user_file is a list, check existence of each file in order.
-        if type(user_file) is list:
-            for ufile in user_file:
-                if os.path.exists(os.path.join(expanded_directory, ufile)):
+        roots, unbounded = effective_roots(
+            expanded_directory, allowed_roots, unbounded_paths
+        )
+
+        names = user_file if type(user_file) is list else [ufile]
+        if unbounded:
+            fname = None
+            for ufile in names:
+                candidate = os.path.join(expanded_directory, ufile)
+                if os.path.exists(candidate):
+                    fname = candidate
                     break
-        fname = os.path.join(expanded_directory, ufile)
+            if fname is None:
+                ufile = names[-1] if names else cls.default_config_file()
+                fname = os.path.join(expanded_directory, ufile)
+            data = cls._read_yaml_or_empty(fname, field, raise_error_if_not_found)
+            return cls(
+                data,
+                directory=expanded_directory,
+                user_file=ufile,
+                allowed_roots=roots,
+                unbounded_paths=True,
+            )
+
+        # Confine before every exists/open. This branch is separate from the
+        # unbounded early-return so request-controlled paths cannot skip the
+        # prefix check and still reach a shared open().
+        fname = None
+        for ufile in names:
+            candidate = os.path.normpath(
+                os.path.realpath(
+                    os.path.expanduser(os.path.join(expanded_directory, ufile))
+                )
+            )
+            confined = False
+            for root in roots:
+                base_path = os.path.normpath(os.path.realpath(root))
+                if candidate == base_path or candidate.startswith(base_path + os.sep):
+                    confined = True
+                    break
+            if not confined:
+                raise PathEscapeError(ufile, list(roots))
+            if os.path.exists(candidate):
+                fname = candidate
+                break
+        if fname is None:
+            ufile = names[-1] if names else cls.default_config_file()
+            fname = os.path.normpath(
+                os.path.realpath(
+                    os.path.expanduser(os.path.join(expanded_directory, ufile))
+                )
+            )
+            confined = False
+            for root in roots:
+                base_path = os.path.normpath(os.path.realpath(root))
+                if fname == base_path or fname.startswith(base_path + os.sep):
+                    confined = True
+                    break
+            if not confined:
+                raise PathEscapeError(ufile, list(roots))
+
         data = {}
         log.debug(f"Attempting to open file \"{fname}\".")
         if os.path.exists(fname):
@@ -867,11 +941,146 @@ c        Expand the environment variables in the configuration.
             errmsg = f'No data found in "{fname}".'
             log.error(errmsg)
             raise ValueError(errmsg)
+
+        return cls(
+            data,
+            directory=expanded_directory,
+            user_file=ufile,
+            allowed_roots=roots,
+            unbounded_paths=False,
+        )
+
+    @classmethod
+    def from_cwd_file(
+        cls,
+        user_file=None,
+        directory=".",
+        field=None,
+        raise_error_if_not_found=True,
+    ):
+        """Load YAML from a path confined to the process working directory.
+
+        Server and session entry points use this instead of ``from_file`` so
+        request-controlled names are joined to ``os.getcwd()`` (an untainted
+        prefix) rather than to the request ``directory``. GitHub CodeQL's
+        ``py/path-injection`` sanitizer recognizes ``normpath``/``realpath``
+        plus ``startswith`` only when that prefix is local to this function.
+        """
+        if user_file is None:
+            names = [cls.default_config_file()]
+        elif type(user_file) is list:
+            names = user_file
+        else:
+            names = [user_file]
+
+        # Untainted jail: process cwd, not a caller-supplied directory.
+        base_path = os.path.realpath(os.getcwd())
+        rel_dir = os.path.expanduser(os.path.expandvars(directory))
+        joined_dir = os.path.normpath(os.path.join(base_path, rel_dir))
+        joined_dir = os.path.realpath(joined_dir)
+        # startswith(base_path) is the CodeQL sanitizer; the os.sep check
+        # blocks the "/cwd" vs "/cwd-evil" prefix bypass.
+        if not joined_dir.startswith(base_path):
+            raise PathEscapeError(directory, [base_path])
+        if joined_dir != base_path and not joined_dir.startswith(base_path + os.sep):
+            raise PathEscapeError(directory, [base_path])
+
+        fname = None
+        ufile = names[-1]
+        for ufile in names:
+            # Join to the untainted prefix, not to a request-derived directory.
+            fullpath = os.path.normpath(os.path.join(base_path, rel_dir, ufile))
+            fullpath = os.path.realpath(fullpath)
+            if not fullpath.startswith(base_path):
+                raise PathEscapeError(ufile, [base_path])
+            if fullpath != base_path and not fullpath.startswith(base_path + os.sep):
+                raise PathEscapeError(ufile, [base_path])
+            if os.path.exists(fullpath):
+                fname = fullpath
+                break
+        if fname is None:
+            fname = os.path.normpath(os.path.join(base_path, rel_dir, ufile))
+            fname = os.path.realpath(fname)
+            if not fname.startswith(base_path):
+                raise PathEscapeError(ufile, [base_path])
+            if fname != base_path and not fname.startswith(base_path + os.sep):
+                raise PathEscapeError(ufile, [base_path])
+
+        data = {}
+        log.debug(f"Attempting to open file \"{fname}\".")
+        if os.path.exists(fname):
+            with open(fname, "r") as stream:
+                try:
+                    log.debug(f'Reading yaml file "{fname}"')
+                    data = yaml.safe_load(stream)
+                except yaml.YAMLError as exc:
+                    errmsg = f'Error reading yaml file "{fname}", error: {exc}'
+                    log.error(errmsg)
+                    raise ValueError(errmsg)
+            if field is not None:
+                if field in data:
+                    data = data[field]
+                else:
+                    raise ValueError(
+                        f'Field "{field}" specified but not found in file "{fname}"'
+                    )
+        else:
+            errmsg = f'No configuration file found at "{fname}".'
+            if raise_error_if_not_found:
+                log.error(errmsg)
+                raise ValueError(errmsg)
+            else:
+                log.info(f'{errmsg} creating empty interface.')
+
+        if data == {} and raise_error_if_not_found:
+            errmsg = f'No data found in "{fname}".'
+            log.error(errmsg)
+            raise ValueError(errmsg)
+
+        return cls(
+            data,
+            directory=joined_dir,
+            user_file=ufile,
+            allowed_roots=[base_path],
+            unbounded_paths=False,
+        )
+
+    @classmethod
+    def _read_yaml_or_empty(cls, fname, field, raise_error_if_not_found):
+        """Read YAML from an already-resolved path, or return empty data."""
+        data = {}
+        log.debug(f"Attempting to open file \"{fname}\".")
+        if os.path.exists(fname):
+            with open(fname, "r") as stream:
+                try:
+                    log.debug(f'Reading yaml file "{fname}"')
+                    data = yaml.safe_load(stream)
+                except yaml.YAMLError as exc:
+                    errmsg = f'Error reading yaml file "{fname}", error: {exc}'
+                    log.error(errmsg)
+                    raise ValueError(errmsg)
+                    
+                    data = {}
+            if field is not None:
+                if field in data:
+                    data = data[field]
+                else:
+                    raise ValueError(
+                        f'Field "{field}" specified but not found in file "{fname}"'
+                    )
+        else:
+            errmsg = f'No configuration file found at "{fname}".'
+            if raise_error_if_not_found:
+                log.error(errmsg)
+                raise ValueError(errmsg)
+            else:
+                log.info(f'{errmsg} creating empty interface.')
         
-        
-        interface = cls(data, directory=expanded_directory, user_file=ufile)
-        
-        return interface
+        if data == {} and raise_error_if_not_found:
+            errmsg = f'No data found in "{fname}".'
+            log.error(errmsg)
+            raise ValueError(errmsg)
+        return data
 
         
     @classmethod

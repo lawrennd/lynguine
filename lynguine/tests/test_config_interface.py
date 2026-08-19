@@ -66,21 +66,27 @@ key2: new_value2
 """
 
 def mock_yaml_open(monkeypatch, file_content_map):
-    def mock_open(filename, mode='r', *args, **kwargs):
+    def _lookup(filename):
         if filename in file_content_map:
-            return StringIO(file_content_map[filename])
+            return filename
+        requested = os.path.realpath(filename)
+        for key in file_content_map:
+            if os.path.realpath(key) == requested:
+                return key
+            if os.path.basename(filename) == os.path.basename(key):
+                return key
+        return None
+
+    def mock_open(filename, mode='r', *args, **kwargs):
+        key = _lookup(filename)
+        if key is not None:
+            return StringIO(file_content_map[key])
         raise FileNotFoundError(f"No mock data for file \"{filename}\"")
 
     monkeypatch.setattr("builtins.open", mock_open)
 
-    def mock_file_exists(filename):
-        return filename in file_content_map
-
-    monkeypatch.setattr("os.path.exists", mock_file_exists)
-    
-    # Mocking os.path.exists to simulate file presence
     def mock_exists(path):
-        return path in file_content_map
+        return _lookup(path) is not None
 
     monkeypatch.setattr("os.path.exists", mock_exists)
     
@@ -311,4 +317,54 @@ def test_get_cache_columns_no_data(instance, mocker):
     mock_log = mocker.patch('lynguine.interface.log')
     assert instance.get_cache_columns() == []
     mock_log.warning.assert_called_once()
+
+
+def test_from_file_rejects_parent_escape(tmp_path):
+    from lynguine.access.paths import PathEscapeError
+
+    jail = tmp_path / "jail"
+    jail.mkdir()
+    (tmp_path / "secret.yml").write_text("leaked: true\n")
+    with pytest.raises(PathEscapeError):
+        Interface.from_file(user_file="../secret.yml", directory=str(jail))
+
+
+def test_from_file_loads_inside_jail(tmp_path):
+    cfg = tmp_path / "user_settings.yml"
+    cfg.write_text("logging:\n  level: INFO\n")
+    interface = Interface.from_file(user_file="user_settings.yml", directory=str(tmp_path))
+    assert interface["logging"]["level"] == "INFO"
+    assert os.path.realpath(str(tmp_path)) in {
+        os.path.realpath(root) for root in interface.allowed_roots
+    }
+
+
+def test_from_file_inherit_cannot_leave_jail(tmp_path):
+    from lynguine.access.paths import PathEscapeError
+
+    jail = tmp_path / "jail"
+    jail.mkdir()
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    (outside / "parent.yml").write_text("parent_only: true\n")
+    (jail / "child.yml").write_text(
+        "inherit:\n  directory: ../outside\n  filename: parent.yml\nchild: 1\n"
+    )
+    with pytest.raises(PathEscapeError):
+        Interface.from_file(user_file="child.yml", directory=str(jail))
+
+
+def test_from_file_unbounded_opt_out(tmp_path):
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    (outside / "cfg.yml").write_text("ok: true\n")
+    jail = tmp_path / "jail"
+    jail.mkdir()
+    interface = Interface.from_file(
+        user_file="../outside/cfg.yml",
+        directory=str(jail),
+        unbounded_paths=True,
+    )
+    assert interface["ok"] is True
+    assert interface.unbounded_paths is True
     

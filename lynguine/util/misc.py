@@ -65,19 +65,21 @@ def extract_full_filename(details : dict) -> str:
     :return: The filename.
     :rtype: str
     """
+    from lynguine.access.paths import confine_configured_path
+
     if "directory" not in details or details["directory"] is None:
         if "filename" not in details or details["filename"] is None:
             errmsg = f"No filename provided in details."
             log.error(errmsg)
             raise ValueError(errmsg)
-        return details["filename"]
+        return confine_configured_path(details["filename"], details)
     
     directory = os.path.expandvars(details["directory"])
     # Make relative paths relative to base_directory if specified
     if not os.path.isabs(directory) and "base_directory" in details:
         directory = os.path.join(details["base_directory"], directory)
         
-    return os.path.join(directory, details["filename"])
+    return confine_configured_path(os.path.join(directory, details["filename"]), details)
 
 
 def extract_root_directory(

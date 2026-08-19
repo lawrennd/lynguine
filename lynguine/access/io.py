@@ -26,6 +26,7 @@ from ..util.misc import (
     reorder_dictionary,
     prompt_stdin,
 )
+from .paths import confine_configured_path
 from ..util.fake import Generate
 from ..assess.compute import Compute
 from ..config.context import Context
@@ -488,6 +489,7 @@ def read_directory(
                 # Make relative paths relative to base_directory if specified
                 if not os.path.isabs(directory) and "base_directory" in details:
                     directory = os.path.join(details["base_directory"], directory)
+                directory = confine_configured_path(directory, details)
             else:
                 directory = "."
             globname = os.path.join(
@@ -520,7 +522,7 @@ def read_directory(
         log.warning(f'No source in "{details}".')
 
     filelist = [
-        os.path.join(dirname, filename)
+        confine_configured_path(os.path.join(dirname, filename), details)
         for filename, dirname in zip(filenames, dirnames)
     ]
 
@@ -635,10 +637,12 @@ def write_directory(df, details, filewriter=None, filewriter_args={}):
             if not os.path.isabs(directoryname) and "base_directory" in details:
                 directoryname = os.path.join(details["base_directory"], directoryname)
 
+            fullfilename = confine_configured_path(
+                os.path.join(directoryname, row[filename_field]), details
+            )
+            directoryname = os.path.dirname(fullfilename)
             if not os.path.exists(directoryname):
                 os.makedirs(directoryname)
-
-            fullfilename = os.path.join(directoryname, row[filename_field])
             if fullfilename in filenames:
                 raise ValueError(
                     'The specified filed name "{fullfilename}" has already been used for a different row of the data.'
@@ -1964,6 +1968,7 @@ def read_data(details):
         base_dir = details.get("base_directory", "")
         if base_dir:
             filelist = [os.path.join(base_dir, f) for f in filelist]
+        filelist = [confine_configured_path(f, details) for f in filelist]
         df = read_list(filelist)
     elif ftype == "yaml_directory":
         df = read_yaml_directory(details)
@@ -2053,8 +2058,10 @@ def data_exists(details):
         if type(sources) is not list:
             sources = [sources]
         for source in sources:
-            directory = source["directory"]
-            if not os.path.exists(os.path.expandvars(directory)):
+            directory = confine_configured_path(
+                os.path.expandvars(source["directory"]), details
+            )
+            if not os.path.exists(directory):
                 log.error(f'Missing directory "{directory}".')
                 available = False
         return available

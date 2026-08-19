@@ -191,6 +191,43 @@ def suffix(name):
     return None, name
 
 
+def _fold_non_latin1(name):
+    """ASCII-fold a name that cannot be encoded as Latin-1.
+
+    Latin-1 (accents, n-tilde, u-umlaut) is left unchanged so pylatexenc can
+    emit real LaTeX. Remaining scripts are folded with anyascii.
+
+    :param name: A personal name, or a fragment of one.
+    :type name: str
+    :return: The original name, or an ASCII-folded form.
+    :rtype: str
+    """
+    if not name:
+        return name
+    try:
+        name.encode("latin-1")
+        return name
+    except UnicodeEncodeError:
+        return anyascii(name).title()
+
+
+def _unicode_to_latex(value):
+    """Convert unicode to LaTeX without letting pylatexenc warnings crash.
+
+    pylatexenc 2.10 formats unknown-character warnings with ``%04X``, which
+    raises TypeError when the codepoint is passed as a string.
+
+    :param value: Text to convert.
+    :return: LaTeX-safe text.
+    :rtype: str
+    """
+    text = value if isinstance(value, str) else str(value)
+    try:
+        return unicode_to_latex(text, unknown_char_warning=False)
+    except TypeError:
+        return unicode_to_latex(anyascii(text), unknown_char_warning=False)
+
+
 def author_editor():
     """
     Returns a random author or editor name.
@@ -244,7 +281,9 @@ def author_editor():
             elif locale == Locale.KO:
                 familyName = anyascii(familyName).title()
                 givenName = anyascii(givenName).title()
-            if familyName is not None and givenName is not None:
+            familyName = _fold_non_latin1(familyName)
+            givenName = _fold_non_latin1(givenName)
+            if familyName and givenName:
                 break
             if count > 100:
                 raise Exception(f"Unable to generate name from locale {locale}.")
@@ -567,15 +606,16 @@ def to_bibtex_author(entry, translate_unicode=True, author_type="author"):
         lastname = ""
         if "prefix" in author:
             lastname += author["prefix"] + " "
-        lastname += author["family"]
+        lastname += _fold_non_latin1(author["family"])
         if "suffix" in author:
             lastname += " " + author["suffix"]
+        given = _fold_non_latin1(author["given"])
 
         # Randomly choose whether to use the comma format or not.
         if random.randint(1, 100) > 50:
-            authors += lastname + ", " + author["given"]
+            authors += lastname + ", " + given
         else:
-            authors += author["given"] + " " + lastname
+            authors += given + " " + lastname
         first = False
     # Remove loose unicode from authors
     for key, value in {
@@ -593,7 +633,7 @@ def to_bibtex_author(entry, translate_unicode=True, author_type="author"):
             "\u021B": r"\c{t}",
         }.items():
             authors = authors.replace(key, value)
-        authors = unicode_to_latex(authors)
+        authors = _unicode_to_latex(authors)
     return authors
 
 
@@ -627,7 +667,7 @@ def to_bibtex(entry, translate_unicode=True):
             "note",
         ]:
             if key in converted:
-                converted[key] = unicode_to_latex(converted[key])
+                converted[key] = _unicode_to_latex(converted[key])
 
     # Convert each entry to a string for bibtexparser
     for key in converted:
