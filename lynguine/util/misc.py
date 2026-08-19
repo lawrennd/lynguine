@@ -58,7 +58,11 @@ def reorder_dictionary(dictionary : dict | list[dict], order : list[str], sort_r
 
 def extract_full_filename(details : dict) -> str:
     """
-    Return the filename from the details of directory and filename
+    Return the filename from the details of directory and filename.
+
+    This is the access-stage confinement point for configured paths
+    (CIP-000A). Primitive readers such as ``read_yaml_file`` do not
+    confine; they open the path this function returns.
 
     :param details: The details of the file to be extracted.
     :type details: dict

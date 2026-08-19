@@ -3,7 +3,7 @@ author: "Neil D. Lawrence"
 created: "2026-08-19"
 id: "000D"
 last_updated: "2026-08-19"
-status: "Accepted"
+status: "In Progress"
 compressed: false
 related_requirements: ["000A"]
 related_cips: ["000A", "0008", "000B"]
@@ -25,7 +25,7 @@ title: "Make CodeQL path-injection analysis match the CIP-000A confinement model
 
 - [x] Proposed - Initial idea documented
 - [x] Accepted - Approved, ready to start work
-- [ ] In Progress - Actively being implemented
+- [x] In Progress - Actively being implemented
 - [ ] Implemented - Work complete, awaiting verification
 - [ ] Closed - Verified and complete
 - [ ] Rejected - Will not be implemented (add reason, use superseded_by if replaced)
@@ -93,7 +93,7 @@ What does **not** count, even when it is a correct jail:
 
 Three honest outcomes, one per cluster:
 
-**Cluster A — dismiss as used in production.** Record on each alert: trusted-caller I/O primitive; confinement is at `extract_full_filename` / flow entry; see CIP-000A. Do this first. It is the bulk of the remaining list and does not require code.
+**Cluster A — dismiss as used in production, and document the contract.** Record on each alert: trusted-caller I/O primitive; confinement is at `extract_full_filename` / flow entry; see CIP-000A. Do this first. It is the bulk of the remaining list and does not require wrapping `open()`. The primitives stay sharp; the contract is documented on the helpers themselves so a later HTTP caller cannot treat a quiet CodeQL tab as permission to pass request paths into `read_yaml_file`.
 
 **Cluster D — isolate or dismiss the opt-out.** The unbounded `exists`/`open` in `create_session` is a real query hit because it is in an HTTP-reachable function. Options:
 
@@ -148,8 +148,9 @@ This CIP's implementation work is (cluster A dismissals) plus whichever of B/C/D
 
 ## Implementation Status
 
-- [ ] Inventory remaining `py/path-injection` alerts into clusters A–D
-- [ ] Dismiss cluster A (io.py primitives)
+- [x] Inventory remaining `py/path-injection` alerts into clusters A–D
+- [x] Document cluster A primitives as trusted-caller I/O
+- [ ] Dismiss GitHub CodeQL alerts 23–33 with the documented rationale
 - [ ] Accepted treatment for B/C (inherit isolation vs models-as-data vs dismiss)
 - [ ] Accepted treatment for D (split unbounded vs dismiss)
 - [ ] Re-scan; leftover alerts all have recorded rationale
@@ -170,3 +171,7 @@ Proposed after PR #22 merged. CIP-000A's jail is in; `py/path-injection` remains
 ### 2026-08-19 (later)
 
 Accepted. Cluster A dismissals first. Treatment for B/C (inherit isolation vs models-as-data vs dismiss) and D (split unbounded vs dismiss) still to be chosen before implementation.
+
+### 2026-08-19 (cluster A)
+
+In Progress. Cluster A accepted as: keep primitives sharp; document the trusted-caller contract on `lynguine.access.io` and `extract_full_filename`. GitHub dismissals of alerts 23–33 use that same rationale when applied.
