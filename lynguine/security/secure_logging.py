@@ -5,11 +5,46 @@ This module provides utilities to prevent credential leakage in logs and
 error messages while maintaining useful debugging information.
 """
 
+import hashlib
 import logging
 import re
 import traceback
 from typing import Any, Dict, List, Optional, Pattern
 import sys
+
+# Truncated hex length for log-safe credential identifiers (CIP-000B).
+IDENTIFIER_HASH_LENGTH = 12
+
+# Public domain-separation salt, not a secret. PBKDF2 is used because CodeQL
+# classifies credential *names* as passwords and rejects fast hashes (SHA-256,
+# HMAC-SHA256) on that taint. This is still identifier fingerprinting for logs,
+# not password storage: iteration count is modest so a debug line stays cheap.
+_IDENTIFIER_KDF_SALT = b"lynguine.credential-identifier.v1"
+_IDENTIFIER_KDF_ITERATIONS = 1000
+
+
+def redact_credential_identifier(key: Optional[str]) -> str:
+    """Return a log-safe fingerprint of a credential name, never the raw key.
+
+    Empty string is fingerprinted; ``None`` becomes ``id:none``.
+
+    :param key: Credential identifier, or None
+    :type key: str or None
+    :return: ``id:<hex>`` or ``id:none``
+    :rtype: str
+    """
+    if key is None:
+        return "id:none"
+    if not isinstance(key, str):
+        key = str(key)
+    digest = hashlib.pbkdf2_hmac(
+        "sha256",
+        key.encode("utf-8"),
+        _IDENTIFIER_KDF_SALT,
+        _IDENTIFIER_KDF_ITERATIONS,
+        dklen=16,
+    )
+    return f"id:{digest.hex()[:IDENTIFIER_HASH_LENGTH]}"
 
 
 # Patterns that might indicate sensitive information

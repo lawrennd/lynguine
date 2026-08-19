@@ -2,8 +2,8 @@
 id: "REQ-0004"
 title: "Secure Credential Management"
 created: "2026-01-03"
-last_updated: "2026-01-03"
-status: "Validated"
+last_updated: "2026-08-19"
+status: "In Progress"
 priority: "High"
 owner: "lawrennd"
 stakeholders: "Security team, Users, Compliance officers"
@@ -44,7 +44,7 @@ The system must securely store, access, and manage sensitive credentials (API ke
 - [x] End-to-end encryption (AES with PBKDF2HMAC key derivation)
 - [x] Access control with RBAC policies
 - [x] Comprehensive audit logging
-- [x] Automatic credential sanitization in logs and errors
+- [ ] Automatic credential sanitization in logs and errors (gap: CodeQL 2026-08-13; CIP-000B)
 - [x] Migration tools for legacy credentials
 - [x] Backward compatibility maintained
 - [x] Security best practices followed (OWASP, NIST)
@@ -94,7 +94,8 @@ The system must securely store, access, and manage sensitive credentials (API ke
 
 ## Related
 
-- CIP: [CIP-0005](../cip/cip0005.md) (Implemented)
+- CIP: [CIP-0005](../cip/cip0005.md) (Closed)
+- CIP: [CIP-000B](../cip/cip000B.md) (Proposed) — remaining log/audit sanitization
 - Backlog Items:
   - `2025-12-03_document-secure-credential-usage.md` (Completed)
   - `2025-12-22_os-keychain-master-key-storage.md` (High Priority - future enhancement)
@@ -105,9 +106,14 @@ The system must securely store, access, and manage sensitive credentials (API ke
 - [x] Not Started
 - [x] In Progress
 - [x] Implemented
-- [x] Validated
+- [ ] Validated
 
 ## Progress Updates
+
+### 2026-08-19
+
+Reopened from Validated to In Progress. GitHub CodeQL reports 16 high `py/clear-text-logging-sensitive-data` findings and 1 high `py/clear-text-storage-sensitive-data` finding. `SanitizingFormatter` exists but `credentials.py` / `access_control.py` still use stdlib loggers and write raw `credential_key` to `audit.log`. Follow-on: [CIP-000B](../cip/cip000B.md).
+
 
 ### 2025-01-02
 

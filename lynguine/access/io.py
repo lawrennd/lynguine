@@ -53,6 +53,7 @@ try:
         AccessDeniedError,
         RateLimitError
     )
+    from ..security.secure_logging import redact_credential_identifier
     SECURE_CREDENTIALS_AVAILABLE = True
 except ImportError:
     SECURE_CREDENTIALS_AVAILABLE = False
@@ -245,9 +246,12 @@ def _get_google_sheets_config(details):
                         operation=AccessLevel.READ,
                         context="google_sheets_read"
                     )
-                except (AccessDeniedError, RateLimitError) as e:
-                    log.error(f"Access denied for Google Sheets credential: {e}")
-                    raise ValueError(f"Failed to authorize credential access: {e}")
+                except (AccessDeniedError, RateLimitError):
+                    log.error(
+                        "Access denied for Google Sheets credential "
+                        f"{redact_credential_identifier(credential_key)}"
+                    )
+                    raise ValueError("Failed to authorize credential access")
                 
                 # Get credential from manager
                 credential_manager = get_credential_manager()
@@ -270,8 +274,9 @@ def _get_google_sheets_config(details):
                             log.debug("Using secure credential management for Google Sheets")
                             return gconfig
                 except CredentialNotFoundError:
+                    safe_credential_key = redact_credential_identifier(credential_key)
                     log.warning(
-                        f"Credential '{credential_key}' not found in secure storage, "
+                        f"Credential '{safe_credential_key}' not found in secure storage, "
                         "falling back to context-based credentials"
                     )
                 except CredentialValidationError as e:

@@ -78,6 +78,7 @@ from .secure_logging import (
     # Utilities
     sanitize_dict,
     secure_repr,
+    redact_credential_identifier,
     
     # Patterns
     SENSITIVE_PATTERNS,
@@ -131,6 +132,7 @@ __all__ = [
     'get_secure_logger',
     'sanitize_dict',
     'secure_repr',
+    'redact_credential_identifier',
     'SENSITIVE_PATTERNS',
     
     # Migration
