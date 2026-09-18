@@ -148,3 +148,68 @@ def test_extract_diagrams_expands_macro_paths(mocker):
     assert './slides/diagrams/ml/quadratic_function000.svg' in result
     assert './slides/diagrams/ml/quadratic_function000.emf' in result
     assert not any('\\concat' in path for path in result)
+
+
+def test_extract_diagrams_inherits_parent_defines_across_includes(tmp_path):
+    child = tmp_path / "anne-bob-talk.md"
+    child.write_text("\\includediagram{\\diagramsDir/\\concat{\\stubname}{000}}\n")
+    middle = tmp_path / "middle.md"
+    middle.write_text("\\include{anne-bob-talk.md}\n")
+    parent = tmp_path / "conversation-tedx.md"
+    parent.write_text(
+        "\\define{\\stubname}{anne-bob-conversation}\n"
+        "\\include{middle.md}\n"
+    )
+
+    result = talk.extract_diagrams(
+        str(parent),
+        diagrams_dir="./slides/diagrams",
+        snippets_path=str(tmp_path),
+        absolute_path=False,
+    )
+
+    assert "./slides/diagrams/anne-bob-conversation000.svg" in result
+    assert "./slides/diagrams/anne-bob-conversation000.emf" in result
+    assert not any("\\stubname" in path for path in result)
+
+
+def test_extract_diagrams_child_defines_do_not_leak_to_siblings(tmp_path):
+    defining = tmp_path / "defining.md"
+    defining.write_text("\\define{\\stubname}{from-child}\n")
+    using = tmp_path / "using.md"
+    using.write_text("\\includediagram{\\diagramsDir/\\concat{\\stubname}{000}}\n")
+    parent = tmp_path / "talk.md"
+    parent.write_text("\\include{defining.md}\n\\include{using.md}\n")
+
+    result = talk.extract_diagrams(
+        str(parent),
+        diagrams_dir="./slides/diagrams",
+        snippets_path=str(tmp_path),
+        absolute_path=False,
+    )
+
+    assert not any("from-child" in path for path in result)
+    assert not any("\\stubname" in path for path in result)
+
+
+def test_extract_diagrams_local_define_overrides_parent(tmp_path):
+    child = tmp_path / "child.md"
+    child.write_text(
+        "\\define{\\stubname}{local-name}\n"
+        "\\includediagram{\\diagramsDir/\\concat{\\stubname}{000}}\n"
+    )
+    parent = tmp_path / "parent.md"
+    parent.write_text(
+        "\\define{\\stubname}{parent-name}\n"
+        "\\include{child.md}\n"
+    )
+
+    result = talk.extract_diagrams(
+        str(parent),
+        diagrams_dir="./slides/diagrams",
+        snippets_path=str(tmp_path),
+        absolute_path=False,
+    )
+
+    assert "./slides/diagrams/local-name000.emf" in result
+    assert not any("parent-name" in path for path in result)

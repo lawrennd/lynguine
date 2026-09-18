@@ -108,13 +108,133 @@ def extract_inputs(filename, snippets_path=".."):
 
     return list_files + not_present
 
+def _skip_scanned_file(filename):
+    """Return True for include names that diagram scanning must not open."""
+    return filename == '\\filename.svg' or filename[:14] == '../talk-macros'
+
+
+def _resolve_included_file(filename, snippets_path):
+    """
+    Resolve an include name the same way :func:`extract_inputs` does.
+
+    :return: Existing path, or None when the file cannot be found.
+    """
+    if os.path.isfile(filename):
+        return filename
+    if snippets_path is not None:
+        includepos = os.path.join(snippets_path, filename)
+        if os.path.isfile(includepos):
+            return includepos
+    return None
+
+
+def _expanded_diagrams(lines, define_macros, diagrams_dir, diagram_exts):
+    """Expand diagram paths in one file and return concrete dependency names."""
+    listdiagrams = []
+    for ext in ['png', 'jpg', 'gif']:
+        diagrams = latex.extract_diagrams(lines, ext)
+        for diag_str in diagrams:
+            if diagrams_dir is not None:
+                diag_str = diag_str.replace('\\diagramsDir', diagrams_dir)
+            diag_str = latex.expand_diagram_path(diag_str, define_macros)
+            if "\\" not in diag_str:
+                listdiagrams.append(diag_str + '.' + ext)
+    diagrams = latex.extract_diagrams(lines, 'diagram')
+    diag_dict = {ext: [] for ext in diagram_exts}
+    for diag_str in diagrams:
+        if diagrams_dir is not None:
+            diag_str = diag_str.replace('\\diagramsDir', diagrams_dir)
+        diag_str = latex.expand_diagram_path(diag_str, define_macros)
+        if "\\" not in diag_str:
+            for ext in diagram_exts:
+                diag_dict[ext].append(diag_str + '.' + ext)
+    for ext in diagram_exts:
+        listdiagrams.extend(diag_dict[ext])
+    return listdiagrams
+
+
+def _extract_diagrams_scoped(filename, inherited_macros, diagrams_dir, diagram_exts, snippets_path, stack):
+    """
+    Scan one file and the includes it reaches, carrying an inherited macro map.
+
+    ``inherited_macros`` is the parent scope. Defines in this file override
+    those names. The merged map is passed into files reached by the same
+    include edges as :func:`extract_inputs` (``\\include``, ``\\includetalkfile``,
+    ``\\input``, ``\\newsection``, ``\\newsubsection``). A child's defines are
+    not written back, so they are invisible to later siblings.
+
+    Defines are taken from the whole including file, not only lines above the
+    include. Expansion is still only ``\\define`` and ``\\concat``, not full gpp.
+    ``stack`` is the include chain currently open, so a cycle stops instead of
+    recursing forever. The same file may be scanned again from another parent.
+    """
+    if filename in stack or _skip_scanned_file(filename):
+        return []
+    if not os.path.exists(filename):
+        resolved = _resolve_included_file(filename, snippets_path)
+        if resolved is None:
+            warnings.warn(
+                f'Input file "{filename}" does not exist with snippets path "{snippets_path}".'
+            )
+            return []
+        if _skip_scanned_file(resolved):
+            return []
+        filename = resolved
+        if filename in stack:
+            return []
+
+    stack.append(filename)
+    try:
+        with open(filename, 'r') as handle:
+            lines = handle.readlines()
+        macros = dict(inherited_macros)
+        macros.update(latex.collect_define_macros(lines))
+        found = _expanded_diagrams(lines, macros, diagrams_dir, diagram_exts)
+        for include_name in latex.extract_inputs(lines):
+            if _skip_scanned_file(include_name):
+                continue
+            child = _resolve_included_file(include_name, snippets_path)
+            if child is None:
+                warnings.warn(
+                    f'Input file "{include_name}" does not exist with snippets path "{snippets_path}".'
+                )
+                continue
+            if _skip_scanned_file(child):
+                continue
+            found.extend(
+                _extract_diagrams_scoped(
+                    child,
+                    macros,
+                    diagrams_dir,
+                    diagram_exts,
+                    snippets_path,
+                    stack,
+                )
+            )
+        return found
+    finally:
+        stack.pop()
+
+
 def extract_diagrams(filename, 
                      absolute_path=True,
                      diagram_exts=['svg', 'png', 'emf', 'pdf'],
                      diagrams_dir=None,
                      snippets_path=None):
     """
-    Extract diagrams from a talk
+    Extract diagrams from a talk.
+
+    ``\\define`` macros are inherited across the include tree. A file sees
+    defines from the files that included it, then its own defines, which
+    win on a name clash. Included files do not publish their defines to
+    siblings. The include edges are those :func:`extract_inputs` already
+    discovers: ``\\include``, ``\\includetalkfile``, ``\\input``,
+    ``\\newsection``, and ``\\newsubsection``.
+
+    This is bounded expansion (``\\define`` name substitution and
+    ``\\concat``), not full gpp. Every ``\\define`` in an including file is
+    visible to its includes, including defines that appear textually after
+    the include line.
 
     :param filename: The filename of the talk.
     :type filename: str
@@ -131,60 +251,19 @@ def extract_diagrams(filename,
     """
     if snippets_path is not None:
         snippets_path = os.path.expandvars(snippets_path)
-        
-    if os.path.exists(filename):
-        filenames = [filename] + extract_inputs(filename, snippets_path)
-    else:
+
+    if not os.path.exists(filename):
         warnings.warn(f'Warning, input file "{filename}" does not exist.')
         return
 
-    listdiagrams = []
-    for filen in filenames:
-        # exclude talk-macros file.
-        if filen[:14] =='../talk-macros':
-            continue
-
-        # exclude \filename.svg
-        if filen == '\\filename.svg':
-            continue
-        else:
-            if not os.path.exists(filen):
-                exname = os.path.join(snippets_path, filen)
-                if os.path.exists(exname):
-                    filen = exname
-                else:
-                    warnings.warn(f'Input file "{filen}" does not exist with snippets path "{snippets_path}".')
-                    continue
-            f = open(filen, 'r')
-            lines = f.readlines()
-            f.close()
-
-        define_macros = latex.collect_define_macros(lines)
-
-        for ext in ['png', 'jpg', 'gif']:
-            diagrams = latex.extract_diagrams(lines, ext)
-            diag_list = []
-            for i, diag_str in enumerate(diagrams):
-                if diagrams_dir is not None: # Substitute if diagrams_dir exists
-                    diag_str = diag_str.replace('\\diagramsDir', diagrams_dir)
-                diag_str = latex.expand_diagram_path(diag_str, define_macros)
-                if "\\" not in diag_str: # Ignore remaining tex macros
-                    diag_list.append(diag_str + '.' + ext)
-            listdiagrams.extend(diag_list)
-        diagrams = latex.extract_diagrams(lines, 'diagram')
-        diag_dict = {}
-        for ext in diagram_exts:
-            diag_dict[ext] = []
-        for i, diag_str in enumerate(diagrams):
-            if diagrams_dir is not None: # Substitute if diagrams_dir exists
-                diag_str = diag_str.replace('\\diagramsDir', diagrams_dir)
-            diag_str = latex.expand_diagram_path(diag_str, define_macros)
-            if "\\" not in diag_str: # Ignore remaining tex macros
-                for ext in diagram_exts:
-                     diag_dict[ext].append(diag_str + '.' + ext)
-
-        for ext in diagram_exts:
-            listdiagrams.extend(diag_dict[ext])
+    listdiagrams = _extract_diagrams_scoped(
+        filename,
+        {},
+        diagrams_dir,
+        diagram_exts,
+        snippets_path,
+        [],
+    )
 
     full_list = []
     if absolute_path:

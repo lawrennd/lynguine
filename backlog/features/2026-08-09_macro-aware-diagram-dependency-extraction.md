@@ -93,4 +93,8 @@ Implemented bounded macro expansion in lynguine (`collect_define_macros`, `expan
 
 ### 2026-09-18
 
-Same-file `\define` + `\concat` works, but **macros defined in a parent include are not visible when scanning the child** for `\includediagram`. Residual failure filed as bug [2026-09-18_macro-defines-not-propagated-across-includes](../bugs/2026-09-18_macro-defines-not-propagated-across-includes.md) (anne–bob conversation EMF deps missing in CEIBS talk pptx build). This feature’s acceptance criterion “included snippet tree” remains unmet until that bug lands.
+Same-file `\define` + `\concat` works. Cross-include propagation is implemented on the residual bug [2026-09-18_macro-defines-not-propagated-across-includes](../bugs/2026-09-18_macro-defines-not-propagated-across-includes.md); the live lamd check is still open, so the “included snippet tree” criterion is not closed yet.
+
+### 2026-09-18
+
+Include-scoped macros landed in `extract_diagrams()`: the including file's `\define` map is passed down `\include` / `\includetalkfile` / `\input` / section edges, and local defines override. Unit tests cover a parent define reaching a grandchild `\includediagram`. The live lamd `dependencies batch` check is still open on the residual bug, so this task stays in progress.

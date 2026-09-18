@@ -1,7 +1,7 @@
 ---
 id: "2026-09-18_macro-defines-not-propagated-across-includes"
 title: "Macro defines not propagated across includes in diagram dependency extraction"
-status: "Ready"
+status: "In Progress"
 priority: "High"
 created: "2026-09-18"
 last_updated: "2026-09-18"
@@ -62,11 +62,11 @@ Same-file cases (e.g. `\basisfunction` defined immediately above `\concat` in `q
 
 ## Acceptance Criteria
 
-- [ ] `\define` macros from an including file are available when resolving `\includediagram` paths in files reached via `\include` / `\includetalkfile` (included snippet tree), not only same-file defines.
+- [x] `\define` macros from an including file are available when resolving `\includediagram` paths in files reached via `\include` / `\includetalkfile` (included snippet tree), not only same-file defines.
 - [ ] `dependencies batch` on a talk that includes `conversation-tedx.md` / `anne-bob-talk.md` lists `anne-bob-conversation000.emf` … `007.emf` (after `\diagramsDir` substitution) in `pptxdiagrams`.
-- [ ] Same-file `\define` + `\concat` behaviour from `2026-08-09_macro-aware-diagram-dependency-extraction` remains intact (no regression).
-- [ ] Unit test covers parent-define / child-`\includediagram` across an include boundary (mirroring `conversation-tedx.md` → `anne-bob-talk.md`).
-- [ ] Documented limitation updated: which include edges propagate macros, and that this is still bounded expansion (not full gpp).
+- [x] Same-file `\define` + `\concat` behaviour from `2026-08-09_macro-aware-diagram-dependency-extraction` remains intact (no regression).
+- [x] Unit test covers parent-define / child-`\includediagram` across an include boundary (mirroring `conversation-tedx.md` → `anne-bob-talk.md`).
+- [x] Documented limitation updated: which include edges propagate macros, and that this is still bounded expansion (not full gpp).
 
 ## Implementation Notes
 
@@ -107,3 +107,7 @@ Expect EMF paths under `pptxdiagrams:`.
 ### 2026-09-18
 
 Bug filed after CEIBS Global CEO talk pptx build: Inkscape conversion skipped for anne–bob conversation frames because cross-include `\stubname` was not visible to the dependency scanner. Same-file macro expansion from August landed; include-boundary propagation did not.
+
+### 2026-09-18
+
+`extract_diagrams()` now walks the include tree with an inherited macro map. Parent `\define`s are visible in included files; a child's defines do not leak to siblings; a local `\define` overrides the parent. Unit tests cover the anne–bob include pattern (including a middle include), the sibling boundary, and the local override. Docstrings on `extract_diagrams()` and `expand_diagram_path()` state which include edges carry the map, and that this is still bounded `\define` / `\concat` expansion. Live `dependencies batch` on the CEIBS talk is still unchecked.

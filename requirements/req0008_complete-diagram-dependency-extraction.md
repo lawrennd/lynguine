@@ -87,4 +87,8 @@ Implementation in progress: bounded `\define` / `\concat` expansion in `lynguine
 
 ### 2026-09-18
 
-Same-file expansion works, but the “included snippet tree” acceptance criterion still fails: parent `\define` (e.g. `\stubname` in `conversation-tedx.md`) is not visible when scanning child `\includediagram` paths (`anne-bob-talk.md`). Residual bug: `backlog/bugs/2026-09-18_macro-defines-not-propagated-across-includes.md`.
+Same-file expansion works. Parent `\define` macros are now passed into included files by `extract_diagrams()`; unit tests cover the include boundary. Residual bug: `backlog/bugs/2026-09-18_macro-defines-not-propagated-across-includes.md`. Live lamd confirmation is still open.
+
+### 2026-09-18
+
+`extract_diagrams()` now passes parent `\define` macros into included files. Unit tests cover the include boundary. The requirement stays in progress until a lamd `dependencies batch` run confirms the CEIBS anne–bob EMF paths.

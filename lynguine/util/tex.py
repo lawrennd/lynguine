@@ -324,6 +324,12 @@ def expand_diagram_path(path, macros, max_depth=20):
     can skip them. Nested ``\\concat`` inside a ``\\concat`` argument is
     not supported; use a single ``\\concat`` with ``\\define`` macros instead.
 
+    The macro map is supplied by the caller. ``talk.extract_diagrams`` passes
+    defines inherited from including files plus the current file (current file
+    wins). Child defines are not returned to siblings. The edges that carry
+    the map are ``\\include``, ``\\includetalkfile``, ``\\input``,
+    ``\\newsection``, and ``\\newsubsection``.
+
     :param path: Diagram path string, typically from :func:`extract_diagrams`.
     :type path: str
     :param macros: Macro name to replacement value mapping.
