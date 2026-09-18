@@ -4,7 +4,7 @@ title: "Macro-aware diagram dependency extraction"
 status: "In Progress"
 priority: "High"
 created: "2026-08-09"
-last_updated: "2026-08-09"
+last_updated: "2026-09-18"
 category: "features"
 related_cips: []
 owner: "Neil Lawrence"
@@ -90,3 +90,7 @@ Task created after diagnosing missing `quadratic_basis*.emf` in mlfc pptx build:
 ### 2026-08-09
 
 Implemented bounded macro expansion in lynguine (`collect_define_macros`, `expand_diagram_path`, balanced-brace `\includediagram` parsing). Unit tests added; pending validation against lamd build.
+
+### 2026-09-18
+
+Same-file `\define` + `\concat` works, but **macros defined in a parent include are not visible when scanning the child** for `\includediagram`. Residual failure filed as bug [2026-09-18_macro-defines-not-propagated-across-includes](../bugs/2026-09-18_macro-defines-not-propagated-across-includes.md) (anne–bob conversation EMF deps missing in CEIBS talk pptx build). This feature’s acceptance criterion “included snippet tree” remains unmet until that bug lands.

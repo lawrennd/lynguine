@@ -4,7 +4,7 @@ title: "Complete Diagram Dependency Extraction"
 status: "In Progress"
 priority: "High"
 created: "2026-08-09"
-last_updated: "2026-08-09"
+last_updated: "2026-09-18"
 related_tenets:
 - explicit-infrastructure
 stakeholders:
@@ -72,6 +72,7 @@ When applications use lynguine to discover build dependencies for talks and slid
 
 - **Related tenets**: `explicit-infrastructure`
 - **Backlog task**: `backlog/features/2026-08-09_macro-aware-diagram-dependency-extraction.md`
+- **Residual bug**: `backlog/bugs/2026-09-18_macro-defines-not-propagated-across-includes.md`
 - **Consumer context**: lamd `dependencies` / `dependencies batch` → build flags for talk output formats
 
 ## Progress Updates
@@ -83,3 +84,7 @@ Requirement drafted from lamd pptx build diagnosis: SVG present, EMF missing fro
 ### 2026-08-09
 
 Implementation in progress: bounded `\define` / `\concat` expansion in `lynguine/util/tex.py`, wired into `extract_diagrams()` in `talk.py`, with balanced-brace parsing for `\includediagram{...}` arguments.
+
+### 2026-09-18
+
+Same-file expansion works, but the “included snippet tree” acceptance criterion still fails: parent `\define` (e.g. `\stubname` in `conversation-tedx.md`) is not visible when scanning child `\includediagram` paths (`anne-bob-talk.md`). Residual bug: `backlog/bugs/2026-09-18_macro-defines-not-propagated-across-includes.md`.
