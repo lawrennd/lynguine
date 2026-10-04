@@ -4,7 +4,7 @@ title: "Harden GitPython dependency and clone usage (referia alerts #79–#99)"
 status: "In Progress"
 priority: "High"
 created: "2026-08-13"
-last_updated: "2026-08-13"
+last_updated: "2026-10-04"
 category: "infrastructure"
 related_cips: []
 owner: "lawrennd"
@@ -25,41 +25,43 @@ Referia's Dependabot scan reports **15 open GitPython alerts** (#79, #85–#99),
 `lynguine → gitpython`. Lynguine declares GitPython directly and uses it in
 `lynguine/access/download.py` (`Repo.clone_from`, `Repo.pull`).
 
-Current lynguine state:
+Current lynguine state (2026-10-04):
 
-- `pyproject.toml`: `gitpython = ">=3.1.57"`
-- `poetry.lock`: **3.1.58** (meets latest advisory patched version)
-- Referia `poetry.lock` still resolves **3.1.51** (stale lock against git `main` lynguine)
+- `pyproject.toml`: `gitpython = ">=3.1.62"`
+- `poetry.lock`: **3.1.62** (covers GHSA-239g-whfq-7xj9, GHSA-g5vv-9gxw-82hx, GHSA-whh4-5q6c-9v3x, GHSA-59cr-6r3x-644w)
+- Companion Dependabot group PR also bumps transitive `oauthlib` → 4.0.0 and `urllib3` → 2.8.0
 
 Lynguine-side work: tighten the declared minimum, confirm safe usage of clone URLs, and ensure
-consumers (referia) can refresh to ≥ 3.1.58.
+consumers (referia) can refresh to ≥ 3.1.62.
 
-**Note:** Dependabot alerts are **disabled** on the lynguine repository (see companion backlog task
-`2026-08-13_enable-dependabot-security-alerts.md`).
+## Dependabot alerts (lynguine, 2026-10-04)
 
-## Dependabot alerts (via referia lock scan)
+Patched version for current open GitPython alerts: **≥ 3.1.62**. Earlier August referia list
+targeted ≥ 3.1.58; that floor is now superseded.
 
-Patched version: **≥ 3.1.58**. Representative GHSAs: GHSA-rwj8-pgh3-r573 (clone URL env expansion),
-GHSA-jm78-9fvv-mhgr, GHSA-wvpp-8hx9-p66j, GHSA-hmq2-w58f-27jc, and others (#85–#99).
+Also closed by the same lock refresh (transitive):
 
-Full list tracked in referia backlog:
+- `urllib3` ≥ 2.8.0 (alerts #27–#29)
+- `oauthlib` ≥ 4.0.0 (alerts #25–#26)
+
+Full historical referia list:
 `referia/backlog/infrastructure/2026-08-13_dependabot-gitpython.md`
 
 ## Acceptance Criteria
 
-- [x] `pyproject.toml` requires `gitpython >= 3.1.58` (explicit, not only `>=3.1.57`)
-- [x] `poetry.lock` remains at ≥ 3.1.58 after refresh (3.1.59)
+- [x] `pyproject.toml` requires `gitpython >= 3.1.62`
+- [x] `poetry.lock` at GitPython **3.1.62** (with oauthlib 4.0.0, urllib3 2.8.0)
 - [ ] Review `lynguine/access/download.py` clone URL handling; document or mitigate untrusted URL risk
-- [x] Lynguine tests pass (588 core; 51 pre-existing failures in `test_server_mode.py`)
-- [ ] Referia can `poetry update gitpython` (or lynguine) and close alerts #79, #85–#99
+- [x] Lynguine tests pass with the bumped lock (688 passed on Dependabot CI)
+- [ ] Referia can `poetry update gitpython` (or lynguine) and close remaining consumer alerts
 - [ ] Cross-link completed work in referia backlog task
 
 ## Implementation Notes
 
 ```bash
 # In lynguine
-# Edit pyproject.toml: gitpython = ">=3.1.58"
-poetry update gitpython
+# Edit pyproject.toml: gitpython = ">=3.1.62"
+poetry update gitpython oauthlib urllib3
 poetry run pytest
 ```
 
@@ -71,6 +73,7 @@ unexpanded env vars from untrusted input.
 
 - Referia backlog: `referia/backlog/infrastructure/2026-08-13_dependabot-gitpython.md`
 - Code: `lynguine/access/download.py` (lines ~290–309)
+- Dependabot PR: https://github.com/lawrennd/lynguine/pull/27
 - No existing lynguine CIP covers GitPython CVE remediation.
 
 ## Progress Updates
@@ -85,3 +88,10 @@ Task created. Lynguine lock already at 3.1.58; referia lock stale. Dependabot no
 - `poetry.lock`: GitPython **3.1.59** after update
 - Core tests pass (588/588 excluding pre-existing `test_server_mode.py` failures)
 - Remaining: referia lock refresh; clone URL trust documentation
+
+### 2026-10-04
+
+- Dependabot opened group PR #27 for GitPython 3.1.62, oauthlib 4.0.0, urllib3 2.8.0 (closes 9 alerts)
+- Raised declared floor to `gitpython >= 3.1.62`
+- Codecov upload no longer fails the Python Tests job when the token is unavailable (Dependabot CI)
+- Remaining: clone URL trust review; referia consumer lock refresh

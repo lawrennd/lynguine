@@ -25,7 +25,7 @@ XlsxWriter = "*"
 pandas = "*"
 numpy = ">=1.0.0,<2.0.0" # to deal with this https://github.com/explosion/thinc/issues/939
 pypandoc = "*"
-gitpython = ">=3.1.58"
+gitpython = ">=3.1.62"
 anyascii = "*"
 python-liquid = "*"
 pylatexenc = "*"
