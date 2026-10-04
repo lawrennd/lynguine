@@ -150,6 +150,29 @@ def test_extract_diagrams_expands_macro_paths(mocker):
     assert not any('\\concat' in path for path in result)
 
 
+def test_extract_diagrams_includegooglebook_png(mocker):
+    snippet = (
+        "\\figure{\\includegooglebook{XG43AQAAMAAJ}{PA88}}"
+        "{caption}{monthly-magazine-ceres-piazzi}\n"
+    )
+    mocker.patch('os.path.exists', return_value=True)
+    mocker.patch('lynguine.util.talk.extract_inputs', return_value=[])
+    mocker.patch('builtins.open', mocker.mock_open(read_data=snippet))
+
+    result = talk.extract_diagrams(
+        'sample_talk.md',
+        diagrams_dir='./slides/diagrams',
+        snippets_path='.',
+        absolute_path=False,
+        diagram_exts=['svg', 'png', 'emf', 'pdf'],
+    )
+
+    assert './slides/diagrams/books/XG43AQAAMAAJ-PA88.png' in result
+    # Google Books screenshots are PNG-only; do not invent svg/emf/pdf deps.
+    assert './slides/diagrams/books/XG43AQAAMAAJ-PA88.svg' not in result
+    assert './slides/diagrams/books/XG43AQAAMAAJ-PA88.emf' not in result
+
+
 def test_extract_diagrams_inherits_parent_defines_across_includes(tmp_path):
     child = tmp_path / "anne-bob-talk.md"
     child.write_text("\\includediagram{\\diagramsDir/\\concat{\\stubname}{000}}\n")

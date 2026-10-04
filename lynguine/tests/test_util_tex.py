@@ -84,10 +84,35 @@ def test_extract_citations():
         "diagram",
         ["\\diagramsDir/ml/\\concat{\\basisfunction}{000}"],
     ),
+    (
+        ["\\includegooglebook{XG43AQAAMAAJ}{PA88}"],
+        "png",
+        ["\\diagramsDir/books/XG43AQAAMAAJ-PA88"],
+    ),
+    (
+        ["\\figure{\\includegooglebook{spcAAAAAMAAJ}{PA72}}{caption}{label}"],
+        "all",
+        ["\\diagramsDir/books/spcAAAAAMAAJ-PA72"],
+    ),
+    (
+        ["\\includegooglebook{XG43AQAAMAAJ}{PA88}"],
+        "diagram",
+        [],
+    ),
 ])
 def test_extract_diagrams(lines, type, expected):
     result = tex.extract_diagrams(lines, type=type)
     assert result == expected
+
+
+def test_extract_googlebook_diagrams_multiple_on_line():
+    lines = [
+        "\\includegooglebook{AAA}{PA1} and \\includegooglebook{BBB}{PA2}\n",
+    ]
+    assert tex._extract_googlebook_diagrams(lines) == [
+        "\\diagramsDir/books/AAA-PA1",
+        "\\diagramsDir/books/BBB-PA2",
+    ]
 
 
 def test_collect_define_macros():

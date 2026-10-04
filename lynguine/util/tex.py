@@ -207,6 +207,31 @@ _DEFINE_MACRO_RE = re.compile(r"""\\define\{([^}]*)\}\{([^}]*)}""")
 _CONCAT_MACRO_RE = re.compile(r"""\\concat\{([^}]*)\}\{([^}]*)}""")
 
 
+def _extract_balanced_brace_group(text, open_brace_index):
+    """
+    Return ``(content, index_after_closing_brace)`` for braces at ``open_brace_index``.
+
+    :param text: Source text.
+    :type text: str
+    :param open_brace_index: Index of the opening ``{``.
+    :type open_brace_index: int
+    :return: Inner content and position after ``}``, or ``(None, open_brace_index)``.
+    :rtype: tuple
+    """
+    if open_brace_index >= len(text) or text[open_brace_index] != "{":
+        return None, open_brace_index
+
+    depth = 0
+    for index in range(open_brace_index, len(text)):
+        if text[index] == "{":
+            depth += 1
+        elif text[index] == "}":
+            depth -= 1
+            if depth == 0:
+                return text[open_brace_index + 1 : index], index + 1
+    return None, open_brace_index
+
+
 def _extract_balanced_brace_content(text, open_brace_index):
     """
     Return the content inside balanced braces starting at ``open_brace_index``.
@@ -218,28 +243,19 @@ def _extract_balanced_brace_content(text, open_brace_index):
     :return: Inner content without the surrounding braces, or None.
     :rtype: str or None
     """
-    if open_brace_index >= len(text) or text[open_brace_index] != "{":
-        return None
-
-    depth = 0
-    for index in range(open_brace_index, len(text)):
-        if text[index] == "{":
-            depth += 1
-        elif text[index] == "}":
-            depth -= 1
-            if depth == 0:
-                return text[open_brace_index + 1 : index]
-    return None
+    content, _ = _extract_balanced_brace_group(text, open_brace_index)
+    return content
 
 
-def _extract_braced_command_arguments(line, command):
+def _extract_n_braced_command_arguments(line, command, n):
     """
-    Extract first braced arguments for each ``command`` occurrence on a line.
+    Extract ``n`` consecutive braced arguments for each ``command`` on a line.
 
     Optional ``[...]`` and ``<...>`` modifiers between the command and the
-    opening brace are skipped.
+    first opening brace are skipped. Occurrences with fewer than ``n`` braced
+    arguments are ignored.
     """
-    arguments = []
+    results = []
     start = 0
     while True:
         index = line.find(command, start)
@@ -274,14 +290,49 @@ def _extract_braced_command_arguments(line, command):
                 while pos < len(line) and line[pos] in " \t":
                     pos += 1
 
-        if pos < len(line) and line[pos] == "{":
-            content = _extract_balanced_brace_content(line, pos)
-            if content is not None:
-                arguments.append(content)
+        args = []
+        ok = True
+        for _ in range(n):
+            while pos < len(line) and line[pos] in " \t":
+                pos += 1
+            if pos >= len(line) or line[pos] != "{":
+                ok = False
+                break
+            content, pos = _extract_balanced_brace_group(line, pos)
+            if content is None:
+                ok = False
+                break
+            args.append(content)
+        if ok:
+            results.append(tuple(args))
 
         start = index + 1
 
-    return arguments
+    return results
+
+
+def _extract_braced_command_arguments(line, command):
+    """
+    Extract first braced arguments for each ``command`` occurrence on a line.
+
+    Optional ``[...]`` and ``<...>`` modifiers between the command and the
+    opening brace are skipped.
+    """
+    return [args[0] for args in _extract_n_braced_command_arguments(line, command, 1)]
+
+
+def _extract_googlebook_diagrams(lines):
+    """
+    Return screenshot paths implied by ``\\includegooglebook{id}{page}``.
+
+    LaMD slides and notes macros render these as
+    ``\\diagramsDir/books/{id}-{page}.png``.
+    """
+    paths = []
+    for line in lines:
+        for book_id, page in _extract_n_braced_command_arguments(line, r"\includegooglebook", 2):
+            paths.append(f"\\diagramsDir/books/{book_id}-{page}")
+    return paths
 
 
 def collect_define_macros(lines):
@@ -365,6 +416,11 @@ def extract_diagrams(lines, type="all"):
     """
     Extract all the diagrams listed in the file.
 
+    Recognized macros include ``\\includediagram*``, ``\\includeimg``,
+    ``\\includepng`` / ``\\includegif`` / ``\\includejpg``, and
+    ``\\includegooglebook{id}{page}`` (mapped to
+    ``\\diagramsDir/books/{id}-{page}`` for PNG dependency tracking).
+
     :param lines: The lines of the file to be processed.
     :type lines: list
     :param type: The type of diagrams to be extracted.
@@ -394,6 +450,10 @@ def extract_diagrams(lines, type="all"):
         for line in lines:
             for argument in _extract_braced_command_arguments(line, rebase):
                 diagram_list += argument.split(",")
+
+    # Slides/notes use a local screenshot for Google Books embeds.
+    if type in ("png", "all"):
+        diagram_list += _extract_googlebook_diagrams(lines)
 
     return diagram_list
 
