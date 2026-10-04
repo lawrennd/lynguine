@@ -35,5 +35,7 @@ jobs:
       uses: codecov/codecov-action@v7
       with:
         files: ./coverage.xml
-        fail_ci_if_error: true
+        # Do not fail the build when Codecov rejects the upload (e.g. missing
+        # token on Dependabot PRs / protected-branch rules). Tests remain the gate.
+        fail_ci_if_error: false
         token: ${{ secrets.CODECOV_TOKEN }}
