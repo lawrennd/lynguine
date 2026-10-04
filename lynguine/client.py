@@ -7,6 +7,7 @@ retry logic, crash recovery, and stateful data sessions.
 """
 
 import json
+import sys
 import time
 import subprocess
 import urllib.parse
@@ -89,9 +90,10 @@ class ServerClient:
         log.info(f"Auto-starting lynguine server on {host}:{port}")
         
         try:
-            # Build command
+            # Use this interpreter so auto-start matches the caller's venv
+            # (bare `python` may be a different install with no lynguine).
             cmd = [
-                'python', '-m', 'lynguine.server',
+                sys.executable, '-m', 'lynguine.server',
                 '--host', host,
                 '--port', str(port)
             ]
@@ -107,8 +109,9 @@ class ServerClient:
                 start_new_session=True  # Detach from parent
             )
             
-            # Wait for server to be ready (with retries)
-            max_retries = 20
+            # Wait for server to be ready. Cold import of lynguine (pandas,
+            # numpy, …) can take well over 10s, especially on macOS.
+            max_retries = 40
             for i in range(max_retries):
                 time.sleep(0.5)
                 if self.ping():

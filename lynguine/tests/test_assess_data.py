@@ -845,7 +845,7 @@ def test_augment_with_df():
     
     assert list(cdf.columns) == ['A', 'B', 'C', 'D']
     assert cdf.colspecs == {'cache': ['A', 'B', 'C', 'D']}
-    np.testing.assert_array_equal(cdf['C'].values, [7, 8, 9])
+    assert list(cdf['C'].values) == [7, 8, 9]
 
     # Test case 2: Augment with a parameter column
     new_data2 = pd.DataFrame({

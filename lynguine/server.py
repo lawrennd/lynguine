@@ -28,6 +28,18 @@ from lynguine.session_manager import SessionManager
 from lynguine import server_session_handlers
 from lynguine import server_interface_handlers
 
+
+class LynguineHTTPServer(HTTPServer):
+    """HTTP server that can rebind a recently closed port.
+
+    Default ``HTTPServer.allow_reuse_address`` is False. After tests (or a
+    crash) kill a listener, macOS keeps the port in TIME_WAIT and the next
+    bind fails. Linux is more lenient, which is why CI can pass while local
+    macOS server-mode tests fail after a few start/stop cycles.
+    """
+
+    allow_reuse_address = True
+
 # Create logger instance
 log = Logger(name="lynguine.server", level="info", filename="lynguine-server.log")
 
@@ -677,7 +689,7 @@ def run_server(host: str = '127.0.0.1', port: int = 8765, idle_timeout: int = 0)
     signal.signal(signal.SIGTERM, signal_handler)
     
     server_address = (host, port)
-    httpd = HTTPServer(server_address, LynguineHandler)
+    httpd = LynguineHTTPServer(server_address, LynguineHandler)
     
     # Setup idle timeout if enabled
     global _idle_timeout_manager
