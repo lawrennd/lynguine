@@ -1855,7 +1855,10 @@ def read_hstack(details):
                 if "index" in specs:
                     df.set_index(specs['index'], inplace=True)
                 if "index" in details:
-                    final_df.set_index(details['index'], inplace=True)                  
+                    final_df.set_index(details['index'], inplace=True)
+                df = _drop_join_suffix_collisions(
+                    final_df, df, specs['lsuffix'], specs['rsuffix']
+                )
                 final_df = final_df.join(df, how=specs['how'], lsuffix=specs['lsuffix'], rsuffix=specs['rsuffix'])
                 # Remove the index column again
                 if "index" in details:
@@ -1863,9 +1866,65 @@ def read_hstack(details):
                     final_df.reset_index(drop=True, inplace=True)
                 
             else:
-                final_df = pd.merge(final_df, df, on=specs['on'], how=specs['how'], suffixes=(specs['lsuffix'], specs['rsuffix']))
+                right = _drop_merge_suffix_collisions(
+                    final_df, df, specs['on'], specs['lsuffix'], specs['rsuffix']
+                )
+                final_df = pd.merge(
+                    final_df,
+                    right,
+                    on=specs['on'],
+                    how=specs['how'],
+                    suffixes=(specs['lsuffix'], specs['rsuffix']),
+                )
 
     return final_df
+
+
+def _drop_join_suffix_collisions(left, right, lsuffix, rsuffix):
+    """Drop right columns whose suffixed names already exist on left.
+
+    A prior join may have created ``col{rsuffix}``. Joining another frame that
+    also has ``col`` would try to create the same name again and raise
+    ``MergeError``. Earlier columns win; the colliding right column is dropped.
+    """
+    if right is None or right.empty:
+        return right
+    drop = []
+    for col in right.columns.intersection(left.columns):
+        right_name = f"{col}{rsuffix}" if rsuffix else col
+        if right_name in left.columns:
+            drop.append(col)
+            continue
+        if lsuffix:
+            left_name = f"{col}{lsuffix}"
+            if left_name in left.columns and left_name != col:
+                drop.append(col)
+    if drop:
+        return right.drop(columns=drop)
+    return right
+
+
+def _drop_merge_suffix_collisions(left, right, on, lsuffix, rsuffix):
+    """Same collision policy as ``_drop_join_suffix_collisions`` for merges."""
+    if right is None or right.empty:
+        return right
+    on_cols = [on] if isinstance(on, str) else list(on)
+    drop = []
+    overlap = left.columns.intersection(right.columns)
+    for col in overlap:
+        if col in on_cols:
+            continue
+        right_name = f"{col}{rsuffix}" if rsuffix else col
+        if right_name in left.columns:
+            drop.append(col)
+            continue
+        if lsuffix:
+            left_name = f"{col}{lsuffix}"
+            if left_name in left.columns and left_name != col:
+                drop.append(col)
+    if drop:
+        return right.drop(columns=drop)
+    return right
 
 def read_stack(details):
     """

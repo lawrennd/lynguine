@@ -179,6 +179,29 @@ def test_from_cwd_file_inherit_cannot_leave_cwd(tmp_path, monkeypatch):
         Interface.from_cwd_file(user_file="child.yml", directory=".")
 
 
+def test_from_file_inherit_allows_sibling_directory(tmp_path):
+    """Sibling inherit is normal; jail expands to include the parent dir."""
+    from lynguine.config.interface import Interface
+
+    parent_dir = tmp_path / "parent"
+    child_dir = tmp_path / "child"
+    parent_dir.mkdir()
+    child_dir.mkdir()
+    (parent_dir / "_lynguine.yml").write_text("parent_only: true\nshared: from_parent\n")
+    (child_dir / "_lynguine.yml").write_text(
+        "inherit:\n  directory: ../parent\nchild_only: true\nshared: from_child\n"
+    )
+    interface = Interface.from_file(user_file="_lynguine.yml", directory=str(child_dir))
+    assert interface["child_only"] is True
+    assert interface["shared"] == "from_child"
+    assert interface["parent_only"] is True
+    child_root = os.path.realpath(str(child_dir))
+    parent_root = os.path.realpath(str(parent_dir))
+    roots = [os.path.realpath(r) for r in interface.allowed_roots]
+    assert child_root in roots
+    assert parent_root in roots
+
+
 def test_create_session_refuses_unbounded_manager(tmp_path):
     from lynguine.session_manager import SessionManager
 

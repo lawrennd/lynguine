@@ -850,6 +850,37 @@ def test_read_hstack_with_suffixes(mock_read_data_fixture):
     expected_columns = ['A', 'B_lefty', 'B_righty', 'C']
     assert all(column in result.columns for column in expected_columns)
 
+
+def test_read_hstack_drops_repeated_rsuffix_collisions(mocker):
+    """Third join must not recreate an existing col_right (pandas MergeError)."""
+    frames = {
+        'source1': pd.DataFrame({'crsid': ['a', 'b'], 'A': [1, 2]}),
+        'source2': pd.DataFrame({'crsid': ['a', 'b'], 'B': [3, 4]}),
+        'source3': pd.DataFrame({'crsid': ['a', 'b'], 'C': [5, 6]}),
+    }
+
+    def read_data_side_effect(specs):
+        return frames[specs['type']].copy(), {}
+
+    mocker.patch('lynguine.access.io.read_data', side_effect=read_data_side_effect)
+    details = {
+        'type': 'hstack',
+        'specifications': [
+            {'type': 'source1'},
+            {'type': 'source2'},
+            {'type': 'source3'},
+        ],
+    }
+    result = lynguine.access.io.read_hstack(details)
+    assert 'crsid' in result.columns
+    assert 'crsid_right' in result.columns
+    assert 'A' in result.columns
+    assert 'B' in result.columns
+    assert 'C' in result.columns
+    # Third crsid dropped rather than creating a duplicate crsid_right.
+    assert list(result.columns).count('crsid_right') == 1
+
+
 def test_read_hstack_no_specifications():
     details = {
         'type': 'hstack',

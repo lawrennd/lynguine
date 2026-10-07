@@ -3076,6 +3076,11 @@ class CustomDataFrame(DataObject):
         """
         Convert the CustomDataFrame to a pandas DataFrame.
 
+        Non-parameter flows are joined on the index. When two flows share
+        column names, the first flow keeps those columns and duplicates in
+        later flows are dropped (explicit: earlier flow wins). Parameter
+        columns are still broadcast onto every row via ``assign``.
+
         :return: A pandas DataFrame representation of the CustomDataFrame.
         :rtype: pandas.DataFrame
         """
@@ -3090,7 +3095,17 @@ class CustomDataFrame(DataObject):
                 if df1 is None:
                     df1 = data
                 else:
-                    df1 = df1.join(data, how="outer")
+                    # Drop columns already present so join does not require
+                    # suffixes (allocation/scores often share identity cols).
+                    overlap = [c for c in data.columns if c in df1.columns]
+                    right = data.drop(columns=overlap) if overlap else data
+                    if right.shape[1] == 0:
+                        # Only overlapping columns; keep left, align index.
+                        df1 = df1.join(
+                            pd.DataFrame(index=right.index), how="outer"
+                        )
+                    else:
+                        df1 = df1.join(right, how="outer")
         return df1
 
     def update_from_pandas(self, df : pd.DataFrame, colspecs : dict=None) -> None:

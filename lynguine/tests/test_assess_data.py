@@ -809,6 +809,30 @@ def test_mathematical_operations_preserve_colspecs(sample_df):
     assert result._colspecs == sample_df._colspecs
 
 
+def test_to_pandas_overlapping_columns_keeps_earlier_flow():
+    """input/output often share identity columns; to_pandas must not raise."""
+    left = pd.DataFrame(
+        {"givenName": ["Ada"], "score": [1]},
+        index=pd.Index(["a"], name="id"),
+    )
+    right = pd.DataFrame(
+        {"givenName": ["Ada"], "comment": ["ok"]},
+        index=pd.Index(["a"], name="id"),
+    )
+    cdf = lynguine.assess.data.CustomDataFrame(
+        left, colspecs={"input": ["givenName", "score"]}
+    )
+    cdf._d["output"] = right
+    cdf._colspecs["output"] = ["givenName", "comment"]
+
+    out = cdf.to_pandas()
+    assert "givenName" in out.columns
+    assert "score" in out.columns
+    assert "comment" in out.columns
+    assert out.loc["a", "givenName"] == "Ada"
+    assert out.loc["a", "comment"] == "ok"
+
+
 def test_to_pandas_includes_series_data(sample_df):
     pd_df = sample_df.to_pandas()
     assert 'D' in pd_df.columns

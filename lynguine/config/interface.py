@@ -371,9 +371,11 @@ class Interface(_HConfig):
 
             # TK Establish if path is relative from current directory and set it to relative location.
             
-            # Load parent under the same jail. HTTP/cwd-sandbox interfaces
-            # must not call from_file: that taints every exists/open there
-            # for CodeQL py/path-injection (CIP-000D).
+            # Load parent under an extended jail that includes the inherit
+            # directory (sibling/ancestor configs are the normal case).
+            # HTTP/cwd-sandbox interfaces must not call from_file: that
+            # taints every exists/open there for CodeQL py/path-injection
+            # (CIP-000D). cwd_sandbox still refuses paths outside CWD.
             if self.unbounded_paths:
                 self._parent = self.__class__.from_file(
                     user_file=filename,
@@ -386,12 +388,23 @@ class Interface(_HConfig):
                     directory=inherit_directory,
                 )
             else:
+                inherit_root = os.path.realpath(
+                    os.path.expanduser(inherit_directory)
+                )
+                parent_roots = list(self.allowed_roots or [])
+                if inherit_root not in parent_roots:
+                    parent_roots.append(inherit_root)
                 self._parent = self.__class__.from_file(
                     user_file=filename,
                     directory=inherit_directory,
-                    allowed_roots=self.allowed_roots,
+                    allowed_roots=parent_roots,
                     unbounded_paths=False,
                 )
+                # Keep parent roots so inherited data paths remain readable.
+                if self._parent.allowed_roots:
+                    for root in self._parent.allowed_roots:
+                        if root not in (self.allowed_roots or []):
+                            self.allowed_roots.append(root)
             
             # Set it not to be writable (convert output to input,
             # series to input, parameters to constants))
