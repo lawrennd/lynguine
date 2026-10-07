@@ -339,9 +339,13 @@ def test_from_file_loads_inside_jail(tmp_path):
     }
 
 
-def test_from_file_inherit_cannot_leave_jail(tmp_path):
-    from lynguine.access.paths import PathEscapeError
+def test_from_file_inherit_extends_jail(tmp_path):
+    """Explicit inherit.directory may extend allowed_roots (CIP-000E / CIP-000A).
 
+    Non-inherit escapes and cwd-sandbox inherit outside CWD still PathEscape;
+    see test_from_file_rejects_parent_escape and
+    test_from_cwd_file_inherit_cannot_leave_cwd.
+    """
     jail = tmp_path / "jail"
     jail.mkdir()
     outside = tmp_path / "outside"
@@ -350,8 +354,12 @@ def test_from_file_inherit_cannot_leave_jail(tmp_path):
     (jail / "child.yml").write_text(
         "inherit:\n  directory: ../outside\n  filename: parent.yml\nchild: 1\n"
     )
-    with pytest.raises(PathEscapeError):
-        Interface.from_file(user_file="child.yml", directory=str(jail))
+    interface = Interface.from_file(user_file="child.yml", directory=str(jail))
+    assert interface["child"] == 1
+    assert interface["parent_only"] is True
+    roots = [os.path.realpath(r) for r in interface.allowed_roots]
+    assert os.path.realpath(str(jail)) in roots
+    assert os.path.realpath(str(outside)) in roots
 
 
 def test_from_file_unbounded_opt_out(tmp_path):
