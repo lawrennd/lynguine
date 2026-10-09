@@ -623,7 +623,7 @@ def test_write_markdown_file(mocker):
     filename = "test.md"
     io_module.write_markdown_file(data, filename)
 
-    # For some reason frontmatter writes to a BytesIO not a StringIO, so "wb" not "w"
+    # Version-safe path: dumps → utf-8 bytes → binary write
     mock_open.assert_called_once_with(filename, "wb")
     handle = mock_open()
     handle.write.assert_called_with(b'---\nkey: value\n---\n\n# Markdown Content')
@@ -669,14 +669,18 @@ def test_create_letter(mocker):
 # test for write_letter_file
 def test_write_letter_file(mocker):
     mock_open = mocker.patch('builtins.open', mocker.mock_open())
-    mock_frontmatter_dump = mocker.patch('frontmatter.dump')
+    mock_frontmatter_dumps = mocker.patch(
+        'frontmatter.dumps', return_value='---\nkey: value\n---\n\nLetter content'
+    )
 
     data = {'key': 'value', 'content': 'Letter content'}
     filename = "letter.md"
     io_module.write_letter_file(data, filename, 'content')
 
     mock_open.assert_called_once_with(filename, "wb")
-    mock_frontmatter_dump.assert_called_once()
+    mock_frontmatter_dumps.assert_called_once()
+    handle = mock_open()
+    handle.write.assert_called_with(b'---\nkey: value\n---\n\nLetter content')
 
 # test for write_formlink 
 def test_write_formlink(mocker):

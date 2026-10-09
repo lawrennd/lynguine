@@ -1060,8 +1060,13 @@ def write_markdown_file(data, filename, content=None, include_content=True):
     if pd.isna(content):
         content = ""
     post = frontmatter.Post(content, **write_data)
+    # Serialize ourselves: older python-frontmatter ``dump`` encodes to bytes
+    # and expects a binary file; newer versions write ``str`` and expect text
+    # mode. ``dumps`` returns str in both — encode once and write binary.
+    text = frontmatter.dumps(post, sort_keys=False)
+    raw = text if isinstance(text, bytes) else text.encode("utf-8")
     with open(filename, "wb") as stream:
-        frontmatter.dump(post, stream, sort_keys=False)
+        stream.write(raw)
 
 def create_document_content(**kwargs):
     """
@@ -1126,8 +1131,11 @@ def write_letter_file(data, filename, content, include_content=True):
 
     log.debug(f'Writing markdown letter file "{filename}"')
     post = frontmatter.Post(content, **write_data)
+    # Same version-safe write as write_markdown_file (dumps → utf-8 → wb).
+    text = frontmatter.dumps(post, sort_keys=False)
+    raw = text if isinstance(text, bytes) else text.encode("utf-8")
     with open(filename, "wb") as stream:
-        frontmatter.dump(post, stream, sort_keys=False)
+        stream.write(raw)
 
 
 def write_formlink(data, filename, content, include_content=True):
