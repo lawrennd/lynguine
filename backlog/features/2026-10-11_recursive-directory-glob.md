@@ -1,7 +1,7 @@
 ---
 id: "2026-10-11_recursive-directory-glob"
 title: "Thread recursive glob support through directory readers"
-status: "Ready"
+status: "Completed"
 priority: "High"
 created: "2026-10-11"
 last_updated: "2026-10-11"
@@ -32,21 +32,21 @@ Default remains non-recursive so existing flat `yaml_directory` / sibling direct
 
 ## Acceptance Criteria
 
-- [ ] `recursive: true` on a source entry enables recursive glob semantics (`glob.glob(..., recursive=True)` or equivalent `Path` API)
-- [ ] Absent / `recursive: false` preserves today's flat `glob.glob` behaviour
-- [ ] Nested fixture `a/b/c.yml` matches `**/c.yml` (or `**/*.yml`) only when `recursive: true`
-- [ ] Debug log records pattern, recursive flag, and match count
-- [ ] Paths outside `allowed_roots` still raise (CIP-000A regression)
-- [ ] `regexp` filter still applies after recursive expansion
-- [ ] No referia-specific ignore rules added; callers narrow via `glob` / `regexp`
-- [ ] Glob matches are used as full paths (no broken rejoin with relative `directory`)
+- [x] `recursive: true` on a source entry enables recursive glob semantics (`glob.glob(..., recursive=True)` or equivalent `Path` API)
+- [x] Absent / `recursive: false` preserves today's flat `glob.glob` behaviour
+- [x] Nested fixture `a/b/c.yml` matches `**/c.yml` (or `**/*.yml`) only when `recursive: true`
+- [x] Debug log records pattern, recursive flag, and match count
+- [x] Paths outside `allowed_roots` still raise (CIP-000A regression)
+- [x] `regexp` filter still applies after recursive expansion
+- [x] No referia-specific ignore rules added; callers narrow via `glob` / `regexp`
+- [x] Glob matches are used as full paths (no broken rejoin with relative `directory`)
 
 ## Implementation Notes
 
-- Primary touch point: `lynguine/access/io.py` — `read_directory` (~L471) and callers that pass source details
-- Apply in the shared directory path so all directory readers benefit (`yaml_directory`, `json_directory`, `markdown_directory`, …)
-- Document that `**` is meaningful only when `recursive: true`
-- **Path join:** today `read_directory` does `os.path.join(directory, match)` after `glob.glob`. Absolute matches (and paths absolutised via `allowed_roots`) are fine; bare relative directories can double-join. Fix when enabling recursion — baseline task should expose current behaviour first.
+- Primary touch point: `lynguine/access/io.py` — `read_directory`
+- Shared path: all directory readers benefit (`yaml_directory`, `json_directory`, `markdown_directory`, …)
+- Precedence: source `recursive` wins, else `details["recursive"]`, else `false`
+- Relative double-join fixed earlier (`2026-10-11_read-directory-relative-glob-double-join`)
 
 ## Related
 
@@ -62,3 +62,5 @@ Default remains non-recursive so existing flat `yaml_directory` / sibling direct
 Task created (Ready) from Accepted CIP-000F implementation plan step 1.
 
 Dependency on baseline directory-glob tests added; note about relative-path rejoin recorded.
+
+Implemented: `glob.glob(..., recursive=...)` in `read_directory`; tests in `test_directory_glob_baseline.py`. Marked Completed.

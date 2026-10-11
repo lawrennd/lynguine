@@ -473,6 +473,11 @@ def read_directory(
     """
     Read data from a directory of files.
 
+    Opt-in ``recursive: true`` on a source entry (or on ``details``) enables
+    ``glob.glob(..., recursive=True)`` so patterns such as ``**/*.yml`` walk
+    nested trees. Default is non-recursive; ``**`` is only meaningful when
+    ``recursive`` is true (CIP-000F).
+
     :param details: The details of the directory to be read.
     :type details: dict
     :param filereader: The function to be used to read the file.
@@ -505,14 +510,19 @@ def read_directory(
                 directory = confine_configured_path(directory, details)
             else:
                 directory = "."
+            # Source entry wins; else top-level details; default false.
+            recursive = bool(source.get("recursive", details.get("recursive", False)))
             globname = os.path.join(
                 directory,
                 glob_text,
             )
-            log.debug(f'Reading directory "{globname}"')
             # glob.glob already returns paths that include the directory prefix;
             # do not rejoin directory onto matches (relative dirs double-joined).
-            newfiles = glob.glob(globname)
+            newfiles = glob.glob(globname, recursive=recursive)
+            log.debug(
+                f'Reading directory "{globname}" recursive={recursive} '
+                f"matches={len(newfiles)}"
+            )
             if len(newfiles) == 0:
                 log.warning(f'No files match "{globname}"')
             if "regexp" in source:
