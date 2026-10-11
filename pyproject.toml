@@ -63,6 +63,9 @@ sphinx-rtd-theme = "^2.0.0"
 myst-parser = "^2.0.0"
 toml = "^0.10.2"
 
+[tool.poetry.group.dev.dependencies]
+ruff = "^0.17.0"
+
 [tool.poetry.scripts]
 ndlconvert = "lynguine.ndlconvert:main"
 
@@ -71,4 +74,24 @@ ndlconvert = "lynguine.ndlconvert:main"
 markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
 ]
+
+# Minimal Ruff baseline (backlog: 2026-10-11_introduce-ruff-minimal-lint).
+# Stage 1 installs the tool and wires CI without a mass cleanup.
+# Baseline on lynguine/ (~2026-10-11): hundreds of E/F findings if enabled,
+# ~75 files would be reformatted; enable rules/format gates in follow-ups.
+[tool.ruff]
+target-version = "py311"
+line-length = 88
+src = ["lynguine"]
+# Legacy Python 2 / broken indentation; Ruff still reports invalid-syntax
+# even when lint.select is empty.
+extend-exclude = ["lynguine/ndlcgi.py"]
+
+[tool.ruff.lint]
+# Intentionally empty until a follow-up enables E4/E7/E9/F (or similar)
+# after the existing findings are addressed or ignored deliberately.
+select = []
+
+[tool.ruff.format]
+quote-style = "double"
 
