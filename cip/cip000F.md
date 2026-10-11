@@ -3,7 +3,7 @@ author: "Neil D. Lawrence"
 created: "2026-10-11"
 id: "000F"
 last_updated: "2026-10-11"
-status: "In Progress"
+status: "Implemented"
 compressed: false
 related_requirements: ["0002", "0005", "0006"]
 related_cips: ["0009", "000A"]
@@ -28,7 +28,7 @@ title: "Recursive directory discovery and field projection for YAML sources"
 - [x] Proposed - Initial idea documented
 - [x] Accepted - Approved, ready to start work
 - [x] In Progress - Actively being implemented
-- [ ] Implemented - Work complete, awaiting verification
+- [x] Implemented - Work complete, awaiting verification
 - [ ] Closed - Verified and complete
 - [ ] Rejected - Will not be implemented (add reason, use superseded_by if replaced)
 - [ ] Deferred - Postponed (use blocked_by field to indicate blocker)
@@ -198,8 +198,8 @@ Specifically, this CIP makes the following true:
 - [x] Thread `recursive` through `read_directory` / source entries → backlog `2026-10-11_recursive-directory-glob`
 - [x] Implement `fields` projection for mapping-valued readers → backlog `2026-10-11_directory-reader-field-projection`
 - [x] Unit tests (recursive match, projection, confinement, regexp) → acceptance criteria on the feature tasks above
-- [ ] Document Directory-of-Files options (incl. typed readers) → backlog `2026-10-11_document-recursive-directory-fields`
-- [ ] Release note (opt-in) → same documentation task
+- [x] Document Directory-of-Files options (incl. typed readers) → backlog `2026-10-11_document-recursive-directory-fields`
+- [x] Release note (opt-in) → same documentation task
 
 ## References
 

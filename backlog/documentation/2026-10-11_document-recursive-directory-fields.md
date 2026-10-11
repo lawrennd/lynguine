@@ -1,7 +1,7 @@
 ---
 id: "2026-10-11_document-recursive-directory-fields"
 title: "Document recursive directory globs and field projection"
-status: "Ready"
+status: "Completed"
 priority: "Medium"
 created: "2026-10-11"
 last_updated: "2026-10-11"
@@ -32,13 +32,13 @@ Also close the pre-existing doc gap: README “Directory of Files” only shows 
 
 ## Acceptance Criteria
 
-- [ ] README and/or Sphinx “Directory of Files” section documents `recursive` and `fields`
-- [ ] README lists typed directory readers (not only bare `type: directory`)
-- [ ] Examples show nested glob + field projection (generic filenames, not referia-specific types)
-- [ ] Docs state default `recursive: false` and absent `fields` = current behaviour
-- [ ] Docs note that `**` is meaningful only with `recursive: true`
-- [ ] Docs note that `fields` applies to mapping-valued readers
-- [ ] Release note records opt-in, no break for existing configs
+- [x] README and/or Sphinx “Directory of Files” section documents `recursive` and `fields`
+- [x] README lists typed directory readers (not only bare `type: directory`)
+- [x] Examples show nested glob + field projection (generic filenames, not referia-specific types)
+- [x] Docs state default `recursive: false` and absent `fields` = current behaviour
+- [x] Docs note that `**` is meaningful only with `recursive: true`
+- [x] Docs note that `fields` applies to mapping-valued readers
+- [x] Release note records opt-in, no break for existing configs
 
 ## Implementation Notes
 
@@ -59,3 +59,5 @@ Also close the pre-existing doc gap: README “Directory of Files” only shows 
 Task created (Ready) from Accepted CIP-000F implementation plan steps 3–4.
 
 Expanded scope: document typed directory readers and non-recursive default (gap found during glob survey).
+
+README “Directory of Files” updated with typed readers, `recursive` / `fields`, nested example, and CIP-000F opt-in release note. Marked Completed.
