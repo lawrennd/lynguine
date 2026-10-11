@@ -1,7 +1,7 @@
 ---
 id: "2026-10-11_wide-flatten-wrapping-index"
 title: "wide_flatten: wrapping index is singleton result label (Phase 3)"
-status: "Ready"
+status: "Completed"
 priority: "High"
 created: "2026-10-11"
 last_updated: "2026-10-11"
@@ -30,11 +30,11 @@ CIP-0010 Phase 3 (Accepted): align `type: wide_flatten` with `stack` / `local`. 
 
 ## Acceptance Criteria
 
-- [ ] Outer `index` sets the wide row’s index label (e.g. `root`)
-- [ ] Tall pre-flatten identity is taken from nested load (nested `index` / existing frame index), not from outer `index` as a column name
-- [ ] Omit outer `index` → legacy behaviour (`0`); documented as deprecated for new configs
-- [ ] No `result_index` key accepted or documented
-- [ ] Existing callers that used outer `index` as tall column name are migrated in tests/docs to nested `index`
+- [x] Outer `index` sets the wide row’s index label (e.g. `root`)
+- [x] Tall pre-flatten identity is taken from nested load (nested `index` / existing frame index), not from outer `index` as a column name
+- [x] Omit outer `index` → legacy behaviour (`0`); documented as deprecated for new configs
+- [x] No `result_index` key accepted or documented
+- [x] Existing callers that used outer `index` as tall column name are migrated in tests/docs to nested `index`
 
 ## Implementation Notes
 
@@ -53,3 +53,7 @@ CIP-0010 Phase 3 (Accepted): align `type: wide_flatten` with `stack` / `local`. 
 ### 2026-10-11
 
 Task created (Ready) after Phase 3 Accepted and REQ-000C marked Ready.
+
+### 2026-10-11 (implementation)
+
+Implemented in `read_wide_flatten`: nested tall `set_index`, outer wrapping label. Marked Completed.

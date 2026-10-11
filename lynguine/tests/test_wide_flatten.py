@@ -206,9 +206,10 @@ def test_read_wide_flatten_via_read_data():
         "separator": "_",
         "order": "index_then_field",
         "columns": ["title", "complete"],
-        "index": "id",
+        "index": "root",  # singleton result label (Phase 3 / REQ-000C)
         "specifications": {
             "type": "local",
+            "index": "id",  # tall identity before flatten
             "data": [
                 {"id": "grant/a", "title": "A", "complete": True},
                 {"id": "grant/b", "title": "B", "complete": False},
@@ -219,6 +220,7 @@ def test_read_wide_flatten_via_read_data():
     df, _ = read_data(details)
 
     assert len(df) == 1
+    assert list(df.index) == ["root"]
     assert df.iloc[0]["flattenKeys"] == ["grant/a", "grant/b"]
     assert df.iloc[0]["grant/a_title"] == "A"
     assert df.iloc[0]["grant/b_complete"] is False or df.iloc[0]["grant/b_complete"] == False
@@ -227,14 +229,34 @@ def test_read_wide_flatten_via_read_data():
     assert "complete" not in df.columns
 
 
+def test_read_wide_flatten_omit_wrapping_index_legacy_zero():
+    """Omit outer index → legacy singleton label 0."""
+    details = {
+        "type": "wide_flatten",
+        "columns": ["title"],
+        "specifications": {
+            "type": "local",
+            "index": "id",
+            "data": [
+                {"id": "a", "title": "A"},
+                {"id": "b", "title": "B"},
+            ],
+        },
+    }
+    df, _ = read_data(details)
+    assert list(df.index) == [0]
+    assert df.iloc[0]["flattenKeys"] == ["a", "b"]
+
+
 def test_read_wide_flatten_keys_field_false():
     details = {
         "type": "wide_flatten",
         "keys_field": False,
         "columns": ["title"],
-        "index": "id",
+        "index": "overview",
         "specifications": {
             "type": "local",
+            "index": "id",
             "data": [
                 {"id": "a", "title": "A"},
                 {"id": "b", "title": "B"},
@@ -243,6 +265,7 @@ def test_read_wide_flatten_keys_field_false():
     }
     df, _ = read_data(details)
     assert "flattenKeys" not in df.columns
+    assert list(df.index) == ["overview"]
 
 
 def test_read_wide_flatten_nested_compute_then_widen():
@@ -250,9 +273,10 @@ def test_read_wide_flatten_nested_compute_then_widen():
     details = {
         "type": "wide_flatten",
         "columns": ["title", "tag"],
-        "index": "id",
+        "index": "root",
         "specifications": {
             "type": "local",
+            "index": "id",
             "data": [
                 {"id": "a", "title": "Alpha"},
                 {"id": "b", "title": "Beta"},
@@ -269,11 +293,30 @@ def test_read_wide_flatten_nested_compute_then_widen():
     df, _ = read_data(details)
 
     assert len(df) == 1
+    assert list(df.index) == ["root"]
     assert df.iloc[0]["flattenKeys"] == ["a", "b"]
     assert "a_title" in df.columns and "b_title" in df.columns
     assert "a_tag" in df.columns and "b_tag" in df.columns
     assert isinstance(df.iloc[0]["a_tag"], str)
     assert len(df.iloc[0]["a_tag"]) == 10
+
+
+def test_read_wide_flatten_wrapping_index_must_be_string():
+    from lynguine.access.io import read_wide_flatten
+
+    with pytest.raises(ValueError, match="string label"):
+        read_wide_flatten(
+            {
+                "type": "wide_flatten",
+                "index": 42,
+                "specifications": {
+                    "type": "local",
+                    "index": "id",
+                    "data": [{"id": "a", "title": "A"}],
+                },
+                "columns": ["title"],
+            }
+        )
 
 
 def test_read_wide_flatten_missing_specifications():

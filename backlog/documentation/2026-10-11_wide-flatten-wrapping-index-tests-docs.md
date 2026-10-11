@@ -1,7 +1,7 @@
 ---
 id: "2026-10-11_wide-flatten-wrapping-index-tests-docs"
 title: "Tests and docs for wide_flatten wrapping index (Phase 3)"
-status: "Ready"
+status: "Completed"
 priority: "High"
 created: "2026-10-11"
 last_updated: "2026-10-11"
@@ -30,11 +30,11 @@ Lock CIP-0010 Phase 3 behaviour with tests and user-facing docs: outer `index` i
 
 ## Acceptance Criteria
 
-- [ ] Unit/integration tests cover named outer `index`, nested tall index, and omit → `0`
-- [ ] Tests that previously passed outer `index` as a tall column name are updated
-- [ ] README `wide_flatten` section documents new semantics and migration
-- [ ] Acceptance check script (if any) updated for Phase 3
-- [ ] CIP-0010 Phase 3 checklist items can be marked done after this lands
+- [x] Unit/integration tests cover named outer `index`, nested tall index, and omit → `0`
+- [x] Tests that previously passed outer `index` as a tall column name are updated
+- [x] README `wide_flatten` section documents new semantics and migration
+- [x] Acceptance check script (if any) updated for Phase 3
+- [x] CIP-0010 Phase 3 checklist items can be marked done after this lands
 
 ## Implementation Notes
 
@@ -52,3 +52,7 @@ Lock CIP-0010 Phase 3 behaviour with tests and user-facing docs: outer `index` i
 ### 2026-10-11
 
 Task created (Ready) after Phase 3 Accepted.
+
+### 2026-10-11 (implementation)
+
+Tests (24 passed), README migration note, acceptance script updated. Marked Completed.

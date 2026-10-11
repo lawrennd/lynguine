@@ -2470,23 +2470,38 @@ def wide_view_set(
     return data
 
 
+def _nested_tall_index_column(specifications):
+    """Return nested ``index`` column name for tall identity, if a string."""
+    if not isinstance(specifications, dict):
+        return None
+    nested = specifications.get("index")
+    if isinstance(nested, dict):
+        nested = nested.get("name")
+    if isinstance(nested, str):
+        return nested
+    return None
+
+
 def read_wide_flatten(details):
     """
     Read a nested data source then wide-flatten to one row (CIP-0010).
 
     Loads ``specifications`` via ``read_data`` (so nested ``compute`` runs
-    through ``finalize_data``), optionally sets an index column, then applies
-    :func:`wide_flatten_dataframe`. The outer ``finalize_data`` in
-    :func:`read_data` may then run ``compute`` on the wide row.
+    through ``finalize_data``), promotes a nested tall index when needed,
+    then applies :func:`wide_flatten_dataframe`. The outer ``finalize_data``
+    in :func:`read_data` may then run ``compute`` on the wide row.
 
     This is a **materialized snapshot** (Pattern B). For editable catalogs,
     prefer tall store + :func:`wide_view_get` / :func:`wide_view_set` (Pattern A).
 
     :param details: Must include ``type: wide_flatten`` and ``specifications``.
         Optional: ``separator`` (default ``_``), ``order`` (default
-        ``index_then_field``), ``columns``, ``index`` (column to set as index
-        before flatten), ``keys_field`` (default ``flattenKeys``; set false/null
-        to omit).
+        ``index_then_field``), ``columns``, ``index`` (label of the singleton
+        wide row — same role as wrapping ``index`` on ``stack`` / ``local``;
+        omit for legacy ``0``), ``keys_field`` (default ``flattenKeys``; set
+        false/null to omit). Tall identity before flatten comes from nested
+        ``specifications.index`` (column promoted via ``set_index``) or from
+        the nested frame's existing index.
     :type details: dict
     :return: Single-row DataFrame with index-augmented column names.
     :rtype: pandas.DataFrame
@@ -2497,18 +2512,13 @@ def read_wide_flatten(details):
     if "specifications" not in details:
         raise ValueError('Details must include "specifications".')
 
-    df, _ = read_data(details=details["specifications"])
+    specs = details["specifications"]
+    df, _ = read_data(details=specs)
 
-    if "index" in details:
-        index_col = details["index"]
-        if index_col not in df.columns:
-            errmsg = (
-                f'wide_flatten index column "{index_col}" not found. '
-                f"Columns are {list(df.columns)}."
-            )
-            log.error(errmsg)
-            raise ValueError(errmsg)
-        df = df.set_index(index_col, drop=True)
+    # Tall identity (Phase 3 / REQ-000C): nested index column, not outer index.
+    tall_col = _nested_tall_index_column(specs)
+    if tall_col is not None and tall_col in df.columns:
+        df = df.set_index(tall_col, drop=True)
 
     separator = details.get("separator", "_")
     order = details.get("order", "index_then_field")
@@ -2523,7 +2533,8 @@ def read_wide_flatten(details):
     log.debug(
         f"wide_flatten: separator={separator!r} order={order!r} "
         f"input_rows={len(df.index)} input_cols={len(df.columns)} "
-        f"columns_subset={columns} keys_field={keys_field!r}"
+        f"columns_subset={columns} keys_field={keys_field!r} "
+        f"tall_index_column={tall_col!r}"
     )
 
     wide = wide_flatten_dataframe(
@@ -2534,9 +2545,22 @@ def read_wide_flatten(details):
         keys_field=keys_field,
     )
 
+    # Singleton result label (wrapping index); omit → legacy RangeIndex 0.
+    if "index" in details:
+        result_label = details["index"]
+        if not isinstance(result_label, str):
+            errmsg = (
+                "wide_flatten wrapping index must be a string label for the "
+                f"singleton wide row, got {type(result_label).__name__}."
+            )
+            log.error(errmsg)
+            raise ValueError(errmsg)
+        wide.index = pd.Index([result_label])
+
     log.debug(
         f"wide_flatten: output_rows={len(wide.index)} "
-        f"output_cols={len(wide.columns)}"
+        f"output_cols={len(wide.columns)} "
+        f"result_index={list(wide.index)!r}"
     )
     return wide
 

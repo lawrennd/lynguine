@@ -71,9 +71,10 @@ def check_pattern_b_materialized() -> None:
         "separator": "_",
         "order": "index_then_field",
         "columns": ["title", "complete"],
-        "index": "id",
+        "index": "root",
         "specifications": {
             "type": "local",
+            "index": "id",
             "data": [
                 {"id": "grant/a", "title": "A", "complete": True},
                 {"id": "grant/b", "title": "B", "complete": False},
@@ -84,6 +85,8 @@ def check_pattern_b_materialized() -> None:
 
     if len(wide) != 1:
         _fail(f"Pattern B expected 1 wide row, got {len(wide)}")
+    if list(wide.index) != ["root"]:
+        _fail(f"Pattern B wrapping index mismatch: {list(wide.index)!r}")
     keys = wide.iloc[0]["flattenKeys"]
     if list(keys) != ["grant/a", "grant/b"]:
         _fail(f"Pattern B flattenKeys mismatch: {keys!r}")

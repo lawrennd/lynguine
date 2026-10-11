@@ -1,7 +1,7 @@
 ---
 id: "000C"
 title: "Singleton and composed frames use an explicit wrapping index"
-status: "In Progress"
+status: "Implemented"
 priority: "High"
 created: "2026-10-11"
 last_updated: "2026-10-11"
@@ -39,11 +39,11 @@ Multi-row sources already declare which column is the index; this requirement do
 
 ## Acceptance Criteria
 
-- [ ] One-row results from access composition/reshape steps expose a configured index label via wrapping `index` (not an undocumented second key)
-- [ ] New documentation and examples do not introduce synonyms such as `result_index` for the same role as wrapping `index`
-- [ ] Tall / pre-reshape identity (when needed) is declared on the nested source or tall frame, distinct from the outer result label
-- [ ] Undocumented defaults (`0`, `"value"`) are deprecated for new configs; behaviour for legacy configs remains defined and documented
-- [ ] Error or validation guidance makes a missing singleton `index` discoverable when the step is one-row by design
+- [x] One-row results from access composition/reshape steps expose a configured index label via wrapping `index` (not an undocumented second key) — `wide_flatten` Phase 3; `stack`/`local` already used wrapping `index`
+- [x] New documentation and examples do not introduce synonyms such as `result_index` for the same role as wrapping `index`
+- [x] Tall / pre-reshape identity (when needed) is declared on the nested source or tall frame, distinct from the outer result label
+- [x] Undocumented defaults (`0`, `"value"`) are deprecated for new configs; behaviour for legacy configs remains defined and documented — omit outer `index` → `0` for `wide_flatten`
+- [ ] Error or validation guidance makes a missing singleton `index` discoverable when the step is one-row by design — deferred (legacy omit still allowed; warn optional later)
 
 ## Notes
 
@@ -64,3 +64,6 @@ Marked **Ready**. Implementing HOW: lynguine CIP-0010 Phase 3 (wrapping `index` 
 
 ### 2026-10-11 (backlog)
 Marked **In Progress**. Backlog: `2026-10-11_wide-flatten-wrapping-index`, `2026-10-11_wide-flatten-wrapping-index-tests-docs`.
+
+### 2026-10-11 (implementation)
+`wide_flatten` Phase 3 implemented. Marked **Implemented** (validation / Close CIP-0010 still open; optional missing-index warning deferred).
