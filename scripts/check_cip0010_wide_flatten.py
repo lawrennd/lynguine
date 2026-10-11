@@ -16,6 +16,12 @@ Exits 0 and prints OK lines if Pattern A (virtual view) and Pattern B
 from __future__ import annotations
 
 import sys
+from pathlib import Path
+
+# Prefer the in-tree package when run from a clone (not only a site-packages install).
+_REPO_ROOT = Path(__file__).resolve().parents[1]
+if str(_REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(_REPO_ROOT))
 
 import pandas as pd
 
