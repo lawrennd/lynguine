@@ -473,6 +473,15 @@ def read_directory(
     """
     Read data from a directory of files.
 
+    Opt-in ``recursive: true`` on a source entry (or on ``details``) enables
+    ``glob.glob(..., recursive=True)`` so patterns such as ``**/*.yml`` walk
+    nested trees. Default is non-recursive; ``**`` is only meaningful when
+    ``recursive`` is true (CIP-000F).
+
+    Opt-in ``fields`` on a source entry (or on ``details``) projects each
+    mapping-valued file to the listed top-level keys before normalize
+    (CIP-000F). Absent ``fields`` keeps full-document behaviour.
+
     :param details: The details of the directory to be read.
     :type details: dict
     :param filereader: The function to be used to read the file.
@@ -485,8 +494,8 @@ def read_directory(
     :type source: dict
     :raises ValueError: if the same filename is specified multiple times.
     """
-    filenames = []
-    dirnames = []
+    # Batches of (confined paths, fields) so per-source field lists apply.
+    batches = []
     if "source" in details:
         sources = details["source"]
         if type(sources) is not list:
@@ -506,41 +515,69 @@ def read_directory(
                 directory = confine_configured_path(directory, details)
             else:
                 directory = "."
+            # Source entry wins; else top-level details; default false.
+            recursive = bool(source.get("recursive", details.get("recursive", False)))
+            if "fields" in source:
+                fields = source["fields"]
+            else:
+                fields = details.get("fields")
             globname = os.path.join(
                 directory,
                 glob_text,
             )
-            log.debug(f'Reading directory "{globname}"')
-            newfiles = glob.glob(globname)
-            newdirs = [directory] * len(newfiles)
+            # glob.glob already returns paths that include the directory prefix;
+            # do not rejoin directory onto matches (relative dirs double-joined).
+            newfiles = glob.glob(globname, recursive=recursive)
+            log.debug(
+                f'Reading directory "{globname}" recursive={recursive} '
+                f"matches={len(newfiles)}"
+            )
             if len(newfiles) == 0:
                 log.warning(f'No files match "{globname}"')
             if "regexp" in source:
                 regexp = source["regexp"]
-                addfiles = []
-                adddirs = []
-                for filename, dirname in zip(newfiles, newdirs):
-                    if re.match(regexp, os.path.basename(filename)):
-                        addfiles.append(filename)
-                        adddirs.append(dirname)
+                addfiles = [
+                    filename
+                    for filename in newfiles
+                    if re.match(regexp, os.path.basename(filename))
+                ]
                 if len(addfiles) == 0:
                     log.warning(f'No files match "regexp"')
             else:
                 addfiles = newfiles
-                adddirs = newdirs
-            filenames += addfiles
-            dirnames += adddirs
-        if len(filenames) == 0:
+            if addfiles:
+                confined = [
+                    confine_configured_path(filename, details)
+                    for filename in addfiles
+                ]
+                batches.append((confined, fields))
+        if len(batches) == 0:
             log.warning(f'No files in "{sources}".')
     else:
         log.warning(f'No source in "{details}".')
 
-    filelist = [
-        confine_configured_path(os.path.join(dirname, filename), details)
-        for filename, dirname in zip(filenames, dirnames)
-    ]
+    all_files = [filename for files, _fields in batches for filename in files]
+    if len(all_files) != len(set(all_files)):
+        errmsg = "There are repeated files listed in the file list."
+        log.error(errmsg)
+        raise ValueError(errmsg)
 
-    return read_files(filelist, details["store_fields"], filereader, filereader_args)
+    frames = []
+    for filelist, fields in batches:
+        frames.append(
+            read_files(
+                filelist,
+                details["store_fields"],
+                filereader,
+                filereader_args,
+                fields=fields,
+            )
+        )
+    if not frames:
+        return pd.DataFrame()
+    if len(frames) == 1:
+        return frames[0]
+    return pd.concat(frames, ignore_index=True)
 
 
 def read_list(filelist):
@@ -558,13 +595,33 @@ def read_list(filelist):
     return read_files(filelist)
 
 
-def read_files(filelist, store_fields=None, filereader=None, filereader_args=None):
+def _project_mapping_fields(payload, fields, filename):
+    """Keep only listed top-level keys from a mapping-valued file payload.
+
+    Non-mapping payloads warn and become nulls for each listed field so
+    path ``store_fields`` can still be attached without crashing (CIP-000F).
+    """
+    if not isinstance(payload, dict):
+        log.warning(
+            f'Fields projection for "{filename}" received '
+            f"{type(payload).__name__}, not a mapping; listed fields will be null."
+        )
+        return {key: None for key in fields}
+    return {key: payload.get(key) for key in fields}
+
+
+def read_files(
+    filelist, store_fields=None, filereader=None, filereader_args=None, fields=None
+):
     """
     Read files from a given list.
 
     Trusted-caller API: this function does not apply ``allowed_roots``.
     Callers that have configuration or request-derived names must confine
     each path first (CIP-000A).
+
+    When ``fields`` is set, each mapping-valued payload is reduced to those
+    top-level keys before path ``store_fields`` are appended (CIP-000F).
 
     :param filelist: The list of files to be read.
     :type filelist: list
@@ -574,6 +631,8 @@ def read_files(filelist, store_fields=None, filereader=None, filereader_args=Non
     :type filereader: function
     :param filereader_args: The arguments to be passed to the filereader.
     :type filereader_args: dict
+    :param fields: Optional list of top-level keys to keep from each mapping.
+    :type fields: list or None
     :return: The data read from the files.
     :rtype: pandas.DataFrame
     """
@@ -587,8 +646,10 @@ def read_files(filelist, store_fields=None, filereader=None, filereader_args=Non
         root_field = "sourceRoot"
 
     if len(filelist) != len(set(filelist)):
-        raise ValueError(f"There are repeated files listed in the file list.")
-    filelist.sort()
+        errmsg = "There are repeated files listed in the file list."
+        log.error(errmsg)
+        raise ValueError(errmsg)
+    filelist = sorted(filelist)
     data = []
     for filename in filelist:
         if not os.path.exists(filename):
@@ -600,9 +661,12 @@ def read_files(filelist, store_fields=None, filereader=None, filereader_args=Non
         else:
             current_reader = filereader
         if filereader_args is None:
-            data.append(current_reader(filename))
+            payload = current_reader(filename)
         else:
-            data.append(current_reader(filename, **filereader_args))
+            payload = current_reader(filename, **filereader_args)
+        if fields is not None:
+            payload = _project_mapping_fields(payload, fields, filename)
+        data.append(payload)
 
         # Add the root location, directory and filename to the data.
         split_path = os.path.split(filename)

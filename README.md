@@ -431,19 +431,57 @@ dtypes:  # Optional, specify data types for columns
 
 #### Directory of Files
 
-To access data from a directory of files, specify the following details:
+Directory readers allocate **one row per matched file**. Choose a typed reader for the file format (each has a default glob):
+
+| Type | Default glob | Reader |
+|------|--------------|--------|
+| `yaml_directory` | `*.yml` | YAML mappings |
+| `json_directory` | `*.json` | JSON mappings |
+| `markdown_directory` | `*.md` | Markdown (+ front matter) |
+| `bibtex_directory` | `*.bib` | BibTeX |
+| `docx_directory` | `*.docx` | Word documents |
+| `directory` | `*` | Plain / auto by extension |
+| `meta_directory` | `*` | Sidecar YAML meta files |
+
+Shared options on each `source` entry (or, for `recursive` / `fields`, on the top-level details when omitted per source):
 
 ```yaml
-type: directory
+type: yaml_directory
 source:
   - directory: path/to/directory
-    glob: "*.csv"  # Optional, default is "*"
-    regexp: ".*"  # Optional, regular expression to match filenames
-store_fields:  # Optional, specify fields to store in the data
+    glob: "*.yml"           # Optional; defaults per type (see table)
+    regexp: "^cfg_.*\\.yml$"  # Optional; filter on basename after expand
+    recursive: false          # Optional; default false (flat discovery)
+    fields:                   # Optional; project mapping keys before normalize
+      - title
+      - description
+store_fields:                 # Optional; path metadata columns (defaults shown)
   directory: sourceDirectory
-  filename: sourceFile
+  filename: sourceFilename
   root: sourceRoot
 ```
+
+**Defaults preserve existing behaviour:** omit `recursive` (or set `false`) for flat globs only; omit `fields` for full-document `json_normalize`. The pattern `**` is meaningful only when `recursive: true`. Field projection applies to **mapping-valued** readers (YAML/JSON/etc.); non-mapping payloads warn and yield nulls for the listed fields.
+
+Nested catalog example (opt-in recursive discovery + lean rows):
+
+```yaml
+type: yaml_directory
+source:
+  - directory: catalogs
+    glob: "**/config.yml"
+    recursive: true
+fields:
+  - title
+  - description
+  - date
+store_fields:
+  directory: sourceDirectory
+  filename: sourceFilename
+  root: sourceRoot
+```
+
+**Release note (CIP-000F):** `recursive` and `fields` are opt-in. Existing directory configs without these keys behave as before (non-recursive, full-document rows). Relative source directories no longer double-join glob matches.
 
 #### Local Data
 
@@ -496,13 +534,13 @@ input:
     - type: gsheet
       filename: Google_Sheet_Name
       sheet: Sheet1
-    - type: directory
+    - type: yaml_directory
       source:
         - directory: data/directory
-          glob: "*.csv"
+          glob: "*.yml"
       store_fields:
         directory: sourceDirectory
-        filename: sourceFile
+        filename: sourceFilename
         root: sourceRoot
     - type: local
       data:
