@@ -1,7 +1,7 @@
 ---
 id: "2026-10-11_wide-flatten-virtual-view"
 title: "Virtual wide view: name to (index, field) get/set on tall store"
-status: "Ready"
+status: "Completed"
 priority: "High"
 created: "2026-10-11"
 last_updated: "2026-10-11"
@@ -32,13 +32,13 @@ This is the tenet-aligned path for catalog `complete` and similar writable field
 
 ## Acceptance Criteria
 
-- [ ] Helper (or `CustomDataFrame` API) parses wide name → `(index, field)` given `separator` and `order`
-- [ ] Get via resolver returns the tall cell without changing `df.shape`
-- [ ] Set via resolver updates the tall cell; subsequent `write_data` sees tall columns only
-- [ ] Ambiguous / unparseable names raise clear errors (separator policy)
-- [ ] Works with `flattenKeys` (or equivalent) to enumerate keys for UI/Liquid
-- [ ] Unit tests: get/set `complete`-style field; shape unchanged; bad name errors
-- [ ] Document that this is Pattern A; materialized `type: wide_flatten` remains a snapshot option
+- [x] Helper (or `CustomDataFrame` API) parses wide name → `(index, field)` given `separator` and `order`
+- [x] Get via resolver returns the tall cell without changing `df.shape`
+- [x] Set via resolver updates the tall cell; subsequent `write_data` sees tall columns only
+- [x] Ambiguous / unparseable names raise clear errors (separator policy)
+- [x] Works with `flattenKeys` (or equivalent) to enumerate keys for UI/Liquid
+- [x] Unit tests: get/set `complete`-style field; shape unchanged; bad name errors
+- [x] Document that this is Pattern A; materialized `type: wide_flatten` remains a snapshot option
 
 ## Implementation Notes
 
@@ -58,3 +58,5 @@ This is the tenet-aligned path for catalog `complete` and similar writable field
 ### 2026-10-11
 
 Task created (Ready) from CIP-0010 Phase 2b.
+
+Implemented with Phase 2 helpers in `lynguine/access/io.py` and tests/docs. Marked Completed.

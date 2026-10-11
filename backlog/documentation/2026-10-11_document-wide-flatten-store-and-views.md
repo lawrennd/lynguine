@@ -1,7 +1,7 @@
 ---
 id: "2026-10-11_document-wide-flatten-store-and-views"
 title: "Document wide_flatten Pattern A vs B and authoritative-store-and-views tenet"
-status: "Ready"
+status: "Completed"
 priority: "Medium"
 created: "2026-10-11"
 last_updated: "2026-10-11"
@@ -35,13 +35,13 @@ Update user-facing docs so CIP-0010 Phase 2 matches tenet `authoritative-store-a
 
 ## Acceptance Criteria
 
-- [ ] README (or equivalent) states A vs B and which path Save uses
-- [ ] Documents `flattenKeys` / keys field and loop guidance for Liquid
-- [ ] Documents virtual name→`(index, field)` for get/set (once implemented)
-- [ ] Documents `wide_unflatten` as secondary / round-trip
-- [ ] Links or cites tenet `authoritative-store-and-views` (once Active, or as Proposed with note)
-- [ ] Cross-link CIP-0012 for pivot policy
-- [ ] Does not claim aggregating `pivot_table` is editable/round-trippable
+- [x] README (or equivalent) states A vs B and which path Save uses
+- [x] Documents `flattenKeys` / keys field and loop guidance for Liquid
+- [x] Documents virtual name→`(index, field)` for get/set (once implemented)
+- [x] Documents `wide_unflatten` as secondary / round-trip
+- [x] Links or cites tenet `authoritative-store-and-views` (once Active, or as Proposed with note)
+- [x] Cross-link CIP-0012 for pivot policy
+- [x] Does not claim aggregating `pivot_table` is editable/round-trippable
 
 ## Implementation Notes
 
@@ -59,3 +59,5 @@ Update user-facing docs so CIP-0010 Phase 2 matches tenet `authoritative-store-a
 ### 2026-10-11
 
 Task created (Ready) from CIP-0010 Phase 2 docs.
+
+Implemented with Phase 2 helpers in `lynguine/access/io.py` and tests/docs. Marked Completed.

@@ -649,24 +649,28 @@ reset_index: True
 
 In this example, data from `file1.csv` and `file2.xlsx` are first horizontally stacked based on the `id` column. The result is then vertically stacked with data from `file3.csv`, and the index is reset after stacking.
 
-### Wide Flatten (`wide_flatten`)
+### Wide Flatten (`wide_flatten`) and wide views
 
-Wide flatten turns a **multi-row** source into a **single row** whose column names incorporate the former index values (for example `grant/a_title`). It is an access `type`, like `series` / `hstack`: nest the multi-row source under `specifications`, then reshape.
+Guided by the [Authoritative Store and Views](tenets/lynguine/authoritative-store-and-views.md) tenet:
 
-This is **not** `series` (which groups into list-valued columns under a parent index) and **not** `hstack`/`vstack` (which concatenate multiple sources).
+| Pattern | What | When |
+|---------|------|------|
+| **A (preferred for editable data)** | Tall store + virtual wide names via `wide_view_get` / `wide_view_set` | Catalog scores such as `complete`; Save writes tall columns |
+| **B (materialized snapshot)** | Access `type: wide_flatten` → one wide row | Liquid/templates or one-shot flows; use `wide_unflatten` only if you must rebuild tall from wide |
 
-#### Required / optional entries
+This is **not** `series` (list-valued columns under a parent index) and **not** `hstack`/`vstack` (source concat). Aggregating `pivot_table` is a different, often lossy, story — see CIP-0012.
+
+#### Pattern B — access `type: wide_flatten`
 
 - **type**: Must be `wide_flatten`.
-- **specifications**: Nested data source (any `read_data` type, e.g. `yaml_directory` or `local`).
+- **specifications**: Nested data source (any `read_data` type).
 - **separator**: Joiner between index and field (default `_`). Must not appear in index labels (v1).
 - **order**: `index_then_field` (default) or `field_then_index`.
-- **columns**: Optional list of value fields to widen; other columns are dropped.
-- **index**: Optional column name to `set_index` before flatten (use the current index if omitted).
+- **columns**: Optional value fields to widen; others dropped.
+- **index**: Optional column to `set_index` before flatten.
+- **keys_field**: Name of the ordered key-list column (default `flattenKeys`); set `false` to omit.
 
-Nested `compute` on `specifications` runs on the multi-row frame; `compute` on the `wide_flatten` block runs on the single wide row (thin `finalize_data` path). Do not assume top-level `postcompute` / `column_args` until CIP-0011.
-
-#### Example
+Nested `compute` on `specifications` runs on the multi-row frame; outer `compute` on the wide row uses thin `finalize_data` (see CIP-0011 for full phases).
 
 ```yaml
 input:
@@ -688,9 +692,24 @@ input:
         complete: false
 ```
 
-Result is one row with columns such as `grant/a_title`, `grant/a_complete`, `grant/b_title`, `grant/b_complete`.
+Result is one row with `flattenKeys: [grant/a, grant/b]` plus columns such as `grant/a_title`, `grant/b_complete`. Loop keys in Liquid with `flattenKeys`; do not parse column names in the application.
 
-**Release note (CIP-0010):** `wide_flatten` is opt-in and additive. Existing flows are unchanged until they use this type.
+#### Pattern A — virtual wide view (Python)
+
+Keep the tall frame as the store. Resolve wide names without changing shape:
+
+```python
+from lynguine.access.io import wide_view_get, wide_view_set
+
+keys = list(df.index)
+wide_view_set(df, "grant/a_complete", True, keys=keys, fields=["complete"])
+value = wide_view_get(df, "grant/a_complete", keys=keys, fields=["complete"])
+# df.shape unchanged; write_data sees tall columns
+```
+
+Helpers: `compose_wide_column_name`, `parse_wide_column_name`, `wide_unflatten_dataframe` (Pattern B inverse / tests).
+
+**Release note (CIP-0010):** Additive and opt-in. Prefer Pattern A for writable scores; `type: wide_flatten` is a snapshot unless you explicitly unflatten.
 
 ---
 

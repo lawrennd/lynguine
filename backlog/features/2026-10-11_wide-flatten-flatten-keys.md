@@ -1,7 +1,7 @@
 ---
 id: "2026-10-11_wide-flatten-flatten-keys"
 title: "Emit flattenKeys on wide_flatten (configurable name)"
-status: "Ready"
+status: "Completed"
 priority: "High"
 created: "2026-10-11"
 last_updated: "2026-10-11"
@@ -33,13 +33,13 @@ Aligns with tenet `authoritative-store-and-views`: key list is infrastructure me
 
 ## Acceptance Criteria
 
-- [ ] Wide result includes a list field of index labels used for name prefixes (default name `flattenKeys`)
-- [ ] Config key to rename the field (e.g. `keys_field: flattenKeys`)
-- [ ] Order is stable and matches prefix order for `index_then_field` / documented for `field_then_index`
-- [ ] Empty input → empty list (or omit per documented policy)
-- [ ] Path metadata (`sourceDirectory`, …) stays as widened value columns when listed in `columns` — not forced to be the index
-- [ ] Unit tests cover happy path, empty, and custom keys field name
-- [ ] Separator-in-index policy unchanged (v1)
+- [x] Wide result includes a list field of index labels used for name prefixes (default name `flattenKeys`)
+- [x] Config key to rename the field (e.g. `keys_field: flattenKeys`)
+- [x] Order is stable and matches prefix order for `index_then_field` / documented for `field_then_index`
+- [x] Empty input → empty list (or omit per documented policy)
+- [x] Path metadata (`sourceDirectory`, …) stays as widened value columns when listed in `columns` — not forced to be the index
+- [x] Unit tests cover happy path, empty, and custom keys field name
+- [x] Separator-in-index policy unchanged (v1)
 
 ## Implementation Notes
 
@@ -58,3 +58,5 @@ Aligns with tenet `authoritative-store-and-views`: key list is infrastructure me
 ### 2026-10-11
 
 Task created (Ready) from CIP-0010 Phase 2a.
+
+Implemented with Phase 2 helpers in `lynguine/access/io.py` and tests/docs. Marked Completed.

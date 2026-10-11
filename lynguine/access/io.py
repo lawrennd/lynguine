@@ -2103,12 +2103,114 @@ def read_series(details):
     return newdf
 
 
+def _validate_wide_flatten_order(order: str) -> None:
+    if order not in ("index_then_field", "field_then_index"):
+        errmsg = (
+            f'wide_flatten order must be "index_then_field" or '
+            f'"field_then_index", got "{order}".'
+        )
+        log.error(errmsg)
+        raise ValueError(errmsg)
+
+
+def _validate_wide_flatten_index(index, separator: str) -> None:
+    if not index.is_unique:
+        duplicates = index[index.duplicated()].unique().tolist()
+        errmsg = (
+            "wide_flatten requires a unique index (cannot unstack "
+            f"ambiguously). Duplicate labels: {duplicates}."
+        )
+        log.error(errmsg)
+        raise ValueError(errmsg)
+    for label in index:
+        label_str = str(label)
+        if separator and separator in label_str:
+            errmsg = (
+                f'wide_flatten separator "{separator}" appears in index '
+                f'label "{label_str}". Choose a separator that does not '
+                "occur in index strings (v1 policy)."
+            )
+            log.error(errmsg)
+            raise ValueError(errmsg)
+
+
+def compose_wide_column_name(key, field, *, separator: str = "_", order: str = "index_then_field") -> str:
+    """Build a wide column name from index key and field (CIP-0010)."""
+    _validate_wide_flatten_order(order)
+    key_s, field_s = str(key), str(field)
+    if order == "index_then_field":
+        return f"{key_s}{separator}{field_s}"
+    return f"{field_s}{separator}{key_s}"
+
+
+def parse_wide_column_name(
+    name,
+    *,
+    separator: str = "_",
+    order: str = "index_then_field",
+    keys,
+    fields=None,
+):
+    """Parse a wide column name into ``(key, field)`` (CIP-0010 Pattern A).
+
+    ``keys`` are the authoritative index labels (e.g. from ``flattenKeys``).
+    Matching prefers longer key strings so one key is not a prefix of another.
+    When ``fields`` is given, names must match an exact key/field composition;
+    otherwise the remainder after the key+separator is the field name.
+
+    :return: ``(key, field)`` where ``key`` is the object from ``keys``.
+    """
+    _validate_wide_flatten_order(order)
+    name_s = str(name)
+    keyed = sorted(list(keys), key=lambda k: len(str(k)), reverse=True)
+    if not keyed:
+        errmsg = f'Cannot parse wide name "{name_s}": no keys provided.'
+        log.error(errmsg)
+        raise ValueError(errmsg)
+
+    if fields is not None:
+        field_list = list(fields)
+        for key in keyed:
+            for field in field_list:
+                expected = compose_wide_column_name(
+                    key, field, separator=separator, order=order
+                )
+                if name_s == expected:
+                    return key, field
+        errmsg = (
+            f'Cannot parse wide name "{name_s}" with separator={separator!r} '
+            f"order={order!r}, keys={list(map(str, keyed))}, "
+            f"fields={list(map(str, field_list))}."
+        )
+        log.error(errmsg)
+        raise ValueError(errmsg)
+
+    if order == "index_then_field":
+        for key in keyed:
+            prefix = f"{key}{separator}"
+            if name_s.startswith(prefix) and len(name_s) > len(prefix):
+                return key, name_s[len(prefix) :]
+    else:
+        for key in keyed:
+            suffix = f"{separator}{key}"
+            if name_s.endswith(suffix) and len(name_s) > len(suffix):
+                return name_s[: -len(suffix)], key
+
+    errmsg = (
+        f'Cannot parse wide name "{name_s}" with separator={separator!r} '
+        f"order={order!r} and keys={list(map(str, keyed))}."
+    )
+    log.error(errmsg)
+    raise ValueError(errmsg)
+
+
 def wide_flatten_dataframe(
     df: pd.DataFrame,
     *,
     separator: str = "_",
     order: str = "index_then_field",
     columns: list | None = None,
+    keys_field: str | None = "flattenKeys",
 ) -> pd.DataFrame:
     """Reshape many rows into one row with index-augmented column names (CIP-0010).
 
@@ -2116,9 +2218,13 @@ def wide_flatten_dataframe(
     frame whose column names are ``{index}{separator}{field}`` (or
     ``{field}{separator}{index}`` when ``order`` is ``field_then_index``).
 
-    Empty input (no rows) yields a single empty row with no value columns.
-    Optional ``columns`` selects value fields to widen; other columns are
-    dropped (not kept as globals).
+    When ``keys_field`` is set (default ``flattenKeys``), the wide row also
+    carries an ordered list of former index labels for Liquid/view loops.
+    Pass ``keys_field=None`` to omit that column.
+
+    Empty input (no rows) yields a single empty row (plus empty ``keys_field``
+    list when enabled). Optional ``columns`` selects value fields to widen;
+    other columns are dropped (not kept as globals).
 
     v1 policy: ``separator`` must not appear in ``str(index)`` labels so
     names stay unambiguously splittable.
@@ -2127,17 +2233,12 @@ def wide_flatten_dataframe(
     :param separator: Joiner between index and field in output names.
     :param order: ``index_then_field`` or ``field_then_index``.
     :param columns: Optional subset of value columns to widen.
+    :param keys_field: Column name for the ordered key list, or ``None`` to omit.
     :return: Single-row DataFrame with flat string column names.
     :raises ValueError: On invalid ``order``, non-unique index, unknown
-        ``columns``, or separator appearing in an index label.
+        ``columns``, keys field collision, or separator in an index label.
     """
-    if order not in ("index_then_field", "field_then_index"):
-        errmsg = (
-            f'wide_flatten order must be "index_then_field" or '
-            f'"field_then_index", got "{order}".'
-        )
-        log.error(errmsg)
-        raise ValueError(errmsg)
+    _validate_wide_flatten_order(order)
 
     if not isinstance(df, pd.DataFrame):
         errmsg = f"wide_flatten expects a pandas DataFrame, got {type(df).__name__}."
@@ -2156,30 +2257,23 @@ def wide_flatten_dataframe(
             raise ValueError(errmsg)
         work = work.loc[:, list(columns)]
 
-    if not work.index.is_unique:
-        duplicates = work.index[work.index.duplicated()].unique().tolist()
+    _validate_wide_flatten_index(work.index, separator)
+
+    if keys_field is not None and keys_field in work.columns:
         errmsg = (
-            "wide_flatten requires a unique index (cannot unstack "
-            f"ambiguously). Duplicate labels: {duplicates}."
+            f'wide_flatten keys_field "{keys_field}" collides with a value '
+            "column. Rename keys_field or omit that column from columns."
         )
         log.error(errmsg)
         raise ValueError(errmsg)
 
-    for label in work.index:
-        label_str = str(label)
-        if separator and separator in label_str:
-            errmsg = (
-                f'wide_flatten separator "{separator}" appears in index '
-                f'label "{label_str}". Choose a separator that does not '
-                "occur in index strings (v1 policy)."
-            )
-            log.error(errmsg)
-            raise ValueError(errmsg)
+    keys_list = list(work.index)
 
     if work.shape[0] == 0:
-        # One empty row, no value columns (matches stack().to_frame().T on
-        # a column-only empty frame).
-        return pd.DataFrame(index=[0])
+        # One empty row; optional empty key list for Liquid loops.
+        if keys_field is None:
+            return pd.DataFrame(index=[0])
+        return pd.DataFrame({keys_field: [[]]}, index=[0])
 
     # stack → MultiIndex (index, field); unstack → (field, index)
     if order == "index_then_field":
@@ -2197,7 +2291,183 @@ def wide_flatten_dataframe(
         for col in wide.columns
     ]
     wide.index = pd.RangeIndex(len(wide))
+    if keys_field is not None:
+        if keys_field in wide.columns:
+            errmsg = (
+                f'wide_flatten keys_field "{keys_field}" collides with a '
+                "widened column name."
+            )
+            log.error(errmsg)
+            raise ValueError(errmsg)
+        wide[keys_field] = [keys_list]
     return wide
+
+
+def wide_unflatten_dataframe(
+    wide: pd.DataFrame,
+    *,
+    separator: str = "_",
+    order: str = "index_then_field",
+    keys_field: str | None = "flattenKeys",
+    fields: list | None = None,
+) -> pd.DataFrame:
+    """Inverse of materialized :func:`wide_flatten_dataframe` (CIP-0010 Pattern B).
+
+    Rebuilds a tall frame from a single wide row. Uses ``keys_field`` (default
+    ``flattenKeys``) for index labels when present; otherwise keys must be
+    recoverable from column names via ``fields`` or parse rules.
+
+    Not the default Save path for catalogs — prefer Pattern A virtual views.
+    """
+    _validate_wide_flatten_order(order)
+
+    if not isinstance(wide, pd.DataFrame):
+        errmsg = (
+            f"wide_unflatten expects a pandas DataFrame, got {type(wide).__name__}."
+        )
+        log.error(errmsg)
+        raise ValueError(errmsg)
+
+    if len(wide) == 0:
+        return pd.DataFrame()
+    if len(wide) != 1:
+        errmsg = (
+            f"wide_unflatten expects a single wide row, got {len(wide)} rows."
+        )
+        log.error(errmsg)
+        raise ValueError(errmsg)
+
+    row = wide.iloc[0]
+    value_columns = [c for c in wide.columns if c != keys_field]
+
+    if keys_field is not None and keys_field in wide.columns:
+        keys = list(row[keys_field])
+    else:
+        keys = None
+
+    if not value_columns:
+        if keys is not None:
+            return pd.DataFrame(index=pd.Index(keys))
+        return pd.DataFrame()
+
+    if keys is None:
+        if fields is None:
+            errmsg = (
+                "wide_unflatten needs keys_field on the wide row or an explicit "
+                "fields list to recover keys from column names."
+            )
+            log.error(errmsg)
+            raise ValueError(errmsg)
+        # Recover keys by parsing all names with a growing key set from fields.
+        # Require fields so each name splits uniquely: try all columns and
+        # collect keys from successful parses using fields-only matching after
+        # a first pass that discovers keys from field-then-index / known fields.
+        discovered = []
+        for col in value_columns:
+            # Without keys, only field_then_index with fields is ambiguous;
+            # require keys_field for robustness unless fields given — then
+            # split by matching field suffix/prefix.
+            matched = False
+            for field in fields:
+                if order == "index_then_field":
+                    suffix = f"{separator}{field}"
+                    if str(col).endswith(suffix) and len(str(col)) > len(suffix):
+                        key = str(col)[: -len(suffix)]
+                        if key not in discovered:
+                            discovered.append(key)
+                        matched = True
+                        break
+                else:
+                    prefix = f"{field}{separator}"
+                    if str(col).startswith(prefix) and len(str(col)) > len(prefix):
+                        key = str(col)[len(prefix) :]
+                        if key not in discovered:
+                            discovered.append(key)
+                        matched = True
+                        break
+            if not matched:
+                errmsg = (
+                    f'wide_unflatten cannot recover key from column "{col}" '
+                    f"with fields={fields}."
+                )
+                log.error(errmsg)
+                raise ValueError(errmsg)
+        keys = discovered
+
+    _validate_wide_flatten_index(pd.Index(keys), separator)
+
+    field_names = list(fields) if fields is not None else None
+    if field_names is None:
+        field_names = []
+        for col in value_columns:
+            _, field = parse_wide_column_name(
+                col, separator=separator, order=order, keys=keys, fields=None
+            )
+            if field not in field_names:
+                field_names.append(field)
+
+    tall = pd.DataFrame(index=pd.Index(keys), columns=field_names, dtype="object")
+    for col in value_columns:
+        key, field = parse_wide_column_name(
+            col, separator=separator, order=order, keys=keys, fields=field_names
+        )
+        tall.at[key, field] = row[col]
+    return tall
+
+
+def wide_view_get(
+    data,
+    wide_name: str,
+    *,
+    separator: str = "_",
+    order: str = "index_then_field",
+    keys=None,
+    fields=None,
+):
+    """Get a tall-store cell via a wide column name (CIP-0010 Pattern A).
+
+    Does not reshape ``data``. For :class:`~lynguine.assess.data.CustomDataFrame`
+    uses focus ``set_index`` / ``set_column`` / ``get_value``; for a plain
+    DataFrame uses label-based ``.at``.
+    """
+    if keys is None:
+        keys = list(data.index)
+    key, field = parse_wide_column_name(
+        wide_name, separator=separator, order=order, keys=keys, fields=fields
+    )
+    if hasattr(data, "get_value") and hasattr(data, "set_index") and hasattr(data, "set_column"):
+        data.set_index(key)
+        data.set_column(field)
+        return data.get_value()
+    return data.at[key, field]
+
+
+def wide_view_set(
+    data,
+    wide_name: str,
+    value,
+    *,
+    separator: str = "_",
+    order: str = "index_then_field",
+    keys=None,
+    fields=None,
+):
+    """Set a tall-store cell via a wide column name (CIP-0010 Pattern A).
+
+    Does not reshape ``data``. Shape (nrows, ncols) is unchanged.
+    """
+    if keys is None:
+        keys = list(data.index)
+    key, field = parse_wide_column_name(
+        wide_name, separator=separator, order=order, keys=keys, fields=fields
+    )
+    if hasattr(data, "set_value") and hasattr(data, "set_index") and hasattr(data, "set_column"):
+        data.set_index(key)
+        data.set_column(field)
+        data.set_value(value)
+        return data
+    data.at[key, field] = value
+    return data
 
 
 def read_wide_flatten(details):
@@ -2209,10 +2479,14 @@ def read_wide_flatten(details):
     :func:`wide_flatten_dataframe`. The outer ``finalize_data`` in
     :func:`read_data` may then run ``compute`` on the wide row.
 
+    This is a **materialized snapshot** (Pattern B). For editable catalogs,
+    prefer tall store + :func:`wide_view_get` / :func:`wide_view_set` (Pattern A).
+
     :param details: Must include ``type: wide_flatten`` and ``specifications``.
         Optional: ``separator`` (default ``_``), ``order`` (default
         ``index_then_field``), ``columns``, ``index`` (column to set as index
-        before flatten).
+        before flatten), ``keys_field`` (default ``flattenKeys``; set false/null
+        to omit).
     :type details: dict
     :return: Single-row DataFrame with index-augmented column names.
     :rtype: pandas.DataFrame
@@ -2239,15 +2513,25 @@ def read_wide_flatten(details):
     separator = details.get("separator", "_")
     order = details.get("order", "index_then_field")
     columns = details.get("columns")
+    if "keys_field" in details:
+        keys_field = details["keys_field"]
+        if keys_field is False:
+            keys_field = None
+    else:
+        keys_field = "flattenKeys"
 
     log.debug(
         f"wide_flatten: separator={separator!r} order={order!r} "
         f"input_rows={len(df.index)} input_cols={len(df.columns)} "
-        f"columns_subset={columns}"
+        f"columns_subset={columns} keys_field={keys_field!r}"
     )
 
     wide = wide_flatten_dataframe(
-        df, separator=separator, order=order, columns=columns
+        df,
+        separator=separator,
+        order=order,
+        columns=columns,
+        keys_field=keys_field,
     )
 
     log.debug(
