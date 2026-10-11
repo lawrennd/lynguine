@@ -3,7 +3,7 @@ author: "Neil D. Lawrence"
 created: "2026-10-11"
 id: "000F"
 last_updated: "2026-10-11"
-status: "Implemented"
+status: "Closed"
 compressed: false
 related_requirements: ["0002", "0005", "0006"]
 related_cips: ["0009", "000A"]
@@ -29,7 +29,7 @@ title: "Recursive directory discovery and field projection for YAML sources"
 - [x] Accepted - Approved, ready to start work
 - [x] In Progress - Actively being implemented
 - [x] Implemented - Work complete, awaiting verification
-- [ ] Closed - Verified and complete
+- [x] Closed - Verified and complete
 - [ ] Rejected - Will not be implemented (add reason, use superseded_by if replaced)
 - [ ] Deferred - Postponed (use blocked_by field to indicate blocker)
 
