@@ -558,7 +558,9 @@ def read_directory(
 
     all_files = [filename for files, _fields in batches for filename in files]
     if len(all_files) != len(set(all_files)):
-        raise ValueError(f"There are repeated files listed in the file list.")
+        errmsg = "There are repeated files listed in the file list."
+        log.error(errmsg)
+        raise ValueError(errmsg)
 
     frames = []
     for filelist, fields in batches:
@@ -601,9 +603,8 @@ def _project_mapping_fields(payload, fields, filename):
     """
     if not isinstance(payload, dict):
         log.warning(
-            f'fields projection for "{filename}": '
-            f"payload is {type(payload).__name__}, not a mapping; "
-            f"listed fields will be null"
+            f'Fields projection for "{filename}" received '
+            f"{type(payload).__name__}, not a mapping; listed fields will be null."
         )
         return {key: None for key in fields}
     return {key: payload.get(key) for key in fields}
@@ -645,7 +646,9 @@ def read_files(
         root_field = "sourceRoot"
 
     if len(filelist) != len(set(filelist)):
-        raise ValueError(f"There are repeated files listed in the file list.")
+        errmsg = "There are repeated files listed in the file list."
+        log.error(errmsg)
+        raise ValueError(errmsg)
     filelist = sorted(filelist)
     data = []
     for filename in filelist:
