@@ -42,18 +42,8 @@ def test_flat_glob_absolute_directory(tmp_path):
     assert set(df["title"].tolist()) == {"A", "B"}
 
 
-@pytest.mark.xfail(
-    reason=(
-        "read_directory rejoins directory onto glob matches; relative directory "
-        "becomes catalog/catalog/item.yml (backlog 2026-10-11_read-directory-relative-glob-double-join)"
-    ),
-    strict=True,
-)
 def test_flat_glob_relative_directory(tmp_path, monkeypatch):
-    """Relative ``directory`` without ``allowed_roots`` should still resolve matches.
-
-    Today this double-joins; the xfail documents current breakage until the bug fix.
-    """
+    """Relative ``directory`` without ``allowed_roots`` resolves matches (no double-join)."""
     root = tmp_path / "workspace"
     data_dir = root / "catalog"
     _write_yml(data_dir / "item.yml", {"title": "Item"})

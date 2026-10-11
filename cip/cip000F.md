@@ -193,7 +193,8 @@ Specifically, this CIP makes the following true:
 
 ## Implementation Status
 
-- [x] Baseline tests for current flat directory-glob behaviour → backlog `2026-10-11_baseline-directory-glob-behaviour` (relative double-join → bug `2026-10-11_read-directory-relative-glob-double-join`)
+- [x] Baseline tests for current flat directory-glob behaviour → backlog `2026-10-11_baseline-directory-glob-behaviour`
+- [x] Fix relative glob double-join in `read_directory` → backlog `2026-10-11_read-directory-relative-glob-double-join`
 - [ ] Thread `recursive` through `read_directory` / source entries → backlog `2026-10-11_recursive-directory-glob`
 - [ ] Implement `fields` projection for mapping-valued readers → backlog `2026-10-11_directory-reader-field-projection`
 - [ ] Unit tests (recursive match, projection, confinement, regexp) → acceptance criteria on the feature tasks above

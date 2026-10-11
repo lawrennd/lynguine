@@ -10,7 +10,6 @@ related_cips: ["000F"]
 owner: "Neil D. Lawrence"
 dependencies:
 - "2026-10-11_baseline-directory-glob-behaviour"
-- "2026-10-11_read-directory-relative-glob-double-join"
 tags:
 - backlog
 - features

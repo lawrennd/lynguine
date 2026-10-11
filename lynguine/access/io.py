@@ -486,7 +486,6 @@ def read_directory(
     :raises ValueError: if the same filename is specified multiple times.
     """
     filenames = []
-    dirnames = []
     if "source" in details:
         sources = details["source"]
         if type(sources) is not list:
@@ -511,33 +510,30 @@ def read_directory(
                 glob_text,
             )
             log.debug(f'Reading directory "{globname}"')
+            # glob.glob already returns paths that include the directory prefix;
+            # do not rejoin directory onto matches (relative dirs double-joined).
             newfiles = glob.glob(globname)
-            newdirs = [directory] * len(newfiles)
             if len(newfiles) == 0:
                 log.warning(f'No files match "{globname}"')
             if "regexp" in source:
                 regexp = source["regexp"]
-                addfiles = []
-                adddirs = []
-                for filename, dirname in zip(newfiles, newdirs):
-                    if re.match(regexp, os.path.basename(filename)):
-                        addfiles.append(filename)
-                        adddirs.append(dirname)
+                addfiles = [
+                    filename
+                    for filename in newfiles
+                    if re.match(regexp, os.path.basename(filename))
+                ]
                 if len(addfiles) == 0:
                     log.warning(f'No files match "regexp"')
             else:
                 addfiles = newfiles
-                adddirs = newdirs
             filenames += addfiles
-            dirnames += adddirs
         if len(filenames) == 0:
             log.warning(f'No files in "{sources}".')
     else:
         log.warning(f'No source in "{details}".')
 
     filelist = [
-        confine_configured_path(os.path.join(dirname, filename), details)
-        for filename, dirname in zip(filenames, dirnames)
+        confine_configured_path(filename, details) for filename in filenames
     ]
 
     return read_files(filelist, details["store_fields"], filereader, filereader_args)

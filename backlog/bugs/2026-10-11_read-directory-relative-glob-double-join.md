@@ -1,7 +1,7 @@
 ---
 id: "2026-10-11_read-directory-relative-glob-double-join"
 title: "read_directory double-joins relative directory with glob matches"
-status: "Ready"
+status: "Completed"
 priority: "High"
 created: "2026-10-11"
 last_updated: "2026-10-11"
@@ -37,12 +37,12 @@ With `allowed_roots` set (typical `from_flow` path), `confine_configured_path` a
 
 ## Acceptance Criteria
 
-- [ ] Glob matches are treated as full paths (no rejoin that duplicates the directory segment)
-- [ ] Relative `directory` without `allowed_roots` loads flat matches
-- [ ] Relative `directory` with `allowed_roots` still loads (no regression)
-- [ ] Absolute `directory` still loads (no regression)
-- [ ] Baseline xfail (if present) is removed or flipped to a passing assertion
-- [ ] Fix lands before or with CIP-000F recursive glob work (nested relative paths amplify the bug)
+- [x] Glob matches are treated as full paths (no rejoin that duplicates the directory segment)
+- [x] Relative `directory` without `allowed_roots` loads flat matches
+- [x] Relative `directory` with `allowed_roots` still loads (no regression)
+- [x] Absolute `directory` still loads (no regression)
+- [x] Baseline xfail (if present) is removed or flipped to a passing assertion
+- [x] Fix lands before or with CIP-000F recursive glob work (nested relative paths amplify the bug)
 
 ## Implementation Notes
 
@@ -60,3 +60,5 @@ With `allowed_roots` set (typical `from_flow` path), `confine_configured_path` a
 ### 2026-10-11
 
 Bug recorded from baseline directory-glob suite (`catalog/catalog/item.yml` FileNotFoundError).
+
+Fixed in `read_directory`: use `glob.glob` matches as full paths and confine each directly (no `os.path.join(directory, match)`). Baseline relative test now passes; marked Completed.
