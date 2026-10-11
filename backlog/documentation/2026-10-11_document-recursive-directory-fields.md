@@ -28,9 +28,12 @@ tags:
 
 Document CIP-000F options for Directory-of-Files readers: `recursive` and `fields`, with examples and an explicit note that defaults preserve non-recursive, full-document behaviour. Add a short release note that the change is opt-in only.
 
+Also close the pre-existing doc gap: README “Directory of Files” only shows generic `type: directory`, while the code exposes typed readers (`yaml_directory`, `json_directory`, `markdown_directory`, `bibtex_directory`, `meta_directory`, `docx_directory`, plain `directory`). Docs should name those types and state that discovery is non-recursive unless `recursive: true`.
+
 ## Acceptance Criteria
 
 - [ ] README and/or Sphinx “Directory of Files” section documents `recursive` and `fields`
+- [ ] README lists typed directory readers (not only bare `type: directory`)
 - [ ] Examples show nested glob + field projection (generic filenames, not referia-specific types)
 - [ ] Docs state default `recursive: false` and absent `fields` = current behaviour
 - [ ] Docs note that `**` is meaningful only with `recursive: true`
@@ -41,14 +44,18 @@ Document CIP-000F options for Directory-of-Files readers: `recursive` and `field
 
 - Formal docs may wait until CIP close/compression if Sphinx targets are unclear; at minimum update the user-facing Directory-of-Files material already in-tree
 - Keep examples infrastructure-generic (no `_referia.yml` requirement in lynguine docs)
+- Baseline survey (2026-10-11): no Sphinx narrative for directory globs; only automodule + README generic `directory` example
 
 ## Related
 
 - CIP: 000F
 - Depends on: feature tasks for recursive glob and field projection
+- Related: `2026-10-11_baseline-directory-glob-behaviour` (pins behaviour docs should describe)
 
 ## Progress Updates
 
 ### 2026-10-11
 
 Task created (Ready) from Accepted CIP-000F implementation plan steps 3–4.
+
+Expanded scope: document typed directory readers and non-recursive default (gap found during glob survey).

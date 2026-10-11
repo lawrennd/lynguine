@@ -8,7 +8,9 @@ last_updated: "2026-10-11"
 category: "features"
 related_cips: ["000F"]
 owner: "Neil D. Lawrence"
-dependencies: []
+dependencies:
+- "2026-10-11_baseline-directory-glob-behaviour"
+- "2026-10-11_read-directory-relative-glob-double-join"
 tags:
 - backlog
 - features
@@ -38,16 +40,19 @@ Default remains non-recursive so existing flat `yaml_directory` / sibling direct
 - [ ] Paths outside `allowed_roots` still raise (CIP-000A regression)
 - [ ] `regexp` filter still applies after recursive expansion
 - [ ] No referia-specific ignore rules added; callers narrow via `glob` / `regexp`
+- [ ] Glob matches are used as full paths (no broken rejoin with relative `directory`)
 
 ## Implementation Notes
 
 - Primary touch point: `lynguine/access/io.py` — `read_directory` (~L471) and callers that pass source details
 - Apply in the shared directory path so all directory readers benefit (`yaml_directory`, `json_directory`, `markdown_directory`, …)
 - Document that `**` is meaningful only when `recursive: true`
+- **Path join:** today `read_directory` does `os.path.join(directory, match)` after `glob.glob`. Absolute matches (and paths absolutised via `allowed_roots`) are fine; bare relative directories can double-join. Fix when enabling recursion — baseline task should expose current behaviour first.
 
 ## Related
 
 - CIP: 000F
+- Depends on: `2026-10-11_baseline-directory-glob-behaviour`
 - Documentation: CIP-000F Configuration sketch / Behaviour table
 - Downstream: referia CIP-0010 catalog allocation
 
@@ -56,3 +61,5 @@ Default remains non-recursive so existing flat `yaml_directory` / sibling direct
 ### 2026-10-11
 
 Task created (Ready) from Accepted CIP-000F implementation plan step 1.
+
+Dependency on baseline directory-glob tests added; note about relative-path rejoin recorded.
