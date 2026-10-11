@@ -663,11 +663,11 @@ This is **not** `series` (list-valued columns under a parent index) and **not** 
 #### Pattern B — access `type: wide_flatten`
 
 - **type**: Must be `wide_flatten`.
-- **specifications**: Nested data source (any `read_data` type).
+- **specifications**: Nested data source (any `read_data` type). Declare tall identity with nested **`index`** (column promoted before flatten), or rely on the nested frame’s existing index.
 - **separator**: Joiner between index and field (default `_`). Must not appear in index labels (v1).
 - **order**: `index_then_field` (default) or `field_then_index`.
 - **columns**: Optional value fields to widen; others dropped.
-- **index**: Optional column to `set_index` before flatten.
+- **index** (outer / wrapping): Label of the **singleton wide row** (same role as wrapping `index` on `stack` / `local`). Omit for legacy label `0` (deprecated for new configs). Do **not** use outer `index` as the tall column name — put that on `specifications.index`.
 - **keys_field**: Name of the ordered key-list column (default `flattenKeys`); set `false` to omit.
 
 Nested `compute` on `specifications` runs on the multi-row frame; outer `compute` on the wide row uses thin `finalize_data` (see CIP-0011 for full phases).
@@ -677,12 +677,13 @@ input:
   type: wide_flatten
   separator: "_"
   order: index_then_field
+  index: root                 # singleton result label (REQ-000C)
   columns:
     - title
     - complete
-  index: id
   specifications:
     type: local
+    index: id                 # tall identity before flatten
     data:
       - id: grant/a
         title: A
@@ -692,7 +693,9 @@ input:
         complete: false
 ```
 
-Result is one row with `flattenKeys: [grant/a, grant/b]` plus columns such as `grant/a_title`, `grant/b_complete`. Loop keys in Liquid with `flattenKeys`; do not parse column names in the application.
+Result is one row indexed `root` with `flattenKeys: [grant/a, grant/b]` plus columns such as `grant/a_title`, `grant/b_complete`. Loop keys in Liquid with `flattenKeys`; do not parse column names in the application.
+
+**Migration (CIP-0010 Phase 3):** configs that used outer `index: id` to mean “tall column” should move that key under `specifications` and set outer `index` to the overview/singleton label (or omit it for legacy `0`).
 
 #### Pattern A — virtual wide view (Python)
 
