@@ -1,7 +1,7 @@
 ---
 id: "2026-10-11_wide-flatten-tests"
 title: "Unit and integration tests for wide_flatten"
-status: "Ready"
+status: "Completed"
 priority: "High"
 created: "2026-10-11"
 last_updated: "2026-10-11"
@@ -28,21 +28,18 @@ tags:
 
 Lock CIP-0010 behaviour with focused tests: helper edge cases plus one integration path through `read_data` / `type: wide_flatten` (nested multi-row source → one wide row).
 
-Core-helper unit tests may land with the helper task; this task owns completeness and the access-path integration coverage.
-
 ## Acceptance Criteria
 
-- [ ] Unit: happy path, both `order` values, `columns` subset
-- [ ] Unit: duplicate index error, empty frame, `str` coercion of non-string names
-- [ ] Unit or doc-assert: separator-in-index policy
-- [ ] Integration: nested in-memory or `yaml_directory` (CIP-000F-style) under `wide_flatten` → assert column set and values
-- [ ] Integration: nested `compute` field appears before widen; optional outer `compute` on wide row (thin finalize only)
-- [ ] Tests under `lynguine/tests/` pass in the project test env
+- [x] Unit: happy path, both `order` values, `columns` subset
+- [x] Unit: duplicate index error, empty frame, `str` coercion of non-string names
+- [x] Unit or doc-assert: separator-in-index policy
+- [x] Integration: nested in-memory or `yaml_directory` (CIP-000F-style) under `wide_flatten` → assert column set and values
+- [x] Integration: nested `compute` field appears before widen; optional outer `compute` on wide row (thin finalize only)
+- [x] Tests under `lynguine/tests/` pass in the project test env
 
 ## Implementation Notes
 
-- Prefer `tmp_path` for any directory fixture; avoid mocking the helper away in the integration test
-- Soft dependency on CIP-000F readers already in tree; in-memory nested `type: local` is enough if simpler
+- `lynguine/tests/test_wide_flatten.py` — 13 tests, all passing
 
 ## Related
 
@@ -54,3 +51,5 @@ Core-helper unit tests may land with the helper task; this task owns completenes
 ### 2026-10-11
 
 Task created (Ready) from Accepted CIP-0010 — test step.
+
+Suite added and green. Marked Completed.

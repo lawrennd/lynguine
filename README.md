@@ -483,6 +483,8 @@ store_fields:
 
 **Release note (CIP-000F):** `recursive` and `fields` are opt-in. Existing directory configs without these keys behave as before (non-recursive, full-document rows). Relative source directories no longer double-join glob matches.
 
+To present directory rows as **one wide data point** (index-augmented column names) instead of a multi-row table, wrap the directory source in [`wide_flatten`](#wide-flatten-wide_flatten) (CIP-0010).
+
 #### Local Data
 
 To access data directly from the details file, specify the following details:
@@ -646,6 +648,49 @@ reset_index: True
 ```
 
 In this example, data from `file1.csv` and `file2.xlsx` are first horizontally stacked based on the `id` column. The result is then vertically stacked with data from `file3.csv`, and the index is reset after stacking.
+
+### Wide Flatten (`wide_flatten`)
+
+Wide flatten turns a **multi-row** source into a **single row** whose column names incorporate the former index values (for example `grant/a_title`). It is an access `type`, like `series` / `hstack`: nest the multi-row source under `specifications`, then reshape.
+
+This is **not** `series` (which groups into list-valued columns under a parent index) and **not** `hstack`/`vstack` (which concatenate multiple sources).
+
+#### Required / optional entries
+
+- **type**: Must be `wide_flatten`.
+- **specifications**: Nested data source (any `read_data` type, e.g. `yaml_directory` or `local`).
+- **separator**: Joiner between index and field (default `_`). Must not appear in index labels (v1).
+- **order**: `index_then_field` (default) or `field_then_index`.
+- **columns**: Optional list of value fields to widen; other columns are dropped.
+- **index**: Optional column name to `set_index` before flatten (use the current index if omitted).
+
+Nested `compute` on `specifications` runs on the multi-row frame; `compute` on the `wide_flatten` block runs on the single wide row (thin `finalize_data` path). Do not assume top-level `postcompute` / `column_args` until CIP-0011.
+
+#### Example
+
+```yaml
+input:
+  type: wide_flatten
+  separator: "_"
+  order: index_then_field
+  columns:
+    - title
+    - complete
+  index: id
+  specifications:
+    type: local
+    data:
+      - id: grant/a
+        title: A
+        complete: true
+      - id: grant/b
+        title: B
+        complete: false
+```
+
+Result is one row with columns such as `grant/a_title`, `grant/a_complete`, `grant/b_title`, `grant/b_complete`.
+
+**Release note (CIP-0010):** `wide_flatten` is opt-in and additive. Existing flows are unchanged until they use this type.
 
 ---
 

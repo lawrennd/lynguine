@@ -1,7 +1,7 @@
 ---
 id: "2026-10-11_document-wide-flatten"
 title: "Document type: wide_flatten and distinguish from series/stack"
-status: "Ready"
+status: "Completed"
 priority: "Medium"
 created: "2026-10-11"
 last_updated: "2026-10-11"
@@ -29,18 +29,17 @@ Document CIP-0010’s access type next to stacking / directory allocation materi
 
 ## Acceptance Criteria
 
-- [ ] README (or equivalent in-tree user docs) describes `type: wide_flatten`
-- [ ] Example shows nested `yaml_directory` (or local multi-row) → wide columns
-- [ ] Documents `separator`, `order`, optional `columns`, and defaults
-- [ ] States result is one row with index-augmented names; no parent index required
-- [ ] Contrasts with `series` (lists / parent index) and `hstack`/`vstack` (source concat)
-- [ ] Notes thin nested/outer `compute` via `finalize_data`; does not claim unwired `postcompute`
-- [ ] Short release note: additive, opt-in
+- [x] README (or equivalent in-tree user docs) describes `type: wide_flatten`
+- [x] Example shows nested `yaml_directory` (or local multi-row) → wide columns
+- [x] Documents `separator`, `order`, optional `columns`, and defaults
+- [x] States result is one row with index-augmented names; no parent index required
+- [x] Contrasts with `series` (lists / parent index) and `hstack`/`vstack` (source concat)
+- [x] Notes thin nested/outer `compute` via `finalize_data`; does not claim unwired `postcompute`
+- [x] Short release note: additive, opt-in
 
 ## Implementation Notes
 
-- Keep examples infrastructure-generic (no referia-specific filenames required)
-- Formal Sphinx compression can wait until CIP close if narrative lives in README for now
+- README section under Stacking Data; cross-link from Directory of Files
 
 ## Related
 
@@ -53,3 +52,5 @@ Document CIP-0010’s access type next to stacking / directory allocation materi
 ### 2026-10-11
 
 Task created (Ready) from Accepted CIP-0010 — documentation step.
+
+README updated. Marked Completed.

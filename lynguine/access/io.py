@@ -2102,6 +2102,161 @@ def read_series(details):
     newdf.reset_index(drop=True, inplace=True)
     return newdf
 
+
+def wide_flatten_dataframe(
+    df: pd.DataFrame,
+    *,
+    separator: str = "_",
+    order: str = "index_then_field",
+    columns: list | None = None,
+) -> pd.DataFrame:
+    """Reshape many rows into one row with index-augmented column names (CIP-0010).
+
+    Turns an ``N × M`` DataFrame with a **unique** index into a ``1 × (N×M)``
+    frame whose column names are ``{index}{separator}{field}`` (or
+    ``{field}{separator}{index}`` when ``order`` is ``field_then_index``).
+
+    Empty input (no rows) yields a single empty row with no value columns.
+    Optional ``columns`` selects value fields to widen; other columns are
+    dropped (not kept as globals).
+
+    v1 policy: ``separator`` must not appear in ``str(index)`` labels so
+    names stay unambiguously splittable.
+
+    :param df: Source frame; the current index labels identify each former row.
+    :param separator: Joiner between index and field in output names.
+    :param order: ``index_then_field`` or ``field_then_index``.
+    :param columns: Optional subset of value columns to widen.
+    :return: Single-row DataFrame with flat string column names.
+    :raises ValueError: On invalid ``order``, non-unique index, unknown
+        ``columns``, or separator appearing in an index label.
+    """
+    if order not in ("index_then_field", "field_then_index"):
+        errmsg = (
+            f'wide_flatten order must be "index_then_field" or '
+            f'"field_then_index", got "{order}".'
+        )
+        log.error(errmsg)
+        raise ValueError(errmsg)
+
+    if not isinstance(df, pd.DataFrame):
+        errmsg = f"wide_flatten expects a pandas DataFrame, got {type(df).__name__}."
+        log.error(errmsg)
+        raise ValueError(errmsg)
+
+    work = df
+    if columns is not None:
+        missing = [c for c in columns if c not in work.columns]
+        if missing:
+            errmsg = (
+                f"wide_flatten columns not present in DataFrame: {missing}. "
+                f"Available columns: {list(work.columns)}."
+            )
+            log.error(errmsg)
+            raise ValueError(errmsg)
+        work = work.loc[:, list(columns)]
+
+    if not work.index.is_unique:
+        duplicates = work.index[work.index.duplicated()].unique().tolist()
+        errmsg = (
+            "wide_flatten requires a unique index (cannot unstack "
+            f"ambiguously). Duplicate labels: {duplicates}."
+        )
+        log.error(errmsg)
+        raise ValueError(errmsg)
+
+    for label in work.index:
+        label_str = str(label)
+        if separator and separator in label_str:
+            errmsg = (
+                f'wide_flatten separator "{separator}" appears in index '
+                f'label "{label_str}". Choose a separator that does not '
+                "occur in index strings (v1 policy)."
+            )
+            log.error(errmsg)
+            raise ValueError(errmsg)
+
+    if work.shape[0] == 0:
+        # One empty row, no value columns (matches stack().to_frame().T on
+        # a column-only empty frame).
+        return pd.DataFrame(index=[0])
+
+    # stack → MultiIndex (index, field); unstack → (field, index)
+    if order == "index_then_field":
+        try:
+            series = work.stack(future_stack=True)
+        except TypeError:
+            # pandas < 2.1
+            series = work.stack()
+    else:
+        series = work.unstack()
+
+    wide = series.to_frame().T
+    wide.columns = [
+        separator.join(map(str, col if isinstance(col, tuple) else (col,)))
+        for col in wide.columns
+    ]
+    wide.index = pd.RangeIndex(len(wide))
+    return wide
+
+
+def read_wide_flatten(details):
+    """
+    Read a nested data source then wide-flatten to one row (CIP-0010).
+
+    Loads ``specifications`` via ``read_data`` (so nested ``compute`` runs
+    through ``finalize_data``), optionally sets an index column, then applies
+    :func:`wide_flatten_dataframe`. The outer ``finalize_data`` in
+    :func:`read_data` may then run ``compute`` on the wide row.
+
+    :param details: Must include ``type: wide_flatten`` and ``specifications``.
+        Optional: ``separator`` (default ``_``), ``order`` (default
+        ``index_then_field``), ``columns``, ``index`` (column to set as index
+        before flatten).
+    :type details: dict
+    :return: Single-row DataFrame with index-augmented column names.
+    :rtype: pandas.DataFrame
+    """
+    if details.get("type") != "wide_flatten":
+        raise ValueError('Expected details type to be "wide_flatten".')
+
+    if "specifications" not in details:
+        raise ValueError('Details must include "specifications".')
+
+    df, _ = read_data(details=details["specifications"])
+
+    if "index" in details:
+        index_col = details["index"]
+        if index_col not in df.columns:
+            errmsg = (
+                f'wide_flatten index column "{index_col}" not found. '
+                f"Columns are {list(df.columns)}."
+            )
+            log.error(errmsg)
+            raise ValueError(errmsg)
+        df = df.set_index(index_col, drop=True)
+
+    separator = details.get("separator", "_")
+    order = details.get("order", "index_then_field")
+    columns = details.get("columns")
+
+    log.debug(
+        f"wide_flatten: separator={separator!r} order={order!r} "
+        f"input_rows={len(df.index)} input_cols={len(df.columns)} "
+        f"columns_subset={columns}"
+    )
+
+    wide = wide_flatten_dataframe(
+        df, separator=separator, order=order, columns=columns
+    )
+
+    log.debug(
+        f"wide_flatten: output_rows={len(wide.index)} "
+        f"output_cols={len(wide.columns)}"
+    )
+    return wide
+
+
 def read_data(details):
     """
     Read in the data from the details given in configuration.
@@ -2128,6 +2283,8 @@ def read_data(details):
         df = read_vstack(details)
     elif ftype == "series":
         df = read_series(details)
+    elif ftype == "wide_flatten":
+        df = read_wide_flatten(details)
     elif ftype == "excel":
         df = read_excel(details)
     elif ftype == "gsheet":
