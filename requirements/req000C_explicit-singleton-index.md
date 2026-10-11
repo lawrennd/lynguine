@@ -1,7 +1,7 @@
 ---
 id: "000C"
 title: "Singleton and composed frames use an explicit wrapping index"
-status: "Ready"
+status: "In Progress"
 priority: "High"
 created: "2026-10-11"
 last_updated: "2026-10-11"
@@ -61,3 +61,6 @@ Requirement drafted from index/`result_index` survey and singleton-nav discussio
 
 ### 2026-10-11 (later)
 Marked **Ready**. Implementing HOW: lynguine CIP-0010 Phase 3 (wrapping `index` = singleton result label; tall key nested).
+
+### 2026-10-11 (backlog)
+Marked **In Progress**. Backlog: `2026-10-11_wide-flatten-wrapping-index`, `2026-10-11_wide-flatten-wrapping-index-tests-docs`.
