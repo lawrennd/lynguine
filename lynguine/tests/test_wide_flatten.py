@@ -222,6 +222,9 @@ def test_read_wide_flatten_via_read_data():
     assert df.iloc[0]["flattenKeys"] == ["grant/a", "grant/b"]
     assert df.iloc[0]["grant/a_title"] == "A"
     assert df.iloc[0]["grant/b_complete"] is False or df.iloc[0]["grant/b_complete"] == False
+    # finalize_data must not inject tall ``columns`` names onto the wide row
+    assert "title" not in df.columns
+    assert "complete" not in df.columns
 
 
 def test_read_wide_flatten_keys_field_false():

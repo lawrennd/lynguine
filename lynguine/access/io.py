@@ -2569,6 +2569,15 @@ def read_data(details):
         df = read_series(details)
     elif ftype == "wide_flatten":
         df = read_wide_flatten(details)
+        # ``columns`` here means fields to widen, not store columns to ensure.
+        # Drop flatten-only keys before finalize_data so it does not inject
+        # tall names (title, complete, …) onto the wide row.
+        finalize_details = {
+            k: v
+            for k, v in details.items()
+            if k not in ("columns", "keys_field", "order", "separator", "index")
+        }
+        return finalize_data(df, finalize_details)
     elif ftype == "excel":
         df = read_excel(details)
     elif ftype == "gsheet":
