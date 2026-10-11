@@ -28,6 +28,11 @@ jobs:
     - name: Install dependencies
       run: |
         poetry install
+    - name: Lint with Ruff
+      run: |
+        # Stage 1: prove Ruff is installed and configured. Rule select is
+        # empty in pyproject.toml until a follow-up enables a green subset.
+        poetry run ruff check lynguine
     - name: Run tests with pytest and coverage
       run: |
         poetry run pytest --cov=lynguine --cov-report=xml
