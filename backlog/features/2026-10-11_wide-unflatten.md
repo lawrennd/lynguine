@@ -1,7 +1,7 @@
 ---
 id: "2026-10-11_wide-unflatten"
 title: "wide_unflatten for materialized round-trip (Pattern B)"
-status: "Ready"
+status: "Completed"
 priority: "Medium"
 created: "2026-10-11"
 last_updated: "2026-10-11"
@@ -33,12 +33,12 @@ CIP-0010 Phase 2c: implement `wide_unflatten_dataframe` — inverse of materiali
 
 ## Acceptance Criteria
 
-- [ ] `wide_unflatten_dataframe(wide, …)` recovers tall frame from a Phase-1/2a wide row
-- [ ] Honours `separator`, `order`, and skips / handles `flattenKeys` (and configurable keys field)
-- [ ] Round-trip: unflatten(flatten(df[columns])) matches original values for unique index
-- [ ] Clear errors on ambiguous parse / separator violations
-- [ ] Unit tests for happy path, keys field exclusion, error cases
-- [ ] Docs state Pattern B / round-trip role — not default editable store
+- [x] `wide_unflatten_dataframe(wide, …)` recovers tall frame from a Phase-1/2a wide row
+- [x] Honours `separator`, `order`, and skips / handles `flattenKeys` (and configurable keys field)
+- [x] Round-trip: unflatten(flatten(df[columns])) matches original values for unique index
+- [x] Clear errors on ambiguous parse / separator violations
+- [x] Unit tests for happy path, keys field exclusion, error cases
+- [x] Docs state Pattern B / round-trip role — not default editable store
 
 ## Implementation Notes
 
@@ -56,3 +56,5 @@ CIP-0010 Phase 2c: implement `wide_unflatten_dataframe` — inverse of materiali
 ### 2026-10-11
 
 Task created (Ready) from CIP-0010 Phase 2c.
+
+Implemented with Phase 2 helpers in `lynguine/access/io.py` and tests/docs. Marked Completed.
