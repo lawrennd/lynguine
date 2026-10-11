@@ -1,7 +1,7 @@
 ---
 id: "2026-10-11_directory-reader-field-projection"
 title: "Project explicit fields when reading directory sources"
-status: "Ready"
+status: "Completed"
 priority: "High"
 created: "2026-10-11"
 last_updated: "2026-10-11"
@@ -33,14 +33,14 @@ This lets catalog flows request `title`, `description`, `date`, `current` (or an
 
 ## Acceptance Criteria
 
-- [ ] When `fields` is present, mapping-valued file results are reduced to `{k: data.get(k) for k in fields}` before normalize
-- [ ] Missing listed keys appear as null/NaN consistently
-- [ ] When `fields` is absent, full-document normalize behaviour is unchanged
-- [ ] `fields` resolves from the active `source` entry, else `details`
-- [ ] `store_fields` still append path metadata after projection; name collisions still error as today
-- [ ] Non-mapping payloads: `fields` is a no-op or warning (documented); no crash
-- [ ] Unit tests cover projection, missing keys, and `store_fields` population
-- [ ] `meta_directory` left unchanged (out of scope)
+- [x] When `fields` is present, mapping-valued file results are reduced to `{k: data.get(k) for k in fields}` before normalize
+- [x] Missing listed keys appear as null/NaN consistently
+- [x] When `fields` is absent, full-document normalize behaviour is unchanged
+- [x] `fields` resolves from the active `source` entry, else `details`
+- [x] `store_fields` still append path metadata after projection; name collisions still error as today
+- [x] Non-mapping payloads: `fields` is a no-op or warning (documented); no crash
+- [x] Unit tests cover projection, missing keys, and `store_fields` population
+- [x] `meta_directory` left unchanged (out of scope)
 
 ## Implementation Notes
 
@@ -59,3 +59,5 @@ This lets catalog flows request `title`, `description`, `date`, `current` (or an
 ### 2026-10-11
 
 Task created (Ready) from Accepted CIP-000F implementation plan step 2.
+
+Implemented via `_project_mapping_fields` in `read_files` and per-source `fields` batches in `read_directory`. Non-mapping payloads warn and project nulls. Tests in `test_directory_glob_baseline.py`. Marked Completed.

@@ -10,7 +10,9 @@ import os
 import pytest
 import yaml
 
-from lynguine.access.io import read_yaml_directory
+import pandas as pd
+
+from lynguine.access.io import read_directory, read_yaml_directory, update_store_fields
 from lynguine.access.paths import PathEscapeError
 
 
@@ -246,4 +248,164 @@ def test_recursive_path_outside_allowed_roots_raises(tmp_path):
 
     with pytest.raises(PathEscapeError):
         read_yaml_directory(details)
+
+
+# --- CIP-000F field projection ----------------------------------------------------
+
+
+def test_fields_projects_top_level_keys(tmp_path):
+    """``fields`` keeps listed keys and drops the rest before normalize."""
+    _write_yml(
+        tmp_path / "rich.yml",
+        {
+            "title": "Catalog",
+            "description": "Desc",
+            "extra": 99,
+            "nested": {"x": 1},
+        },
+    )
+
+    df = read_yaml_directory(
+        _yaml_details(str(tmp_path), "*.yml", fields=["title", "description"])
+    )
+
+    assert len(df) == 1
+    assert df.iloc[0]["title"] == "Catalog"
+    assert df.iloc[0]["description"] == "Desc"
+    assert "extra" not in df.columns
+    assert "nested" not in df.columns
+    assert "nested.x" not in df.columns
+
+
+def test_fields_missing_keys_are_null(tmp_path):
+    """Missing listed keys appear as null/NaN after normalize."""
+    _write_yml(tmp_path / "partial.yml", {"title": "OnlyTitle"})
+
+    df = read_yaml_directory(
+        _yaml_details(str(tmp_path), "*.yml", fields=["title", "missing"])
+    )
+
+    assert df.iloc[0]["title"] == "OnlyTitle"
+    assert pd.isna(df.iloc[0]["missing"])
+
+
+def test_fields_absent_keeps_full_document(tmp_path):
+    """Absent ``fields`` preserves full-document normalize behaviour."""
+    _write_yml(
+        tmp_path / "full.yml",
+        {"title": "T", "extra": 1, "nested": {"x": 2}},
+    )
+
+    df = read_yaml_directory(_yaml_details(str(tmp_path), "*.yml"))
+
+    assert df.iloc[0]["title"] == "T"
+    assert df.iloc[0]["extra"] == 1
+    assert "nested.x" in df.columns
+
+
+def test_fields_from_details_when_source_omits(tmp_path):
+    """Top-level ``details['fields']`` applies when source omits the key."""
+    _write_yml(tmp_path / "a.yml", {"title": "T", "noise": True})
+
+    details = _yaml_details(str(tmp_path), "*.yml")
+    details["fields"] = ["title"]
+
+    df = read_yaml_directory(details)
+
+    assert list(df["title"]) == ["T"]
+    assert "noise" not in df.columns
+
+
+def test_source_fields_overrides_details(tmp_path):
+    """Per-source ``fields`` wins over ``details``."""
+    _write_yml(tmp_path / "a.yml", {"title": "T", "description": "D"})
+
+    details = _yaml_details(str(tmp_path), "*.yml", fields=["title"])
+    details["fields"] = ["description"]
+
+    df = read_yaml_directory(details)
+
+    assert "title" in df.columns
+    assert "description" not in df.columns
+
+
+def test_fields_preserves_store_fields(tmp_path):
+    """Path ``store_fields`` are still appended after projection."""
+    _write_yml(tmp_path / "meta.yml", {"title": "Meta", "noise": 1})
+
+    details = _yaml_details(str(tmp_path), "*.yml", fields=["title"])
+    details["store_fields"] = {
+        "directory": "sourceDirectory",
+        "filename": "sourceFilename",
+        "root": "sourceRoot",
+    }
+
+    df = read_yaml_directory(details)
+
+    assert df.iloc[0]["title"] == "Meta"
+    assert df.iloc[0]["sourceFilename"] == "meta.yml"
+    assert "noise" not in df.columns
+    assert "sourceDirectory" in df.columns
+    assert "sourceRoot" in df.columns
+
+
+def test_fields_store_fields_name_collision_still_errors(tmp_path):
+    """Projected content that already uses a store field name still errors."""
+    _write_yml(tmp_path / "clash.yml", {"title": "T", "sourceFilename": "bad"})
+
+    details = _yaml_details(
+        str(tmp_path), "*.yml", fields=["title", "sourceFilename"]
+    )
+
+    with pytest.raises(ValueError, match="sourceFilename"):
+        read_yaml_directory(details)
+
+
+def test_fields_non_mapping_warns_without_crash(tmp_path, caplog):
+    """Non-mapping payloads warn and yield null projected fields (no crash)."""
+    plain = tmp_path / "note.txt"
+    plain.write_text("not yaml mapping", encoding="utf-8")
+
+    details = update_store_fields(
+        _yaml_details(str(tmp_path), "*.txt", fields=["title", "description"])
+    )
+
+    with caplog.at_level("WARNING"):
+        df = read_directory(
+            details,
+            filereader=lambda filename: open(filename, encoding="utf-8").read(),
+        )
+
+    assert len(df) == 1
+    assert pd.isna(df.iloc[0]["title"])
+    assert pd.isna(df.iloc[0]["description"])
+    assert df.iloc[0]["sourceFilename"] == "note.txt"
+    assert "not a mapping" in caplog.text
+
+
+def test_fields_with_recursive_catalog(tmp_path):
+    """Recursive discovery plus field projection for nested catalog files."""
+    _write_yml(
+        tmp_path / "apps" / "one" / "config.yml",
+        {"title": "One", "description": "D1", "input": {"type": "csv"}},
+    )
+    _write_yml(
+        tmp_path / "apps" / "two" / "config.yml",
+        {"title": "Two", "description": "D2", "review": {"a": 1}},
+    )
+
+    df = read_yaml_directory(
+        _yaml_details(
+            str(tmp_path),
+            "**/config.yml",
+            recursive=True,
+            fields=["title", "description"],
+        )
+    )
+
+    assert sorted(df["title"].tolist()) == ["One", "Two"]
+    assert "input" not in df.columns
+    assert "input.type" not in df.columns
+    assert "review" not in df.columns
+    assert "review.a" not in df.columns
 
