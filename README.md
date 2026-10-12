@@ -397,6 +397,21 @@ type: yaml
 filename: path/to/file.yaml
 ```
 
+A top-level **mapping** loads as a **single-row** table (useful for `constants` / parameters). All-scalar maps keep an explicit index (default `value`). Maps that mix scalars with nested dicts or lists (for example a Jekyll `_config.yml`) become one row with nested values as cell objects. A **sequence of mappings** remains a multi-row table.
+
+Optional `fields` projects the document before the row is formed — top-level keys, dotted paths, or renamed projections via `path` / `liquid`:
+
+```yaml
+type: yaml
+filename: _config.yml
+fields:
+  - github_username
+  - field: github_repository
+    path: ghub.repository
+  - field: edit_base
+    liquid: "https://github.com/{{github_username}}/{{ghub.repository}}"
+```
+
 #### Markdown
 
 To access data from a Markdown file, specify the following details:

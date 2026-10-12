@@ -1,7 +1,7 @@
 ---
 id: "2026-10-12_yaml-constants-nested-mapping"
 title: "read_yaml cannot load nested mappings as single-row constants"
-status: "Ready"
+status: "Completed"
 priority: "High"
 created: "2026-10-12"
 last_updated: "2026-10-12"
@@ -46,13 +46,13 @@ Markdown constants already wrap a single document as one row (`pd.DataFrame([dat
 
 ## Acceptance Criteria
 
-- [ ] A YAML mapping with nested dict/list values can be loaded as a **single-row** DataFrame (constants / parameters use case)
-- [ ] Optional `fields` (including liquid) can project nested paths into flat columns (e.g. `ghub.repository` → `github_repository`) before or after the row is formed
-- [ ] All-scalar YAML maps keep current behaviour (no regression)
-- [ ] YAML sequences of mappings (multi-row tables) keep current behaviour (no regression)
-- [ ] Clear error if the document is neither a mapping nor a sequence of mappings
-- [ ] Unit tests cover: nested Jekyll-like `_config.yml` fixture; scalar-only map; list-of-maps table
-- [ ] Documented in lynguine data-source docs (constants from nested YAML)
+- [x] A YAML mapping with nested dict/list values can be loaded as a **single-row** DataFrame (constants / parameters use case)
+- [x] Optional `fields` (including liquid) can project nested paths into flat columns (e.g. `ghub.repository` → `github_repository`) before or after the row is formed
+- [x] All-scalar YAML maps keep current behaviour (no regression)
+- [x] YAML sequences of mappings (multi-row tables) keep current behaviour (no regression)
+- [x] Clear error if the document is neither a mapping nor a sequence of mappings
+- [x] Unit tests cover: nested Jekyll-like `_config.yml` fixture; scalar-only map; list-of-maps table
+- [x] Documented in lynguine data-source docs (constants from nested YAML)
 
 ## Implementation Notes
 
@@ -78,3 +78,7 @@ Related compute note (may be separate backlog): constants columns are **not** av
 ### 2026-10-12
 
 Bug confirmed while wiring GitHub edit URLs for talks overview. Task created Ready.
+
+### 2026-10-12 (implemented)
+
+`read_yaml` now loads any top-level mapping as a single-row frame (nested values as cell objects); optional `fields` supports keys, dotted `path`, and `liquid`. Tests and README YAML section updated. Marked Completed.
