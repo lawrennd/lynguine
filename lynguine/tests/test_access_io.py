@@ -143,6 +143,117 @@ def test_read_yaml(mocker):
     assert isinstance(result, pd.DataFrame)
     assert result.to_dict('records') == [{'c': 3, 'd': 4}]
 
+
+def test_read_yaml_scalar_mapping_single_row(tmp_path):
+    """All-scalar YAML maps keep the indexed single-row constants behaviour."""
+    path = tmp_path / "scalars.yml"
+    path.write_text("github_username: lawrennd\nsite: talks\n", encoding="utf-8")
+    details = {"filename": str(path.name), "directory": str(tmp_path), "index": "value"}
+
+    result = read_yaml(details)
+
+    assert list(result.index) == ["value"]
+    assert result.loc["value", "github_username"] == "lawrennd"
+    assert result.loc["value", "site"] == "talks"
+
+
+def test_read_yaml_nested_mapping_single_row(tmp_path):
+    """Nested Jekyll-like config maps load as one row with cell objects."""
+    path = tmp_path / "_config.yml"
+    path.write_text(
+        "\n".join(
+            [
+                "title: Talks",
+                "github_username: lawrennd",
+                "ghub:",
+                "  repository: talks",
+                "  branch: gh-pages",
+                "plugins:",
+                "  - jekyll-feed",
+                "  - jekyll-seo-tag",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    details = {"filename": path.name, "directory": str(tmp_path)}
+
+    result = read_yaml(details)
+
+    assert len(result) == 1
+    row = result.iloc[0]
+    assert row["title"] == "Talks"
+    assert row["github_username"] == "lawrennd"
+    assert row["ghub"] == {"repository": "talks", "branch": "gh-pages"}
+    assert row["plugins"] == ["jekyll-feed", "jekyll-seo-tag"]
+
+
+def test_read_yaml_fields_path_and_liquid_projection(tmp_path):
+    """Optional fields can flatten nested paths (path or liquid) into columns."""
+    path = tmp_path / "_config.yml"
+    path.write_text(
+        "\n".join(
+            [
+                "github_username: lawrennd",
+                "ghub:",
+                "  repository: talks",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    details = {
+        "filename": path.name,
+        "directory": str(tmp_path),
+        "fields": [
+            "github_username",
+            {"field": "github_repository", "path": "ghub.repository"},
+            {
+                "field": "edit_base",
+                "liquid": "https://github.com/{{github_username}}/{{ghub.repository}}",
+            },
+        ],
+    }
+
+    result = read_yaml(details)
+
+    assert list(result.index) == ["value"]
+    assert result.loc["value", "github_username"] == "lawrennd"
+    assert result.loc["value", "github_repository"] == "talks"
+    assert (
+        result.loc["value", "edit_base"]
+        == "https://github.com/lawrennd/talks"
+    )
+    assert "ghub" not in result.columns
+
+
+def test_read_yaml_list_of_mappings_unchanged(tmp_path):
+    """YAML sequences of mappings remain multi-row tables."""
+    path = tmp_path / "table.yml"
+    path.write_text(
+        "- name: a\n  value: 1\n- name: b\n  value: 2\n",
+        encoding="utf-8",
+    )
+    details = {"filename": path.name, "directory": str(tmp_path)}
+
+    result = read_yaml(details)
+
+    assert len(result) == 2
+    assert result.to_dict("records") == [
+        {"name": "a", "value": 1},
+        {"name": "b", "value": 2},
+    ]
+
+
+def test_read_yaml_rejects_non_tabular_document(tmp_path):
+    """Scalar / non-mapping documents raise a clear error."""
+    path = tmp_path / "scalar.yml"
+    path.write_text("just-a-string\n", encoding="utf-8")
+    details = {"filename": path.name, "directory": str(tmp_path)}
+
+    with pytest.raises(ValueError, match="mapping or a sequence"):
+        read_yaml(details)
+
 # Test for write_yaml
 def test_write_yaml(mocker):
     mock_write_yaml_file = mocker.patch('lynguine.access.io.write_yaml_file')

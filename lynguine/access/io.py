@@ -360,25 +360,109 @@ def write_json(df, details):
     write_json_file(df.to_dict("records"), filename)
 
 
+def _dig_mapping_path(mapping, path):
+    """Return ``mapping`` value at a dotted path, or ``None`` if missing."""
+    current = mapping
+    for part in str(path).split("."):
+        if not isinstance(current, dict) or part not in current:
+            return None
+        current = current[part]
+    return current
+
+
+def _project_yaml_document_fields(data, fields):
+    """Project a YAML document mapping to flat columns for constants use.
+
+    ``fields`` entries may be:
+
+    - a string top-level key or dotted path (``ghub.repository``);
+    - a mapping with ``field`` and either ``path`` (dotted dig) or
+      ``liquid`` (template rendered against the document as context).
+    """
+    if not isinstance(fields, list):
+        raise ValueError(
+            f'"fields" for yaml document projection must be a list, got {type(fields).__name__}.'
+        )
+
+    projected = {}
+    liquid_env = None
+    for entry in fields:
+        if isinstance(entry, str):
+            if "." in entry:
+                projected[entry] = _dig_mapping_path(data, entry)
+            else:
+                projected[entry] = data.get(entry)
+            continue
+        if isinstance(entry, dict):
+            if "field" not in entry:
+                raise ValueError(
+                    'Each mapping in yaml "fields" must include a "field" name.'
+                )
+            name = entry["field"]
+            if "liquid" in entry:
+                if liquid_env is None:
+                    import liquid as lq
+
+                    liquid_env = lq.Environment(tolerance=lq.Mode.LAX)
+                projected[name] = liquid_env.from_string(entry["liquid"]).render(**data)
+            elif "path" in entry:
+                projected[name] = _dig_mapping_path(data, entry["path"])
+            else:
+                projected[name] = data.get(name)
+            continue
+        raise ValueError(
+            f'Unsupported yaml "fields" entry type {type(entry).__name__}; '
+            "expected str or mapping."
+        )
+    return projected
+
+
+def _yaml_mapping_to_frame(data, details):
+    """Load a YAML mapping as a single-row DataFrame (constants / parameters)."""
+    if "fields" in details and details["fields"] is not None:
+        data = _project_yaml_document_fields(data, details["fields"])
+
+    if all(not isinstance(v, (list, dict)) for v in data.values()):
+        index_name = details.get("index", "value")
+        return pd.DataFrame(data, index=[index_name])
+
+    # Nested values remain as cell objects (same pattern as read_markdown).
+    return pd.DataFrame([data])
+
+
 def read_yaml(details):
     """
     Read data from a yaml file.
+
+    A top-level YAML mapping is always treated as a **single-row** table
+    (constants / parameters). All-scalar maps keep an explicit index
+    (default ``value``). Maps with nested dict/list values become one row
+    with those values as cell objects, matching ``read_markdown``.
+
+    Optional ``fields`` projects the document before the row is formed
+    (top-level keys, dotted paths, or ``field`` + ``path`` / ``liquid``).
+
+    A YAML sequence of mappings remains a multi-row table.
 
     :param details: The details of the file to be read.
     :type details: dict
     :return: The data read from the file.
     :rtype: pandas.DataFrame
+    :raises ValueError: If the document is neither a mapping nor a sequence.
     """
     filename = extract_full_filename(details)
     data = read_yaml_file(filename)
-    
-    # Handle scalar dictionaries (e.g., for parameters/constants)
-    if isinstance(data, dict) and all(not isinstance(v, (list, dict)) for v in data.values()):
-        # All values are scalars - provide an index
-        index_name = details.get("index", "value")
-        return pd.DataFrame(data, index=[index_name])
-    
-    return pd.DataFrame(data)
+
+    if isinstance(data, dict):
+        return _yaml_mapping_to_frame(data, details)
+
+    if isinstance(data, list):
+        return pd.DataFrame(data)
+
+    raise ValueError(
+        f'YAML file "{filename}" must contain a mapping or a sequence of '
+        f"mappings for tabular load; got {type(data).__name__}."
+    )
 
 def read_markdown(details):
     """
