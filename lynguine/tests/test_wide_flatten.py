@@ -217,10 +217,11 @@ def test_read_wide_flatten_via_read_data():
         },
     }
 
-    df, _ = read_data(details)
+    df, iface = read_data(details)
 
     assert len(df) == 1
     assert list(df.index) == ["root"]
+    assert iface["index"] == "root"
     assert df.iloc[0]["flattenKeys"] == ["grant/a", "grant/b"]
     assert df.iloc[0]["grant/a_title"] == "A"
     assert df.iloc[0]["grant/b_complete"] is False or df.iloc[0]["grant/b_complete"] == False
