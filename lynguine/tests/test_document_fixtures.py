@@ -77,6 +77,19 @@ def test_manifest_pdf_structure(manifest_path: Path, tmp_path: Path):
         lines = [ln.strip() for ln in after.splitlines() if ln.strip()]
         assert len(lines) >= expected["min_reference_lines"]
 
+    if "ref_raw_contains" in expected:
+        from lynguine.access.documents import segment_pdf
+
+        refs = segment_pdf(
+            str(pdf_path),
+            strategy="auto",
+            aspect="references",
+            allowed_roots=[str(tmp_path)],
+        )
+        joined = "\n".join(u.text for u in refs)
+        for needle in expected["ref_raw_contains"]:
+            assert needle in joined, needle
+
 
 def test_builders_registered():
     assert set(BUILDERS) >= {

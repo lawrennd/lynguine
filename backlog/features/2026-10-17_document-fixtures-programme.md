@@ -1,7 +1,7 @@
 ---
 id: "2026-10-17_document-fixtures-programme"
 title: "Multi-corpus document fixture programme for CIP-0013"
-status: "In Progress"
+status: "Completed"
 priority: "High"
 created: "2026-10-17"
 last_updated: "2026-10-17"
@@ -52,3 +52,5 @@ Stand up `tests/fixtures/documents/<corpus>/…` with per-file manifests (expect
 Task created (Ready) from Accepted CIP-0013 implementation plan step 7.
 
 Started: synthetic builders + manifests for `public_dialogue_report`, `pmlr_twocolumn`, `scan_like`, inspired by pub-dialogue data/, mlresearch PMLR PDFs, and public ai@cam reports. Parametrised `test_document_fixtures.py`. DOCX family still open.
+
+PDF fixture families + gold `ref_raw_contains` landed. DOCX deferred to `2026-10-17_docx-dialogue-strategies`. Marked Completed for PDF scope.

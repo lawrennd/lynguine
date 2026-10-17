@@ -157,3 +157,24 @@ def document_segment(
         **params,
     )
     return [u.to_dict() for u in units]
+
+
+def extract_references(
+    path: str,
+    *,
+    strategy: str = "auto",
+    reader: str = "pdf",
+    root: str | None = None,
+    on_sparse_text: OnSparse = "error",
+    **kwargs: Any,
+) -> list[dict[str, Any]]:
+    """Compute helper: ``document_segment`` with ``aspect='references'``."""
+    return document_segment(
+        path,
+        strategy=strategy,
+        aspect="references",
+        reader=reader,
+        root=root,
+        on_sparse_text=on_sparse_text,
+        **kwargs,
+    )

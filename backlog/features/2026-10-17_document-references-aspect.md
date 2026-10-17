@@ -1,7 +1,7 @@
 ---
 id: "2026-10-17_document-references-aspect"
 title: "References aspect with academic prose strategy"
-status: "Ready"
+status: "Completed"
 priority: "Medium"
 created: "2026-10-17"
 last_updated: "2026-10-17"
@@ -28,11 +28,11 @@ Implement the `references` aspect: locate the references region in a PDF documen
 
 ## Acceptance Criteria
 
-- [ ] Region detection finds References (or equivalent) block on fixture academic PDFs
-- [ ] At least one entry-splitting strategy emits ordered `ref_raw` rows
-- [ ] Gold `ref_raw` lists asserted in fixture manifests for sample papers
-- [ ] Missing/unfound region fails clearly (no invented citations)
-- [ ] No GROBID / LLM dependency in this task
+- [x] Region detection finds References (or equivalent) block on fixture academic PDFs
+- [x] At least one entry-splitting strategy emits ordered `ref_raw` rows
+- [x] Gold `ref_raw` lists asserted in fixture manifests for sample papers
+- [x] Missing/unfound region fails clearly (no invented citations)
+- [x] No GROBID / LLM dependency in this task
 
 ## Implementation Notes
 
@@ -50,3 +50,5 @@ Implement the `references` aspect: locate the references region in a PDF documen
 ### 2026-10-17
 
 Task created (Ready) from Accepted CIP-0013 implementation plan step 5.
+
+Implemented `pmlr_references.v1` + `extract_references` compute; gold `ref_raw_contains` on PMLR fixture manifest. Marked Completed.

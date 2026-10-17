@@ -15,11 +15,13 @@ from .pdf import (
 )
 from .segment import (
     document_segment,
+    extract_references,
     segment_document,
     segment_pdf,
     segment_pdf_frame,
     units_to_frame,
 )
+from .strategies.pmlr_references_v1 import ReferencesRegionNotFoundError
 from .strategy import (
     ensure_builtin_strategies,
     get_strategy,
@@ -43,11 +45,13 @@ __all__ = [
     "classify_text_layer",
     "document_segment",
     "ensure_builtin_strategies",
+    "extract_references",
     "get_strategy",
     "list_strategies",
     "read_pdf",
     "register_strategy",
     "resolve_strategy_id",
+    "ReferencesRegionNotFoundError",
     "segment_document",
     "segment_pdf",
     "segment_pdf_frame",

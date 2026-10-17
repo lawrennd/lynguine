@@ -12,7 +12,7 @@ from ..util.text import render_liquid
 from ..util.misc import isna
 
 from ..util.liquid import url_escape, markdownify, relative_url, absolute_url, to_i
-from ..access.documents.segment import document_segment
+from ..access.documents.segment import document_segment, extract_references
 
 cntxt = Context(name="lynguine")
            
@@ -566,6 +566,20 @@ class Compute():
                 "docstr": (
                     "Segment a PDF path into unit dicts (CIP-0013). "
                     "Store in one field (list); use segment_pdf_frame for exploded rows."
+                ),
+            },
+            {
+                "name": "extract_references",
+                "function": extract_references,
+                "context": False,
+                "default_args": {
+                    "strategy": "auto",
+                    "reader": "pdf",
+                    "on_sparse_text": "error",
+                },
+                "docstr": (
+                    "Extract bibliographic reference strings from a PDF "
+                    "(aspect=references; CIP-0013)."
                 ),
             },
         ]

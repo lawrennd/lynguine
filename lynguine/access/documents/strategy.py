@@ -74,3 +74,7 @@ def ensure_builtin_strategies() -> None:
         from .strategies.pub_dialogue_v1 import PubDialogueV1
 
         register_strategy(PubDialogueV1())
+    if "pmlr_references.v1" not in _REGISTRY:
+        from .strategies.pmlr_references_v1 import PmlrReferencesV1
+
+        register_strategy(PmlrReferencesV1())

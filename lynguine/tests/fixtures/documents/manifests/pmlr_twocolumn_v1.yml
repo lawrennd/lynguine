@@ -12,3 +12,9 @@ expected:
     - References
   twocolumn_body: true
   min_reference_lines: 3
+  # Gold for pmlr_references.v1 (substring match per entry)
+  ref_raw_contains:
+    - "Ahmed and Aaron Courville"
+    - "Brain of the Firm"
+    - "Every good regulator"
+    - "Deep learning"
