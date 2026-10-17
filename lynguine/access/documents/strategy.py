@@ -1,0 +1,76 @@
+"""Named segmenter strategies and registry (CIP-0013)."""
+
+from __future__ import annotations
+
+from typing import Callable, Protocol
+
+from .errors import UnknownStrategyError
+from .model import Document
+from .unit import Unit
+
+
+class SegmentStrategy(Protocol):
+    """Strategy: document model → ordered units for a declared aspect."""
+
+    id: str
+    aspects: tuple[str, ...]
+
+    def segment(self, document: Document, **params) -> list[Unit]:
+        """Segment *document* into units."""
+        ...
+
+
+_REGISTRY: dict[str, SegmentStrategy] = {}
+
+
+def register_strategy(strategy: SegmentStrategy) -> SegmentStrategy:
+    """Register *strategy* (replaces any prior entry with the same id)."""
+    _REGISTRY[strategy.id] = strategy
+    return strategy
+
+
+def get_strategy(strategy_id: str) -> SegmentStrategy:
+    if strategy_id not in _REGISTRY:
+        known = ", ".join(sorted(_REGISTRY)) or "(none)"
+        raise UnknownStrategyError(
+            f"Unknown segment strategy {strategy_id!r}. Registered: {known}"
+        )
+    return _REGISTRY[strategy_id]
+
+
+def list_strategies(*, aspect: str | None = None) -> list[str]:
+    ids = []
+    for sid, strat in sorted(_REGISTRY.items()):
+        if aspect is None or aspect in strat.aspects:
+            ids.append(sid)
+    return ids
+
+
+def resolve_strategy_id(
+    strategy: str,
+    *,
+    aspect: str,
+) -> str:
+    """Resolve ``auto`` or an explicit id to a registered strategy id."""
+    if strategy != "auto":
+        get_strategy(strategy)  # validate
+        return strategy
+    candidates = list_strategies(aspect=aspect)
+    if len(candidates) == 1:
+        return candidates[0]
+    if not candidates:
+        raise UnknownStrategyError(
+            f"No strategies registered for aspect {aspect!r}"
+        )
+    raise UnknownStrategyError(
+        f"strategy='auto' is ambiguous for aspect {aspect!r}; "
+        f"choose one of: {', '.join(candidates)}"
+    )
+
+
+def ensure_builtin_strategies() -> None:
+    """Register built-in strategies (idempotent)."""
+    if "pub_dialogue.v1" not in _REGISTRY:
+        from .strategies.pub_dialogue_v1 import PubDialogueV1
+
+        register_strategy(PubDialogueV1())

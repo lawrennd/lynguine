@@ -1,7 +1,7 @@
 ---
 id: "2026-10-17_document-segment-pub-dialogue-v1"
 title: "Strategy API, pub_dialogue.v1 segmenter, document_segment compute"
-status: "Ready"
+status: "Completed"
 priority: "High"
 created: "2026-10-17"
 last_updated: "2026-10-17"
@@ -27,12 +27,12 @@ Define the named strategy interface and implement `pub_dialogue.v1` by porting b
 
 ## Acceptance Criteria
 
-- [ ] Strategy protocol: id, supported aspects, parameters, `segment(document_model) -> units`
-- [ ] `pub_dialogue.v1` produces body_chunks comparable to pub-dialogue chunking on fixtures
-- [ ] `document_segment` available via Compute registry (lynguine access compute or agreed registration path)
-- [ ] Default row grain is exploded (one row per unit); strategy id recorded on rows
-- [ ] Sparse/absent text layer yields explicit error or empty result with warning (per CIP-0013)
-- [ ] Unit tests against committed fixtures (may land with fixture task)
+- [x] Strategy protocol: id, supported aspects, parameters, `segment(document_model) -> units`
+- [x] `pub_dialogue.v1` produces body_chunks comparable to pub-dialogue chunking on fixtures
+- [x] `document_segment` available via Compute registry (lynguine access compute or agreed registration path)
+- [x] Default row grain is exploded (one row per unit); strategy id recorded on rows
+- [x] Sparse/absent text layer yields explicit error or empty result with warning (per CIP-0013)
+- [x] Unit tests against committed fixtures (may land with fixture task)
 
 ## Implementation Notes
 
@@ -50,3 +50,5 @@ Define the named strategy interface and implement `pub_dialogue.v1` by porting b
 ### 2026-10-17
 
 Task created (Ready) from Accepted CIP-0013 implementation plan step 3.
+
+Implemented: strategy registry, `pub_dialogue.v1`, `segment_pdf` / `segment_pdf_frame`, compute `document_segment` (list of unit dicts). Sparse/absent text raises by default (`on_sparse_text`). Marked Completed.
