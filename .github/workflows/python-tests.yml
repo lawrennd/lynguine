@@ -27,7 +27,8 @@ jobs:
         pip install poetry
     - name: Install dependencies
       run: |
-        poetry install
+        # documents extra: PyMuPDF for CIP-0013 PDF reader tests
+        poetry install --extras documents
     - name: Lint with Ruff
       run: |
         # Stage 1: prove Ruff is installed and configured. Rule select is

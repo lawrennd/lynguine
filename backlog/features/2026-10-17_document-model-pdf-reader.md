@@ -1,7 +1,7 @@
 ---
 id: "2026-10-17_document-model-pdf-reader"
 title: "Document model and PDF reader with text-layer detection"
-status: "Ready"
+status: "Completed"
 priority: "High"
 created: "2026-10-17"
 last_updated: "2026-10-17"
@@ -30,12 +30,12 @@ No OCR in this task — detect only, as accepted in CIP-0013.
 
 ## Acceptance Criteria
 
-- [ ] Package/module `lynguine.access.documents` (or agreed name) with a documented document model
-- [ ] PDF reader opens a confined path and returns pages/blocks plus text-layer stats
-- [ ] Low-text / scan-like PDFs are classified without calling OCR
-- [ ] Optional dependency declared; import/use without PyMuPDF raises an actionable error
-- [ ] Unit tests with a small text PDF and a scan-like / empty-text fixture
-- [ ] No new `read_data` type yet (functions only)
+- [x] Package/module `lynguine.access.documents` (or agreed name) with a documented document model
+- [x] PDF reader opens a confined path and returns pages/blocks plus text-layer stats
+- [x] Low-text / scan-like PDFs are classified without calling OCR
+- [x] Optional dependency declared; import/use without PyMuPDF raises an actionable error
+- [x] Unit tests with a small text PDF and a scan-like / empty-text fixture
+- [x] No new `read_data` type yet (functions only)
 
 ## Implementation Notes
 
@@ -53,3 +53,5 @@ No OCR in this task — detect only, as accepted in CIP-0013.
 ### 2026-10-17
 
 Task created (Ready) from Accepted CIP-0013 implementation plan step 2.
+
+Implemented on `cip0013-document-extractors`: `lynguine.access.documents` model + `read_pdf` / `classify_text_layer`; optional `documents` extra (PyMuPDF); CI installs `--extras documents`; tests in `test_access_documents_pdf.py`. Marked Completed.

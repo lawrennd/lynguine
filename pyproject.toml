@@ -38,6 +38,11 @@ mimesis = ">11"
 wget = "*"
 pyzmq = "^25.1.2"
 cryptography = ">=50.0.0"
+pymupdf = {version = ">=1.24.0", optional = true}
+
+[tool.poetry.extras]
+# CIP-0013 document readers (PDF via PyMuPDF). Install: poetry install --extras documents
+documents = ["pymupdf"]
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
