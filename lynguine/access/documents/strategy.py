@@ -78,3 +78,11 @@ def ensure_builtin_strategies() -> None:
         from .strategies.pmlr_references_v1 import PmlrReferencesV1
 
         register_strategy(PmlrReferencesV1())
+    if "docx_chatbot.v1" not in _REGISTRY:
+        from .strategies.docx_chatbot_v1 import DocxChatbotV1
+
+        register_strategy(DocxChatbotV1())
+    if "docx_workshop.v1" not in _REGISTRY:
+        from .strategies.docx_workshop_v1 import DocxWorkshopV1
+
+        register_strategy(DocxWorkshopV1())

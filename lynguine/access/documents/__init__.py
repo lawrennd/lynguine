@@ -7,6 +7,7 @@ scope — sparse/absent text layers are detected and refused by default.
 
 from .errors import DocumentSegmentError, SparseTextLayerError, UnknownStrategyError
 from .model import Block, Document, Page, TextLayer
+from .docx_reader import PythonDocxMissingError, read_docx
 from .pdf import (
     DEFAULT_MIN_WORDS_PER_PAGE,
     PyMuPDFMissingError,
@@ -37,6 +38,7 @@ __all__ = [
     "DocumentSegmentError",
     "Page",
     "PyMuPDFMissingError",
+    "PythonDocxMissingError",
     "SparseTextLayerError",
     "TextLayer",
     "Unit",
@@ -48,6 +50,7 @@ __all__ = [
     "extract_references",
     "get_strategy",
     "list_strategies",
+    "read_docx",
     "read_pdf",
     "register_strategy",
     "resolve_strategy_id",

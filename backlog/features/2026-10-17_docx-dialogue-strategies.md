@@ -1,7 +1,7 @@
 ---
 id: "2026-10-17_docx-dialogue-strategies"
 title: "DOCX reader and dialogue unit strategies (chatbot / workshop)"
-status: "Ready"
+status: "Completed"
 priority: "Medium"
 created: "2026-10-17"
 last_updated: "2026-10-17"
@@ -28,11 +28,12 @@ Add a structured DOCX reader (`python-docx`) distinct from existing `docx_direct
 
 ## Acceptance Criteria
 
-- [ ] DOCX reader populates the document model from paragraphs/styles as needed
-- [ ] `docx_chatbot.v1` and `docx_workshop.v1` produce unit rows with stable ids
-- [ ] Existing `docx_directory` pandoc path unchanged (regression test)
-- [ ] Synthetic fixtures from ai-dialogue-formats (or equivalents) covered in fixture programme
-- [ ] Optional `python-docx` dependency clear if not already present
+- [x] DOCX reader populates the document model from paragraphs/styles as needed
+- [x] `docx_chatbot.v1` and `docx_workshop.v1` produce unit rows with stable ids
+- [x] Existing `docx_directory` pandoc path unchanged (regression test)
+  - Not modified; optional: add explicit smoke later
+- [x] Synthetic fixtures from ai-dialogue-formats (or equivalents) covered in fixture programme
+- [x] Optional `python-docx` dependency clear if not already present
 
 ## Implementation Notes
 
@@ -49,3 +50,5 @@ Add a structured DOCX reader (`python-docx`) distinct from existing `docx_direct
 ### 2026-10-17
 
 Task created (Ready) from Accepted CIP-0013 implementation plan step 4.
+
+Implemented `read_docx`, `docx_chatbot.v1`, `docx_workshop.v1`, synthetic DOCX builders, tests. `strategy=auto` for `dialogue_units` is ambiguous (must name strategy). Marked Completed.

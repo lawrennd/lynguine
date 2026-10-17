@@ -564,7 +564,7 @@ class Compute():
                     "on_sparse_text": "error",
                 },
                 "docstr": (
-                    "Segment a PDF path into unit dicts (CIP-0013). "
+                    "Segment a PDF/DOCX path into unit dicts (CIP-0013). "
                     "Store in one field (list); use segment_pdf_frame for exploded rows."
                 ),
             },

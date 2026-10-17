@@ -11,6 +11,7 @@ import pandas as pd
 
 from .errors import SparseTextLayerError
 from .model import Document, TextLayer
+from .docx_reader import read_docx
 from .pdf import read_pdf
 from .strategy import ensure_builtin_strategies, get_strategy, resolve_strategy_id
 from .unit import Unit
@@ -57,6 +58,20 @@ def segment_document(
     return strat.segment(document, **strategy_params)
 
 
+def _read_document(
+    path: str,
+    reader: str,
+    *,
+    allowed_roots: list[str] | None = None,
+    details: dict[str, Any] | None = None,
+):
+    if reader == "pdf":
+        return read_pdf(path, allowed_roots=allowed_roots, details=details)
+    if reader == "docx":
+        return read_docx(path, allowed_roots=allowed_roots, details=details)
+    raise ValueError(f"Unsupported reader {reader!r} (expected 'pdf' or 'docx')")
+
+
 def segment_pdf(
     path: str,
     *,
@@ -68,10 +83,10 @@ def segment_pdf(
     on_sparse_text: OnSparse = "error",
     **strategy_params: Any,
 ) -> list[Unit]:
-    """Load a PDF and segment it into units."""
-    if reader != "pdf":
-        raise ValueError(f"Unsupported reader {reader!r} (only 'pdf' in this task)")
-    document = read_pdf(path, allowed_roots=allowed_roots, details=details)
+    """Load a document (PDF or DOCX) and segment it into units."""
+    document = _read_document(
+        path, reader, allowed_roots=allowed_roots, details=details
+    )
     return segment_document(
         document,
         strategy=strategy,
