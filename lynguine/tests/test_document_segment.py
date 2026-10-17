@@ -58,6 +58,8 @@ def test_segment_auto_resolves_sole_strategy(tmp_path):
     units = segment_pdf(str(pdf), strategy="auto", allowed_roots=[str(tmp_path)])
     assert units
     assert units[0].segment_strategy == "pub_dialogue.v1"
+    assert units[0].extras.get("recogniser_score", 0) > 0
+    assert "recogniser_rationale" in (units[0].extras or {})
 
 
 def test_segment_frame_exploded(tmp_path):

@@ -7,7 +7,6 @@ import pytest
 pytest.importorskip("docx")
 
 from lynguine.access.documents import (
-    UnknownStrategyError,
     read_docx,
     segment_pdf,
 )
@@ -58,14 +57,16 @@ def test_docx_workshop_units(tmp_path):
     assert units[0].word_count >= 4
 
 
-def test_dialogue_auto_ambiguous(tmp_path):
+def test_dialogue_auto_picks_chatbot(tmp_path):
     path = tmp_path / "chat.docx"
     make_chatbot_transcript(path)
-    with pytest.raises(UnknownStrategyError, match="ambiguous"):
-        segment_pdf(
-            str(path),
-            reader="docx",
-            strategy="auto",
-            aspect="dialogue_units",
-            allowed_roots=[str(tmp_path)],
-        )
+    units = segment_pdf(
+        str(path),
+        reader="docx",
+        strategy="auto",
+        aspect="dialogue_units",
+        allowed_roots=[str(tmp_path)],
+    )
+    assert units
+    assert units[0].segment_strategy == "docx_chatbot.v1"
+    assert units[0].extras.get("recogniser_score", 0) > 0

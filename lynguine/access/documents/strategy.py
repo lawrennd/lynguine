@@ -50,11 +50,21 @@ def resolve_strategy_id(
     strategy: str,
     *,
     aspect: str,
+    document=None,
 ) -> str:
-    """Resolve ``auto`` or an explicit id to a registered strategy id."""
+    """Resolve ``auto`` or an explicit id to a registered strategy id.
+
+    When *document* is provided, ``auto`` uses the layout recogniser.
+    Without a document, ``auto`` only succeeds if exactly one strategy
+    is registered for *aspect* (legacy fallback).
+    """
     if strategy != "auto":
         get_strategy(strategy)  # validate
         return strategy
+    if document is not None:
+        from .recogniser import choose_strategy
+
+        return choose_strategy(document, aspect=aspect, strategy="auto").strategy_id
     candidates = list_strategies(aspect=aspect)
     if len(candidates) == 1:
         return candidates[0]
@@ -63,7 +73,7 @@ def resolve_strategy_id(
             f"No strategies registered for aspect {aspect!r}"
         )
     raise UnknownStrategyError(
-        f"strategy='auto' is ambiguous for aspect {aspect!r}; "
+        f"strategy='auto' is ambiguous for aspect {aspect!r} without a document; "
         f"choose one of: {', '.join(candidates)}"
     )
 

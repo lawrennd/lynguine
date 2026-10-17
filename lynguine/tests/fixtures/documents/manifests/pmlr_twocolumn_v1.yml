@@ -18,3 +18,7 @@ expected:
     - "Brain of the Firm"
     - "Every good regulator"
     - "Deep learning"
+  auto_strategy:
+    aspect: references
+    strategy_id: pmlr_references.v1
+    reader: pdf

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import warnings
+from dataclasses import replace
 from pathlib import Path
 from typing import Any, Literal
 
@@ -13,12 +14,23 @@ from .errors import SparseTextLayerError
 from .model import Document, TextLayer
 from .docx_reader import read_docx
 from .pdf import read_pdf
-from .strategy import ensure_builtin_strategies, get_strategy, resolve_strategy_id
+from .recogniser import StrategyCandidate, choose_strategy
+from .strategy import ensure_builtin_strategies, get_strategy
 from .unit import Unit
 
 log = logging.getLogger(__name__)
 
 OnSparse = Literal["error", "empty", "warn"]
+
+
+def _attach_recogniser(units: list[Unit], choice: StrategyCandidate) -> list[Unit]:
+    out: list[Unit] = []
+    for u in units:
+        extras = dict(u.extras or {})
+        extras["recogniser_score"] = choice.score
+        extras["recogniser_rationale"] = choice.rationale
+        out.append(replace(u, extras=extras))
+    return out
 
 
 def segment_document(
@@ -31,9 +43,14 @@ def segment_document(
 ) -> list[Unit]:
     """Segment an already-loaded :class:`Document` into units."""
     ensure_builtin_strategies()
-    strategy_id = resolve_strategy_id(strategy, aspect=aspect)
 
     if document.text_layer in (TextLayer.ABSENT, TextLayer.SPARSE):
+        # Rank first so auto cannot claim a false success on empty text.
+        try:
+            choice = choose_strategy(document, aspect=aspect, strategy=strategy)
+            strategy_id = choice.strategy_id
+        except Exception:
+            strategy_id = strategy if strategy != "auto" else "(unresolved)"
         msg = (
             f"Document {document.path!r} has text_layer={document.text_layer.value!r} "
             f"(words_per_page={document.words_per_page:.1f}); "
@@ -49,13 +66,17 @@ def segment_document(
             log.warning(msg)
         return []
 
+    choice = choose_strategy(document, aspect=aspect, strategy=strategy)
+    strategy_id = choice.strategy_id
+
     strat = get_strategy(strategy_id)
     if aspect not in strat.aspects:
         raise ValueError(
             f"Strategy {strategy_id!r} does not support aspect {aspect!r} "
             f"(supports: {', '.join(strat.aspects)})"
         )
-    return strat.segment(document, **strategy_params)
+    units = strat.segment(document, **strategy_params)
+    return _attach_recogniser(units, choice)
 
 
 def _read_document(

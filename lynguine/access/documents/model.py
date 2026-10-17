@@ -66,4 +66,8 @@ class Document:
 
     @property
     def full_text(self) -> str:
-        return "\n".join(page.text for page in self.pages)
+        # Concatenate pages with no separator — matches pub-dialogue /
+        # ``"".join(page.get_text() …)``. Joining with ``"\\n"`` invents
+        # blank-line paragraph breaks at page boundaries and diverges from
+        # the seeded chunker.
+        return "".join(page.text for page in self.pages)

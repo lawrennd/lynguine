@@ -8,8 +8,15 @@ import pytest
 import yaml
 
 fitz = pytest.importorskip("fitz")
+pytest.importorskip("docx")
 
-from lynguine.access.documents import TextLayer, read_pdf
+from lynguine.access.documents import (
+    SparseTextLayerError,
+    TextLayer,
+    read_docx,
+    read_pdf,
+    segment_pdf,
+)
 from lynguine.tests.fixtures.documents.builders import BUILDERS
 
 FIXTURES = Path(__file__).resolve().parent / "fixtures" / "documents"
@@ -41,17 +48,36 @@ def _median_text_block_width_ratio(pdf_path: Path, page_index: int = 0) -> float
         doc.close()
 
 
+def _build_path(manifest: dict, tmp_path: Path) -> tuple[Path, str]:
+    """Return (built path, reader name)."""
+    auto = manifest.get("expected", {}).get("auto_strategy") or {}
+    reader = auto.get("reader") or (
+        "docx" if manifest["builder"].startswith("make_chatbot")
+        or manifest["builder"].startswith("make_workshop")
+        else "pdf"
+    )
+    suffix = ".docx" if reader == "docx" else ".pdf"
+    path = tmp_path / f"{manifest['id']}{suffix}"
+    BUILDERS[manifest["builder"]](path)
+    return path, reader
+
+
+def _read(path: Path, reader: str, tmp_path: Path):
+    if reader == "docx":
+        return read_docx(str(path), allowed_roots=[str(tmp_path)])
+    return read_pdf(str(path), allowed_roots=[str(tmp_path)])
+
+
 @pytest.mark.parametrize("manifest_path", MANIFESTS, ids=lambda p: p.stem)
-def test_manifest_pdf_structure(manifest_path: Path, tmp_path: Path):
+def test_manifest_document_structure(manifest_path: Path, tmp_path: Path):
     manifest = _load_manifest(manifest_path)
     builder_name = manifest["builder"]
     assert builder_name in BUILDERS, builder_name
     expected = manifest["expected"]
 
-    pdf_path = tmp_path / f"{manifest['id']}.pdf"
-    BUILDERS[builder_name](pdf_path)
+    path, reader = _build_path(manifest, tmp_path)
+    doc = _read(path, reader, tmp_path)
 
-    doc = read_pdf(str(pdf_path), allowed_roots=[str(tmp_path)])
     layer = TextLayer(expected["text_layer"])
     assert doc.text_layer is layer
     assert doc.page_count >= expected.get("min_pages", 1)
@@ -68,7 +94,7 @@ def test_manifest_pdf_structure(manifest_path: Path, tmp_path: Path):
 
     if expected.get("twocolumn_body"):
         # Body page (0): median text block should be clearly less than full width
-        ratio = _median_text_block_width_ratio(pdf_path, page_index=0)
+        ratio = _median_text_block_width_ratio(path, page_index=0)
         assert ratio < 0.75, f"expected two-column-ish blocks, got ratio={ratio}"
 
     if "min_reference_lines" in expected:
@@ -78,17 +104,41 @@ def test_manifest_pdf_structure(manifest_path: Path, tmp_path: Path):
         assert len(lines) >= expected["min_reference_lines"]
 
     if "ref_raw_contains" in expected:
-        from lynguine.access.documents import segment_pdf
-
         refs = segment_pdf(
-            str(pdf_path),
+            str(path),
             strategy="auto",
             aspect="references",
+            reader=reader,
             allowed_roots=[str(tmp_path)],
         )
         joined = "\n".join(u.text for u in refs)
         for needle in expected["ref_raw_contains"]:
             assert needle in joined, needle
+
+    auto = expected.get("auto_strategy")
+    if auto:
+        if auto.get("expect_sparse_error"):
+            with pytest.raises(SparseTextLayerError):
+                segment_pdf(
+                    str(path),
+                    strategy="auto",
+                    aspect=auto.get("aspect", "body_chunks"),
+                    reader=reader,
+                    allowed_roots=[str(tmp_path)],
+                )
+        else:
+            params = dict(auto.get("strategy_params") or {})
+            units = segment_pdf(
+                str(path),
+                strategy="auto",
+                aspect=auto["aspect"],
+                reader=reader,
+                allowed_roots=[str(tmp_path)],
+                **params,
+            )
+            assert units, f"{manifest['id']}: expected units under auto"
+            assert units[0].segment_strategy == auto["strategy_id"]
+            assert units[0].extras.get("recogniser_score", 0) > 0
 
 
 def test_builders_registered():
@@ -96,4 +146,6 @@ def test_builders_registered():
         "make_public_dialogue_report",
         "make_pmlr_twocolumn",
         "make_scan_like",
+        "make_chatbot_transcript",
+        "make_workshop_transcript",
     }

@@ -7,3 +7,8 @@ expected:
   min_pages: 2
   min_total_words: 0
   max_total_words: 0
+  # auto must not silently succeed with a text-layer strategy
+  auto_strategy:
+    aspect: body_chunks
+    expect_sparse_error: true
+    reader: pdf

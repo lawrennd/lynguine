@@ -12,6 +12,9 @@ from lynguine.access.documents import (
     extract_references,
     segment_pdf,
 )
+from lynguine.access.documents.strategies.pmlr_references_v1 import (
+    split_reference_entries,
+)
 from lynguine.assess.compute import Compute
 from lynguine.tests.fixtures.documents.builders import (
     make_pmlr_twocolumn,
@@ -25,6 +28,38 @@ MANIFEST = (
     / "manifests"
     / "pmlr_twocolumn_v1.yml"
 )
+
+
+def test_split_rejects_coarse_blank_line_page_artifacts():
+    """Few huge blank-line blocks + many year dots → year-boundary split."""
+    # Simulate two-column PDF: one blank line mid-list (page break), years intact
+    entries = [
+        "TW Archibald et al. On Markov decision processes. JORS, 1995.",
+        "Leemon Baird. Residual algorithms. ML Proceedings, 1995.",
+        "M. G. Bellemare et al. Arcade learning environment. JAIR, 2013.",
+        "Dimitri Bertsekas. Neuro-dynamic programming. Athena, 1996.",
+        "Shalabh Bhatnagar et al. Natural actor-critic. Automatica, 2009.",
+    ]
+    # Join with newlines (line-wrapped style) and one blank line mid-way
+    region = "\n".join(entries[:3]) + "\n\n" + "\n".join(entries[3:])
+    parts = split_reference_entries(region)
+    assert len(parts) == 5
+    assert parts[0].startswith("TW Archibald")
+    assert parts[1].startswith("Leemon Baird")
+    assert all(len(p.split()) < 40 for p in parts)
+
+
+def test_split_keeps_blank_line_when_entries_are_separated():
+    region = (
+        "Faruk Ahmed and Aaron Courville. Detecting semantic anomalies. "
+        "In ICML, 2019.\n\n"
+        "Stafford Beer. Brain of the Firm. Wiley, 1972.\n\n"
+        "Roger Conant. Every good regulator. Int J Systems Sci, 1970."
+    )
+    parts = split_reference_entries(region)
+    assert len(parts) == 3
+    assert "Ahmed" in parts[0]
+    assert "Beer" in parts[1]
 
 
 def test_extract_references_from_pmlr_fixture(tmp_path):

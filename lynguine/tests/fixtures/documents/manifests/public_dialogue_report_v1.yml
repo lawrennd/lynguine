@@ -14,3 +14,8 @@ expected:
     - Recommendations
     - References
   cover_page_max_words: 40
+  # Recogniser v0 under strategy=auto
+  auto_strategy:
+    aspect: body_chunks
+    strategy_id: pub_dialogue.v1
+    reader: pdf

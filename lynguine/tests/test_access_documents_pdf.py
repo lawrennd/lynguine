@@ -64,6 +64,31 @@ def test_read_pdf_text_document(tmp_path):
     assert doc.pages[0].word_count == doc.total_words
 
 
+def test_full_text_joins_pages_without_invented_blank_lines(tmp_path):
+    """Parity with pub-dialogue: pages concatenated with '' not '\\n'."""
+    pdf = tmp_path / "multipage.pdf"
+    doc = fitz.open()
+    p0 = doc.new_page()
+    p0.insert_textbox(
+        fitz.Rect(72, 72, 500, 200), "Page zero ends here.\n", fontsize=11
+    )
+    p1 = doc.new_page()
+    p1.insert_textbox(
+        fitz.Rect(72, 72, 500, 200), "Page one starts here.\n", fontsize=11
+    )
+    doc.save(pdf)
+    doc.close()
+
+    model = read_pdf(str(pdf), allowed_roots=[str(tmp_path)])
+    assert model.page_count == 2
+    joined = "".join(p.text for p in model.pages)
+    assert model.full_text == joined
+    # Joining with "\n" would invent blank paragraphs at page boundaries
+    newline_joined = "\n".join(p.text for p in model.pages)
+    assert model.full_text != newline_joined
+    assert model.full_text.count("\n\n") == joined.count("\n\n")
+
+
 def test_read_pdf_blank_is_absent(tmp_path):
     pdf = tmp_path / "scan_like.pdf"
     _write_blank_pdf(pdf, pages=2)

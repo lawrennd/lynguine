@@ -9,7 +9,8 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-from ..model import Document, TextLayer
+from ..chrome_filters import apply_chrome_filters, resolve_chrome_filter_flags
+from ..model import Document
 from ..unit import Unit
 
 # Defaults match pub-dialogue.access constants.
@@ -110,6 +111,12 @@ class PubDialogueV1:
         sentence_fallback_target_words: int = SENTENCE_FALLBACK_TARGET_WORDS,
         sentence_fallback_min_paragraphs: int = SENTENCE_FALLBACK_MIN_PARAGRAPHS,
         min_text_coverage: float = MIN_TEXT_COVERAGE,
+        filter_chrome: bool = False,
+        drop_duplicate_footers: bool | None = None,
+        strip_running_headers: bool | None = None,
+        skip_toc: bool | None = None,
+        min_footer_repeats: int = 3,
+        empty_after_filter: str = "error",
         **_ignored,
     ) -> list[Unit]:
         full_text = document.full_text
@@ -204,4 +211,20 @@ class PubDialogueV1:
                     },
                 )
             )
-        return units
+
+        chrome = resolve_chrome_filter_flags(
+            filter_chrome=filter_chrome,
+            drop_duplicate_footers=drop_duplicate_footers,
+            strip_running_headers=strip_running_headers,
+            skip_toc=skip_toc,
+        )
+        return apply_chrome_filters(
+            units,
+            drop_duplicate_footers=chrome["drop_duplicate_footers"],
+            strip_running_headers=chrome["strip_running_headers"],
+            skip_toc=chrome["skip_toc"],
+            min_footer_repeats=min_footer_repeats,
+            min_chunk_words=min_chunk_words,
+            min_chunk_chars=min_chunk_chars,
+            empty_after_filter=empty_after_filter,
+        )
