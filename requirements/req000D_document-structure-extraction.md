@@ -1,7 +1,7 @@
 ---
 id: "000D"
 title: "Document structure and aspect extraction from PDF and DOCX"
-status: "Ready"
+status: "In Progress"
 priority: "High"
 created: "2026-10-17"
 last_updated: "2026-10-17"
@@ -61,3 +61,5 @@ In-PDF reference extraction (end-of-paper lists) is distinct from volume-level B
 Requirement created from discussion of wiring pub-dialogue PDFs and ai-dialogue-formats DOCX through lynguine, plus mlresearch reference extraction and pluggable layout/reference recognisers.
 
 CIP-0013 Accepted. Placement: lynguine access (not vongole). Scanned PDFs: detect in v1, OCR future. Status → Ready.
+
+CIP-0013 moved to In Progress; backlog slices created under `backlog/features/2026-10-17_document-*`. Status → In Progress.
