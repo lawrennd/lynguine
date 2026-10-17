@@ -1,0 +1,14 @@
+id: scan_like_v1
+family: scan_like
+builder: make_scan_like
+notes: Blank pages for text-layer detection (absent). No OCR in v1.
+expected:
+  text_layer: absent
+  min_pages: 2
+  min_total_words: 0
+  max_total_words: 0
+  # auto must not silently succeed with a text-layer strategy
+  auto_strategy:
+    aspect: body_chunks
+    expect_sparse_error: true
+    reader: pdf

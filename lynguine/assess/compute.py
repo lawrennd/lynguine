@@ -12,6 +12,7 @@ from ..util.text import render_liquid
 from ..util.misc import isna
 
 from ..util.liquid import url_escape, markdownify, relative_url, absolute_url, to_i
+from ..access.documents.segment import document_segment, extract_references
 
 cntxt = Context(name="lynguine")
            
@@ -551,6 +552,35 @@ class Compute():
                     "format": "%Y-%m-%d",
                 },
                 "docstr" : "Return today's date as a string.",
+            },
+            {
+                "name": "document_segment",
+                "function": document_segment,
+                "context": False,
+                "default_args": {
+                    "strategy": "auto",
+                    "aspect": "body_chunks",
+                    "reader": "pdf",
+                    "on_sparse_text": "error",
+                },
+                "docstr": (
+                    "Segment a PDF/DOCX path into unit dicts (CIP-0013). "
+                    "Store in one field (list); use segment_pdf_frame for exploded rows."
+                ),
+            },
+            {
+                "name": "extract_references",
+                "function": extract_references,
+                "context": False,
+                "default_args": {
+                    "strategy": "auto",
+                    "reader": "pdf",
+                    "on_sparse_text": "error",
+                },
+                "docstr": (
+                    "Extract bibliographic reference strings from a PDF "
+                    "(aspect=references; CIP-0013)."
+                ),
             },
         ]
     

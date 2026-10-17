@@ -1,0 +1,17 @@
+id: docx_chatbot_v1
+family: docx_chatbot
+builder: make_chatbot_transcript
+notes: >
+  Inspired by ai-dialogue-formats chatbot DOCX exports (Participant NNN,
+  Conversation Transcript). Synthetic content only.
+expected:
+  text_layer: present
+  min_pages: 1
+  min_total_words: 20
+  contains:
+    - Participant 001
+    - Conversation Transcript
+  auto_strategy:
+    aspect: dialogue_units
+    strategy_id: docx_chatbot.v1
+    reader: docx

@@ -1,0 +1,20 @@
+id: docx_workshop_v1
+family: docx_workshop
+builder: make_workshop_transcript
+notes: >
+  Inspired by ai-dialogue-formats workshop DOCX (Facilitator / Speaker labels).
+  Synthetic content only.
+expected:
+  text_layer: present
+  min_pages: 1
+  min_total_words: 40
+  contains:
+    - Facilitator
+    - Speaker 1
+  auto_strategy:
+    aspect: dialogue_units
+    strategy_id: docx_workshop.v1
+    reader: docx
+    strategy_params:
+      facilitator_names:
+        - Facilitator

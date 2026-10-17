@@ -1,0 +1,21 @@
+id: public_dialogue_report_v1
+family: public_dialogue_report
+builder: make_public_dialogue_report
+notes: >
+  Inspired by pub-dialogue Sciencewise reports and ai@cam Hopkins Van Mil
+  public-dialogue PDFs (sparse cover, Findings, Recommendations, References).
+  Synthetic content only — not copied from any report.
+expected:
+  text_layer: present
+  min_pages: 5
+  min_total_words: 200
+  contains:
+    - Findings
+    - Recommendations
+    - References
+  cover_page_max_words: 40
+  # Recogniser v0 under strategy=auto
+  auto_strategy:
+    aspect: body_chunks
+    strategy_id: pub_dialogue.v1
+    reader: pdf
