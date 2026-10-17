@@ -1,10 +1,10 @@
 ---
 id: "2026-10-11_remove-legacy-manchester-cgi-scripts"
 title: "Remove unused Manchester-era CGI / ndl* legacy scripts"
-status: "Proposed"
+status: "Completed"
 priority: "Medium"
 created: "2026-10-11"
-last_updated: "2026-10-11"
+last_updated: "2026-10-17"
 category: "infrastructure"
 related_cips: []
 owner: "Neil D. Lawrence"
@@ -50,12 +50,12 @@ Preferred outcome: **delete** the unused cluster from the package. If any script
 
 ## Acceptance Criteria
 
-- [ ] Decision recorded: delete from package (preferred) vs move to a non-packaged archive location
-- [ ] Unused Manchester CGI / `ndl*` modules listed above are removed from `lynguine/` (or relocated out of the installable package)
-- [ ] `lynguine/ndlconvert.py` and its Poetry entry point remain
-- [ ] No remaining imports or docs that treat the removed modules as part of lynguine’s API
-- [ ] `pyproject.toml` Ruff `extend-exclude` for `lynguine/ndlcgi.py` is removed
-- [ ] Tests still pass; Ruff check still passes under the current stage-1 config
+- [x] Decision recorded: delete from package (preferred) vs move to a non-packaged archive location
+- [x] Unused Manchester CGI / `ndl*` modules listed above are removed from `lynguine/` (or relocated out of the installable package)
+- [x] `lynguine/ndlconvert.py` and its Poetry entry point remain
+- [x] No remaining imports or docs that treat the removed modules as part of lynguine’s API
+- [x] `pyproject.toml` Ruff `extend-exclude` for `lynguine/ndlcgi.py` is removed
+- [x] Tests still pass; Ruff check still passes under the current stage-1 config
 
 ## Implementation Notes
 
@@ -77,3 +77,7 @@ Preferred outcome: **delete** the unused cluster from the package. If any script
 ### 2026-10-11
 
 Task created with Proposed status after Ruff stage 1 required excluding `ndlcgi.py`. Cluster confirmed unused by modern lynguine; only cross-refs are among the legacy CGI scripts themselves.
+
+### 2026-10-17
+
+Completed. Deleted the nine unused modules from the package; kept `ndlconvert.py`. Removed Ruff `extend-exclude` for `ndlcgi.py`. Decision: delete (not archive in-tree).
