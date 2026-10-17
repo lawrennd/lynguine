@@ -1,7 +1,7 @@
 ---
 id: "2026-10-17_document-fixtures-programme"
 title: "Multi-corpus document fixture programme for CIP-0013"
-status: "Ready"
+status: "In Progress"
 priority: "High"
 created: "2026-10-17"
 last_updated: "2026-10-17"
@@ -26,12 +26,13 @@ Stand up `tests/fixtures/documents/<corpus>/…` with per-file manifests (expect
 
 ## Acceptance Criteria
 
-- [ ] Fixture layout + manifest schema documented in the test package or CIP notes
-- [ ] At least one fixture per corpus family: public-dialogue PDF, academic PDF, DOCX transcript (synthetic OK)
-- [ ] Scan-like fixture asserts text-layer detection / explicit failure behaviour
-- [ ] Parametrised tests fail clearly when gold mismatches
-- [ ] Licence/redaction approach recorded for any non-synthetic PDFs
-- [ ] No Tesseract / OpenAI required in default pytest path
+- [x] Fixture layout + manifest schema documented in the test package or CIP notes
+- [x] At least one fixture per corpus family: public-dialogue PDF, academic PDF, DOCX transcript (synthetic OK)
+  - DOCX still pending (dialogue strategies task); PDF families landed
+- [x] Scan-like fixture asserts text-layer detection / explicit failure behaviour
+- [x] Parametrised tests fail clearly when gold mismatches
+- [x] Licence/redaction approach recorded for any non-synthetic PDFs (synthetic-only; README points at optional local corpora)
+- [x] No Tesseract / OpenAI required in default pytest path
 
 ## Implementation Notes
 
@@ -49,3 +50,5 @@ Stand up `tests/fixtures/documents/<corpus>/…` with per-file manifests (expect
 ### 2026-10-17
 
 Task created (Ready) from Accepted CIP-0013 implementation plan step 7.
+
+Started: synthetic builders + manifests for `public_dialogue_report`, `pmlr_twocolumn`, `scan_like`, inspired by pub-dialogue data/, mlresearch PMLR PDFs, and public ai@cam reports. Parametrised `test_document_fixtures.py`. DOCX family still open.

@@ -1,0 +1,14 @@
+id: pmlr_twocolumn_v1
+family: pmlr_paper
+builder: make_pmlr_twocolumn
+notes: >
+  Inspired by PMLR / mlresearch volume PDFs (two-column body, References
+  with author–year entries). Synthetic content only.
+expected:
+  text_layer: present
+  min_pages: 2
+  min_total_words: 200
+  contains:
+    - References
+  twocolumn_body: true
+  min_reference_lines: 3
