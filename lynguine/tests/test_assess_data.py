@@ -1093,3 +1093,78 @@ def test_at_setitem_routes_dict_to_cache_when_output_index_empty():
     cdf.set_column("applicant")
     cdf.set_value({"given": "Ada", "email": "ada2@example.com"})
     assert cdf.get_value_column("applicant")["email"] == "ada2@example.com"
+
+
+def test_at_setitem_creates_missing_column_on_coltype_store():
+    """Registered cache column missing from the store frame is created on write."""
+    cdf = lynguine.assess.data.CustomDataFrame(
+        pd.DataFrame(
+            {"given": ["Ada"], "email": [None], "applicant": [None]},
+            index=["Ada"],
+        ),
+        colspecs={"input": ["given"], "cache": ["email", "applicant"]},
+    )
+    del cdf._d["cache"]["applicant"]
+
+    payload = {"email": "ada@example.com"}
+    cdf.at["Ada", "applicant"] = payload
+
+    assert "applicant" in cdf._d["cache"].columns
+    assert cdf.at["Ada", "applicant"] == payload
+
+
+def test_at_setitem_appends_missing_row_on_coltype_store():
+    """Write to a colspecs-owned store with an empty index appends the row."""
+    cdf = lynguine.assess.data.CustomDataFrame(
+        pd.DataFrame({"given": ["Ada"], "email": [None]}, index=["Ada"]),
+        colspecs={"input": ["given"], "cache": ["email"]},
+    )
+    cdf._d["cache"] = pd.DataFrame(columns=["email"])
+
+    cdf.at["Ada", "email"] = "ada@example.com"
+
+    assert "Ada" in cdf._d["cache"].index
+    assert cdf._d["cache"].at["Ada", "email"] == "ada@example.com"
+    assert cdf.at["Ada", "email"] == "ada@example.com"
+
+
+def test_at_setitem_rejects_parameters_via_coltype():
+    """Parameters columns cannot be written through .at when coltype routes them."""
+    cdf = create_merged_dataframe()
+    with pytest.raises(KeyError, match="parameters"):
+        cdf.at[0, "E"] = 99
+
+
+def test_at_setitem_fallback_updates_existing_unregistered_cell():
+    """Fallback writes an existing (row, column) cell when colspecs omit the column."""
+    cdf = lynguine.assess.data.CustomDataFrame(
+        pd.DataFrame({"given": ["Ada"], "score": [1]}, index=["Ada"]),
+        colspecs={"input": ["given"], "output": ["score"]},
+    )
+    cdf._d["output"]["orphan"] = [None]
+    cdf._colspecs = {"input": ["given"], "output": ["score"]}
+    assert cdf.coltype("orphan") is None
+
+    cdf.at["Ada", "orphan"] = 99
+
+    assert cdf._d["output"].at["Ada", "orphan"] == 99
+
+
+def test_at_setitem_fallback_rejects_unknown_key():
+    """Fallback refuses to invent a column on an unrelated empty store."""
+    cdf = lynguine.assess.data.CustomDataFrame(
+        pd.DataFrame({"given": ["Ada"], "score": [1]}, index=["Ada"]),
+        colspecs={"input": ["given"], "output": ["score"]},
+    )
+    with pytest.raises(KeyError, match="not found"):
+        cdf.at["Ada", "missing"] = 1
+
+
+def test_at_setitem_fallback_rejects_parameters_series():
+    """Fallback still blocks writes when a parameters Series owns the label."""
+    cdf = create_merged_dataframe()
+    cdf._colspecs = {"input": ["A", "B"], "output": ["C", "D"]}
+    assert cdf.coltype("E") is None
+
+    with pytest.raises(KeyError, match="parameters"):
+        cdf.at[0, "E"] = 99
