@@ -1052,3 +1052,44 @@ job_title: Manager
         # Verify that the interface mapping overrode the auto-generated identity mapping
         assert "jobTitle" in data._name_column_map
         assert data._name_column_map["jobTitle"] == "job_title"
+
+
+def test_at_setitem_routes_dict_to_cache_when_output_index_empty():
+    """Regression: empty output must not steal cache writes (dict soft-fill).
+
+    When ``output`` has no rows but ``cache`` owns a column, ``.at`` must
+    write to cache.  The old loop wrote into the first store missing the
+    row (empty output); ``coltype`` still said cache, so ``get`` returned
+    None and liquid soft-fill (e.g. Candidate Email) saw an empty applicant.
+    """
+    data = pd.DataFrame(
+        {
+            "given": ["Ada"],
+            "Application Number": [1],
+            "Candidate Email": [None],
+            "SessionDate": [None],
+            "applicant": [None],
+        },
+        index=["Ada_Lovelace"],
+    )
+    cdf = lynguine.assess.data.CustomDataFrame(
+        data,
+        colspecs={
+            "input": ["given", "Application Number"],
+            "output": ["Candidate Email", "SessionDate"],
+            "cache": ["applicant"],
+        },
+    )
+    # Reproduce soft-fill load: output CSV empty (headers only).
+    cdf._d["output"] = pd.DataFrame(columns=["Candidate Email", "SessionDate"])
+
+    payload = {"given": "Ada", "email": "ada@example.com"}
+    cdf.at["Ada_Lovelace", "applicant"] = payload
+
+    assert "applicant" not in cdf._d["output"].columns
+    assert cdf._d["cache"].at["Ada_Lovelace", "applicant"] == payload
+    assert cdf.at["Ada_Lovelace", "applicant"] == payload
+
+    cdf.set_column("applicant")
+    cdf.set_value({"given": "Ada", "email": "ada2@example.com"})
+    assert cdf.get_value_column("applicant")["email"] == "ada2@example.com"
