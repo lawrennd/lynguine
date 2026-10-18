@@ -2727,6 +2727,13 @@ class CustomDataFrame(DataObject):
             This method provides a way to set the value of a single element, similar to pandas' .at accessor.
             It expects a single label for both row and column and updates the value at that location.
 
+            Writes are routed to the store declared in ``colspecs`` (via
+            ``coltype``).  Iterating ``_d`` and writing into the first frame
+            that lacks the row is unsafe: an empty ``output`` index would
+            steal values intended for ``cache`` (e.g. dict results from
+            ``extract_form_fields``), while ``get`` still reads ``cache`` via
+            colspecs and returns ``None``.
+
             :param key: A tuple containing the row and column label.
             :param value: The new value to set at the specified location.
             :raises KeyError: If the specified key is not a tuple or if it does not correspond
@@ -2744,28 +2751,47 @@ class CustomDataFrame(DataObject):
                     f"Column \"{col_label}\" is immutable and cannot be modified."
                 )
 
-            # Setting the value
+            typ = self._data_object.coltype(col_label)
+            if typ is not None and typ in self._data_object._d:
+                if typ in self._data_object.types["parameters"]:
+                    raise KeyError(
+                        f"Cannot modify individual elements in 'parameters' type data."
+                    )
+                data = self._data_object._d[typ]
+                if isinstance(data, pd.DataFrame) and col_label not in data.columns:
+                    data[col_label] = None
+                if isinstance(data, pd.DataFrame) and row_label not in data.index:
+                    empty = {c: None for c in data.columns}
+                    data = pd.concat(
+                        [data, pd.DataFrame(empty, index=[row_label])]
+                    )
+                _set_value_with_coercion(data, row_label, col_label, value)
+                self._data_object._d[typ] = data
+                return
+
+            # Fallback when the column is not yet in colspecs: find an
+            # existing (row, column) cell, else refuse rather than inventing
+            # the column on an unrelated empty store.
             data_modified = False
             for typ, data in self._data_object._d.items():
-                if row_label in data.index and col_label in data.columns:
-                    _set_value_with_coercion(data, row_label, col_label, value)
-                    data_modified = True
-                    break
-                if row_label not in data.index and typ not in self._data_object.types["parameters"]:
-                    # Add row indexed by row_label to pd.DataFrame data
-                    _set_value_with_coercion(data, row_label, col_label, value)
-                    data_modified = True
-                    break
-                elif typ in self._data_object.types["parameters"]:
-                    if col_label in data.index:
+                if typ in self._data_object.types["parameters"]:
+                    if isinstance(data, pd.Series) and col_label in data.index:
                         raise KeyError(
                             f"Cannot modify individual elements in 'parameters' type data."
                         )
+                    continue
+                if (
+                    isinstance(data, pd.DataFrame)
+                    and row_label in data.index
+                    and col_label in data.columns
+                ):
+                    _set_value_with_coercion(data, row_label, col_label, value)
+                    data_modified = True
+                    break
 
             if not data_modified:
                 raise KeyError(f"Key {key} not found in the CustomDataFrame")
 
-            # Update the data object with the modified data
             self._data_object._d[typ] = data
 
     class _LocAccessor(Accessor):

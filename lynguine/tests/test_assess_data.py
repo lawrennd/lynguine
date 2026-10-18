@@ -1052,3 +1052,193 @@ job_title: Manager
         # Verify that the interface mapping overrode the auto-generated identity mapping
         assert "jobTitle" in data._name_column_map
         assert data._name_column_map["jobTitle"] == "job_title"
+
+
+def test_at_setitem_routes_dict_to_cache_when_output_index_empty():
+    """Regression: empty output must not steal cache writes (dict soft-fill).
+
+    When ``output`` has no rows but ``cache`` owns a column, ``.at`` must
+    write to cache.  The old loop wrote into the first store missing the
+    row (empty output); ``coltype`` still said cache, so ``get`` returned
+    None and liquid soft-fill (e.g. Candidate Email) saw an empty applicant.
+    """
+    data = pd.DataFrame(
+        {
+            "given": ["Ada"],
+            "Application Number": [1],
+            "Candidate Email": [None],
+            "SessionDate": [None],
+            "applicant": [None],
+        },
+        index=["Ada_Lovelace"],
+    )
+    cdf = lynguine.assess.data.CustomDataFrame(
+        data,
+        colspecs={
+            "input": ["given", "Application Number"],
+            "output": ["Candidate Email", "SessionDate"],
+            "cache": ["applicant"],
+        },
+    )
+    # Reproduce soft-fill load: output CSV empty (headers only).
+    cdf._d["output"] = pd.DataFrame(columns=["Candidate Email", "SessionDate"])
+
+    payload = {"given": "Ada", "email": "ada@example.com"}
+    cdf.at["Ada_Lovelace", "applicant"] = payload
+
+    assert "applicant" not in cdf._d["output"].columns
+    assert cdf._d["cache"].at["Ada_Lovelace", "applicant"] == payload
+    assert cdf.at["Ada_Lovelace", "applicant"] == payload
+
+    cdf.set_column("applicant")
+    cdf.set_value({"given": "Ada", "email": "ada2@example.com"})
+    assert cdf.get_value_column("applicant")["email"] == "ada2@example.com"
+
+
+def test_at_setitem_creates_missing_column_on_coltype_store():
+    """Registered cache column missing from the store frame is created on write."""
+    cdf = lynguine.assess.data.CustomDataFrame(
+        pd.DataFrame(
+            {"given": ["Ada"], "email": [None], "applicant": [None]},
+            index=["Ada"],
+        ),
+        colspecs={"input": ["given"], "cache": ["email", "applicant"]},
+    )
+    del cdf._d["cache"]["applicant"]
+
+    payload = {"email": "ada@example.com"}
+    cdf.at["Ada", "applicant"] = payload
+
+    assert "applicant" in cdf._d["cache"].columns
+    assert cdf.at["Ada", "applicant"] == payload
+
+
+def test_at_setitem_appends_missing_row_on_coltype_store():
+    """Write to a colspecs-owned store with an empty index appends the row."""
+    cdf = lynguine.assess.data.CustomDataFrame(
+        pd.DataFrame({"given": ["Ada"], "email": [None]}, index=["Ada"]),
+        colspecs={"input": ["given"], "cache": ["email"]},
+    )
+    cdf._d["cache"] = pd.DataFrame(columns=["email"])
+
+    cdf.at["Ada", "email"] = "ada@example.com"
+
+    assert "Ada" in cdf._d["cache"].index
+    assert cdf._d["cache"].at["Ada", "email"] == "ada@example.com"
+    assert cdf.at["Ada", "email"] == "ada@example.com"
+
+
+def test_at_setitem_rejects_parameters_via_coltype():
+    """Parameters columns cannot be written through .at when coltype routes them."""
+    cdf = create_merged_dataframe()
+    with pytest.raises(KeyError, match="parameters"):
+        cdf.at[0, "E"] = 99
+
+
+def test_at_setitem_fallback_updates_existing_unregistered_cell():
+    """Fallback writes an existing (row, column) cell when colspecs omit the column."""
+    cdf = lynguine.assess.data.CustomDataFrame(
+        pd.DataFrame({"given": ["Ada"], "score": [1]}, index=["Ada"]),
+        colspecs={"input": ["given"], "output": ["score"]},
+    )
+    cdf._d["output"]["orphan"] = [None]
+    cdf._colspecs = {"input": ["given"], "output": ["score"]}
+    assert cdf.coltype("orphan") is None
+
+    cdf.at["Ada", "orphan"] = 99
+
+    assert cdf._d["output"].at["Ada", "orphan"] == 99
+
+
+def test_at_setitem_fallback_rejects_unknown_key():
+    """Fallback refuses to invent a column on an unrelated empty store."""
+    cdf = lynguine.assess.data.CustomDataFrame(
+        pd.DataFrame({"given": ["Ada"], "score": [1]}, index=["Ada"]),
+        colspecs={"input": ["given"], "output": ["score"]},
+    )
+    with pytest.raises(KeyError, match="not found"):
+        cdf.at["Ada", "missing"] = 1
+
+
+def test_at_setitem_fallback_rejects_parameters_series():
+    """Fallback still blocks writes when a parameters Series owns the label."""
+    cdf = create_merged_dataframe()
+    cdf._colspecs = {"input": ["A", "B"], "output": ["C", "D"]}
+    assert cdf.coltype("E") is None
+
+    with pytest.raises(KeyError, match="parameters"):
+        cdf.at[0, "E"] = 99
+
+
+def test_at_getitem_parameters_and_missing_row():
+    """``.at`` reads parameters as globals and returns None for absent rows."""
+    cdf = create_merged_dataframe()
+    assert cdf.at[0, "E"] == 7
+
+    cdf._d["output"] = pd.DataFrame(columns=["C", "D"])
+    assert cdf.at[0, "C"] is None
+
+
+def test_at_getitem_rejects_bad_key_and_missing_column():
+    cdf = create_merged_dataframe()
+    with pytest.raises(KeyError, match="tuple"):
+        _ = cdf.at[0]
+    with pytest.raises(KeyError, match="not found"):
+        _ = cdf.at[0, "ZZZ"]
+
+
+def test_set_value_with_coercion_bool_to_float64(monkeypatch):
+    """Bool → float64 coercion when pandas rejects the assignment."""
+    from lynguine.assess.data import _set_value_with_coercion
+
+    data = pd.DataFrame({"flag": [float("nan")]}, index=["Ada"])
+    assert pd.api.types.is_float_dtype(data["flag"])
+
+    original_setitem = pd.core.indexing._AtIndexer.__setitem__
+    calls = {"n": 0}
+
+    def flaky_setitem(self, key, value):
+        calls["n"] += 1
+        if calls["n"] == 1 and isinstance(value, bool):
+            raise TypeError("incompatible dtype")
+        return original_setitem(self, key, value)
+
+    monkeypatch.setattr(pd.core.indexing._AtIndexer, "__setitem__", flaky_setitem)
+    _set_value_with_coercion(data, "Ada", "flag", True)
+    assert data.at["Ada", "flag"] == 1.0
+    assert pd.api.types.is_float_dtype(data["flag"])
+
+
+def test_set_value_with_coercion_upcasts_to_object():
+    """Non-bool type mismatches upcast the column to object."""
+    from lynguine.assess.data import _set_value_with_coercion
+
+    data = pd.DataFrame({"score": [1.0]}, index=["Ada"])
+    payload = {"email": "ada@example.com"}
+    _set_value_with_coercion(data, "Ada", "score", payload)
+    assert data.at["Ada", "score"] == payload
+    assert data["score"].dtype == object
+
+
+def test_to_pandas_only_overlapping_columns_aligns_index():
+    """When the right flow's columns are all duplicates, join still aligns index."""
+    left = pd.DataFrame(
+        {"givenName": ["Ada"], "score": [1]},
+        index=pd.Index(["a"], name="id"),
+    )
+    right = pd.DataFrame(
+        {"givenName": ["Ada"]},
+        index=pd.Index(["a", "b"], name="id"),
+    )
+    cdf = lynguine.assess.data.CustomDataFrame(
+        left, colspecs={"input": ["givenName", "score"]}
+    )
+    cdf._d["output"] = right
+    cdf._colspecs["output"] = ["givenName"]
+
+    out = cdf.to_pandas()
+    assert list(out.index) == ["a", "b"]
+    assert "givenName" in out.columns
+    assert "score" in out.columns
+    assert out.loc["a", "givenName"] == "Ada"
+    assert pd.isna(out.loc["b", "score"])
