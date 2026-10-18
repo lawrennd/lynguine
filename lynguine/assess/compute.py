@@ -12,7 +12,11 @@ from ..util.text import render_liquid
 from ..util.misc import isna
 
 from ..util.liquid import url_escape, markdownify, relative_url, absolute_url, to_i
-from ..access.documents.segment import document_segment, extract_references
+from ..access.documents.segment import (
+    document_segment,
+    extract_form_fields,
+    extract_references,
+)
 
 cntxt = Context(name="lynguine")
            
@@ -580,6 +584,20 @@ class Compute():
                 "docstr": (
                     "Extract bibliographic reference strings from a PDF "
                     "(aspect=references; CIP-0013)."
+                ),
+            },
+            {
+                "name": "extract_form_fields",
+                "function": extract_form_fields,
+                "context": False,
+                "default_args": {
+                    "strategy": "auto",
+                    "reader": "pdf",
+                    "on_sparse_text": "error",
+                },
+                "docstr": (
+                    "Extract a single structured form_fields record from a PDF "
+                    "(CIP-0013 YAML strategies / form_fields engine)."
                 ),
             },
         ]

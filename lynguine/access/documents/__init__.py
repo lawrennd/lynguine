@@ -28,6 +28,7 @@ from .recogniser import (
 )
 from .segment import (
     document_segment,
+    extract_form_fields,
     extract_references,
     segment_document,
     segment_pdf,
@@ -63,6 +64,7 @@ __all__ = [
     "document_features",
     "document_segment",
     "ensure_builtin_strategies",
+    "extract_form_fields",
     "extract_references",
     "get_strategy",
     "is_toc_like",

@@ -40,12 +40,14 @@ def document_features(document: Document) -> dict:
     ratios.sort()
     median_block_width_ratio = ratios[len(ratios) // 2] if ratios else 1.0
 
+    page0 = document.pages[0].text if document.pages else ""
     return {
         "reader": document.reader,
         "text_layer": document.text_layer.value,
         "words_per_page": document.words_per_page,
         "page_count": document.page_count,
         "total_words": document.total_words,
+        "page0_text": page0,
         "has_participant_heading": bool(_PARTICIPANT.search(full)),
         "has_conversation_transcript": bool(_TRANSCRIPT.search(full)),
         "has_speaker_labels": bool(_SPEAKER.search(full)),
@@ -55,6 +57,60 @@ def document_features(document: Document) -> dict:
         "median_block_width_ratio": median_block_width_ratio,
         "twocolumn_ish": median_block_width_ratio < 0.75,
     }
+
+
+def _page0_text(feats: dict) -> str:
+    return feats.get("page0_text") or ""
+
+
+def _yaml_recogniser_boost(
+    strategy_id: str, aspect: str, feats: dict
+) -> StrategyCandidate | None:
+    """Score YAML strategies from their ``recogniser`` block, if present."""
+    from .strategy import get_strategy
+
+    try:
+        strat = get_strategy(strategy_id)
+    except Exception:
+        return None
+    cfg = getattr(strat, "recogniser", None)
+    if not isinstance(cfg, dict) or not cfg:
+        return None
+    if aspect not in getattr(strat, "aspects", ()):
+        return StrategyCandidate(
+            strategy_id, 0.0, "yaml strategy: aspect not declared"
+        )
+
+    page0 = _page0_text(feats)
+    score = 0.0
+    reasons: list[str] = []
+    required = cfg.get("boost_when_page0_matches") or []
+    if required:
+        hits = [s for s in required if s and s in page0]
+        if len(hits) == len(required):
+            score += 0.55
+            reasons.append(f"page0 matches all ({len(hits)})")
+        elif hits:
+            score += 0.15 * (len(hits) / len(required))
+            reasons.append(f"page0 partial match ({len(hits)}/{len(required)})")
+        else:
+            reasons.append("page0 required markers missing")
+    any_of = cfg.get("boost_when_page0_matches_any") or []
+    if any_of:
+        any_hits = [s for s in any_of if s and s in page0]
+        if any_hits:
+            score += 0.25
+            reasons.append(f"page0 any-of ({any_hits[0]!r})")
+    if feats.get("reader") == "pdf" and score > 0:
+        score += 0.1
+        reasons.append("pdf reader")
+    if score <= 0:
+        reasons.append("yaml recogniser: no boost")
+    return StrategyCandidate(
+        strategy_id,
+        round(score, 3),
+        "; ".join(reasons) if reasons else "yaml recogniser",
+    )
 
 
 def _score_strategy(strategy_id: str, aspect: str, feats: dict) -> StrategyCandidate:
@@ -68,6 +124,11 @@ def _score_strategy(strategy_id: str, aspect: str, feats: dict) -> StrategyCandi
             0.0,
             f"text_layer={layer} (no viable text-layer strategy)",
         )
+
+    # YAML strategies with a recogniser block use that path exclusively
+    yaml_hit = _yaml_recogniser_boost(strategy_id, aspect, feats)
+    if yaml_hit is not None:
+        return yaml_hit
 
     if strategy_id == "pub_dialogue.v1" and aspect == "body_chunks":
         score += 0.4

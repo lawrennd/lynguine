@@ -79,7 +79,11 @@ def resolve_strategy_id(
 
 
 def ensure_builtin_strategies() -> None:
-    """Register built-in strategies (idempotent)."""
+    """Register built-in strategies (idempotent).
+
+    Code strategies are registered first; packaged ``*.yml`` strategies are
+    discovered beside ``strategies/`` (YAML config + engine path).
+    """
     if "pub_dialogue.v1" not in _REGISTRY:
         from .strategies.pub_dialogue_v1 import PubDialogueV1
 
@@ -96,3 +100,9 @@ def ensure_builtin_strategies() -> None:
         from .strategies.docx_workshop_v1 import DocxWorkshopV1
 
         register_strategy(DocxWorkshopV1())
+
+    from .strategies.loader import load_packaged_yaml_strategies
+
+    for strat in load_packaged_yaml_strategies():
+        if strat.id not in _REGISTRY:
+            register_strategy(strat)
