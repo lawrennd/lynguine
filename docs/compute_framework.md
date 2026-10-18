@@ -279,11 +279,14 @@ compute.run_onchange(data, index=0, column='score')
 
 ## Refresh Behavior
 
-By default, compute operations only execute when:
-1. The output field doesn't exist, OR
-2. The output field value is NaN/None
+By default (`refresh: false`), compute **soft-fills** target fields: it writes only when a value is considered missing. Existing values are left alone. This is the right pattern when an access/compute step *suggests* a value (for example PDF form extraction) and a human may later correct it in the same column.
 
-To force recomputation:
+A field is treated as missing when:
+
+1. The output column does not exist yet, **or**
+2. The current cell is **NaN / None** (`pandas`-style null via `isna`)
+
+To force recomputation (overwrite whatever is there):
 
 ```yaml
 compute:
@@ -291,6 +294,55 @@ compute:
     field: result
     refresh: true  # Always recompute
 ```
+
+### Soft fill (suggest if empty)
+
+Typical review wiring — extract into the **same** columns the UI edits; do not set `refresh: true`:
+
+```yaml
+output:
+  columns:
+    - given
+    - family
+    - Candidate Email
+
+compute:
+  - function: extract_form_fields
+    field: [given, family, Candidate Email]   # or flatten via a helper
+    refresh: false                            # default: fill only if missing
+    row_args:
+      path: applicationPdf
+    args:
+      strategy: cam_panel_application.v1
+      root: ../files
+```
+
+| Situation | What happens (`refresh: false`) |
+|-----------|----------------------------------|
+| First open, field null / absent | Compute writes the suggestion |
+| User edited and saved a value | Compute does **not** overwrite |
+| User wants PDF suggestion again | Use a PopulateButton / one-shot with `refresh: true` on that field |
+
+See also CIP-0013 / backlog `2026-10-18_document-form-fields-cam-panel-v1` for Panel PDF → `form_fields`.
+
+### Caveat: empty string is not “missing”
+
+`refresh: false` uses **`isna` only**. A cell that holds an empty string `""` (or whitespace-only text, depending on dtype) is treated as **present**, so soft fill will **not** replace it.
+
+| Cell value | Soft-filled? |
+|------------|--------------|
+| column absent | yes |
+| `None` / `NaN` | yes |
+| `""` (empty string) | **no** |
+| `"salonee@…"` (user or prior fill) | **no** |
+
+Implications:
+
+- Prefer leaving untouched review fields as null/`NaN` until filled, not `""`, if you want soft fill to run.
+- Clearing a widget to `""` may block later PDF suggestions until you refresh explicitly or clear to null.
+- A future enhancement may treat blank strings as missing for soft fill; until then, callers and UIs should not rely on `""` meaning empty for compute skip logic.
+
+Append/prepend `mode` always runs and concatenates; that is separate from soft fill replace semantics.
 
 ## Complete Example
 
