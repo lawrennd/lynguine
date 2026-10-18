@@ -179,7 +179,7 @@ Local experiment path to retire or thin-wrap once lynguine ships.
 
 - CIP: 0013
 - REQ: 000D (via CIP)
-- Prototype: `~/OneDrive/referia/applications/panel/2026-27/experiments/extract_panel_applicant.py` (local only)
+- Prototype: `$REFERIAl/2026-27/experiments/extract_panel_applicant.py` (local only)
 - Consumer: referia `applications/panel/2026-27/{mphil,phd}/`
 
 ## Progress Updates
