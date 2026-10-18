@@ -1,0 +1,54 @@
+# Cambridge Panel PG "Department Copy" application PDFs (CST).
+# Synthetic fixtures only in lynguine — do not commit real applicant PDFs/PII.
+id: cam_panel_application.v1
+aspects:
+  - form_fields
+engine: form_fields
+grain: one_record_per_document
+recogniser:
+  boost_when_page0_matches:
+    - "Application Number:"
+    - "USN:"
+    - "Postgraduate Application Form"
+  boost_when_page0_matches_any:
+    - "MPhil in"
+    - "PhD in"
+params:
+  month_aliases:
+    sept: Sep
+    june: Jun
+    july: Jul
+  labels:
+    application_number: "Application Number:"
+    usn: "USN:"
+    date_submitted: "Date submitted"
+    course_start_date: "Course start date"
+    mode_of_study: "Mode of study"
+    nationality: "Nationality"
+    fee_status: "Estimated fee status"
+  contact:
+    personal_section: "^Personal Information\\s*$"
+    personal_end:
+      - "^Referee Details\\s*$"
+      - "^Research\\s*$"
+      - "^Academic History\\s*$"
+    contact_section: "^Contact\\s*$"
+    contact_end:
+      - "^Home address\\s*$"
+      - "^Immigration\\s*$"
+      - "^Language\\s*$"
+      - "^Funding\\s*$"
+      - "^Referee Details\\s*$"
+      - "^Research\\s*$"
+    referee_section: "^Referee Details\\s*$"
+    address_stop_prefixes:
+      - Home address
+      - Email
+      - Telephone
+      - Mobile
+      - Phone
+      - Valid until
+      - Immigration
+      - Language
+      - Funding
+      - Referee

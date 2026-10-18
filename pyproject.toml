@@ -6,7 +6,10 @@ authors = ["Neil D. Lawrence <lawrennd@gmail.com>"]
 license = "MIT"
 readme = "README.md"
 homepage = "https://github.com/lawrennd/lynguine"
-include = ["lynguine/defaults.yml"]
+include = [
+    "lynguine/defaults.yml",
+    "lynguine/access/documents/strategies/*.yml",
+]
 classifiers = [
     "License :: OSI Approved :: MIT License",	
     "Programming Language :: Python",

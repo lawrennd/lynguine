@@ -214,3 +214,60 @@ def extract_references(
         on_sparse_text=on_sparse_text,
         **kwargs,
     )
+
+
+def extract_form_fields(
+    path: str,
+    *,
+    strategy: str = "auto",
+    reader: str = "pdf",
+    root: str | None = None,
+    on_sparse_text: OnSparse = "error",
+    **kwargs: Any,
+) -> dict[str, Any]:
+    """Compute helper: return the single ``form_fields`` record as a dict.
+
+    Segments with ``aspect='form_fields'`` and unwraps the first unit's field
+    payload (one record per document). Returns ``{}`` when segmentation yields
+    no units (e.g. sparse text with ``on_sparse_text='empty'``).
+    """
+    units = document_segment(
+        path,
+        strategy=strategy,
+        aspect="form_fields",
+        reader=reader,
+        root=root,
+        on_sparse_text=on_sparse_text,
+        **kwargs,
+    )
+    if not units:
+        return {}
+    first = units[0]
+    fields = first.get("form_fields")
+    if isinstance(fields, dict):
+        out = dict(fields)
+    else:
+        # Flat extras already merged via Unit.to_dict()
+        skip = {
+            "unit_id",
+            "text",
+            "segment_strategy",
+            "aspect",
+            "chunk_index",
+            "word_count",
+            "chunking_method",
+            "was_truncated",
+            "source_path",
+            "recogniser_score",
+            "recogniser_rationale",
+            "form_fields",
+        }
+        out = {k: v for k, v in first.items() if k not in skip}
+    out["segment_strategy"] = first.get("segment_strategy")
+    if "segment_engine" in first:
+        out["segment_engine"] = first["segment_engine"]
+    if "recogniser_score" in first:
+        out["recogniser_score"] = first["recogniser_score"]
+    if "recogniser_rationale" in first:
+        out["recogniser_rationale"] = first["recogniser_rationale"]
+    return out
