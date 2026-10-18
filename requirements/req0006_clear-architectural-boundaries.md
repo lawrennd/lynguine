@@ -2,7 +2,7 @@
 id: "REQ-0006"
 title: "Clear Architectural Boundaries and Separation of Concerns"
 created: "2026-01-03"
-last_updated: "2026-01-03"
+last_updated: "2026-10-18"
 status: "Proposed"
 priority: "High"
 owner: "lawrennd"
@@ -116,14 +116,19 @@ applications (referia, lamd, etc.)
 
 ## Related
 
-- CIP: [CIP-0007](../cip/cip0007.md) (Proposed)
+- CIP: [CIP-0007](../cip/cip0007.md) (Proposed — revised 2026-10-18)
 - Backlog Items:
+  - `2026-10-18_align-compute-framework-docs-vongole-intent.md` (doc/CIP intent alignment)
+  - `2026-10-18_inventory-referia-compute-for-vongole.md` (Phase 0 inventory)
   - `2025-12-22_investigate-compute-integration-for-config-sections.md` (Investigation - related)
 - Tenets:
   - `explicit-infrastructure`: Separation makes architecture explicit
   - `flow-based-processing`: Aligns with access-assess-address pattern
 - Related CIPs:
   - CIP-0003: Layering principles
+  - CIP-0011: Phase wiring prerequisite
+  - CIP-0013: Document→units stays in lynguine (not vongole)
+  - CIP-0004: Generic LLM promotion → **vongole** (retargeted 2026-10-18; was lynguine)
 
 ## Implementation Status
 
@@ -163,4 +168,17 @@ Requirement created. Status: Proposed, awaiting CIP-0007 acceptance.
 - Existing code works (with warnings)
 - Clear documentation
 - All tests pass
+
+### 2026-10-18
+
+CIP-0007 revised in place (still Proposed) after a compute-layering audit:
+
+- Assessment compute already lives in **referia**, not lynguine — vongole migration source is referia’s registry
+- lynguine registry is intentionally thin (+ CIP-0013 access extractors)
+- CIP-0013 supersedes vongole `files.py` for document→units
+- CIP-0011 is a prerequisite for honest three-phase assumptions
+- Generic LLM preferred destination recorded: **vongole** (CIP-0004 retargeted; confirm on CIP-0007 Accept)
+- Doc/inventory cleanup backlog created; no vongole package yet
+
+Still awaiting CIP-0007 acceptance before implementation tasks for package creation.
 
