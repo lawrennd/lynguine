@@ -4,7 +4,7 @@ title: "Config-driven remote data access before local read"
 status: "Proposed"
 priority: "Medium"
 created: "2026-08-18"
-last_updated: "2026-08-18"
+last_updated: "2026-10-18"
 related_tenets:
 - explicit-infrastructure
 - flow-based-processing
@@ -57,3 +57,11 @@ Transferred from [referia#9](https://github.com/lawrennd/referia/issues/9); trac
 ### 2026-08-18
 
 Requirement extracted from transferred GitHub issue #20 (originally referia#9). Status Proposed; CIP-0009 describes HOW.
+
+### 2026-10-11
+
+Still Proposed; no acceptance criteria checked. Prerequisites advanced (CIP-000A path confinement merged; CIP-000B credential log fingerprinting merged). CIP-000F closed and introduced a local directory `source` key that collides with CIP-0009's proposed remote `source` block — naming must be resolved before accept. Status comment posted on lynguine#20.
+
+### 2026-10-18
+
+Progress note recovered onto `main`; requirement unchanged (Proposed). Directory `include_start_directory` (CIP-000F follow-on, PR #40) does not resolve the remote `source` naming clash.
