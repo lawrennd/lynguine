@@ -467,6 +467,7 @@ source:
     glob: "*.yml"           # Optional; defaults per type (see table)
     regexp: "^cfg_.*\\.yml$"  # Optional; filter on basename after expand
     recursive: false          # Optional; default false (flat discovery)
+    include_start_directory: true  # Optional; false = descendants only
     fields:                   # Optional; project mapping keys before normalize
       - title
       - description
@@ -476,7 +477,7 @@ store_fields:                 # Optional; path metadata columns (defaults shown)
   root: sourceRoot
 ```
 
-**Defaults preserve existing behaviour:** omit `recursive` (or set `false`) for flat globs only; omit `fields` for full-document `json_normalize`. The pattern `**` is meaningful only when `recursive: true`. Field projection applies to **mapping-valued** readers (YAML/JSON/etc.); non-mapping payloads warn and yield nulls for the listed fields.
+**Defaults preserve existing behaviour:** omit `recursive` (or set `false`) for flat globs only; omit `fields` for full-document `json_normalize`; omit `include_start_directory` (or set `true`) to keep matches in the source directory itself. The pattern `**` is meaningful only when `recursive: true`. Field projection applies to **mapping-valued** readers (YAML/JSON/etc.); non-mapping payloads warn and yield nulls for the listed fields. Set `include_start_directory: false` to omit files whose immediate parent is the source `directory` (nested matches remain).
 
 Nested catalog example (opt-in recursive discovery + lean rows):
 

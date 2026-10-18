@@ -566,6 +566,11 @@ def read_directory(
     mapping-valued file to the listed top-level keys before normalize
     (CIP-000F). Absent ``fields`` keeps full-document behaviour.
 
+    ``include_start_directory`` (source entry or ``details``, default
+    ``True``) controls whether matches whose immediate parent is the source
+    ``directory`` itself are kept. Set ``False`` for descendants-only
+    discovery (e.g. nested ``**/_referia.yml`` without the file in ``.``).
+
     :param details: The details of the directory to be read.
     :type details: dict
     :param filereader: The function to be used to read the file.
@@ -601,6 +606,10 @@ def read_directory(
                 directory = "."
             # Source entry wins; else top-level details; default false.
             recursive = bool(source.get("recursive", details.get("recursive", False)))
+            include_start_directory = source.get(
+                "include_start_directory",
+                details.get("include_start_directory", True),
+            )
             if "fields" in source:
                 fields = source["fields"]
             else:
@@ -614,6 +623,7 @@ def read_directory(
             newfiles = glob.glob(globname, recursive=recursive)
             log.debug(
                 f'Reading directory "{globname}" recursive={recursive} '
+                f"include_start_directory={include_start_directory} "
                 f"matches={len(newfiles)}"
             )
             if len(newfiles) == 0:
@@ -629,6 +639,13 @@ def read_directory(
                     log.warning(f'No files match "regexp"')
             else:
                 addfiles = newfiles
+            if include_start_directory is False:
+                start_dir = os.path.realpath(directory)
+                addfiles = [
+                    filename
+                    for filename in addfiles
+                    if os.path.realpath(os.path.dirname(filename)) != start_dir
+                ]
             if addfiles:
                 confined = [
                     confine_configured_path(filename, details)
