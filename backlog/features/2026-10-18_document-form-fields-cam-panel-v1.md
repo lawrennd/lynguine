@@ -162,18 +162,37 @@ lynguine/tests/fixtures/documents/builders/panel_layouts.py
 4. Emit one `Unit` with `aspect=form_fields`, fields in `extras`, plus `segment_engine`; `extract_form_fields` returns that dict for compute ergonomics.
 5. Path confinement: reuse `allowed_roots` / `root` like other CIP-0013 computes.
 
-### referia follow-on (not this task)
+### Soft fill into editable review fields (referia / Panel)
 
-After merge, referia Panel configs can:
+**No new compute primitive required.** Use existing `refresh: false` (default): write PDF suggestions only when the target cell is missing (`isna` / column absent). Human edits in the same columns are preserved on reload.
+
+Documented in [docs/compute_framework.md](../../docs/compute_framework.md) under **Refresh Behavior** / **Soft fill**.
 
 ```yaml
-input:
-  compute:
-    - function: extract_form_fields
-      # flatten into given / family / Application Number for candidates.csv seed
+# Panel review (sketch) — extract into the same columns the widgets edit
+output:
+  columns:
+    - given
+    - family
+    - Candidate Email
+    # …
+
+compute:
+  - function: extract_form_fields
+    field: [given, family, Candidate Email]  # flatten as implemented
+    refresh: false   # soft fill: do not overwrite user corrections
+    row_args:
+      path: applicationPdf
+    args:
+      strategy: cam_panel_application.v1
+      root: ../files
 ```
 
-Local experiment path to retire or thin-wrap once lynguine ships.
+**Caveat (must call out in referia wiring):** empty string `""` is **not** treated as missing today — only `NaN`/`None`. Soft fill will not replace `""`. Prefer null until filled; use explicit `refresh: true` (e.g. PopulateButton) to re-pull from the PDF. See also backlog `2026-10-18_compute-soft-fill-blank-string-as-missing` if that behaviour should change.
+
+### referia follow-on (not this task)
+
+After merge, referia Panel configs can soft-fill as above (and optionally seed `candidates.csv`). Local experiment path to retire or thin-wrap once lynguine ships.
 
 ## Related
 
@@ -191,3 +210,5 @@ Task created (Proposed). Prototype script validated on two early Gates Panel PDF
 Design update: ship as YAML strategy + shared `form_fields` engine (CIP-0013 YAML registration path), not a Python strategy class.
 
 Implementation landed in lynguine: `engines/form_fields.py`, `strategies/loader.py`, `strategies/cam_panel_application.v1.yml`, `extract_form_fields` compute helper, synthetic Panel fixture + tests. Status → In Progress pending local parity check against the referia prototype (no PII in repo).
+
+Documented soft-fill wiring (`refresh: false` into editable columns) and empty-string vs `isna` caveat in `docs/compute_framework.md`; linked optional follow-on `2026-10-18_compute-soft-fill-blank-string-as-missing`.
