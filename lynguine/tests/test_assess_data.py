@@ -1168,3 +1168,77 @@ def test_at_setitem_fallback_rejects_parameters_series():
 
     with pytest.raises(KeyError, match="parameters"):
         cdf.at[0, "E"] = 99
+
+
+def test_at_getitem_parameters_and_missing_row():
+    """``.at`` reads parameters as globals and returns None for absent rows."""
+    cdf = create_merged_dataframe()
+    assert cdf.at[0, "E"] == 7
+
+    cdf._d["output"] = pd.DataFrame(columns=["C", "D"])
+    assert cdf.at[0, "C"] is None
+
+
+def test_at_getitem_rejects_bad_key_and_missing_column():
+    cdf = create_merged_dataframe()
+    with pytest.raises(KeyError, match="tuple"):
+        _ = cdf.at[0]
+    with pytest.raises(KeyError, match="not found"):
+        _ = cdf.at[0, "ZZZ"]
+
+
+def test_set_value_with_coercion_bool_to_float64(monkeypatch):
+    """Bool → float64 coercion when pandas rejects the assignment."""
+    from lynguine.assess.data import _set_value_with_coercion
+
+    data = pd.DataFrame({"flag": [float("nan")]}, index=["Ada"])
+    assert pd.api.types.is_float_dtype(data["flag"])
+
+    original_setitem = pd.core.indexing._AtIndexer.__setitem__
+    calls = {"n": 0}
+
+    def flaky_setitem(self, key, value):
+        calls["n"] += 1
+        if calls["n"] == 1 and isinstance(value, bool):
+            raise TypeError("incompatible dtype")
+        return original_setitem(self, key, value)
+
+    monkeypatch.setattr(pd.core.indexing._AtIndexer, "__setitem__", flaky_setitem)
+    _set_value_with_coercion(data, "Ada", "flag", True)
+    assert data.at["Ada", "flag"] == 1.0
+    assert pd.api.types.is_float_dtype(data["flag"])
+
+
+def test_set_value_with_coercion_upcasts_to_object():
+    """Non-bool type mismatches upcast the column to object."""
+    from lynguine.assess.data import _set_value_with_coercion
+
+    data = pd.DataFrame({"score": [1.0]}, index=["Ada"])
+    payload = {"email": "ada@example.com"}
+    _set_value_with_coercion(data, "Ada", "score", payload)
+    assert data.at["Ada", "score"] == payload
+    assert data["score"].dtype == object
+
+
+def test_to_pandas_only_overlapping_columns_aligns_index():
+    """When the right flow's columns are all duplicates, join still aligns index."""
+    left = pd.DataFrame(
+        {"givenName": ["Ada"], "score": [1]},
+        index=pd.Index(["a"], name="id"),
+    )
+    right = pd.DataFrame(
+        {"givenName": ["Ada"]},
+        index=pd.Index(["a", "b"], name="id"),
+    )
+    cdf = lynguine.assess.data.CustomDataFrame(
+        left, colspecs={"input": ["givenName", "score"]}
+    )
+    cdf._d["output"] = right
+    cdf._colspecs["output"] = ["givenName"]
+
+    out = cdf.to_pandas()
+    assert list(out.index) == ["a", "b"]
+    assert "givenName" in out.columns
+    assert "score" in out.columns
+    assert out.loc["a", "givenName"] == "Ada"
+    assert pd.isna(out.loc["b", "score"])
