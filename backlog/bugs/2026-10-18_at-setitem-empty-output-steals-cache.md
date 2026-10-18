@@ -63,3 +63,9 @@ empty frames.
 Root cause confirmed on Panel MPhil soft-fill (Candidate Email). Fix and
 regression test landed on `main` working tree; smoke with WebReviewer yields
 `Candidate Email` from PDF.
+
+### 2026-10-18 (merged)
+
+Merged via PR #42. Referia CoE
+`2026-10-18_web-reviewer-skips-precompute-soft-fill` closed after operator
+validation on Panel applications.
