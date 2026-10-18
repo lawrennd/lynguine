@@ -1021,6 +1021,42 @@ class DataObject:
         return cls.from_pandas(df=pd.DataFrame.from_dict(data, *args, **kwargs))
 
 
+    @staticmethod
+    def _resolve_index_column_name(df, details=None, default="index"):
+        """Return the column name to use when materialising the index for write.
+
+        ``save_flows`` / ``to_flow`` concat a Series of index values onto the
+        frame before ``write_csv(..., index=False)``. If that Series has
+        ``name=None`` (because ``df.index.name`` is unset), pandas labels the
+        column ``0``. Reload then fails when the config expects e.g.
+        ``index: Name``. Prefer ``df.index.name``, then ``details['index']``
+        (str or ``{'name': ...}``), then ``default``.
+        """
+        name = getattr(df.index, "name", None)
+        if name is not None:
+            return name
+        if details is not None and hasattr(details, "get"):
+            idx = details.get("index")
+            if isinstance(idx, dict):
+                name = idx.get("name")
+            elif isinstance(idx, str):
+                name = idx
+        return name if name is not None else default
+
+    def _dataframe_for_output_write(self, df, details=None):
+        """Build a write frame with a named index column (never pandas ``0``)."""
+        index_name = self._resolve_index_column_name(df, details)
+        if df.index.name is None:
+            df = df.copy()
+            df.index.name = index_name
+        return pd.concat(
+            [
+                pd.Series(list(df.index), index=df.index, name=index_name),
+                df,
+            ],
+            axis=1,
+        )
+
     def to_flow(self, interface):
         """
         Writes the output data to the flows specified in the interface.
@@ -1035,9 +1071,7 @@ class DataObject:
                 df = self._d.get(typ)
                 if df is not None:
                     try:
-                        write_df = pd.concat(
-                            [pd.Series(list(df.index), index=df.index, name=df.index.name), df], axis=1
-                        )
+                        write_df = self._dataframe_for_output_write(df, details)
                         
                         access.io.write_data(write_df, details)
                         data_written = True
@@ -1152,6 +1186,14 @@ class DataObject:
                                         f"Unrecognised key type \"{key}\". Valid data types are \"{', '.join(cls.valid_data_types)}\"."
                                     )
                             newdf = pd.DataFrame(index=cdf.index, columns=columns)
+                            # Creating from cdf.index can leave index.name None
+                            # (e.g. empty RangeIndex); name it from the flow
+                            # config so save_flows does not write column "0".
+                            if newdf.index.name is None and "index" in item:
+                                idx = item["index"]
+                                newdf.index.name = (
+                                    idx["name"] if isinstance(idx, dict) else idx
+                                )
                             
                     else:
                         raise ValueError(
@@ -1329,9 +1371,8 @@ class DataObject:
         for typ in self.types["output"]:
             if typ in self._d:
                 df = self._d[typ]
-                write_df = pd.concat(
-                    [pd.Series(list(df.index), index=df.index, name=df.index.name), df], axis=1
-                )
+                details = self.interface[typ] if typ in self.interface else None
+                write_df = self._dataframe_for_output_write(df, details)
                 log.info(f"Saving data for flow type '{typ}'")
                 access.io.write_data(write_df, self.interface[typ])
     

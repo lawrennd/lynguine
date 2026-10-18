@@ -199,3 +199,62 @@ class TestSaveFlowsWritesUpdatedValue:
         second_saved = captured[1].loc["alice", "Score"]
         assert first_saved == 3, f"First save wrote {first_saved!r}, expected 3"
         assert second_saved == 12, f"Second save wrote {second_saved!r}, expected 12 (regression)"
+
+
+# ---------------------------------------------------------------------------
+# Tests: save_flows must not write index column as pandas integer 0
+# ---------------------------------------------------------------------------
+
+
+class TestSaveFlowsIndexColumnName:
+    """When df.index.name is None, concat used to label the index column 0."""
+
+    def test_unnamed_index_uses_interface_index_name(self, monkeypatch):
+        import lynguine.access.io as io
+
+        captured: list[pd.DataFrame] = []
+
+        def fake_write_data(df: pd.DataFrame, details) -> None:
+            captured.append(df.copy())
+
+        monkeypatch.setattr(io, "write_data", fake_write_data)
+
+        colspec_type = "output"
+        cdf = _make_cdf(colspec_type=colspec_type)
+        # Simulate lost index name (empty create / concat path)
+        cdf._d[colspec_type].index.name = None
+        cdf.interface = {
+            colspec_type: {
+                "type": "csv",
+                "filename": "preliminary.csv",
+                "index": "Name",
+            }
+        }
+
+        cdf.save_flows()
+
+        assert captured, "write_data was never called"
+        written = captured[0]
+        assert 0 not in written.columns and "0" not in written.columns
+        assert "Name" in written.columns
+        assert list(written["Name"]) == ["alice", "bob"]
+
+    def test_named_index_preserved(self, monkeypatch):
+        import lynguine.access.io as io
+
+        captured: list[pd.DataFrame] = []
+
+        def fake_write_data(df: pd.DataFrame, details) -> None:
+            captured.append(df.copy())
+
+        monkeypatch.setattr(io, "write_data", fake_write_data)
+
+        colspec_type = "output"
+        cdf = _make_cdf(colspec_type=colspec_type)
+        cdf._d[colspec_type].index.name = "Name"
+        cdf.interface = {colspec_type: {"type": "csv", "index": "Name"}}
+
+        cdf.save_flows()
+
+        assert "Name" in captured[0].columns
+        assert 0 not in captured[0].columns
