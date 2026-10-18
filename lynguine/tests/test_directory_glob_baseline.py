@@ -164,6 +164,53 @@ def test_recursive_starstar_matches_full_tree(tmp_path):
     assert set(df["title"].tolist()) == {"Top", "Deep", "Leaf"}
 
 
+def test_include_start_directory_false_omits_start_dir_matches(tmp_path):
+    """``include_start_directory: false`` keeps nested files only."""
+    _write_yml(tmp_path / "top.yml", {"title": "Top"})
+    _write_yml(tmp_path / "sub" / "deep.yml", {"title": "Deep"})
+    _write_yml(tmp_path / "sub" / "deeper" / "leaf.yml", {"title": "Leaf"})
+
+    df = read_yaml_directory(
+        _yaml_details(
+            str(tmp_path),
+            "**/*.yml",
+            recursive=True,
+            include_start_directory=False,
+        )
+    )
+
+    assert sorted(df["sourceFilename"].tolist()) == ["deep.yml", "leaf.yml"]
+    assert set(df["title"].tolist()) == {"Deep", "Leaf"}
+
+
+def test_include_start_directory_default_keeps_start_dir(tmp_path):
+    """Default ``include_start_directory`` keeps start-directory matches."""
+    _write_yml(tmp_path / "top.yml", {"title": "Top"})
+    _write_yml(tmp_path / "sub" / "deep.yml", {"title": "Deep"})
+
+    df = read_yaml_directory(
+        _yaml_details(str(tmp_path), "**/*.yml", recursive=True)
+    )
+
+    assert "top.yml" in df["sourceFilename"].tolist()
+
+
+def test_include_start_directory_false_non_recursive(tmp_path):
+    """Descendants-only also applies to flat globs (start-dir file omitted)."""
+    _write_yml(tmp_path / "top.yml", {"title": "Top"})
+    _write_yml(tmp_path / "sub" / "nested.yml", {"title": "Nested"})
+
+    df = read_yaml_directory(
+        _yaml_details(
+            str(tmp_path),
+            "*.yml",
+            include_start_directory=False,
+        )
+    )
+
+    assert len(df) == 0
+
+
 def test_recursive_false_preserves_non_full_tree(tmp_path):
     """Explicit ``recursive: false`` keeps non-full-tree ``**`` semantics."""
     _write_yml(tmp_path / "top.yml", {"title": "Top"})
