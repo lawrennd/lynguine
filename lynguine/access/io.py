@@ -3151,7 +3151,10 @@ def pack_dataframe(
     for dest, src in columns.items():
         packed[dest] = [[_packable_cell(v) for v in work[src].tolist()]]
     idx_name = index_name or "Name"
-    return pd.DataFrame(packed, index=pd.Index([index_value], name=idx_name))
+    out = pd.DataFrame(packed, index=pd.Index([index_value], name=idx_name))
+    if idx_name not in out.columns:
+        out.insert(0, idx_name, index_value)
+    return out
 
 
 def reshape_for_write(df, details) -> pd.DataFrame:

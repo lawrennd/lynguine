@@ -1071,7 +1071,7 @@ class DataObject:
                 df = self._d.get(typ)
                 if df is not None:
                     try:
-                        write_df = self._dataframe_for_output_write(df, details)
+                        write_df = self._write_frame_for_store(typ, df, details)
                         
                         access.io.write_data(write_df, details)
                         data_written = True
@@ -1381,8 +1381,49 @@ class DataObject:
         _stamp_path_roots(details, self.interface)
         return details
 
+    def _parent_grain_frame(self) -> pd.DataFrame:
+        """Join row-aligned partitions for CIP-0014 explode/pack.
+
+        ``units`` and inherit columns often sit on input/cache while
+        ``output.explode`` is declared on the output store. Pack columns
+        similarly span input phrase text and output embeddings. Series and
+        parameter partitions are skipped.
+        """
+        parts = []
+        seen = []
+        skip = set(self.types["series"]) | set(self.types["parameters"])
+        for typ in ("input", "data", "cache", "output", "writedata"):
+            if typ in skip or typ not in self._d:
+                continue
+            df = self._d[typ]
+            if not isinstance(df, pd.DataFrame) or df.empty:
+                continue
+            keep = [c for c in df.columns if c not in seen]
+            if not keep:
+                continue
+            parts.append(df.loc[:, keep])
+            seen.extend(keep)
+        if not parts:
+            return pd.DataFrame()
+        return pd.concat(parts, axis=1)
+
+    def _write_frame_for_store(self, typ, df, details):
+        """Parent-grain frame when the store explodes or packs; else *df*."""
+        if isinstance(details, dict) and (
+            "explode" in details or "pack" in details
+        ):
+            combined = self._parent_grain_frame()
+            if not combined.empty:
+                df = combined
+        return self._dataframe_for_output_write(df, details)
+
     def _write_pack_store(self) -> bool:
-        """Write CIP-0014 pack store from the tall source frame (default output)."""
+        """Write CIP-0014 pack store from the tall source frame.
+
+        ``source`` selects a loaded partition. When omitted, pack the
+        parent-grain table (input/cache/output columns) so a tall input
+        store does not need a dummy output partition.
+        """
         details = self._pack_details()
         if details is None:
             return False
@@ -1390,14 +1431,26 @@ class DataObject:
             raise ValueError(
                 'Top-level pack store must include a nested pack: mapping (columns, ...).'
             )
-        source_key = details.get("source", "output")
-        if source_key not in self._d:
+        source_key = details.get("source")
+        if source_key is not None:
+            if source_key not in self._d:
+                raise ValueError(
+                    f'pack source "{source_key}" is not loaded '
+                    f'(have {list(self._d.keys())}).'
+                )
+            frame = self._d[source_key]
+        else:
+            frame = self._parent_grain_frame()
+        if frame is None or (isinstance(frame, pd.DataFrame) and frame.empty):
             raise ValueError(
-                f'pack source "{source_key}" is not loaded '
-                f'(have {list(self._d.keys())}).'
+                "pack has no tall rows to stack "
+                f'(partitions: {list(self._d.keys())}).'
             )
-        log.info(f'Saving packed store from "{source_key}"')
-        access.io.write_data(self._d[source_key], details)
+        log.info(
+            'Saving packed store'
+            + (f' from "{source_key}"' if source_key else " from parent grain")
+        )
+        access.io.write_data(frame, details)
         return True
 
     def save_flows(self):
@@ -1408,7 +1461,7 @@ class DataObject:
             if typ in self._d:
                 df = self._d[typ]
                 details = self.interface[typ] if typ in self.interface else None
-                write_df = self._dataframe_for_output_write(df, details)
+                write_df = self._write_frame_for_store(typ, df, details)
                 log.info(f"Saving data for flow type '{typ}'")
                 access.io.write_data(write_df, self.interface[typ])
         self._write_pack_store()
