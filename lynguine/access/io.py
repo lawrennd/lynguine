@@ -1514,9 +1514,32 @@ def read_excel(details):
     return data
 
 
+def _uniquify_index_values(values):
+    """Disambiguate later duplicate index labels by appending `` (n)``.
+
+    Fake generators such as ``name`` are not unique. ``from_flow`` drops
+    duplicate non-series indexes, so a declared fake index must be unique
+    or ``nrows`` is silently reduced.
+    """
+    seen = {}
+    unique = []
+    for value in values:
+        count = seen.get(value, 0) + 1
+        seen[value] = count
+        if count == 1:
+            unique.append(value)
+        else:
+            unique.append(f"{value} ({count})")
+    return unique
+
+
 def read_fake(details):
     """
     Read data from an artificially generated source.
+
+    When ``index`` names a generated column, later duplicate values in that
+    column are disambiguated so the frame keeps ``nrows`` after
+    ``from_flow`` sets the index.
 
     :param details: The details of the data to be read.
     :type details: dict
@@ -1581,7 +1604,18 @@ def read_fake(details):
         row = {col: gen() for col, gen in cols.items()}
         data.append(row)
 
-    return pd.DataFrame(data)
+    df = pd.DataFrame(data)
+    index_column = details.get("index")
+    if isinstance(index_column, str) and index_column in df.columns:
+        if df[index_column].duplicated().any():
+            duplicates = df.loc[df[index_column].duplicated(keep="first"), index_column]
+            duplicate_names = [str(value) for value in duplicates.tolist()]
+            log.warning(
+                f"Duplicate fake index values in column \"{index_column}\": "
+                f"\"{', '.join(duplicate_names)}\". Disambiguating later copies."
+            )
+            df[index_column] = _uniquify_index_values(df[index_column])
+    return df
     
     
 def read_local(details):

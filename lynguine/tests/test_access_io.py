@@ -12,6 +12,8 @@ from pandas.testing import assert_frame_equal
 
 import lynguine
 from lynguine.util.fake import Generate
+from lynguine.assess.data import CustomDataFrame
+from lynguine.config.interface import Interface
 from lynguine.access.io import (
     read_json, write_json, read_json_file, write_json_file,
     write_csv, read_csv, write_excel, read_excel, read_local, read_fake, read_bibtex, write_yaml,
@@ -1121,6 +1123,48 @@ def test_read_fake_nonexistent_generator(valid_details, mock_generate):
     valid_details['cols']['col1'] = 'nonexistent_gen'
     with pytest.raises(ValueError):
         read_fake(valid_details)
+
+
+def test_read_fake_uniquifies_declared_index_column(mocker):
+    mocker.patch.object(Generate, 'name', return_value='Ada Lovelace')
+    mocker.patch.object(Generate, 'email', return_value='ada@example.com')
+    df = read_fake({
+        'nrows': 3,
+        'cols': ['name', 'email'],
+        'index': 'name',
+    })
+    assert list(df['name']) == [
+        'Ada Lovelace',
+        'Ada Lovelace (2)',
+        'Ada Lovelace (3)',
+    ]
+    assert df['name'].is_unique
+
+
+def test_read_fake_keeps_duplicate_names_without_index(mocker):
+    mocker.patch.object(Generate, 'name', return_value='Ada Lovelace')
+    df = read_fake({
+        'nrows': 3,
+        'cols': {'name': 'name'},
+    })
+    assert list(df['name']) == ['Ada Lovelace', 'Ada Lovelace', 'Ada Lovelace']
+
+
+def test_from_flow_fake_index_keeps_nrows_when_names_collide(mocker):
+    mocker.patch.object(Generate, 'name', return_value='Ada Lovelace')
+    mocker.patch.object(Generate, 'email', return_value='ada@example.com')
+    interface = Interface.from_yaml("""
+input:
+  type: fake
+  nrows: 10
+  cols:
+    - name
+    - email
+  index: name
+""")
+    cdf = CustomDataFrame.from_flow(interface)
+    assert len(cdf.index) == 10
+    assert cdf.index.is_unique
 
 
 # test for new age and phone columns
