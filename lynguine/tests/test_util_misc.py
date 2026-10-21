@@ -114,6 +114,8 @@ def test_extract_root_directory(setup_environment):
     ("data.csv", "csv"),
     ("report.xlsx", "excel"),
     ("config.yaml", "yaml"),
+    ("phrases.yml.gz", "yaml"),
+    ("cache.json.gz", "json"),
     ("reference.bib", "bibtex"),
     ("document.docx", "docx"),
     ("unknown.file", ValueError)

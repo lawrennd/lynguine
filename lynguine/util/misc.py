@@ -126,11 +126,19 @@ def extract_file_type(filename : str) -> str:
     """
     Return a standardised file type.
 
+    Compression suffixes (``.gz``) are stripped before the logical type
+    is read, so ``phrases.yml.gz`` is yaml (CIP-0015).
+
     :param filename: The filename to be extracted.
     :type filename: str
     :return: The standardised file type.
     :rtype: str
     """
+    lower = filename.lower()
+    if lower.endswith(".gz"):
+        filename = filename[: -len(".gz")]
+        if filename.lower().endswith(".gzip"):
+            filename = filename[: -len(".gzip")]
     ext = os.path.splitext(filename)[1][1:]
     if ext in ["md", "mmd", "markdown", "html"]:
         return "markdown"

@@ -1080,6 +1080,8 @@ class DataObject:
                         log.error(f"Error writing data for type '{typ}': {e}")
                 else:
                     log.warning(f"No data found for type '{typ}' to write.")
+        if self._write_pack_store():
+            data_written = True
         if not data_written:
             log.warning(f"No data written, implying no data of type \"output\" found, data in CustomDataFrame are \"{', '.join(self._d)}\".")
 
@@ -1364,6 +1366,40 @@ class DataObject:
                 self._colspecs[typ] += cols
 
         
+    def _pack_details(self):
+        """Top-level ``pack:`` store is write-only; stamp path roots for CIP-000A."""
+        if not isinstance(self.interface, (dict, Interface)):
+            return None
+        if "pack" not in self.interface:
+            return None
+        details = self.interface["pack"]
+        if not isinstance(details, dict):
+            raise ValueError("Top-level pack store must be a mapping.")
+        details = dict(details)
+        if "base_directory" not in details and "base_directory" in self.interface:
+            details["base_directory"] = self.interface["base_directory"]
+        _stamp_path_roots(details, self.interface)
+        return details
+
+    def _write_pack_store(self) -> bool:
+        """Write CIP-0014 pack store from the tall source frame (default output)."""
+        details = self._pack_details()
+        if details is None:
+            return False
+        if not isinstance(details.get("pack"), dict):
+            raise ValueError(
+                'Top-level pack store must include a nested pack: mapping (columns, ...).'
+            )
+        source_key = details.get("source", "output")
+        if source_key not in self._d:
+            raise ValueError(
+                f'pack source "{source_key}" is not loaded '
+                f'(have {list(self._d.keys())}).'
+            )
+        log.info(f'Saving packed store from "{source_key}"')
+        access.io.write_data(self._d[source_key], details)
+        return True
+
     def save_flows(self):
         """
         Save the output flows.
@@ -1375,6 +1411,7 @@ class DataObject:
                 write_df = self._dataframe_for_output_write(df, details)
                 log.info(f"Saving data for flow type '{typ}'")
                 access.io.write_data(write_df, self.interface[typ])
+        self._write_pack_store()
     
     def sort_values(self, *args, inplace=False, **kwargs):
         """
