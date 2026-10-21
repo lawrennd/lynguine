@@ -14,6 +14,9 @@ jail (CIP-000D cluster A).
 """
 import os
 import glob
+import gzip
+from contextlib import contextmanager
+from datetime import datetime
 
 
 import sys
@@ -83,6 +86,79 @@ log = Logger(
     level=ctxt._data["logging"]["level"],
     filename=ctxt._data["logging"]["filename"],
 )
+
+GZIP_MAGIC = b"\x1f\x8b"
+_GZIP_SUFFIXES = (".gz", ".gzip")
+
+
+def _compress_kwargs(details, write=True) -> dict:
+    """Pass compress arguments only when the store declares them."""
+    kwargs = {}
+    compress = details.get("compress") if isinstance(details, dict) else None
+    if compress is not None:
+        kwargs["compress"] = compress
+    if write and isinstance(details, dict) and "compress_level" in details:
+        kwargs["compress_level"] = details["compress_level"]
+    return kwargs
+
+
+def gzip_codec_from_name(filename: str) -> str | None:
+    """Return ``gzip`` if *filename* declares compression by suffix."""
+    lower = str(filename).lower()
+    return "gzip" if lower.endswith(_GZIP_SUFFIXES) else None
+
+
+def resolve_text_codec(filename: str, compress=None) -> str | None:
+    """Declare gzip from suffix and/or ``compress: gzip`` (CIP-0015).
+
+    A ``.yml`` name is never treated as gzip. ``compress: gzip`` with a
+    non-``.gz`` filename is an error.
+    """
+    by_name = gzip_codec_from_name(filename)
+    if compress not in (None, "gzip"):
+        errmsg = f'Unknown compress codec "{compress}".'
+        log.error(errmsg)
+        raise ValueError(errmsg)
+    if compress == "gzip" and not by_name:
+        errmsg = f'compress: gzip requires a .gz filename, got "{filename}".'
+        log.error(errmsg)
+        raise ValueError(errmsg)
+    return by_name
+
+
+def _raise_if_undeclared_gzip(filename: str, compress=None) -> None:
+    """Fail if a non-``.gz`` path contains gzip bytes (no magic sniffing to decode)."""
+    if resolve_text_codec(filename, compress) == "gzip":
+        return
+    if not os.path.isfile(filename):
+        return
+    with open(filename, "rb") as fh:
+        head = fh.read(2)
+    if head == GZIP_MAGIC:
+        errmsg = (
+            f'File "{filename}" is gzip-compressed but the name does not '
+            "end in .gz; rename to .yml.gz / .json.gz or write uncompressed YAML."
+        )
+        log.error(errmsg)
+        raise ValueError(errmsg)
+
+
+@contextmanager
+def open_text_store(filename, mode, compress=None, compress_level=6):
+    """Open a YAML/JSON store as text, optionally gzip-wrapped."""
+    codec = resolve_text_codec(filename, compress)
+    if codec == "gzip":
+        gz_mode = mode if "t" in mode else f"{mode}t"
+        with gzip.open(
+            filename,
+            gz_mode,
+            encoding="utf-8",
+            compresslevel=compress_level,
+        ) as stream:
+            yield stream
+    else:
+        with open(filename, mode) as stream:
+            yield stream
 
 
 def multiline_str_representer(dumper, data):
@@ -342,7 +418,7 @@ def read_json(details):
     :rtype: pandas.DataFrame
     """
     filename = extract_full_filename(details)
-    data = read_json_file(filename)
+    data = read_json_file(filename, **_compress_kwargs(details, write=False))
     return pd.DataFrame(data)
 
 
@@ -357,7 +433,7 @@ def write_json(df, details):
     :type details: dict
     """
     filename = extract_full_filename(details)
-    write_json_file(df.to_dict("records"), filename)
+    write_json_file(df.to_dict("records"), filename, **_compress_kwargs(details))
 
 
 def _dig_mapping_path(mapping, path):
@@ -451,7 +527,7 @@ def read_yaml(details):
     :raises ValueError: If the document is neither a mapping nor a sequence.
     """
     filename = extract_full_filename(details)
-    data = read_yaml_file(filename)
+    data = read_yaml_file(filename, **_compress_kwargs(details, write=False))
 
     if isinstance(data, dict):
         return _yaml_mapping_to_frame(data, details)
@@ -510,7 +586,7 @@ def write_yaml(df, details):
     # Remove all the nan and missing values from the dictionary.
     for num, entry in enumerate(data_dict):
         data_dict[num] = remove_nan(entry)
-    write_yaml_file(data_dict, filename)
+    write_yaml_file(data_dict, filename, **_compress_kwargs(details))
 
 
 def read_bibtex(details):
@@ -850,7 +926,7 @@ def write_directory(df, details, filewriter=None, filewriter_args={}):
                 filewriter(row_dict, fullfilename, **filewriter_args)
 
 
-def read_json_file(filename):
+def read_json_file(filename, compress=None):
     """
     Read a json file and return a python dictionary.
 
@@ -859,30 +935,34 @@ def read_json_file(filename):
 
     :param filename: The filename of the json file.
     :type filename: str
+    :param compress: Optional ``gzip``; suffix ``.json.gz`` also selects gzip.
     :return: The data read from the file.
     :rtype: dict
     """
-    with open(filename, "r") as stream:
+    _raise_if_undeclared_gzip(filename, compress)
+    with open_text_store(filename, "r", compress=compress) as stream:
         try:
             log.debug(f'Reading json file "{filename}"')
             data = json.load(stream)
-        except json.JSONDecodeError as exc:
-            log.warning(exc)
+        except json.JSONDecodeError as vis:
+            log.warning(vis)
             data = {}
     return data
 
 
-def write_json_file(data, filename):
+def write_json_file(data, filename, compress=None, compress_level=6):
     """Write a json file from a python dictionary.
 
     Trusted-caller I/O: does not confine ``filename`` (CIP-000A).
     """
-    with open(filename, "w") as stream:
+    with open_text_store(
+        filename, "w", compress=compress, compress_level=compress_level
+    ) as stream:
         try:
             log.debug(f'Writing json file "{filename}".')
             json.dump(data, stream)
-        except json.JSONDecodeError as exc:
-            log.warning(exc)
+        except json.JSONDecodeError as vis:
+            log.warning(vis)
 
 
 def read_txt_file(filename):
@@ -948,13 +1028,16 @@ def read_file(filename):
     return default_file_reader(typ)(filename)
 
 
-def read_yaml_file(filename):
+def read_yaml_file(filename, compress=None):
     """Read a yaml file and return a python dictionary.
 
     Trusted-caller I/O: does not confine ``filename``. Configured or
     untrusted names must go through ``extract_full_filename`` first (CIP-000A).
+    ``.yml.gz`` is gzip YAML (CIP-0015); a ``.yml`` file whose bytes are
+    gzip is an error (no magic-byte decode).
     """
-    with open(filename, "r") as stream:
+    _raise_if_undeclared_gzip(filename, compress)
+    with open_text_store(filename, "r", compress=compress) as stream:
         try:
             log.debug(f'Reading yaml file "{filename}"')
             data = yaml.safe_load(stream)
@@ -1046,11 +1129,12 @@ def write_bibtex_file(data, filename):
         bp.dump(bibdata, stream, writer)
 
 
-def write_yaml_file(data, filename):
+def write_yaml_file(data, filename, compress=None, compress_level=6):
     """
     Write a yaml file from a python dictionary.
 
     Trusted-caller I/O: does not confine ``filename`` (CIP-000A).
+    ``.yml.gz`` writes gzip YAML (CIP-0015).
 
     :param data: The data to be written.
     :type data: dict
@@ -1058,7 +1142,9 @@ def write_yaml_file(data, filename):
     :type filename: str
     """
     writedata = yaml_prep(data)
-    with open(filename, "w") as stream:
+    with open_text_store(
+        filename, "w", compress=compress, compress_level=compress_level
+    ) as stream:
         try:
             log.debug(f'Writing yaml file "{filename}".')
             # Use custom dumper that forces block scalars for multiline strings
@@ -1428,9 +1514,32 @@ def read_excel(details):
     return data
 
 
+def _uniquify_index_values(values):
+    """Disambiguate later duplicate index labels by appending `` (n)``.
+
+    Fake generators such as ``name`` are not unique. ``from_flow`` drops
+    duplicate non-series indexes, so a declared fake index must be unique
+    or ``nrows`` is silently reduced.
+    """
+    seen = {}
+    unique = []
+    for value in values:
+        count = seen.get(value, 0) + 1
+        seen[value] = count
+        if count == 1:
+            unique.append(value)
+        else:
+            unique.append(f"{value} ({count})")
+    return unique
+
+
 def read_fake(details):
     """
     Read data from an artificially generated source.
+
+    When ``index`` names a generated column, later duplicate values in that
+    column are disambiguated so the frame keeps ``nrows`` after
+    ``from_flow`` sets the index.
 
     :param details: The details of the data to be read.
     :type details: dict
@@ -1495,7 +1604,18 @@ def read_fake(details):
         row = {col: gen() for col, gen in cols.items()}
         data.append(row)
 
-    return pd.DataFrame(data)
+    df = pd.DataFrame(data)
+    index_column = details.get("index")
+    if isinstance(index_column, str) and index_column in df.columns:
+        if df[index_column].duplicated().any():
+            duplicates = df.loc[df[index_column].duplicated(keep="first"), index_column]
+            duplicate_names = [str(value) for value in duplicates.tolist()]
+            log.warning(
+                f"Duplicate fake index values in column \"{index_column}\": "
+                f"\"{', '.join(duplicate_names)}\". Disambiguating later copies."
+            )
+            df[index_column] = _uniquify_index_values(df[index_column])
+    return df
     
     
 def read_local(details):
@@ -2933,6 +3053,206 @@ def series(details, index=None):
         raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), details)
 
 
+def _store_index_name(details) -> str | None:
+    idx = details.get("index") if isinstance(details, dict) else None
+    if isinstance(idx, dict):
+        return idx.get("name")
+    if isinstance(idx, str):
+        return idx
+    return None
+
+
+def _as_pandas(df) -> pd.DataFrame:
+    if hasattr(df, "to_pandas"):
+        return df.to_pandas()
+    return df
+
+
+def explode_list_field(df, field, inherit=None, index=None) -> pd.DataFrame:
+    """Expand a list-of-mappings column into one row per item (CIP-0014).
+
+    Parent columns listed in *inherit* are copied onto every child row.
+    The list field itself is not kept. Child mapping keys become columns.
+    """
+    work = _as_pandas(df).copy()
+    if work.index.name and work.index.name not in work.columns:
+        work = work.reset_index()
+    if field not in work.columns:
+        errmsg = f'explode field "{field}" is not a column (have {list(work.columns)}).'
+        log.error(errmsg)
+        raise ValueError(errmsg)
+    inherit = list(inherit or [])
+    missing_inherit = [c for c in inherit if c not in work.columns]
+    if missing_inherit:
+        errmsg = (
+            f'explode inherit columns not present: {missing_inherit} '
+            f"(have {list(work.columns)})."
+        )
+        log.error(errmsg)
+        raise ValueError(errmsg)
+
+    rows = []
+    for _, parent in work.iterrows():
+        items = parent[field]
+        if items is None or (isinstance(items, float) and pd.isna(items)):
+            items = []
+        elif isinstance(items, np.ndarray):
+            items = items.tolist()
+        if not isinstance(items, (list, tuple)):
+            errmsg = (
+                f'explode field "{field}" must be a list of mappings, '
+                f"got {type(items).__name__}."
+            )
+            log.error(errmsg)
+            raise ValueError(errmsg)
+        parent_vals = {c: parent[c] for c in inherit}
+        for item in items:
+            if hasattr(item, "to_dict"):
+                item = item.to_dict()
+            if not isinstance(item, dict):
+                errmsg = (
+                    f'explode field "{field}" items must be mappings, '
+                    f"got {type(item).__name__}."
+                )
+                log.error(errmsg)
+                raise ValueError(errmsg)
+            row = dict(parent_vals)
+            row.update(item)
+            rows.append(row)
+
+    out = pd.DataFrame(rows)
+    if index:
+        if out.empty:
+            if index not in out.columns:
+                out[index] = pd.Series(dtype=object)
+            out = out.set_index(index, drop=False)
+            out.index.name = index
+            return out
+        if index not in out.columns:
+            errmsg = f'explode index "{index}" is not a key on exploded rows.'
+            log.error(errmsg)
+            raise ValueError(errmsg)
+        if out[index].duplicated().any():
+            dups = out.loc[out[index].duplicated(), index].unique().tolist()
+            errmsg = f'explode index "{index}" is not unique: {dups}.'
+            log.error(errmsg)
+            raise ValueError(errmsg)
+        out = out.set_index(index, drop=False)
+        out.index.name = index
+    return out
+
+
+def _packable_cell(val):
+    if isinstance(val, np.ndarray):
+        return val.tolist()
+    if pd.isna(val) if np.ndim(val) == 0 else False:
+        return val
+    return val
+
+
+def pack_dataframe(
+    df,
+    columns,
+    index_value="corpus",
+    index_name="Name",
+    drop_incomplete=False,
+    incomplete_field="embedding",
+) -> pd.DataFrame:
+    """Stack selected columns into one row of aligned array cells (CIP-0014)."""
+    work = _as_pandas(df).copy()
+    if not isinstance(columns, dict) or not columns:
+        raise ValueError('pack.columns must be a mapping of dest: source.')
+    missing = [src for src in columns.values() if src not in work.columns]
+    if missing:
+        errmsg = f"pack source columns not present: {missing}."
+        log.error(errmsg)
+        raise ValueError(errmsg)
+
+    check = incomplete_field if incomplete_field in set(columns.values()) else None
+    if check is not None:
+        mask = work[check].isna()
+        if mask.any() and not drop_incomplete:
+            errmsg = (
+                f"pack: {int(mask.sum())} row(s) missing {check}; "
+                "set drop_incomplete: true to skip them."
+            )
+            log.error(errmsg)
+            raise ValueError(errmsg)
+        if drop_incomplete:
+            work = work.loc[~mask]
+
+    packed = {}
+    for dest, src in columns.items():
+        packed[dest] = [[_packable_cell(v) for v in work[src].tolist()]]
+    idx_name = index_name or "Name"
+    out = pd.DataFrame(packed, index=pd.Index([index_value], name=idx_name))
+    if idx_name not in out.columns:
+        out.insert(0, idx_name, index_value)
+    return out
+
+
+def reshape_for_write(df, details) -> pd.DataFrame:
+    """Apply CIP-0014 explode / pack declared on a store, then write."""
+    frame = _as_pandas(df)
+    if "explode" in details:
+        spec = details["explode"]
+        if not isinstance(spec, dict) or "field" not in spec:
+            raise ValueError('explode must be a mapping with "field".')
+        frame = explode_list_field(
+            frame,
+            field=spec["field"],
+            inherit=spec.get("inherit"),
+            index=_store_index_name(details) or spec.get("index"),
+        )
+    if "pack" in details and isinstance(details["pack"], dict):
+        spec = details["pack"]
+        if "columns" not in spec:
+            raise ValueError('pack must include "columns" mapping dest: source.')
+        frame = pack_dataframe(
+            frame,
+            columns=spec["columns"],
+            index_value=spec.get("index_value", "corpus"),
+            index_name=_store_index_name(details) or spec.get("index_name") or "Name",
+            drop_incomplete=bool(spec.get("drop_incomplete", False)),
+            incomplete_field=spec.get("incomplete_field", "embedding"),
+        )
+    return frame
+
+
+def store_stat(details) -> dict:
+    """File facts for a named store without loading the table (CIP-0015)."""
+    filename = extract_full_filename(details)
+    codec = resolve_text_codec(filename, details.get("compress"))
+    logical = details.get("type")
+    if not logical:
+        try:
+            logical = extract_file_type(filename)
+        except ValueError:
+            logical = None
+    abs_path = os.path.abspath(filename)
+    if not os.path.exists(filename):
+        return {
+            "path": abs_path,
+            "exists": False,
+            "mtime": None,
+            "size_bytes": 0,
+            "codec": codec,
+            "logical_type": logical,
+            "role": details.get("role"),
+        }
+    st = os.stat(filename)
+    mtime = datetime.fromtimestamp(st.st_mtime, tz=datetime.now().astimezone().tzinfo)
+    return {
+        "path": abs_path,
+        "exists": True,
+        "mtime": mtime.isoformat(),
+        "size_bytes": st.st_size,
+        "codec": codec,
+        "logical_type": logical,
+        "role": details.get("role"),
+    }
+
+
 def write_data(df, details):
     """
     Write the data using the details given in configuration.
@@ -2947,6 +3267,8 @@ def write_data(df, details):
     else:
         log.error('Field "type" missing in data source details for write_data.')
         return
+
+    df = reshape_for_write(df, details)
 
     if ftype == "excel":
         write_excel(df, details)

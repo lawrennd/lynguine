@@ -1,7 +1,7 @@
 ---
 id: "2026-10-21_explode-units-to-rows"
 title: "Explode list fields to rows, pack columns to a corpus row, and optional file catalog"
-status: "Proposed"
+status: "In Progress"
 priority: "High"
 created: "2026-10-21"
 last_updated: "2026-10-21"
@@ -43,20 +43,20 @@ index-augmented column names.
 
 ## Acceptance Criteria
 
-- [ ] `output.explode` in flow YAML expands a named list field into a tall
+- [x] `output.explode` in flow YAML expands a named list field into a tall
       table, inheriting declared parent columns
-- [ ] Output index is `unit_id` (or the declared index); unit dict keys
+- [x] Output index is `unit_id` (or the declared index); unit dict keys
       become columns
-- [ ] `units_to_frame` is registered for programmatic callers; flows use
+- [x] `units_to_frame` is the programmatic helper; flows use
       `output.explode`
-- [ ] `pack` write path stacks declared columns into aligned array cells on
+- [x] `pack` write path stacks declared columns into aligned array cells on
       one row (`index_value` default `corpus`); missing embeddings abort
       unless `drop_incomplete: true`
 - [ ] Optional `file_catalog` globs `*.pdf` / `*.docx` and infers `reader`
       from suffix; hand-written `documents.yml` remains valid
-- [ ] No process-global frame; deleting the chunk or records store and
+- [x] No process-global frame; deleting the chunk or records store and
       re-running explode / pack recreates it
-- [ ] CIP-0013 fixtures reused for explode; a three-row phrase table for pack
+- [x] CIP-0013 fixtures reused for explode; a three-row phrase table for pack
 
 ## Implementation Notes
 
@@ -65,7 +65,7 @@ See [CIP-0014](../../cip/cip0014.md). Referia drafts
 name these clauses. Phrase-row explode after `llm_extract_phrases` reuses
 the same write path.
 
-Proposed only: do not implement until CIP-0014 is Accepted.
+CIP-0014 Accepted; explode/pack IO in progress. `file_catalog` still open.
 
 ## Related
 
@@ -80,3 +80,6 @@ Proposed only: do not implement until CIP-0014 is Accepted.
 Task created as Proposed from CIP-0014 (explode + catalog). Same day:
 extended to pack (array columns), matching the CIP amendment that moved
 pack out of referia CIP-0015.
+
+CIP-0014 accepted. Implemented `explode_list_field`, `pack_dataframe`,
+and write-path reshape. Catalog still to do.

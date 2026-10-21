@@ -569,7 +569,9 @@ class Compute():
                 },
                 "docstr": (
                     "Segment a PDF/DOCX path into unit dicts (CIP-0013). "
-                    "Store in one field (list); use segment_pdf_frame for exploded rows."
+                    "Store in one field (list); flows explode with output.explode "
+                    "(CIP-0014). Programmatic callers may use units_to_frame / "
+                    "segment_pdf_frame."
                 ),
             },
             {
