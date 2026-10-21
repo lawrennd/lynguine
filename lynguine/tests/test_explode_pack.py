@@ -1,9 +1,13 @@
 """CIP-0014 explode list fields and pack columns to a corpus row."""
 
+import numpy as np
 import pandas as pd
 import pytest
 
 from lynguine.access.io import (
+    _as_pandas,
+    _packable_cell,
+    _store_index_name,
     explode_list_field,
     pack_dataframe,
     reshape_for_write,
@@ -155,3 +159,120 @@ def test_reshape_for_write_pack_on_store():
     )
     assert list(out.index) == ["corpus"]
     assert out.iloc[0]["phrases"] == ["p0"]
+
+
+def test_store_index_name_str_dict_and_missing():
+    assert _store_index_name({"index": "unit_id"}) == "unit_id"
+    assert _store_index_name({"index": {"name": "Name"}}) == "Name"
+    assert _store_index_name({"index": 3}) is None
+    assert _store_index_name("not-a-dict") is None
+
+
+def test_as_pandas_uses_to_pandas():
+    class _Wrap:
+        def to_pandas(self):
+            return pd.DataFrame({"a": [1]})
+
+    assert list(_as_pandas(_Wrap()).columns) == ["a"]
+    plain = pd.DataFrame({"b": [2]})
+    assert _as_pandas(plain) is plain
+
+
+def test_explode_field_missing_and_inherit_missing():
+    df = pd.DataFrame({"Name": ["x"], "units": [[{"unit_id": "x-0"}]]})
+    with pytest.raises(ValueError, match="not a column"):
+        explode_list_field(df, field="missing")
+    with pytest.raises(ValueError, match="inherit columns not present"):
+        explode_list_field(df, field="units", inherit=["filename"])
+
+
+def test_explode_none_nan_and_ndarray_items():
+    df = pd.DataFrame(
+        {
+            "Name": ["none", "nan", "arr"],
+            "units": [
+                None,
+                np.nan,
+                np.array([{"unit_id": "arr-0", "text": "ok"}], dtype=object),
+            ],
+        }
+    )
+    tall = explode_list_field(df, field="units", inherit=["Name"], index="unit_id")
+    assert list(tall.index) == ["arr-0"]
+    assert tall.loc["arr-0", "text"] == "ok"
+
+
+def test_explode_rejects_non_list_and_non_mapping_items():
+    with pytest.raises(ValueError, match="must be a list of mappings"):
+        explode_list_field(pd.DataFrame({"units": ["not-a-list"]}), field="units")
+    with pytest.raises(ValueError, match="items must be mappings"):
+        explode_list_field(pd.DataFrame({"units": [["plain"]]}), field="units")
+
+
+def test_explode_series_item_to_dict():
+    df = pd.DataFrame(
+        {"units": [[pd.Series({"unit_id": "s-0", "text": "from-series"})]]}
+    )
+    tall = explode_list_field(df, field="units", index="unit_id")
+    assert tall.loc["s-0", "text"] == "from-series"
+
+
+def test_explode_index_missing_on_rows():
+    df = pd.DataFrame({"units": [[{"text": "no-id"}]]})
+    with pytest.raises(ValueError, match="is not a key"):
+        explode_list_field(df, field="units", index="unit_id")
+
+
+def test_packable_cell_ndarray_and_scalar_na():
+    assert _packable_cell(np.array([1.0, 2.0])) == [1.0, 2.0]
+    assert pd.isna(_packable_cell(np.float64("nan")))
+    assert _packable_cell("keep") == "keep"
+
+
+def test_pack_columns_must_be_mapping_and_present():
+    tall = pd.DataFrame({"phrase": ["p0"]})
+    with pytest.raises(ValueError, match="must be a mapping"):
+        pack_dataframe(tall, columns=[])
+    with pytest.raises(ValueError, match="source columns not present"):
+        pack_dataframe(tall, columns={"phrases": "missing"})
+
+
+def test_pack_skips_incomplete_check_when_field_absent():
+    packed = pack_dataframe(
+        pd.DataFrame({"phrase": ["p0", "p1"]}),
+        columns={"phrases": "phrase"},
+    )
+    assert packed.iloc[0]["phrases"] == ["p0", "p1"]
+
+
+def test_pack_does_not_duplicate_existing_index_column():
+    packed = pack_dataframe(
+        pd.DataFrame({"Name": ["a"], "phrase": ["p0"]}),
+        columns={"Name": "Name", "phrases": "phrase"},
+        index_name="Name",
+        index_value="corpus",
+    )
+    assert list(packed.columns).count("Name") == 1
+    assert packed.iloc[0]["Name"] == ["a"]
+
+
+def test_reshape_rejects_bad_explode_and_pack_specs():
+    df = pd.DataFrame({"units": [[{"unit_id": "a"}]]})
+    with pytest.raises(ValueError, match='mapping with "field"'):
+        reshape_for_write(df, {"explode": "units"})
+    with pytest.raises(ValueError, match="must include"):
+        reshape_for_write(
+            pd.DataFrame({"phrase": ["p0"]}),
+            {"pack": {"index_value": "corpus"}},
+        )
+
+
+def test_reshape_uses_explode_spec_index_when_store_index_absent():
+    df = pd.DataFrame(
+        {"units": [[{"unit_id": "u-0", "text": "x"}]]}
+    )
+    out = reshape_for_write(
+        df,
+        {"explode": {"field": "units", "index": "unit_id"}},
+    )
+    assert list(out.index) == ["u-0"]

@@ -302,3 +302,128 @@ def test_yml_gz_round_trip_and_gzip_yml_fails(tmp_path):
     )
     with pytest.raises(ValueError, match="does not end in .gz"):
         CustomDataFrame.from_flow(bad_iface)
+
+
+def test_write_pack_store_skips_when_pack_absent_or_non_mapping_interface():
+    cdf = CustomDataFrame(
+        pd.DataFrame({"phrase": ["one"]}),
+        colspecs={"input": ["phrase"]},
+    )
+    cdf.interface = {"input": {"type": "yaml"}}
+    assert cdf._write_pack_store() is False
+    cdf._interface = object()
+    assert cdf._write_pack_store() is False
+
+
+def test_pack_source_partition_and_error_paths(tmp_path):
+    phrases = pd.DataFrame(
+        {
+            "phrase": ["one", "two"],
+            "embedding": [[0.1], [0.2]],
+        },
+        index=pd.Index(["p0", "p1"], name="phrase_id"),
+    )
+    cdf = CustomDataFrame(phrases, colspecs={"input": ["phrase", "embedding"]})
+    cdf.interface = {
+        "base_directory": str(tmp_path),
+        "pack": {
+            "type": "yaml",
+            "filename": "from_input.yml",
+            "directory": str(tmp_path),
+            "index": "Name",
+            "source": "input",
+            "pack": {
+                "columns": {"phrases": "phrase", "embeddings": "embedding"},
+                "index_value": "corpus",
+            },
+        },
+    }
+    assert cdf._write_pack_store() is True
+    written = yaml.safe_load((tmp_path / "from_input.yml").read_text(encoding="utf-8"))
+    assert written[0]["phrases"] == ["one", "two"]
+
+    cdf.interface["pack"]["source"] = "output"
+    with pytest.raises(ValueError, match="is not loaded"):
+        cdf._write_pack_store()
+
+    cdf.interface["pack"] = "not-a-mapping"
+    with pytest.raises(ValueError, match="must be a mapping"):
+        cdf._write_pack_store()
+
+    cdf.interface["pack"] = {
+        "type": "yaml",
+        "filename": "bad.yml",
+        "directory": str(tmp_path),
+    }
+    with pytest.raises(ValueError, match="nested pack"):
+        cdf._write_pack_store()
+
+    empty = CustomDataFrame(pd.DataFrame({"x": []}), colspecs={"input": ["x"]})
+    empty.interface = {
+        "base_directory": str(tmp_path),
+        "pack": {
+            "type": "yaml",
+            "filename": "empty.yml",
+            "directory": str(tmp_path),
+            "pack": {"columns": {"xs": "x"}},
+        },
+    }
+    with pytest.raises(ValueError, match="no tall rows"):
+        empty._write_pack_store()
+
+
+def test_parent_grain_skips_duplicate_columns_and_empty_partitions():
+    cdf = CustomDataFrame(
+        pd.DataFrame({"phrase": ["one"], "shared": [1]}, index=["p0"]),
+        colspecs={"input": ["phrase", "shared"]},
+    )
+    cdf._d["cache"] = pd.DataFrame(
+        {"shared": [9], "extra": ["keep"]}, index=["p0"]
+    )
+    cdf._colspecs["cache"] = ["shared", "extra"]
+    cdf._d["output"] = pd.DataFrame(index=["p0"])
+    combined = cdf._parent_grain_frame()
+    assert list(combined.columns) == ["phrase", "shared", "extra"]
+    assert combined.loc["p0", "shared"] == 1
+    assert combined.loc["p0", "extra"] == "keep"
+
+    vacant = CustomDataFrame(pd.DataFrame(), colspecs={"input": []})
+    assert vacant._parent_grain_frame().empty
+
+
+def test_to_flow_explodes_parent_grain(tmp_path):
+    docs = pd.DataFrame(
+        {
+            "filename": ["a.pdf"],
+            "units": [[{"unit_id": "a-0", "text": "hello"}]],
+        },
+        index=pd.Index(["doc-a"], name="Name"),
+    )
+    cdf = CustomDataFrame(docs, colspecs={"input": ["filename", "units"]})
+    cdf._d["output"] = pd.DataFrame(index=docs.index)
+    cdf._colspecs["output"] = []
+    interface = {
+        "output": {
+            "type": "yaml",
+            "filename": "chunks.yml",
+            "directory": str(tmp_path),
+            "index": "unit_id",
+            "explode": {"field": "units", "inherit": ["Name", "filename"]},
+        }
+    }
+    cdf.interface = interface
+    cdf.to_flow(interface)
+    written = yaml.safe_load((tmp_path / "chunks.yml").read_text(encoding="utf-8"))
+    assert written[0]["unit_id"] == "a-0"
+    assert written[0]["filename"] == "a.pdf"
+
+
+def test_write_frame_for_store_keeps_output_when_parent_grain_empty():
+    cdf = CustomDataFrame(
+        pd.DataFrame({"score": [1]}, index=["a"]),
+        colspecs={"output": ["score"]},
+    )
+    cdf._d["input"] = pd.DataFrame()
+    details = {"type": "yaml", "index": "Name", "explode": {"field": "units"}}
+    frame = cdf._write_frame_for_store("output", cdf._d["output"], details)
+    assert "score" in frame.columns

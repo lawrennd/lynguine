@@ -116,6 +116,7 @@ def test_extract_root_directory(setup_environment):
     ("config.yaml", "yaml"),
     ("phrases.yml.gz", "yaml"),
     ("cache.json.gz", "json"),
+    ("phrases.yml.gzip.gz", "yaml"),
     ("reference.bib", "bibtex"),
     ("document.docx", "docx"),
     ("unknown.file", ValueError)
