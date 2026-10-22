@@ -562,6 +562,20 @@ class TestSecureLogging:
         formatted = formatter.format(record)
         assert "mysecretpass123" not in formatted
         assert "***PASSWORD***" in formatted
+
+    def test_sanitizing_formatter_preserves_percent_f(self):
+        formatter = SanitizingFormatter()
+        record = logging.LogRecord(
+            name="test",
+            level=logging.INFO,
+            pathname="",
+            lineno=1,
+            msg="loss=%f",
+            args=(0.5,),
+            exc_info=None,
+        )
+        formatted = formatter.format(record)
+        assert "0.5" in formatted
     
     def test_sanitize_dict(self):
         """Test dictionary sanitization."""

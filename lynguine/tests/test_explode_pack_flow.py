@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import gzip
 
+import numpy as np
 import pandas as pd
 import pytest
 import yaml
@@ -602,3 +603,175 @@ def test_write_frame_for_store_keeps_output_when_parent_grain_empty():
     details = {"type": "yaml", "index": "Name", "explode": {"field": "units"}}
     frame = cdf._write_frame_for_store("output", cdf._d["output"], details)
     assert "score" in frame.columns
+
+
+def test_write_frame_for_store_pack_joins_parent_grain():
+    cdf = CustomDataFrame(
+        pd.DataFrame({"phrase": ["one"]}, index=["p0"]),
+        colspecs={"input": ["phrase"]},
+    )
+    cdf._d["output"] = pd.DataFrame({"embedding": [[0.1]]}, index=["p0"])
+    cdf._colspecs["output"] = ["embedding"]
+    details = {
+        "type": "yaml",
+        "index": "Name",
+        "pack": {"columns": {"phrases": "phrase", "embeddings": "embedding"}},
+    }
+    frame = cdf._write_frame_for_store("output", cdf._d["output"], details)
+    assert "phrase" in frame.columns
+    assert "embedding" in frame.columns
+
+    vacant = CustomDataFrame(
+        pd.DataFrame({"score": [1]}, index=["a"]),
+        colspecs={"output": ["score"]},
+    )
+    vacant._d["input"] = pd.DataFrame()
+    kept = vacant._write_frame_for_store(
+        "output",
+        vacant._d["output"],
+        {"pack": {"columns": {"scores": "score"}}},
+    )
+    assert "score" in kept.columns
+
+
+def test_join_partitions_skips_series_and_parameter_stores():
+    cdf = CustomDataFrame(
+        pd.DataFrame({"phrase": ["one"]}, index=["p0"]),
+        colspecs={"input": ["phrase"]},
+    )
+    cdf._d["series"] = pd.DataFrame({"secret": [99]}, index=["p0"])
+    cdf._colspecs["series"] = ["secret"]
+    cdf._d["parameters"] = pd.Series({"k": 1})
+    combined = cdf._join_partitions(("input", "series", "parameters", "cache"))
+    assert list(combined.columns) == ["phrase"]
+    assert "secret" not in combined.columns
+
+
+def test_parameter_series_for_write_select_name_default_and_nan():
+    cdf = CustomDataFrame(
+        pd.DataFrame({"x": [1]}, index=["r0"]),
+        colspecs={"input": ["x"]},
+    )
+    named = pd.Series({"model": "x", "pca_dim": np.nan})
+    named.name = "from-name"
+    from_name = cdf._parameter_series_for_write(named, {"index": "index"})
+    assert from_name.index[0] == "from-name"
+    assert from_name.iloc[0]["pca_dim"] is None
+    assert from_name.iloc[0]["model"] == "x"
+
+    selected = cdf._parameter_series_for_write(
+        named, {"index": "index", "select": "dialogue-v1"}
+    )
+    assert selected.index[0] == "dialogue-v1"
+    assert selected.iloc[0]["index"] == "dialogue-v1"
+
+    unnamed = pd.Series({"model": "x"})
+    defaulted = cdf._parameter_series_for_write(unnamed, {"index": "index"})
+    assert defaulted.index[0] == "default"
+
+    already = pd.Series({"index": "keep-me", "model": "x"})
+    skipped = cdf._parameter_series_for_write(
+        already, {"index": "index", "select": "sel"}
+    )
+    assert list(skipped.columns).count("index") == 1
+    assert skipped.iloc[0]["index"] == "keep-me"
+    assert skipped.index[0] == "sel"
+
+
+def test_explode_output_for_pack_guard_branches(caplog):
+    cdf = CustomDataFrame(
+        pd.DataFrame({"filename": ["a.pdf"]}, index=["c0"]),
+        colspecs={"input": ["filename"]},
+    )
+    parent = pd.DataFrame(
+        {
+            "filename": ["a.pdf"],
+            "extraction_phrases": [[{"phrase_id": "p0", "phrase": "one"}]],
+        }
+    )
+    cdf._interface = object()
+    assert cdf._explode_output_for_pack(parent) is parent
+
+    cdf.interface = {"output": {"type": "yaml"}}
+    assert cdf._explode_output_for_pack(parent) is parent
+
+    cdf.interface = {"output": {"explode": "units"}}
+    with pytest.raises(ValueError, match='mapping with "field"'):
+        cdf._explode_output_for_pack(parent)
+
+    cdf.interface = {
+        "output": {
+            "index": "phrase_id",
+            "explode": {"field": "extraction_phrases"},
+        }
+    }
+    assert cdf._explode_output_for_pack(None).empty
+    assert cdf._explode_output_for_pack(pd.DataFrame()).empty
+
+    with caplog.at_level("WARNING"):
+        missing = cdf._explode_output_for_pack(pd.DataFrame({"filename": ["a.pdf"]}))
+    assert missing.empty
+    assert "pack explode field" in caplog.text
+
+    class _Wrap:
+        def to_pandas(self):
+            return parent
+
+    tall = cdf._explode_output_for_pack(_Wrap())
+    assert list(tall.index) == ["p0"]
+    assert tall.loc["p0", "phrase"] == "one"
+
+
+def test_write_pack_store_none_frame_writes_empty_arrays(tmp_path, monkeypatch):
+    cdf = CustomDataFrame(
+        pd.DataFrame({"x": [1]}, index=["r0"]),
+        colspecs={"input": ["x"]},
+    )
+    cdf.interface = {
+        "base_directory": str(tmp_path),
+        "pack": {
+            "type": "yaml",
+            "filename": "records.yml",
+            "directory": str(tmp_path),
+            "index": "Name",
+            "pack": {"columns": {"xs": "x"}, "index_value": "corpus"},
+        },
+    }
+    monkeypatch.setattr(cdf, "_explode_output_for_pack", lambda frame: None)
+    monkeypatch.setattr(cdf, "_explode_source_frame", lambda: pd.DataFrame())
+    assert cdf._write_pack_store() is True
+    written = yaml.safe_load((tmp_path / "records.yml").read_text(encoding="utf-8"))
+    assert written[0]["xs"] == []
+
+
+def test_save_flows_skips_input_types_and_null_details(tmp_path):
+    cdf = CustomDataFrame(
+        pd.DataFrame({"filename": ["a.pdf"]}, index=["c0"]),
+        colspecs={"input": ["filename"]},
+    )
+    cdf._d["constants"] = pd.Series({"model": "x"})
+    cdf._d["cache"] = pd.DataFrame({"tmp": [1]}, index=["c0"])
+    cdf._colspecs["cache"] = ["tmp"]
+    cdf._d["output"] = pd.DataFrame({"score": [1]}, index=["c0"])
+    cdf._colspecs["output"] = ["score"]
+    cdf.interface = {
+        "base_directory": str(tmp_path),
+        "constants": {
+            "type": "yaml",
+            "filename": "constants.yml",
+            "directory": str(tmp_path),
+            "index": "index",
+        },
+        "cache": None,
+        "output": {
+            "type": "yaml",
+            "filename": "scores.yml",
+            "directory": str(tmp_path),
+            "index": "Name",
+        },
+    }
+    cdf.save_flows()
+    assert not (tmp_path / "constants.yml").exists()
+    assert not (tmp_path / "_extract_cache.yml.gz").exists()
+    scores = yaml.safe_load((tmp_path / "scores.yml").read_text(encoding="utf-8"))
+    assert scores[0]["score"] == 1

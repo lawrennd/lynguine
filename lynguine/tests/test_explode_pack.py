@@ -3,6 +3,7 @@
 import numpy as np
 import pandas as pd
 import pytest
+import yaml
 
 from lynguine.access.io import (
     _as_pandas,
@@ -12,6 +13,7 @@ from lynguine.access.io import (
     pack_dataframe,
     reshape_for_write,
     write_data,
+    write_yaml,
     read_yaml,
 )
 from lynguine.access.documents.segment import units_to_frame
@@ -178,13 +180,16 @@ def test_as_pandas_uses_to_pandas():
     assert _as_pandas(plain) is plain
 
 
-def test_explode_field_missing_and_inherit_missing():
+def test_explode_field_missing_and_inherit_missing(caplog):
     df = pd.DataFrame({"Name": ["x"], "units": [[{"unit_id": "x-0"}]]})
     with pytest.raises(ValueError, match="not a column"):
         explode_list_field(df, field="missing")
-    tall = explode_list_field(
-        df, field="units", inherit=["filename", "Name"], index="unit_id"
-    )
+    with caplog.at_level("WARNING"):
+        tall = explode_list_field(
+            df, field="units", inherit=["filename", "Name"], index="unit_id"
+        )
+    assert "inherit columns not present, skipping" in caplog.text
+    assert "filename" in caplog.text
     assert list(tall.index) == ["x-0"]
     assert tall.loc["x-0", "Name"] == "x"
     assert "filename" not in tall.columns
@@ -246,6 +251,27 @@ def test_pack_empty_frame_writes_empty_arrays():
     assert packed.iloc[0]["Name"] == "corpus"
 
 
+def test_pack_empty_defaults_index_name_and_skips_duplicate_dest():
+    unnamed = pack_dataframe(
+        pd.DataFrame(columns=["phrase"]),
+        columns={"phrases": "phrase"},
+        index_name=None,
+        index_value="corpus",
+    )
+    assert unnamed.index.name == "Name"
+    assert unnamed.iloc[0]["Name"] == "corpus"
+    assert unnamed.iloc[0]["phrases"] == []
+
+    packed = pack_dataframe(
+        pd.DataFrame(columns=["Name"]),
+        columns={"Name": "Name"},
+        index_name="Name",
+        index_value="corpus",
+    )
+    assert list(packed.columns).count("Name") == 1
+    assert packed.iloc[0]["Name"] == []
+
+
 def test_pack_columns_must_be_mapping_and_present():
     tall = pd.DataFrame({"phrase": ["p0"]})
     with pytest.raises(ValueError, match="must be a mapping"):
@@ -282,6 +308,34 @@ def test_reshape_rejects_bad_explode_and_pack_specs():
             pd.DataFrame({"phrase": ["p0"]}),
             {"pack": {"index_value": "corpus"}},
         )
+
+
+def test_write_yaml_keep_nulls_preserves_nan_as_null(tmp_path):
+    df = pd.DataFrame({"model": ["x"], "pca_dim": [np.nan], "note": [None]})
+    details = {
+        "type": "yaml",
+        "filename": "constants.yml",
+        "directory": str(tmp_path),
+        "keep_nulls": True,
+    }
+    write_yaml(df, details)
+    loaded = yaml.safe_load((tmp_path / "constants.yml").read_text(encoding="utf-8"))
+    assert loaded[0]["model"] == "x"
+    assert loaded[0]["pca_dim"] is None
+    assert loaded[0]["note"] is None
+
+
+def test_write_yaml_default_drops_nan_keys(tmp_path):
+    df = pd.DataFrame({"model": ["x"], "pca_dim": [np.nan]})
+    details = {
+        "type": "yaml",
+        "filename": "constants.yml",
+        "directory": str(tmp_path),
+    }
+    write_yaml(df, details)
+    loaded = yaml.safe_load((tmp_path / "constants.yml").read_text(encoding="utf-8"))
+    assert loaded[0]["model"] == "x"
+    assert "pca_dim" not in loaded[0]
 
 
 def test_reshape_uses_explode_spec_index_when_store_index_absent():

@@ -227,6 +227,15 @@ def test_parameters_accept_none_without_isnan():
     assert cdf._d["parameters"]["model"] == "x"
 
 
+def test_parameters_empty_dataframe_sets_none():
+    data = pd.DataFrame(columns=["pca_dim", "model"])
+    cdf = lynguine.assess.data.CustomDataFrame(
+        data, colspecs={"parameters": ["pca_dim", "model"]}
+    )
+    assert cdf._d["parameters"]["pca_dim"] is None
+    assert cdf._d["parameters"]["model"] is None
+
+
 def test_from_flow_empty_input_then_null_constant(tmp_path):
     """02_embed: empty chunks.yml then constants with embed_pca_dim: null."""
     (tmp_path / "chunks.yml").write_text("[]\n")
