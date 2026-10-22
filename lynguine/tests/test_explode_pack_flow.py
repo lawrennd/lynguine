@@ -368,8 +368,137 @@ def test_pack_source_partition_and_error_paths(tmp_path):
             "pack": {"columns": {"xs": "x"}},
         },
     }
-    with pytest.raises(ValueError, match="no tall rows"):
-        empty._write_pack_store()
+    assert empty._write_pack_store() is True
+    written = yaml.safe_load((tmp_path / "empty.yml").read_text(encoding="utf-8"))
+    assert written[0]["xs"] == []
+
+
+def test_write_pack_store_explodes_output_then_packs(tmp_path):
+    chunks = pd.DataFrame(
+        {
+            "filename": ["a.pdf"],
+            "extraction_phrases": [[
+                {
+                    "phrase_id": "p0",
+                    "phrase": "one",
+                    "embedding": [0.1],
+                    "doc_id": "a.pdf",
+                },
+                {
+                    "phrase_id": "p1",
+                    "phrase": "two",
+                    "embedding": [0.2],
+                    "doc_id": "a.pdf",
+                },
+            ]],
+        },
+        index=pd.Index(["c0"], name="unit_id"),
+    )
+    cdf = CustomDataFrame(
+        chunks, colspecs={"input": ["filename", "extraction_phrases"]}
+    )
+    cdf.interface = {
+        "base_directory": str(tmp_path),
+        "output": {
+            "type": "yaml",
+            "filename": "phrases.yml",
+            "directory": str(tmp_path),
+            "index": "phrase_id",
+            "explode": {"field": "extraction_phrases", "inherit": ["filename"]},
+        },
+        "pack": {
+            "type": "yaml",
+            "filename": "records.yml",
+            "directory": str(tmp_path),
+            "index": "Name",
+            "pack": {
+                "columns": {
+                    "phrases": "phrase",
+                    "embeddings": "embedding",
+                    "doc_ids": "doc_id",
+                },
+                "index_value": "corpus",
+            },
+        },
+    }
+    assert cdf._write_pack_store() is True
+    written = yaml.safe_load((tmp_path / "records.yml").read_text(encoding="utf-8"))
+    assert written[0]["phrases"] == ["one", "two"]
+    assert written[0]["doc_ids"] == ["a.pdf", "a.pdf"]
+
+
+def test_save_flows_writes_cache_parameters_and_empty_pack(tmp_path):
+    chunks = pd.DataFrame(
+        {
+            "filename": ["a.pdf"],
+            "extraction_phrases": [[]],
+            "phrase_kinds": ["benefit"],
+        },
+        index=pd.Index(["c0"], name="unit_id"),
+    )
+    cdf = CustomDataFrame(
+        chunks,
+        colspecs={
+            "input": ["filename"],
+            "cache": ["extraction_phrases"],
+            "parameters": ["phrase_kinds"],
+        },
+    )
+    cdf._d["parameters"] = pd.Series(
+        {"phrase_kinds": "concern, benefit", "embed_pca_dim": None}
+    )
+    cdf._d["output"] = pd.DataFrame(index=pd.Index(["c0"], name="unit_id"))
+    cdf._colspecs["output"] = []
+    cdf.interface = {
+        "base_directory": str(tmp_path),
+        "parameters": {
+            "type": "yaml",
+            "filename": "parameters.yml",
+            "directory": str(tmp_path),
+            "index": "index",
+            "select": "dialogue-v1",
+        },
+        "cache": {
+            "type": "yaml",
+            "filename": "_extract_cache.yml.gz",
+            "directory": str(tmp_path),
+            "index": "unit_id",
+            "compress": "gzip",
+        },
+        "output": {
+            "type": "yaml",
+            "filename": "phrases.yml",
+            "directory": str(tmp_path),
+            "index": "phrase_id",
+            "explode": {
+                "field": "extraction_phrases",
+                "inherit": ["filename"],
+            },
+        },
+        "pack": {
+            "type": "yaml",
+            "filename": "records.yml",
+            "directory": str(tmp_path),
+            "index": "Name",
+            "pack": {
+                "columns": {
+                    "phrases": "phrase",
+                    "embeddings": "embedding",
+                    "doc_ids": "doc_id",
+                },
+                "index_value": "corpus",
+            },
+        },
+    }
+    cdf.save_flows()
+    assert not (tmp_path / "constants.yml").exists()
+    parameters = yaml.safe_load((tmp_path / "parameters.yml").read_text(encoding="utf-8"))
+    assert parameters[0]["phrase_kinds"] == "concern, benefit"
+    assert parameters[0]["index"] == "dialogue-v1"
+    assert parameters[0]["embed_pca_dim"] is None
+    records = yaml.safe_load((tmp_path / "records.yml").read_text(encoding="utf-8"))
+    assert records[0]["phrases"] == []
+    assert (tmp_path / "_extract_cache.yml.gz").exists()
 
 
 def test_parent_grain_skips_duplicate_columns_and_empty_partitions():
@@ -416,6 +545,52 @@ def test_to_flow_explodes_parent_grain(tmp_path):
     written = yaml.safe_load((tmp_path / "chunks.yml").read_text(encoding="utf-8"))
     assert written[0]["unit_id"] == "a-0"
     assert written[0]["filename"] == "a.pdf"
+
+
+def test_explode_ignores_tall_output_partition(tmp_path):
+    """Previous phrases.yml must not join onto chunks before explode."""
+    chunks = pd.DataFrame(
+        {
+            "filename": ["a.pdf"],
+            "extraction_phrases": [
+                [{"phrase_id": "p-new", "phrase": "fresh", "kind": "benefit"}]
+            ],
+        },
+        index=pd.Index(["c0"], name="unit_id"),
+    )
+    cdf = CustomDataFrame(
+        chunks[["filename"]],
+        colspecs={"input": ["filename"]},
+    )
+    cdf._d["cache"] = chunks[["extraction_phrases"]]
+    cdf._colspecs["cache"] = ["extraction_phrases"]
+    cdf._d["output"] = pd.DataFrame(
+        {
+            "phrase": ["stale"],
+            "embedding": [[0.1]],
+            "doc_id": ["old.pdf"],
+        },
+        index=pd.Index(["old-p0"], name="phrase_id"),
+    )
+    cdf._colspecs["output"] = ["phrase", "embedding", "doc_id"]
+    cdf.interface = {
+        "output": {
+            "type": "yaml",
+            "filename": "phrases.yml",
+            "directory": str(tmp_path),
+            "index": "phrase_id",
+            "explode": {
+                "field": "extraction_phrases",
+                "inherit": ["unit_id", "filename"],
+            },
+        }
+    }
+    cdf.to_flow(cdf.interface)
+    written = yaml.safe_load((tmp_path / "phrases.yml").read_text(encoding="utf-8"))
+    assert len(written) == 1
+    assert written[0]["phrase"] == "fresh"
+    assert written[0]["filename"] == "a.pdf"
+    assert written[0]["unit_id"] == "c0"
 
 
 def test_write_frame_for_store_keeps_output_when_parent_grain_empty():

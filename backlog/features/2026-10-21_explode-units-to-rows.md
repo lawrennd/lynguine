@@ -4,7 +4,7 @@ title: "Explode list fields to rows, pack columns to a corpus row, and optional 
 status: "In Progress"
 priority: "High"
 created: "2026-10-21"
-last_updated: "2026-10-21"
+last_updated: "2026-10-22"
 category: "features"
 related_cips: ["0014"]
 owner: "lawrennd"
@@ -83,3 +83,10 @@ pack out of referia CIP-0015.
 
 CIP-0014 accepted. Implemented `explode_list_field`, `pack_dataframe`,
 and write-path reshape. Catalog still to do.
+
+### 2026-10-22
+
+Explode/pack edge cases (empty pack, inherit skip, explode-then-pack,
+parameter nulls) moved to follow-up
+[2026-10-22_explode-pack-edge-cases](./2026-10-22_explode-pack-edge-cases.md)
+so they are not lost after CIP-0016. Catalog remains on this task.

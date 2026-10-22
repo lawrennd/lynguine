@@ -1399,18 +1399,12 @@ class DataObject:
         _stamp_path_roots(details, self.interface)
         return details
 
-    def _parent_grain_frame(self) -> pd.DataFrame:
-        """Join row-aligned partitions for CIP-0014 explode/pack.
-
-        ``units`` and inherit columns often sit on input/cache while
-        ``output.explode`` is declared on the output store. Pack columns
-        similarly span input phrase text and output embeddings. Series and
-        parameter partitions are skipped.
-        """
+    def _join_partitions(self, types) -> pd.DataFrame:
+        """Outer-join row-aligned partitions, first flow wins duplicate columns."""
         parts = []
         seen = []
         skip = set(self.types["series"]) | set(self.types["parameters"])
-        for typ in ("input", "data", "cache", "output", "writedata"):
+        for typ in types:
             if typ in skip or typ not in self._d:
                 continue
             df = self._d[typ]
@@ -1425,11 +1419,84 @@ class DataObject:
             return pd.DataFrame()
         return pd.concat(parts, axis=1)
 
+    def _parent_grain_frame(self) -> pd.DataFrame:
+        """Join row-aligned partitions for CIP-0014 explode/pack.
+
+        ``units`` and inherit columns often sit on input/cache while
+        ``output.explode`` is declared on the output store. Pack columns
+        similarly span input phrase text and output embeddings. Series and
+        parameter partitions are skipped.
+        """
+        return self._join_partitions(
+            ("input", "data", "cache", "output", "writedata")
+        )
+
+    def _explode_source_frame(self) -> pd.DataFrame:
+        """Chunk-grain table for ``output.explode`` (not already-tall output).
+
+        After a previous Save, ``output`` is the exploded phrase table with a
+        different index. Joining it onto chunks before explode mixes grains
+        and hangs Save.
+        """
+        return self._join_partitions(("input", "data", "cache"))
+
+    def _parameter_series_for_write(self, series, details):
+        """One-row DataFrame for a constants/parameters Series (index = field names)."""
+        idx_col = access.io._store_index_name(details) or "index"
+        idx_val = None
+        if isinstance(details, dict):
+            idx_val = details.get("select")
+        if idx_val is None:
+            idx_val = series.name if getattr(series, "name", None) is not None else "default"
+        row = {}
+        for key, val in series.items():
+            if isinstance(val, float) and pd.isna(val):
+                row[key] = None
+            else:
+                row[key] = val
+        out = pd.DataFrame([row], index=pd.Index([idx_val], name=idx_col))
+        if idx_col not in out.columns:
+            out.insert(0, idx_col, idx_val)
+        return out
+
+    def _explode_output_for_pack(self, frame):
+        """Turn parent-grain rows into tall phrase rows using ``output.explode``.
+
+        Pack needs phrase/embedding/doc_id, which exist only after explode.
+        Chunk-grain parent tables do not have those columns.
+        """
+        if not isinstance(self.interface, (dict, Interface)):
+            return frame
+        output_details = self.interface.get("output")
+        if not isinstance(output_details, dict) or "explode" not in output_details:
+            return frame
+        spec = output_details["explode"]
+        if not isinstance(spec, dict) or "field" not in spec:
+            raise ValueError('explode must be a mapping with "field".')
+        if frame is None or (isinstance(frame, pd.DataFrame) and frame.empty):
+            return pd.DataFrame()
+        work = frame.to_pandas() if hasattr(frame, "to_pandas") else frame
+        field = spec["field"]
+        if field not in work.columns:
+            log.warning(
+                f'pack explode field "{field}" is not on the parent grain '
+                f"(have {list(work.columns)}); writing an empty pack."
+            )
+            return pd.DataFrame()
+        return access.io.explode_list_field(
+            work,
+            field=field,
+            inherit=spec.get("inherit"),
+            index=access.io._store_index_name(output_details) or spec.get("index"),
+        )
+
     def _write_frame_for_store(self, typ, df, details):
         """Parent-grain frame when the store explodes or packs; else *df*."""
-        if isinstance(details, dict) and (
-            "explode" in details or "pack" in details
-        ):
+        if isinstance(details, dict) and "explode" in details:
+            combined = self._explode_source_frame()
+            if not combined.empty:
+                df = combined
+        elif isinstance(details, dict) and "pack" in details:
             combined = self._parent_grain_frame()
             if not combined.empty:
                 df = combined
@@ -1438,9 +1505,9 @@ class DataObject:
     def _write_pack_store(self) -> bool:
         """Write CIP-0014 pack store from the tall source frame.
 
-        ``source`` selects a loaded partition. When omitted, pack the
-        parent-grain table (input/cache/output columns) so a tall input
-        store does not need a dummy output partition.
+        ``source`` selects a loaded partition. When omitted, explode the
+        chunk-grain table using ``output.explode`` so phrase/embedding
+        columns exist, then pack. Empty tall frames write empty arrays.
         """
         details = self._pack_details()
         if details is None:
@@ -1458,12 +1525,9 @@ class DataObject:
                 )
             frame = self._d[source_key]
         else:
-            frame = self._parent_grain_frame()
-        if frame is None or (isinstance(frame, pd.DataFrame) and frame.empty):
-            raise ValueError(
-                "pack has no tall rows to stack "
-                f'(partitions: {list(self._d.keys())}).'
-            )
+            frame = self._explode_output_for_pack(self._explode_source_frame())
+        if frame is None:
+            frame = pd.DataFrame()
         log.info(
             'Saving packed store'
             + (f' from "{source_key}"' if source_key else " from parent grain")
@@ -1473,15 +1537,36 @@ class DataObject:
 
     def save_flows(self):
         """
-        Save the output flows.
+        Save output, cache, and parameter stores, then the pack store.
         """
-        for typ in self.types["output"]:
-            if typ in self._d:
-                df = self._d[typ]
-                details = self.interface[typ] if typ in self.interface else None
+        write_types = []
+        seen = set()
+        for typ in (
+            list(self.types["output"])
+            + list(self.types["cache"])
+            + list(self.types["parameters"])
+        ):
+            if typ in seen:
+                continue
+            seen.add(typ)
+            write_types.append(typ)
+        for typ in write_types:
+            if typ in self.types["input"]:
+                continue
+            if typ not in self._d or typ not in self.interface:
+                continue
+            df = self._d[typ]
+            details = self.interface[typ]
+            if details is None:
+                continue
+            if typ in self.types["parameters"] and isinstance(df, pd.Series):
+                write_df = self._parameter_series_for_write(df, details)
+                details = dict(details)
+                details["keep_nulls"] = True
+            else:
                 write_df = self._write_frame_for_store(typ, df, details)
-                log.info(f"Saving data for flow type '{typ}'")
-                access.io.write_data(write_df, self.interface[typ])
+            log.info(f"Saving data for flow type '{typ}'")
+            access.io.write_data(write_df, details)
         self._write_pack_store()
     
     def sort_values(self, *args, inplace=False, **kwargs):
@@ -3211,10 +3296,13 @@ class CustomDataFrame(DataObject):
                 if typ in self.types["parameters"]:
                     self._d[typ] = pd.Series(index=cols, data=None).astype(object)
                     for col in cols:
-                        if all(df[col] == df[col].iloc[0]):
+                        # All-missing (None / NaN / pd.NA) is a valid identical
+                        # parameter. np.isnan(None) TypeErrors on object dtype.
+                        if len(df) == 0:
+                            self._d[typ][col] = None
+                        elif bool(df[col].isna().all()):
                             self._d[typ][col] = df[col].iloc[0]
-                        # Check if the column is all NaN/None and the value is NaN.
-                        elif all(df[col].isna()) and np.isnan(df[col].iloc[0]):
+                        elif all(df[col] == df[col].iloc[0]):
                             self._d[typ][col] = df[col].iloc[0]
                         else:
                             raise ValueError(

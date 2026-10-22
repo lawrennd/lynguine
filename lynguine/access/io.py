@@ -583,9 +583,18 @@ def write_yaml(df, details):
     filename = extract_full_filename(details)
     data_dict = df.to_dict("records")
 
-    # Remove all the nan and missing values from the dictionary.
+    keep_nulls = bool(details.get("keep_nulls"))
     for num, entry in enumerate(data_dict):
-        data_dict[num] = remove_nan(entry)
+        if keep_nulls:
+            cleaned = {}
+            for key, val in entry.items():
+                if isinstance(val, float) and pd.isna(val):
+                    cleaned[key] = None
+                else:
+                    cleaned[key] = val
+            data_dict[num] = cleaned
+        else:
+            data_dict[num] = remove_nan(entry)
     write_yaml_file(data_dict, filename, **_compress_kwargs(details))
 
 
@@ -3084,12 +3093,11 @@ def explode_list_field(df, field, inherit=None, index=None) -> pd.DataFrame:
     inherit = list(inherit or [])
     missing_inherit = [c for c in inherit if c not in work.columns]
     if missing_inherit:
-        errmsg = (
-            f'explode inherit columns not present: {missing_inherit} '
+        log.warning(
+            f"explode inherit columns not present, skipping: {missing_inherit} "
             f"(have {list(work.columns)})."
         )
-        log.error(errmsg)
-        raise ValueError(errmsg)
+        inherit = [c for c in inherit if c in work.columns]
 
     rows = []
     for _, parent in work.iterrows():
@@ -3162,6 +3170,13 @@ def pack_dataframe(
     work = _as_pandas(df).copy()
     if not isinstance(columns, dict) or not columns:
         raise ValueError('pack.columns must be a mapping of dest: source.')
+    if work.empty:
+        packed = {dest: [[]] for dest in columns}
+        idx_name = index_name or "Name"
+        out = pd.DataFrame(packed, index=pd.Index([index_value], name=idx_name))
+        if idx_name not in out.columns:
+            out.insert(0, idx_name, index_value)
+        return out
     missing = [src for src in columns.values() if src not in work.columns]
     if missing:
         errmsg = f"pack source columns not present: {missing}."

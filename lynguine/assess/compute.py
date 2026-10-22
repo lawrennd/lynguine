@@ -283,8 +283,14 @@ class Compute():
                         self.logger.error(errmsg)
                         raise ValueError(errmsg)
                 else:
-                    # Check if column is actually a valid column name
-                    if isinstance(column, str) and column in data.columns:
+                    # Columns plus the frame index name (explode identity is often
+                    # the index, not a column — CustomDataFrame.get_value_column
+                    # already returns the current index when asked for index.name).
+                    index_name = getattr(getattr(data, "index", None), "name", None)
+                    if isinstance(column, str) and (
+                        column in data.columns
+                        or (isinstance(index_name, str) and column == index_name)
+                    ):
                         kwargs[key] = data.get_value_column(column)
                     else:
                         # column is not a valid column name - this is likely a parameter value

@@ -113,23 +113,17 @@ class SanitizingFormatter(logging.Formatter):
         """
         Format log record with sanitization.
         
+        Interpolate first so numeric conversions (``%d``, ``%f``) still
+        work, then redact the formatted line. Stringifying args before
+        ``getMessage()`` turns ``200`` into ``"200"`` and breaks httpx's
+        ``HTTP Request: ... %d ...`` log.
+
         :param record: Log record to format
         :type record: logging.LogRecord
         :return: Formatted and sanitized log message
         :rtype: str
         """
-        # Sanitize the message
-        if record.msg:
-            record.msg = self.sanitize(str(record.msg))
-        
-        # Sanitize arguments
-        if record.args:
-            if isinstance(record.args, dict):
-                record.args = {k: self.sanitize(str(v)) for k, v in record.args.items()}
-            elif isinstance(record.args, tuple):
-                record.args = tuple(self.sanitize(str(arg)) for arg in record.args)
-        
-        return super().format(record)
+        return self.sanitize(super().format(record))
     
     def sanitize(self, text: str) -> str:
         """
