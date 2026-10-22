@@ -60,4 +60,6 @@ Task created. Branch `cip0015-parquet-stores` from main after CIP-0014
 follow-up PR #48. Wired `read_parquet` / `write_parquet` through
 `read_data` / `write_data`, extra `lynguine[parquet]` (pyarrow 14–17 for
 NumPy 1.x), `store_stat` codec from parquet metadata. Tests in
-`test_parquet_stores.py`.
+`test_parquet_stores.py`. Follow-up tests cover `read_auto`, declared
+`list_columns`, named-index reset, uncompressed codec, missing-extra
+read path, and `store_stat` when pyarrow cannot read metadata.
