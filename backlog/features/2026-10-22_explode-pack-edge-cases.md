@@ -68,3 +68,9 @@ Task created to track leftover explode/pack WIP after CIP-0016 merged.
 Restored `data.py` helpers that had been stripped so the Liquid PR stayed
 clean (`_explode_source_frame`, `_explode_output_for_pack`,
 `_parameter_series_for_write`, None-safe parameter distribution).
+
+Merged as PR #48. Coverage of the patch was thin on helper guards:
+`write_yaml` `keep_nulls` float-NaN, empty-pack index dest, explode-for-pack
+error/empty/to_pandas paths, parameter Series write variants, save_flows
+skipping input types and null details, and empty parameter distribution.
+Follow-up tests added on `cip0014-explode-pack-coverage`.
