@@ -156,6 +156,8 @@ def extract_file_type(filename : str) -> str:
         return "docx"
     if ext in ["txt"]:
         return "txt"
+    if ext in ["parquet"]:
+        return "parquet"
     raise ValueError(f'Unrecognised type of file in "{filename}"')
 
 

@@ -28,7 +28,8 @@ jobs:
     - name: Install dependencies
       run: |
         # documents extra: PyMuPDF for CIP-0013 PDF reader tests
-        poetry install --extras documents
+        # parquet extra: pyarrow for CIP-0015 phase 2 store tests
+        poetry install --extras "documents parquet"
     - name: Lint with Ruff
       run: |
         # Stage 1: prove Ruff is installed and configured. Rule select is
