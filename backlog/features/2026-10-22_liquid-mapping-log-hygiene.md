@@ -1,7 +1,7 @@
 ---
 id: "2026-10-22_liquid-mapping-log-hygiene"
 title: "Stop interpolating cell values in mapping debug logs"
-status: "Ready"
+status: "Completed"
 priority: "High"
 created: "2026-10-22"
 last_updated: "2026-10-22"
@@ -32,8 +32,8 @@ corpus row that costs about 1.4s over `get_row_data()`. Replace with lazy
 
 ## Acceptance Criteria
 
-- [ ] `mapping()` / `liquid_to_value` debug logs do not interpolate cell values
-- [ ] Logging at WARNING does not call `repr` on a large list cell (spy or a cell whose `__repr__` raises)
+- [x] `mapping()` / `liquid_to_value` debug logs do not interpolate cell values
+- [x] Logging at WARNING does not call `repr` on a large list cell (spy or a cell whose `__repr__` raises)
 
 ## Implementation Notes
 
@@ -50,3 +50,7 @@ See [CIP-0016](../../cip/cip0016.md) Implementation Plan step 1. Use
 ### 2026-10-22
 
 CIP-0016 accepted. Task created.
+
+### 2026-10-22
+
+Implemented. Logger formats lazily; mapping/get_value/set_value log names and types only.

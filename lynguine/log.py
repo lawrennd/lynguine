@@ -44,17 +44,25 @@ class Logger:
         for handler in self.logger.handlers:
             handler.setFormatter(_SANITIZER)
 
-    def debug(self, message):
-        self.logger.debug(_sanitize_log_message(message))
+    def _emit(self, level, emit, message, *args):
+        """Format and sanitize only when this level is enabled (CIP-0016)."""
+        if not self.logger.isEnabledFor(level):
+            return
+        if args:
+            message = message % args
+        emit(_sanitize_log_message(message))
 
-    def info(self, message):
-        self.logger.info(_sanitize_log_message(message))
+    def debug(self, message, *args):
+        self._emit(logging.DEBUG, self.logger.debug, message, *args)
 
-    def warning(self, message):
-        self.logger.warning(_sanitize_log_message(message))
+    def info(self, message, *args):
+        self._emit(logging.INFO, self.logger.info, message, *args)
 
-    def error(self, message):
-        self.logger.error(_sanitize_log_message(message))
+    def warning(self, message, *args):
+        self._emit(logging.WARNING, self.logger.warning, message, *args)
 
-    def critical(self, message):
-        self.logger.critical(_sanitize_log_message(message))
+    def error(self, message, *args):
+        self._emit(logging.ERROR, self.logger.error, message, *args)
+
+    def critical(self, message, *args):
+        self._emit(logging.CRITICAL, self.logger.critical, message, *args)

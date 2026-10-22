@@ -8,6 +8,7 @@ from ..log import Logger
 from ..config.context import Context
 from ..config.interface import Interface
 from ..util.misc import remove_nan, to_camel_case, is_valid_var
+from ..util.liquid import liquid_root_identifiers
 
 from ..assess.compute import Compute
 
@@ -85,7 +86,14 @@ class DataObject:
         self.at = self._AtAccessor(self)
         self.iloc = self._IlocAccessor(self)
         self.loc = self._locAccessor(self)
+        self._mapping_cache = {}
         log.debug(f"lynguine.assess.data.DataObject initialiser called.")
+
+    def _invalidate_mapping_cache(self):
+        """Clear the per-index mapping memo (CIP-0016). Not a second data store."""
+        cache = getattr(self, "_mapping_cache", None)
+        if cache is not None:
+            cache.clear()
 
     class _AtAccessor(Accessor):
         def __init__(self, data):
@@ -186,9 +194,11 @@ class DataObject:
         if index is None:
             log.debug("Setting index to None.")
             self._index = None
+            self._invalidate_mapping_cache()
         elif index in self.index:
             log.debug(f"Setting index to \"{index}\".")            
             self._index = index
+            self._invalidate_mapping_cache()
                 
         else:
             errmsg = f"Index \"{index}\" not found in data"
@@ -551,9 +561,9 @@ class DataObject:
         index = self.get_index()
         if col == self.index.name:
             return index
-        log.debug(f"Getting value for index \"{index}\" and column \"{col}\"")
+        log.debug("Getting value for index \"%s\" and column \"%s\"", index, col)
         val = self.at[index, col]
-        log.debug(f"Value is \"{val}\"")
+        log.debug("Got value for column \"%s\" type=%s", col, type(val).__name__)
         if val is None:
             return None
         if not isinstance(val, pd.Series):
@@ -630,7 +640,15 @@ class DataObject:
             # Update the data object with the modified data
             self._d[typ] = series_df
 
-        log.debug(f"Set value {value} for index \"{index}\", column \"{col}\", selector \"{self._selector}\", subindex \"{self._subindex}\"")
+        self._invalidate_mapping_cache()
+        log.debug(
+            "Set value type=%s for index \"%s\", column \"%s\", selector \"%s\", subindex \"%s\"",
+            type(value).__name__,
+            index,
+            col,
+            self._selector,
+            self._subindex,
+        )
 
     
     def add_row(self, index, typ=None, values=None):
@@ -2693,6 +2711,7 @@ class CustomDataFrame(DataObject):
         self.at = self._AtAccessor(self)
         self.loc = self._LocAccessor(self)
         self.iloc = self._ILocAccessor(self)
+        self._mapping_cache = {}
 
     def get_type_columns(self, col_type):
         """
@@ -3458,12 +3477,22 @@ class CustomDataFrame(DataObject):
         """
         return self._name_column_map
 
-    def mapping(self, mapping=None, series=None):
+    def mapping(self, mapping=None, series=None, names=None):
         """
         Generate dictionary of mapping between variable names and column values.
 
+        No-arg ``mapping()`` returns every mapped column on the current row.
+        ``mapping(names=["store_status"])`` fetches only those names. Names
+        that are not in the name-column map are omitted. A name that is in
+        the map whose column is absent still raises KeyError.
+
+        Subset and full maps for the current index are memoized. The cache
+        is a per-object render memo, not a second data store; it is cleared
+        on ``set_index``, ``set_value``, and new ``from_flow`` instances.
+
         :param mapping: mapping to use, if None use default mapping
         :param series: series to use, if None use current series
+        :param names: optional iterable of variable names to fetch
         :returns: dictionary of mapping between variable names and column values
         :rtype: dict
         """
@@ -3471,27 +3500,50 @@ class CustomDataFrame(DataObject):
         if self.index.name and self.index.name not in self._column_name_map:
             self.update_name_column_map(name=self.index.name, column=self.index.name)
 
+        explicit_mapping = mapping
+        cache_key = None
+        if explicit_mapping is None and series is None:
+            if isinstance(names, str):
+                names = [names]
+            cache_key = (self.get_index(), None if names is None else frozenset(names))
+            cached = getattr(self, "_mapping_cache", {}).get(cache_key)
+            if cached is not None:
+                return dict(cached)
+
         if mapping is None:
-            log.debug(f"Creating new mapping as mapping is None.")
+            log.debug("Creating new mapping as mapping is None.")
+            source_map = self._name_column_map
+            if names is not None:
+                if isinstance(names, str):
+                    names = [names]
+                source_map = {name: source_map[name] for name in names if name in source_map}
             if series is None:
-                # Always include all columns and the index in the mapping
-                mapping = {name: column for name, column in self._name_column_map.items() if column in self.columns or column == self.index.name}
-                log.debug(f"Mapping is \"{', '.join(mapping.keys())}\"")
+                if names is None:
+                    # Full row: skip names whose column is not on the frame.
+                    mapping = {name: column for name, column in source_map.items() if column in self.columns or column == self.index.name}
+                else:
+                    # Named subset: mapped-but-missing columns still KeyError below.
+                    mapping = dict(source_map)
+                log.debug("Mapping is \"%s\"", ", ".join(mapping.keys()))
             else:
-                mapping = {name: column for name, column in self._name_column_map.items() if column in series.index or column == self.index.name}
+                mapping = {name: column for name, column in source_map.items() if column in series.index or column == self.index.name}
 
         form = {}
         for name, column in mapping.items():
             if series is None:
                 if column in self.columns or column == self.index.name:
-                    log.debug(f"Setting column to \"{column}\" to extract mapping.")
+                    log.debug("Setting column to \"%s\" to extract mapping.", column)
                     self.set_column(column)
                     try:
                         value = self.get_value()
                     except ValueError as e:
                         log.error(e)
                         value = None
-                    log.debug(f"Setting \"{name}\" column of format to \"{value}\".")
+                    log.debug(
+                        "Setting \"%s\" column of format to type=%s.",
+                        name,
+                        type(value).__name__,
+                    )
                     form[name] = value
                 else:
                     errmsg = f"Column \"{column}\" in mapping is not in columns \"{', '.join(self.columns)}\"."
@@ -3500,9 +3552,13 @@ class CustomDataFrame(DataObject):
             else:
                 if column in series or column == self.index.name:
                     form[name] = series[column] if column in series else series.name
-        mapping = remove_nan(form)
-        log.debug(f"Mapping now has the following keys \"{', '.join(mapping)}\"")        
-        return remove_nan(form)
+        result = remove_nan(form)
+        log.debug("Mapping now has the following keys \"%s\"", ", ".join(result))
+        if cache_key is not None:
+            if not hasattr(self, "_mapping_cache") or self._mapping_cache is None:
+                self._mapping_cache = {}
+            self._mapping_cache[cache_key] = result
+        return result
 
     def viewer_to_value(self, viewer, kwargs=None):
         """
@@ -3536,10 +3592,6 @@ class CustomDataFrame(DataObject):
         """
         # Ensure view is a dictionary or an Interface
         log.debug(f"Entering view to value")
-        if kwargs is None:
-            log.debug(f"Creating mapping as kwargs not present.")
-            kwargs = self.mapping()
-            log.debug(f"kwargs are now \"{', '.join(kwargs)}\"")
         if isinstance(view, Interface):
             view = view.to_dict()
         elif not isinstance(view, dict):
@@ -3803,19 +3855,33 @@ class CustomDataFrame(DataObject):
         :param local: Local overrides to use on top of the kwargs for substitution in the liquid template, defaults to {}
         :type local: dict, optional
         """
-        log.debug(f"Calling liquid_to_value with display argument \"{display}\".")
+        log.debug("Calling liquid_to_value with display argument \"%s\".", display)
         if self.compute is None:
             errmsg = f"Compute needs to be initialised before liquid_to_value is called."
             log.error(errmsg)
             raise ValueError(errmsg)
 
         
-        if kwargs is None or kwargs=={}:
-            kwargs = self.mapping()
-        kwargs.update(local)
-        log.debug(f"Kwargs keys: {list(kwargs.keys())}")
+        omitted = kwargs is None or kwargs == {}
+        if omitted:
+            try:
+                names = liquid_root_identifiers(display)
+            except Exception as err:
+                log.warning(
+                    "Liquid identifier extraction failed (%s); using full mapping().",
+                    err,
+                )
+                kwargs = self.mapping()
+            else:
+                if names:
+                    kwargs = self.mapping(names=names)
+                else:
+                    kwargs = {}
+        context = dict(kwargs)
+        context.update(local)
+        log.debug("Kwargs keys: %s", list(context.keys()))
         try:
-            return self.compute._liquid_env.from_string(display).render(**remove_nan(kwargs))
+            return self.compute._liquid_env.from_string(display).render(**remove_nan(context))
         except Exception as err:
             errmsg = f"In {display}\n\n {err}"
             log.error(errmsg)

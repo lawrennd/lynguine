@@ -1,7 +1,7 @@
 ---
 id: "2026-10-22_liquid-root-identifiers"
 title: "Extract Liquid root identifiers from the parse tree"
-status: "Ready"
+status: "Completed"
 priority: "High"
 created: "2026-10-22"
 last_updated: "2026-10-22"
@@ -30,10 +30,10 @@ in lynguine.
 
 ## Acceptance Criteria
 
-- [ ] `{{ store_status.output.path }}` → `{"store_status"}`
-- [ ] `{% if selected_doc %}...{% endif %}` → `{"selected_doc"}`
-- [ ] `{{ embeddings[0] }}` → `{"embeddings"}`
-- [ ] Static HTML with no `{{` / `{%` → empty set
+- [x] `{{ store_status.output.path }}` → `{"store_status"}`
+- [x] `{% if selected_doc %}...{% endif %}` → `{"selected_doc"}`
+- [x] `{{ embeddings[0] }}` → `{"embeddings"}`
+- [x] Static HTML with no `{{` / `{%` → empty set
 
 ## Implementation Notes
 
@@ -49,3 +49,7 @@ See [CIP-0016](../../cip/cip0016.md) identifier extraction. Use
 ### 2026-10-22
 
 CIP-0016 accepted. Task created.
+
+### 2026-10-22
+
+Implemented via python-liquid `BoundTemplate.global_variables()`.

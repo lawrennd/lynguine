@@ -1,7 +1,7 @@
 ---
 id: "2026-10-22_demand-driven-liquid-to-value"
 title: "Make liquid_to_value demand-driven"
-status: "Ready"
+status: "Completed"
 priority: "High"
 created: "2026-10-22"
 last_updated: "2026-10-22"
@@ -37,12 +37,12 @@ render context. A template that names `embeddings` still receives it.
 
 ## Acceptance Criteria
 
-- [ ] kwargs omitted: identifiers → `mapping(names=...)` → merge `local` → render
-- [ ] Empty identifier set → render with `local` only (no `get_value`)
-- [ ] Parse failure → WARNING + full `mapping()`
-- [ ] `liquid_to_value` does not `get_value` unmentioned columns
-- [ ] Mentioned packed-like arrays are still returned
-- [ ] `view_to_value` liquid path does not pre-build the full-row mapping
+- [x] kwargs omitted: identifiers → `mapping(names=...)` → merge `local` → render
+- [x] Empty identifier set → render with `local` only (no `get_value`)
+- [x] Parse failure → WARNING + full `mapping()`
+- [x] `liquid_to_value` does not `get_value` unmentioned columns
+- [x] Mentioned packed-like arrays are still returned
+- [x] `view_to_value` liquid path does not pre-build the full-row mapping
 
 ## Implementation Notes
 
@@ -59,3 +59,7 @@ See [CIP-0016](../../cip/cip0016.md) Implementation Plan step 4. Treat
 ### 2026-10-22
 
 CIP-0016 accepted. Task created.
+
+### 2026-10-22
+
+Implemented demand-driven `liquid_to_value` and stopped `view_to_value` from eagerly calling full `mapping()`.

@@ -1,7 +1,7 @@
 ---
 id: "2026-10-22_mapping-names-subset"
 title: "Add mapping(names=...) subset fetch"
-status: "Ready"
+status: "Completed"
 priority: "High"
 created: "2026-10-22"
 last_updated: "2026-10-22"
@@ -31,9 +31,9 @@ and the column is absent.
 
 ## Acceptance Criteria
 
-- [ ] `mapping(names=["store_status", "selected_doc"])` fetches only those names
-- [ ] Existing no-arg `mapping()` tests unchanged
-- [ ] Unmapped names omitted; mapped-but-missing-column still KeyError
+- [x] `mapping(names=["store_status", "selected_doc"])` fetches only those names
+- [x] Existing no-arg `mapping()` tests unchanged
+- [x] Unmapped names omitted; mapped-but-missing-column still KeyError
 
 ## Implementation Notes
 
@@ -50,3 +50,7 @@ Liquid will use `names=` after identifier extraction.
 ### 2026-10-22
 
 CIP-0016 accepted. Task created.
+
+### 2026-10-22
+
+Implemented `mapping(names=...)` subset fetch.

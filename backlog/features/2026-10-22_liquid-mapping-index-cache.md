@@ -1,7 +1,7 @@
 ---
 id: "2026-10-22_liquid-mapping-index-cache"
 title: "Cache subset mappings for the current index"
-status: "Ready"
+status: "Completed"
 priority: "High"
 created: "2026-10-22"
 last_updated: "2026-10-22"
@@ -32,9 +32,9 @@ the cache is a per-object render memo, not a second data store.
 
 ## Acceptance Criteria
 
-- [ ] Two `liquid_to_value` calls naming `store_status` on the same index call `get_value` once
-- [ ] Cache miss after `set_value`
-- [ ] Cache miss after `set_index`
+- [x] Two `liquid_to_value` calls naming `store_status` on the same index call `get_value` once
+- [x] Cache miss after `set_value`
+- [x] Cache miss after `set_index`
 
 ## Implementation Notes
 
@@ -51,3 +51,7 @@ an empty cache; still clear if any in-place reload path exists.
 ### 2026-10-22
 
 CIP-0016 accepted. Task created.
+
+### 2026-10-22
+
+Implemented per-index mapping cache; invalidate on `set_index` and `set_value`.

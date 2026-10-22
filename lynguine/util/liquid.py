@@ -5,6 +5,32 @@ import urllib.parse
 
 from liquid.filter import string_filter
 
+
+def liquid_root_identifiers(source, env=None):
+    """Return root Liquid variable names referenced by a template.
+
+    Dot paths and indexes contribute only the first segment:
+    ``{{ store_status.output.path }}`` → ``{"store_status"}``,
+    ``{{ embeddings[0] }}`` → ``{"embeddings"}``. Assigned locals
+    (``{% assign x = store_status %}{{ x }}``) are omitted; the
+    referenced global (``store_status``) is kept.
+
+    Parse with a strict Environment by default so syntax errors raise
+    and CIP-0016 can fall back to full ``mapping()``. Do not pass the
+    Compute ``Mode.LAX`` env here — LAX swallows bad tags.
+
+    :param source: Liquid template source.
+    :type source: str
+    :param env: Optional Liquid environment. If omitted, a default
+        strict ``Environment`` is used.
+    :return: Root identifiers named by the template.
+    :rtype: set[str]
+    """
+    parse_env = env if env is not None else liq.Environment()
+    template = parse_env.from_string(source)
+    return set(template.global_variables())
+
+
 def load_template_env(ext=".md", template_dir=None):
     """
     Load in the templates to be used for lists.
