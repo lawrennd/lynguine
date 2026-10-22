@@ -4,7 +4,7 @@ title: "Gzip YAML/JSON Access stores and store_stat"
 status: "In Progress"
 priority: "High"
 created: "2026-10-21"
-last_updated: "2026-10-21"
+last_updated: "2026-10-22"
 category: "features"
 related_cips: ["0015"]
 owner: "lawrennd"
@@ -51,3 +51,8 @@ See [CIP-0015](../../cip/cip0015.md). Encoding is Access IO, not compute.
 ### 2026-10-21
 
 CIP-0015 accepted. Gzip YAML/JSON and `store_stat` implemented; parquet deferred.
+
+### 2026-10-22
+
+Phase 2 parquet moved to
+[2026-10-22_parquet-stores](./2026-10-22_parquet-stores.md).

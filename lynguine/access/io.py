@@ -161,6 +161,181 @@ def open_text_store(filename, mode, compress=None, compress_level=6):
             yield stream
 
 
+_PYARROW_INSTALL = (
+    "pyarrow is required for parquet stores. "
+    "Install with: pip install 'lynguine[parquet]' "
+    "or: poetry install --extras parquet"
+)
+_PARQUET_COMPRESS = {
+    "snappy",
+    "zstd",
+    "gzip",
+    "brotli",
+    "lz4",
+    "none",
+    "uncompressed",
+}
+
+
+class PyArrowMissingError(ImportError):
+    """Raised when parquet IO is requested but pyarrow is not installed."""
+
+
+def _import_pyarrow():
+    try:
+        import pyarrow as pa
+        import pyarrow.parquet as pq
+    except ImportError as exc:
+        raise PyArrowMissingError(_PYARROW_INSTALL) from exc
+    return pa, pq
+
+
+def _parquet_compression(details) -> str:
+    """Parquet column codec (CIP-0015 phase 2). Default snappy."""
+    compress = details.get("compress") if isinstance(details, dict) else None
+    if compress is None:
+        return "snappy"
+    key = str(compress).lower()
+    if key not in _PARQUET_COMPRESS:
+        errmsg = f'Unknown parquet compress codec "{compress}".'
+        log.error(errmsg)
+        raise ValueError(errmsg)
+    if key in {"none", "uncompressed"}:
+        return "none"
+    return key
+
+
+def _cell_as_nested_list(value):
+    """Python lists of floats/strings for Arrow list columns (not pickle)."""
+    if value is None:
+        return None
+    if isinstance(value, np.ndarray):
+        value = value.tolist()
+    if isinstance(value, (list, tuple)):
+        return [_cell_as_nested_list(item) for item in value]
+    if isinstance(value, (np.floating, np.integer)):
+        if pd.isna(value):
+            return None
+        return float(value) if isinstance(value, np.floating) else int(value)
+    if isinstance(value, float) and pd.isna(value):
+        return None
+    return value
+
+
+def _arrow_list_type(value, pa):
+    """Infer Arrow list type for a sample cell, or None if not a list."""
+    if isinstance(value, np.ndarray):
+        value = value.tolist()
+    if not isinstance(value, (list, tuple)):
+        return None
+    if len(value) == 0:
+        return None
+    inner = value[0]
+    if isinstance(inner, np.ndarray):
+        inner = inner.tolist()
+    if isinstance(inner, (list, tuple)):
+        if inner and isinstance(inner[0], (int, float, np.floating, np.integer)):
+            return pa.list_(pa.list_(pa.float32()))
+        return None
+    if isinstance(inner, (int, float, np.floating, np.integer)):
+        return pa.list_(pa.float32())
+    if isinstance(inner, str):
+        return pa.list_(pa.string())
+    return None
+
+
+def _list_column_arrow_types(df, details, pa) -> dict:
+    """Numeric/string list columns as Arrow lists, not object/pickle."""
+    types = {}
+    declared = details.get("list_columns") if isinstance(details, dict) else None
+    if isinstance(declared, dict):
+        for col in declared:
+            if col in df.columns:
+                types[col] = pa.list_(pa.float32())
+    elif isinstance(declared, list):
+        for col in declared:
+            if col in df.columns:
+                types[col] = pa.list_(pa.float32())
+    for col in df.columns:
+        if col in types:
+            continue
+        sample = df[col].dropna()
+        if len(sample) == 0:
+            continue
+        inferred = _arrow_list_type(sample.iloc[0], pa)
+        if inferred is not None:
+            types[col] = inferred
+    return types
+
+
+def _dataframe_to_arrow_table(df, details, pa):
+    """Build a pyarrow Table with list<float32> embedding columns."""
+    frame = _as_pandas(df).copy()
+    idx_name = frame.index.name
+    if idx_name and idx_name not in frame.columns:
+        frame = frame.reset_index()
+    list_types = _list_column_arrow_types(frame, details, pa)
+    arrays = []
+    names = []
+    for col in frame.columns:
+        names.append(str(col))
+        if col in list_types:
+            arrays.append(
+                pa.array(
+                    [_cell_as_nested_list(v) for v in frame[col].tolist()],
+                    type=list_types[col],
+                )
+            )
+        else:
+            arrays.append(pa.array(frame[col]))
+    return pa.Table.from_arrays(arrays, names=names)
+
+
+def _cell_from_arrow(value):
+    """Normalise parquet list cells to Python lists of float/str."""
+    if value is None:
+        return None
+    if isinstance(value, np.ndarray):
+        if value.dtype == object:
+            return [_cell_from_arrow(item) for item in value.tolist()]
+        return [_cell_from_arrow(item) for item in value.tolist()]
+    if isinstance(value, (list, tuple)):
+        return [_cell_from_arrow(item) for item in value]
+    if isinstance(value, (np.floating, float)):
+        return float(value)
+    if isinstance(value, (np.integer,)):
+        return int(value)
+    return value
+
+
+def _python_lists_from_parquet(df: pd.DataFrame) -> pd.DataFrame:
+    out = df.copy()
+    for col in out.columns:
+        sample = out[col].dropna()
+        if len(sample) == 0:
+            continue
+        first = sample.iloc[0]
+        if isinstance(first, (list, tuple, np.ndarray)):
+            out[col] = [_cell_from_arrow(v) for v in out[col].tolist()]
+    return out
+
+
+def parquet_codec_from_file(filename: str) -> str | None:
+    """Column codec from parquet metadata without loading the table."""
+    _pa, pq = _import_pyarrow()
+    meta = pq.read_metadata(filename)
+    codecs = set()
+    for i in range(meta.num_row_groups):
+        group = meta.row_group(i)
+        for j in range(group.num_columns):
+            codecs.add(str(group.column(j).compression).lower())
+    if not codecs:
+        return None
+    if len(codecs) == 1:
+        return next(iter(codecs))
+    return ",".join(sorted(codecs))
+
+
 def multiline_str_representer(dumper, data):
     if "\n" in data:
         return dumper.represent_scalar("tag:yaml.org,2002:str", data, style="|")
@@ -1488,6 +1663,15 @@ def read_csv(details):
     return data
 
 
+def read_parquet(details):
+    """Read a parquet table (CIP-0015 phase 2). Requires ``lynguine[parquet]``."""
+    _pa, pq = _import_pyarrow()
+    filename = extract_full_filename(details)
+    log.debug(f'Reading parquet file "{filename}"')
+    table = pq.read_table(filename)
+    return _python_lists_from_parquet(table.to_pandas())
+
+
 def read_excel(details):
     """
     Read data from an excel spreadsheet.
@@ -1770,6 +1954,20 @@ def write_csv(df, details):
             header=True,
             index=False,
         )
+
+
+def write_parquet(df, details):
+    """Write a parquet table with list<float32> numeric list columns.
+
+    Requires ``lynguine[parquet]``. Default codec is snappy; set
+    ``compress: zstd`` (or gzip/brotli/lz4/none) to override.
+    """
+    pa, pq = _import_pyarrow()
+    filename = extract_full_filename(details)
+    compression = _parquet_compression(details)
+    log.debug(f'Writing parquet file "{filename}" with compression "{compression}"')
+    table = _dataframe_to_arrow_table(df, details, pa)
+    pq.write_table(table, filename, compression=compression)
 
 
 if GSPREAD_AVAILABLE:
@@ -2845,6 +3043,8 @@ def read_data(details):
         df = read_yaml(details)
     elif ftype == "csv":
         df = read_csv(details)
+    elif ftype == "parquet":
+        df = read_parquet(details)
     elif ftype == "json":
         df = read_json(details)
     elif ftype == "bibtex":
@@ -2900,6 +3100,8 @@ def read_auto(details):
             return read_json(details)
         elif ext == ".csv":
             return read_csv(details)
+        elif ext == ".parquet":
+            return read_parquet(details)
         elif ext == ".bib" or ext == ".bibtex":
             return read_bibtex(details)
         elif ext == ".md" or ext == ".markdown":
@@ -3237,13 +3439,21 @@ def reshape_for_write(df, details) -> pd.DataFrame:
 def store_stat(details) -> dict:
     """File facts for a named store without loading the table (CIP-0015)."""
     filename = extract_full_filename(details)
-    codec = resolve_text_codec(filename, details.get("compress"))
     logical = details.get("type")
     if not logical:
         try:
             logical = extract_file_type(filename)
         except ValueError:
             logical = None
+    if logical == "parquet":
+        codec = details.get("compress") or "snappy"
+        if os.path.exists(filename):
+            try:
+                codec = parquet_codec_from_file(filename)
+            except PyArrowMissingError:
+                pass
+    else:
+        codec = resolve_text_codec(filename, details.get("compress"))
     abs_path = os.path.abspath(filename)
     if not os.path.exists(filename):
         return {
@@ -3291,6 +3501,8 @@ def write_data(df, details):
         write_gsheet(df, details)
     elif ftype == "csv":
         write_csv(df, details)
+    elif ftype == "parquet":
+        write_parquet(df, details)
     elif ftype == "json":
         write_json(df, details)
     elif ftype == "bibtex":

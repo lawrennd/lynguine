@@ -119,6 +119,7 @@ def test_extract_root_directory(setup_environment):
     ("phrases.yml.gzip.gz", "yaml"),
     ("reference.bib", "bibtex"),
     ("document.docx", "docx"),
+    ("phrases.parquet", "parquet"),
     ("unknown.file", ValueError)
 ])
 def test_extract_file_type(filename, expected):
