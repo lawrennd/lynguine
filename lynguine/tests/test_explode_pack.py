@@ -182,8 +182,12 @@ def test_explode_field_missing_and_inherit_missing():
     df = pd.DataFrame({"Name": ["x"], "units": [[{"unit_id": "x-0"}]]})
     with pytest.raises(ValueError, match="not a column"):
         explode_list_field(df, field="missing")
-    with pytest.raises(ValueError, match="inherit columns not present"):
-        explode_list_field(df, field="units", inherit=["filename"])
+    tall = explode_list_field(
+        df, field="units", inherit=["filename", "Name"], index="unit_id"
+    )
+    assert list(tall.index) == ["x-0"]
+    assert tall.loc["x-0", "Name"] == "x"
+    assert "filename" not in tall.columns
 
 
 def test_explode_none_nan_and_ndarray_items():
@@ -227,6 +231,19 @@ def test_packable_cell_ndarray_and_scalar_na():
     assert _packable_cell(np.array([1.0, 2.0])) == [1.0, 2.0]
     assert pd.isna(_packable_cell(np.float64("nan")))
     assert _packable_cell("keep") == "keep"
+
+
+def test_pack_empty_frame_writes_empty_arrays():
+    packed = pack_dataframe(
+        pd.DataFrame(columns=["phrase", "embedding"]),
+        columns={"phrases": "phrase", "embeddings": "embedding"},
+        index_value="corpus",
+        index_name="Name",
+    )
+    assert list(packed.index) == ["corpus"]
+    assert packed.iloc[0]["phrases"] == []
+    assert packed.iloc[0]["embeddings"] == []
+    assert packed.iloc[0]["Name"] == "corpus"
 
 
 def test_pack_columns_must_be_mapping_and_present():

@@ -10,6 +10,7 @@ Tests cover:
 """
 
 import os
+import logging
 import pytest
 import tempfile
 import json
@@ -524,6 +525,43 @@ class TestSecureLogging:
         sanitized = formatter.sanitize(text)
         assert "mysecretpass123" not in sanitized
         assert "***PASSWORD***" in sanitized
+
+    def test_sanitizing_formatter_preserves_percent_d(self):
+        """httpx logs status as %d; sanitizer must not stringify args first."""
+        formatter = SanitizingFormatter()
+        record = logging.LogRecord(
+            name="httpx",
+            level=logging.INFO,
+            pathname="",
+            lineno=1,
+            msg='HTTP Request: %s %s "%s %d %s"',
+            args=(
+                "POST",
+                "https://api.openai.com/v1/chat/completions",
+                "HTTP/1.1",
+                200,
+                "OK",
+            ),
+            exc_info=None,
+        )
+        formatted = formatter.format(record)
+        assert "200" in formatted
+        assert "HTTP Request" in formatted
+
+    def test_sanitizing_formatter_redacts_after_interpolation(self):
+        formatter = SanitizingFormatter()
+        record = logging.LogRecord(
+            name="test",
+            level=logging.INFO,
+            pathname="",
+            lineno=1,
+            msg="login password=%s",
+            args=("mysecretpass123",),
+            exc_info=None,
+        )
+        formatted = formatter.format(record)
+        assert "mysecretpass123" not in formatted
+        assert "***PASSWORD***" in formatted
     
     def test_sanitize_dict(self):
         """Test dictionary sanitization."""

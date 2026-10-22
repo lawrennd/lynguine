@@ -486,6 +486,30 @@ def test_row_args_validation_with_valid_column(compute_instance, mocker):
     # Verify that get_value_column was called with the correct column
     mock_data.get_value_column.assert_called_with("Quality")
 
+def test_row_args_accepts_index_name(compute_instance, mocker):
+    """row_args may name the DataFrame index (explode identity is often not a column)."""
+    cdf = CustomDataFrame(
+        pd.DataFrame(
+            {"text": ["hello"]},
+            index=pd.Index(["placeholder.pdf::c0003"], name="unit_id"),
+        )
+    )
+    captured = {}
+
+    def capture(**kwargs):
+        captured.update(kwargs)
+        return "ok"
+
+    mocked_functions = [
+        {"name": "test_function", "function": capture, "default_args": {}}
+    ]
+    mocker.patch.object(compute_instance, "_compute_functions_list", return_value=mocked_functions)
+    compute_func = compute_instance.gcf_("test_function", cdf)
+    result = compute_func(cdf, row_args={"chunk_id": "unit_id", "text": "text"})
+    assert result == "ok"
+    assert captured["chunk_id"] == "placeholder.pdf::c0003"
+    assert captured["text"] == "hello"
+
 def test_row_args_validation_with_series_data(compute_instance, mocker):
     """Test that row_args validation works correctly with Series data."""
     # Create a CustomDataFrame with a Series column

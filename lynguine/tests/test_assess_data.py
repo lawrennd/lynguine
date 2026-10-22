@@ -215,6 +215,47 @@ def test_from_flow_with_valid_select_settings(valid_local_select_settings):
     assert isinstance(cdf, lynguine.assess.data.CustomDataFrame)
     assert cdf == lynguine.assess.data.CustomDataFrame(pd.DataFrame({'key1': 'value1row2', 'key2' : 'value2row2', 'key3': 'value3row2'}, index=[0]))
     assert cdf.colspecs == {"parameters" : ["key1", "key2", "key3"]}
+
+
+def test_parameters_accept_none_without_isnan():
+    """Empty-input flows reconstruct from constants; None must not hit np.isnan."""
+    data = pd.DataFrame({"pca_dim": [None], "model": ["x"]})
+    cdf = lynguine.assess.data.CustomDataFrame(
+        data, colspecs={"parameters": ["pca_dim", "model"]}
+    )
+    assert pd.isna(cdf._d["parameters"]["pca_dim"])
+    assert cdf._d["parameters"]["model"] == "x"
+
+
+def test_from_flow_empty_input_then_null_constant(tmp_path):
+    """02_embed: empty chunks.yml then constants with embed_pca_dim: null."""
+    (tmp_path / "chunks.yml").write_text("[]\n")
+    (tmp_path / "constants.yml").write_text(
+        "- index: dialogue-v1\n  model: x\n  pca_dim: null\n"
+    )
+    interface = lynguine.config.interface.Interface(
+        {
+            "input": {
+                "type": "yaml",
+                "filename": "chunks.yml",
+                "directory": str(tmp_path),
+                "index": "id",
+            },
+            "constants": {
+                "type": "yaml",
+                "filename": "constants.yml",
+                "directory": str(tmp_path),
+                "index": "index",
+                "select": "dialogue-v1",
+            },
+        },
+        user_file="test.yml",
+        directory=str(tmp_path),
+    )
+    cdf = lynguine.assess.data.CustomDataFrame.from_flow(interface)
+    assert isinstance(cdf, lynguine.assess.data.CustomDataFrame)
+    assert pd.isna(cdf._d["constants"]["pca_dim"])
+    assert cdf._d["constants"]["model"] == "x"
     
 def test_from_flow_with_invalid_type():
     with pytest.raises(ValueError):
