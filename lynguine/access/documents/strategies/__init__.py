@@ -9,6 +9,7 @@ from .docx_workshop_v1 import DocxWorkshopV1
 from .loader import YamlStrategy, load_strategy_yaml
 from .pmlr_references_v1 import PmlrReferencesV1, ReferencesRegionNotFoundError
 from .pub_dialogue_v1 import PubDialogueV1
+from .socratic_markdown_v1 import SocraticMarkdownV1
 
 __all__ = [
     "DocxChatbotV1",
@@ -16,6 +17,7 @@ __all__ = [
     "PubDialogueV1",
     "PmlrReferencesV1",
     "ReferencesRegionNotFoundError",
+    "SocraticMarkdownV1",
     "YamlStrategy",
     "load_strategy_yaml",
 ]
