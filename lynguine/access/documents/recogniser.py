@@ -16,6 +16,9 @@ _REF_HEADING = re.compile(
 )
 _FINDINGS = re.compile(r"^\s*Findings\s*$", re.I | re.M)
 _RECOMMENDATIONS = re.compile(r"^\s*Recommendations\s*$", re.I | re.M)
+_SOCRATIC_EXCHANGE = re.compile(r"^##\s+Exchange\s+\d+\b", re.I | re.M)
+_SOCRATIC_USER = re.compile(r"^###\s+User\s*$", re.I | re.M)
+_SOCRATIC_LLM = re.compile(r"^###\s+LLM\s*$", re.I | re.M)
 
 
 @dataclass(frozen=True)
@@ -54,6 +57,10 @@ def document_features(document: Document) -> dict:
         "has_references_heading": bool(_REF_HEADING.search(full)),
         "has_findings": bool(_FINDINGS.search(full)),
         "has_recommendations": bool(_RECOMMENDATIONS.search(full)),
+        "has_socratic_exchange": bool(_SOCRATIC_EXCHANGE.search(full)),
+        "has_user_llm_labels": bool(
+            _SOCRATIC_USER.search(full) and _SOCRATIC_LLM.search(full)
+        ),
         "median_block_width_ratio": median_block_width_ratio,
         "twocolumn_ish": median_block_width_ratio < 0.75,
     }
@@ -181,6 +188,20 @@ def _score_strategy(strategy_id: str, aspect: str, feats: dict) -> StrategyCandi
         if not feats["has_conversation_transcript"]:
             score += 0.1
             reasons.append("no chatbot transcript markers")
+
+    elif strategy_id == "socratic_markdown.v1" and aspect in (
+        "dialogue_units",
+        "body_chunks",
+    ):
+        if feats["reader"] == "markdown":
+            score += 0.4
+            reasons.append("markdown reader")
+        if feats["has_socratic_exchange"]:
+            score += 0.5
+            reasons.append("exchange headings")
+        if feats["has_user_llm_labels"]:
+            score += 0.3
+            reasons.append("User/LLM labels")
 
     else:
         reasons.append("no heuristic match for aspect")

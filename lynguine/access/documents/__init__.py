@@ -1,4 +1,4 @@
-"""Document access: readers and models for PDF/DOCX structuring (CIP-0013).
+"""Document access: readers and models for PDF/DOCX/markdown structuring (CIP-0013).
 
 This package turns files into an explicit document model (pages, blocks,
 text-layer stats), then optional named strategies emit units. OCR is out of
@@ -14,6 +14,7 @@ from .chrome_filters import (
 from .errors import DocumentSegmentError, SparseTextLayerError, UnknownStrategyError
 from .model import Block, Document, Page, TextLayer
 from .docx_reader import PythonDocxMissingError, read_docx
+from .markdown import read_markdown
 from .pdf import (
     DEFAULT_MIN_WORDS_PER_PAGE,
     PyMuPDFMissingError,
@@ -71,6 +72,7 @@ __all__ = [
     "list_strategies",
     "rank_strategies",
     "read_docx",
+    "read_markdown",
     "read_pdf",
     "register_strategy",
     "resolve_chrome_filter_flags",

@@ -100,6 +100,10 @@ def ensure_builtin_strategies() -> None:
         from .strategies.docx_workshop_v1 import DocxWorkshopV1
 
         register_strategy(DocxWorkshopV1())
+    if "socratic_markdown.v1" not in _REGISTRY:
+        from .strategies.socratic_markdown_v1 import SocraticMarkdownV1
+
+        register_strategy(SocraticMarkdownV1())
 
     from .strategies.loader import load_packaged_yaml_strategies
 
