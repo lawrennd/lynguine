@@ -1089,9 +1089,10 @@ class DataObject:
                 df = self._d.get(typ)
                 if df is not None:
                     try:
-                        write_df = self._write_frame_for_store(typ, df, details)
+                        write_details = dict(details) if isinstance(details, dict) else details
+                        write_df = self._write_frame_for_store(typ, df, write_details)
                         
-                        access.io.write_data(write_df, details)
+                        access.io.write_data(write_df, write_details)
                         data_written = True
                         log.info(f"Data for type '{typ}' written successfully.")
                     except Exception as e:
@@ -1459,11 +1460,40 @@ class DataObject:
             out.insert(0, idx_col, idx_val)
         return out
 
+    def _merge_output_columns(self, tall: pd.DataFrame) -> pd.DataFrame:
+        """Copy output-only columns (e.g. embedding) onto exploded phrase rows.
+
+        Embed writes vectors on the tall output partition, not back into the
+        cache list. Re-exploding cache for pack/Save would otherwise drop
+        them. Join is by index (phrase_id); unmatched rows stay without the
+        extra columns so drop_incomplete can skip them.
+        """
+        if tall is None or not isinstance(tall, pd.DataFrame) or tall.empty:
+            return tall
+        src = self._d.get("output")
+        if src is None:
+            return tall
+        src_df = src.to_pandas() if hasattr(src, "to_pandas") else src
+        if not isinstance(src_df, pd.DataFrame) or src_df.empty:
+            return tall
+        extra = [c for c in src_df.columns if c not in tall.columns]
+        if not extra:
+            return tall
+        aligned = src_df.reindex(tall.index)
+        work = tall.copy()
+        for col in extra:
+            series = aligned[col]
+            if series.notna().any():
+                work[col] = series
+        return work
+
     def _explode_output_for_pack(self, frame):
         """Turn parent-grain rows into tall phrase rows using ``output.explode``.
 
         Pack needs phrase/embedding/doc_id, which exist only after explode.
-        Chunk-grain parent tables do not have those columns.
+        Chunk-grain parent tables do not have those columns. Embedding is
+        merged from the tall output partition when extract has not written
+        it back onto the cache list.
         """
         if not isinstance(self.interface, (dict, Interface)):
             return frame
@@ -1483,12 +1513,13 @@ class DataObject:
                 f"(have {list(work.columns)}); writing an empty pack."
             )
             return pd.DataFrame()
-        return access.io.explode_list_field(
+        tall = access.io.explode_list_field(
             work,
             field=field,
             inherit=spec.get("inherit"),
             index=access.io._store_index_name(output_details) or spec.get("index"),
         )
+        return self._merge_output_columns(tall)
 
     def _write_frame_for_store(self, typ, df, details):
         """Parent-grain frame when the store explodes or packs; else *df*."""
@@ -1496,11 +1527,35 @@ class DataObject:
             combined = self._explode_source_frame()
             if not combined.empty:
                 df = combined
+            spec = details.get("explode")
+            field = spec.get("field") if isinstance(spec, dict) else None
+            work = df.to_pandas() if hasattr(df, "to_pandas") else df
+            if field and isinstance(work, pd.DataFrame) and field in work.columns:
+                df = access.io.explode_list_field(
+                    work,
+                    field=field,
+                    inherit=spec.get("inherit"),
+                    index=access.io._store_index_name(details) or spec.get("index"),
+                )
+                df = self._merge_output_columns(df)
+                details.pop("explode", None)
         elif isinstance(details, dict) and "pack" in details:
             combined = self._parent_grain_frame()
             if not combined.empty:
                 df = combined
         return self._dataframe_for_output_write(df, details)
+
+    def _pack_has_complete_rows(self, frame, spec) -> bool:
+        """True when at least one row has the pack incomplete_field (embedding)."""
+        if frame is None or not isinstance(frame, pd.DataFrame) or frame.empty:
+            return False
+        check = spec.get("incomplete_field", "embedding")
+        columns = spec.get("columns") or {}
+        if check not in set(columns.values()):
+            return not frame.empty
+        if check not in frame.columns:
+            return False
+        return bool(frame[check].notna().any())
 
     def _write_pack_store(self) -> bool:
         """Write CIP-0014 pack store from the tall source frame.
@@ -1508,11 +1563,14 @@ class DataObject:
         ``source`` selects a loaded partition. When omitted, explode the
         chunk-grain table using ``output.explode`` so phrase/embedding
         columns exist, then pack. Empty tall frames write empty arrays.
+        With ``drop_incomplete``, Save after extract (no embeddings yet)
+        keeps an existing pack rather than aborting or wiping it.
         """
         details = self._pack_details()
         if details is None:
             return False
-        if not isinstance(details.get("pack"), dict):
+        spec = details.get("pack")
+        if not isinstance(spec, dict):
             raise ValueError(
                 'Top-level pack store must include a nested pack: mapping (columns, ...).'
             )
@@ -1528,6 +1586,15 @@ class DataObject:
             frame = self._explode_output_for_pack(self._explode_source_frame())
         if frame is None:
             frame = pd.DataFrame()
+        if (
+            spec.get("drop_incomplete")
+            and not self._pack_has_complete_rows(frame, spec)
+            and access.io.data_exists(details)
+        ):
+            log.info(
+                "Skipping pack write: no complete rows; keeping existing pack."
+            )
+            return True
         log.info(
             'Saving packed store'
             + (f' from "{source_key}"' if source_key else " from parent grain")
@@ -1559,9 +1626,10 @@ class DataObject:
             details = self.interface[typ]
             if details is None:
                 continue
+            if isinstance(details, dict):
+                details = dict(details)
             if typ in self.types["parameters"] and isinstance(df, pd.Series):
                 write_df = self._parameter_series_for_write(df, details)
-                details = dict(details)
                 details["keep_nulls"] = True
             else:
                 write_df = self._write_frame_for_store(typ, df, details)

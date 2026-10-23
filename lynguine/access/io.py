@@ -287,8 +287,55 @@ def _dataframe_to_arrow_table(df, details, pa):
                 )
             )
         else:
-            arrays.append(pa.array(frame[col]))
+            arrays.append(_object_column_to_arrow(frame[col], pa))
     return pa.Table.from_arrays(arrays, names=names)
+
+
+def _json_cell_default(value):
+    if isinstance(value, np.ndarray):
+        return value.tolist()
+    if isinstance(value, (np.floating,)):
+        return float(value)
+    if isinstance(value, (np.integer,)):
+        return int(value)
+    raise TypeError(
+        f"Object of type {type(value).__name__} is not JSON serializable"
+    )
+
+
+def _is_missing_cell(value) -> bool:
+    if value is None:
+        return True
+    try:
+        if value is pd.NA:
+            return True
+    except (ValueError, TypeError):
+        pass
+    try:
+        return bool(isinstance(value, float) and np.isnan(value))
+    except TypeError:
+        return False
+
+
+def _object_column_to_arrow(series, pa):
+    """Encode nested dict cells (Plotly specs) as JSON strings.
+
+    ``pa.array`` on a Plotly figure dict fails with ArrowInvalid because
+    ``data``/``frames`` are lists while ``layout`` is a mapping.
+    """
+    values = series.tolist()
+    sample = next((v for v in values if not _is_missing_cell(v)), None)
+    if isinstance(sample, dict):
+        encoded = []
+        for value in values:
+            if _is_missing_cell(value):
+                encoded.append(None)
+            elif isinstance(value, str):
+                encoded.append(value)
+            else:
+                encoded.append(json.dumps(value, default=_json_cell_default))
+        return pa.array(encoded, type=pa.string())
+    return pa.array(series)
 
 
 def _cell_from_arrow(value):
@@ -3360,6 +3407,16 @@ def _packable_cell(val):
     return val
 
 
+def _empty_packed_frame(columns, index_value, index_name) -> pd.DataFrame:
+    """One corpus row with empty array cells for each packed column."""
+    packed = {dest: [[]] for dest in columns}
+    idx_name = index_name or "Name"
+    out = pd.DataFrame(packed, index=pd.Index([index_value], name=idx_name))
+    if idx_name not in out.columns:
+        out.insert(0, idx_name, index_value)
+    return out
+
+
 def pack_dataframe(
     df,
     columns,
@@ -3373,14 +3430,17 @@ def pack_dataframe(
     if not isinstance(columns, dict) or not columns:
         raise ValueError('pack.columns must be a mapping of dest: source.')
     if work.empty:
-        packed = {dest: [[]] for dest in columns}
-        idx_name = index_name or "Name"
-        out = pd.DataFrame(packed, index=pd.Index([index_value], name=idx_name))
-        if idx_name not in out.columns:
-            out.insert(0, idx_name, index_value)
-        return out
+        return _empty_packed_frame(columns, index_value, index_name)
     missing = [src for src in columns.values() if src not in work.columns]
     if missing:
+        only_incomplete = (
+            drop_incomplete
+            and incomplete_field in set(columns.values())
+            and set(missing) == {incomplete_field}
+        )
+        if only_incomplete:
+            # Extract-only Save: explode has phrase/doc_id but no embedding yet.
+            return _empty_packed_frame(columns, index_value, index_name)
         errmsg = f"pack source columns not present: {missing}."
         log.error(errmsg)
         raise ValueError(errmsg)
@@ -3397,6 +3457,8 @@ def pack_dataframe(
             raise ValueError(errmsg)
         if drop_incomplete:
             work = work.loc[~mask]
+    if work.empty:
+        return _empty_packed_frame(columns, index_value, index_name)
 
     packed = {}
     for dest, src in columns.items():
@@ -3406,6 +3468,55 @@ def pack_dataframe(
     if idx_name not in out.columns:
         out.insert(0, idx_name, index_value)
     return out
+
+
+def _drop_nested_keys(cell, drop):
+    """Return a copy of *cell* without mapping keys in *drop*."""
+    if isinstance(cell, np.ndarray):
+        cell = cell.tolist()
+    if isinstance(cell, list):
+        return [_drop_nested_keys(item, drop) for item in cell]
+    if isinstance(cell, dict):
+        return {
+            key: _drop_nested_keys(val, drop)
+            for key, val in cell.items()
+            if key not in drop
+        }
+    return cell
+
+
+def omit_nested_keys_frame(df, details):
+    """Copy list-of-dict cells without bulky nested keys (CIP-0014 write).
+
+    ``omit_nested_keys`` maps a column name to keys to strip, e.g.
+    ``extraction_phrases: [embedding]``. The source frame is not mutated, so
+    in-memory embeddings remain available for pack on the same Save.
+    """
+    spec = details.get("omit_nested_keys") if isinstance(details, dict) else None
+    if not spec or not isinstance(spec, dict):
+        return df
+    work = _as_pandas(df).copy()
+    for col, keys in spec.items():
+        if col not in work.columns:
+            continue
+        if isinstance(keys, str):
+            drop = {keys}
+        else:
+            drop = set(keys)
+        work[col] = [_drop_nested_keys(cell, drop) for cell in work[col].tolist()]
+    return work
+
+
+def omit_columns_frame(df, details):
+    """Drop write-only-ignored columns (e.g. embedding) without mutating source."""
+    names = details.get("omit_columns") if isinstance(details, dict) else None
+    if not names:
+        return df
+    work = _as_pandas(df)
+    drop = [col for col in names if col in work.columns]
+    if not drop:
+        return df
+    return work.drop(columns=drop)
 
 
 def reshape_for_write(df, details) -> pd.DataFrame:
@@ -3494,6 +3605,8 @@ def write_data(df, details):
         return
 
     df = reshape_for_write(df, details)
+    df = omit_nested_keys_frame(df, details)
+    df = omit_columns_frame(df, details)
 
     if ftype == "excel":
         write_excel(df, details)

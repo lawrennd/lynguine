@@ -1,6 +1,7 @@
 """CIP-0015 phase 2: parquet Access stores and store_stat."""
 
 from datetime import datetime
+import json
 
 import numpy as np
 import pandas as pd
@@ -13,7 +14,10 @@ from lynguine.access.io import (
     _cell_as_nested_list,
     _cell_from_arrow,
     _import_pyarrow,
+    _is_missing_cell,
+    _json_cell_default,
     _list_column_arrow_types,
+    _object_column_to_arrow,
     _parquet_compression,
     _python_lists_from_parquet,
     parquet_codec_from_file,
@@ -91,6 +95,86 @@ def test_parquet_float32_list_round_trip(tmp_path):
 
     via_read_data, _finalized = read_data(details)
     assert list(via_read_data["phrase"]) == ["one", "two", "three"]
+
+
+def test_parquet_plotly_dict_column_json_round_trip(tmp_path):
+    pytest.importorskip("pyarrow")
+    table = pd.DataFrame(
+        {
+            "Name": ["corpus"],
+            "vq_spec": [
+                {
+                    "data": [{"x": [0.0], "y": [1.0]}],
+                    "layout": {"title": {"text": "walk"}},
+                    "frames": [{"name": "0", "data": [{"x": [0.0]}]}],
+                }
+            ],
+        }
+    )
+    details = _parquet_details(tmp_path)
+    write_data(table, details)
+    loaded = read_parquet(details)
+    raw = loaded.iloc[0]["vq_spec"]
+    assert isinstance(raw, str)
+    spec = json.loads(raw)
+    assert spec["layout"]["title"]["text"] == "walk"
+    assert spec["frames"][0]["name"] == "0"
+
+
+def test_json_cell_default_numpy_and_reject_unknown():
+    assert _json_cell_default(np.array([0.25, 0.75])) == [0.25, 0.75]
+    assert _json_cell_default(np.float64(1.5)) == 1.5
+    assert _json_cell_default(np.int64(3)) == 3
+    with pytest.raises(TypeError, match="not JSON serializable"):
+        _json_cell_default(object())
+
+
+def test_is_missing_cell_none_na_and_nan(monkeypatch):
+    assert _is_missing_cell(None) is True
+    assert _is_missing_cell(pd.NA) is True
+    assert _is_missing_cell(float("nan")) is True
+    assert _is_missing_cell(np.nan) is True
+    assert _is_missing_cell({"layout": {}}) is False
+    assert _is_missing_cell("already-json") is False
+
+    import lynguine.access.io as io_mod
+
+    def _isnan_raises(_value):
+        raise TypeError("not a real float")
+
+    monkeypatch.setattr(io_mod.np, "isnan", _isnan_raises)
+    assert io_mod._is_missing_cell(1.0) is False
+
+
+def test_object_column_to_arrow_missing_str_and_numpy_dict(tmp_path):
+    pa = pytest.importorskip("pyarrow")
+    table = pd.DataFrame(
+        {
+            "Name": ["a", "b", "c", "d"],
+            "vq_spec": [
+                None,
+                {
+                    "data": [{"x": np.array([0.0])}],
+                    "layout": {"n": np.int64(1), "f": np.float64(2.5)},
+                },
+                '{"already": true}',
+                float("nan"),
+            ],
+        }
+    )
+    write_data(table, _parquet_details(tmp_path))
+    loaded = read_parquet(_parquet_details(tmp_path))
+    assert loaded.iloc[0]["vq_spec"] is None
+    spec = json.loads(loaded.iloc[1]["vq_spec"])
+    assert spec["data"][0]["x"] == [0.0]
+    assert spec["layout"] == {"n": 1, "f": 2.5}
+    assert json.loads(loaded.iloc[2]["vq_spec"]) == {"already": True}
+    assert loaded.iloc[3]["vq_spec"] is None
+
+    encoded = _object_column_to_arrow(pd.Series([None, pd.NA]), pa)
+    assert encoded.to_pylist() == [None, None]
+    plain = _object_column_to_arrow(pd.Series(["keep"]), pa)
+    assert plain.to_pylist() == ["keep"]
 
 
 def test_parquet_smaller_than_gzip_yaml_for_embeddings(tmp_path):

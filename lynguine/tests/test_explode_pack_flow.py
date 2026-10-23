@@ -428,6 +428,99 @@ def test_write_pack_store_explodes_output_then_packs(tmp_path):
     assert written[0]["doc_ids"] == ["a.pdf", "a.pdf"]
 
 
+def _extract_only_pack_cdf(tmp_path):
+    chunks = pd.DataFrame(
+        {
+            "filename": ["a.pdf"],
+            "extraction_phrases": [[
+                {"phrase_id": "p0", "phrase": "one", "doc_id": "a.pdf"},
+            ]],
+        },
+        index=pd.Index(["c0"], name="unit_id"),
+    )
+    cdf = CustomDataFrame(
+        chunks, colspecs={"input": ["filename", "extraction_phrases"]}
+    )
+    cdf.interface = {
+        "base_directory": str(tmp_path),
+        "output": {
+            "type": "yaml",
+            "filename": "phrases.yml",
+            "directory": str(tmp_path),
+            "index": "phrase_id",
+            "explode": {"field": "extraction_phrases", "inherit": ["filename"]},
+        },
+        "pack": {
+            "type": "yaml",
+            "filename": "records.yml",
+            "directory": str(tmp_path),
+            "index": "Name",
+            "pack": {
+                "columns": {
+                    "phrases": "phrase",
+                    "embeddings": "embedding",
+                    "doc_ids": "doc_id",
+                },
+                "index_value": "corpus",
+                "drop_incomplete": True,
+            },
+        },
+    }
+    return cdf
+
+
+def test_write_pack_store_keeps_existing_when_extract_only(tmp_path):
+    existing = tmp_path / "records.yml"
+    existing.write_text(
+        yaml.safe_dump(
+            [{"Name": "corpus", "phrases": ["old"], "embeddings": [[0.1]]}],
+            sort_keys=False,
+        ),
+        encoding="utf-8",
+    )
+    cdf = _extract_only_pack_cdf(tmp_path)
+    assert cdf._write_pack_store() is True
+    written = yaml.safe_load(existing.read_text(encoding="utf-8"))
+    assert written[0]["phrases"] == ["old"]
+
+
+def test_write_pack_store_extract_only_writes_empty_when_absent(tmp_path):
+    cdf = _extract_only_pack_cdf(tmp_path)
+    assert cdf._write_pack_store() is True
+    written = yaml.safe_load((tmp_path / "records.yml").read_text(encoding="utf-8"))
+    assert written[0]["phrases"] == []
+    assert written[0]["embeddings"] == []
+
+
+def test_explode_output_for_pack_merges_embedding_from_output():
+    chunks = pd.DataFrame(
+        {
+            "filename": ["a.pdf"],
+            "extraction_phrases": [[
+                {"phrase_id": "p0", "phrase": "one", "doc_id": "a.pdf"},
+            ]],
+        },
+        index=pd.Index(["c0"], name="unit_id"),
+    )
+    cdf = CustomDataFrame(
+        chunks, colspecs={"input": ["filename", "extraction_phrases"]}
+    )
+    cdf._d["output"] = pd.DataFrame(
+        {"phrase": ["one"], "embedding": [[0.5, 0.6]]},
+        index=pd.Index(["p0"], name="phrase_id"),
+    )
+    cdf._colspecs["output"] = ["phrase", "embedding"]
+    cdf.interface = {
+        "output": {
+            "index": "phrase_id",
+            "explode": {"field": "extraction_phrases", "inherit": ["filename"]},
+        }
+    }
+    tall = cdf._explode_output_for_pack(cdf._explode_source_frame())
+    assert tall.loc["p0", "embedding"] == [0.5, 0.6]
+    assert tall.loc["p0", "phrase"] == "one"
+
+
 def test_save_flows_writes_cache_parameters_and_empty_pack(tmp_path):
     chunks = pd.DataFrame(
         {
@@ -500,6 +593,80 @@ def test_save_flows_writes_cache_parameters_and_empty_pack(tmp_path):
     records = yaml.safe_load((tmp_path / "records.yml").read_text(encoding="utf-8"))
     assert records[0]["phrases"] == []
     assert (tmp_path / "_extract_cache.yml.gz").exists()
+
+
+def test_save_flows_keeps_vectors_in_pack_not_yaml(tmp_path):
+    """Phrase YAML is text-only; pack still receives in-memory embeddings."""
+    phrases = [
+        {
+            "phrase_id": "p0",
+            "phrase": "one",
+            "kind": "benefit",
+            "doc_id": "a.pdf",
+            "embedding": [0.1, 0.2],
+        }
+    ]
+    chunks = pd.DataFrame(
+        {
+            "filename": ["a.pdf"],
+            "extraction_phrases": [phrases],
+        },
+        index=pd.Index(["c0"], name="unit_id"),
+    )
+    cdf = CustomDataFrame(
+        chunks,
+        colspecs={
+            "input": ["filename"],
+            "cache": ["extraction_phrases"],
+        },
+    )
+    cdf._d["output"] = pd.DataFrame(index=pd.Index(["c0"], name="unit_id"))
+    cdf._colspecs["output"] = []
+    cdf.interface = {
+        "base_directory": str(tmp_path),
+        "cache": {
+            "type": "yaml",
+            "filename": "_extract_cache.yml",
+            "directory": str(tmp_path),
+            "index": "unit_id",
+            "omit_nested_keys": {"extraction_phrases": ["embedding"]},
+        },
+        "output": {
+            "type": "yaml",
+            "filename": "phrases.yml",
+            "directory": str(tmp_path),
+            "index": "phrase_id",
+            "explode": {
+                "field": "extraction_phrases",
+                "inherit": ["filename"],
+            },
+            "omit_columns": ["embedding"],
+        },
+        "pack": {
+            "type": "yaml",
+            "filename": "records.yml",
+            "directory": str(tmp_path),
+            "index": "Name",
+            "pack": {
+                "columns": {
+                    "phrases": "phrase",
+                    "embeddings": "embedding",
+                    "doc_ids": "doc_id",
+                },
+                "index_value": "corpus",
+            },
+        },
+    }
+    cdf.save_flows()
+    cached = yaml.safe_load((tmp_path / "_extract_cache.yml").read_text(encoding="utf-8"))
+    assert "embedding" not in cached[0]["extraction_phrases"][0]
+    assert cdf._d["cache"].iloc[0]["extraction_phrases"][0]["embedding"] == [0.1, 0.2]
+    written = yaml.safe_load((tmp_path / "phrases.yml").read_text(encoding="utf-8"))
+    assert "embedding" not in written[0]
+    assert written[0]["phrase"] == "one"
+    records = yaml.safe_load((tmp_path / "records.yml").read_text(encoding="utf-8"))
+    assert records[0]["phrases"] == ["one"]
+    assert records[0]["embeddings"] == [[0.1, 0.2]]
 
 
 def test_parent_grain_skips_duplicate_columns_and_empty_partitions():
@@ -775,3 +942,83 @@ def test_save_flows_skips_input_types_and_null_details(tmp_path):
     assert not (tmp_path / "_extract_cache.yml.gz").exists()
     scores = yaml.safe_load((tmp_path / "scores.yml").read_text(encoding="utf-8"))
     assert scores[0]["score"] == 1
+
+
+def test_to_flow_non_dict_output_details_does_not_raise():
+    cdf = CustomDataFrame(
+        pd.DataFrame({"score": [1]}, index=["a"]),
+        colspecs={"output": ["score"]},
+    )
+    cdf.to_flow({"output": "not-a-mapping"})
+
+
+def test_write_frame_for_store_skips_non_mapping_explode():
+    cdf = CustomDataFrame(
+        pd.DataFrame({"score": [1]}, index=["a"]),
+        colspecs={"output": ["score"]},
+    )
+    details = {"type": "yaml", "index": "Name", "explode": "units"}
+    frame = cdf._write_frame_for_store("output", cdf._d["output"], details)
+    assert "score" in frame.columns
+    assert details["explode"] == "units"
+
+
+def test_merge_output_columns_guard_branches():
+    cdf = CustomDataFrame(
+        pd.DataFrame({"filename": ["a.pdf"]}, index=["c0"]),
+        colspecs={"input": ["filename"]},
+    )
+    assert cdf._merge_output_columns(None) is None
+    assert cdf._merge_output_columns("not-a-frame") == "not-a-frame"
+    assert cdf._merge_output_columns(pd.DataFrame()).empty
+
+    tall = pd.DataFrame({"phrase": ["one"]}, index=pd.Index(["p0"], name="phrase_id"))
+    assert cdf._merge_output_columns(tall) is tall
+
+    cdf._d["output"] = pd.DataFrame()
+    assert cdf._merge_output_columns(tall) is tall
+
+    cdf._d["output"] = pd.DataFrame(
+        {"phrase": ["one"]}, index=pd.Index(["p0"], name="phrase_id")
+    )
+    assert "embedding" not in cdf._merge_output_columns(tall).columns
+
+    cdf._d["output"] = pd.DataFrame(
+        {"embedding": [None]}, index=pd.Index(["p0"], name="phrase_id")
+    )
+    skipped = cdf._merge_output_columns(tall)
+    assert "embedding" not in skipped.columns
+
+    class _Wrap:
+        def to_pandas(self):
+            return pd.DataFrame(
+                {"embedding": [[0.5]]},
+                index=pd.Index(["p0"], name="phrase_id"),
+            )
+
+    cdf._d["output"] = _Wrap()
+    merged = cdf._merge_output_columns(tall)
+    assert merged.loc["p0", "embedding"] == [0.5]
+
+
+def test_pack_has_complete_rows_guard_branches():
+    cdf = CustomDataFrame(
+        pd.DataFrame({"x": [1]}, index=["r0"]),
+        colspecs={"input": ["x"]},
+    )
+    spec = {"columns": {"phrases": "phrase", "embeddings": "embedding"}}
+    assert cdf._pack_has_complete_rows(None, spec) is False
+    assert cdf._pack_has_complete_rows("not-a-frame", spec) is False
+    assert cdf._pack_has_complete_rows(pd.DataFrame(), spec) is False
+    phrases = pd.DataFrame({"phrase": ["one"]})
+    assert cdf._pack_has_complete_rows(
+        phrases, {"columns": {"phrases": "phrase"}}
+    ) is True
+    assert cdf._pack_has_complete_rows(phrases, spec) is False
+    assert cdf._pack_has_complete_rows(
+        pd.DataFrame({"embedding": [[0.1]]}), spec
+    ) is True
+    assert cdf._pack_has_complete_rows(
+        pd.DataFrame({"embedding": [None]}), spec
+    ) is False
+    assert cdf._pack_has_complete_rows(phrases, {"columns": None}) is True
