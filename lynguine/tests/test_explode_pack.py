@@ -10,6 +10,8 @@ from lynguine.access.io import (
     _packable_cell,
     _store_index_name,
     explode_list_field,
+    omit_columns_frame,
+    omit_nested_keys_frame,
     pack_dataframe,
     reshape_for_write,
     write_data,
@@ -123,6 +125,33 @@ def test_pack_drop_incomplete():
         drop_incomplete=True,
     )
     assert packed.iloc[0]["phrases"] == ["p0"]
+
+
+def test_pack_drop_incomplete_missing_embedding_column():
+    """Save after extract: phrase rows exist, embedding column does not."""
+    tall = pd.DataFrame({"phrase": ["p0"], "doc_id": ["a.pdf"]})
+    packed = pack_dataframe(
+        tall,
+        columns={
+            "phrases": "phrase",
+            "embeddings": "embedding",
+            "doc_ids": "doc_id",
+        },
+        drop_incomplete=True,
+    )
+    row = packed.iloc[0]
+    assert row["phrases"] == []
+    assert row["embeddings"] == []
+    assert row["doc_ids"] == []
+
+
+def test_pack_missing_embedding_column_without_drop_still_errors():
+    tall = pd.DataFrame({"phrase": ["p0"]})
+    with pytest.raises(ValueError, match="pack source columns not present"):
+        pack_dataframe(
+            tall,
+            columns={"phrases": "phrase", "embeddings": "embedding"},
+        )
 
 
 def test_write_data_explode_round_trip(tmp_path):
@@ -347,3 +376,56 @@ def test_reshape_uses_explode_spec_index_when_store_index_absent():
         {"explode": {"field": "units", "index": "unit_id"}},
     )
     assert list(out.index) == ["u-0"]
+
+
+def test_omit_nested_keys_copies_and_strips_embedding():
+    phrases = [[{"phrase": "one", "embedding": [0.1, 0.2], "kind": "benefit"}]]
+    df = pd.DataFrame({"extraction_phrases": phrases})
+    out = omit_nested_keys_frame(
+        df,
+        {"omit_nested_keys": {"extraction_phrases": ["embedding"]}},
+    )
+    assert "embedding" not in out.iloc[0]["extraction_phrases"][0]
+    assert out.iloc[0]["extraction_phrases"][0]["phrase"] == "one"
+    assert df.iloc[0]["extraction_phrases"][0]["embedding"] == [0.1, 0.2]
+
+
+def test_omit_columns_drops_embedding_without_touching_source():
+    df = pd.DataFrame({"phrase": ["one"], "embedding": [[0.1]]})
+    out = omit_columns_frame(df, {"omit_columns": ["embedding"]})
+    assert "embedding" not in out.columns
+    assert "embedding" in df.columns
+
+
+def test_write_data_omits_yaml_vectors_and_keeps_source(tmp_path):
+    """Extract/embed YAML must not persist 3072-d lists; pack still sees them."""
+    phrases = [[{"phrase": "one", "embedding": [0.1, 0.2], "kind": "benefit"}]]
+    cache = pd.DataFrame(
+        {"extraction_payload": [{"raw": "x"}], "extraction_phrases": phrases}
+    )
+    write_data(
+        cache,
+        {
+            "type": "yaml",
+            "filename": "cache.yml",
+            "directory": str(tmp_path),
+            "omit_nested_keys": {"extraction_phrases": ["embedding"]},
+        },
+    )
+    tall = pd.DataFrame({"phrase": ["one"], "embedding": [[0.1, 0.2]]})
+    write_data(
+        tall,
+        {
+            "type": "yaml",
+            "filename": "phrases.yml",
+            "directory": str(tmp_path),
+            "omit_columns": ["embedding"],
+        },
+    )
+    cached = yaml.safe_load((tmp_path / "cache.yml").read_text(encoding="utf-8"))
+    assert "embedding" not in cached[0]["extraction_phrases"][0]
+    assert cache.iloc[0]["extraction_phrases"][0]["embedding"] == [0.1, 0.2]
+    written = yaml.safe_load((tmp_path / "phrases.yml").read_text(encoding="utf-8"))
+    assert "embedding" not in written[0]
+    assert written[0]["phrase"] == "one"
+    assert tall.iloc[0]["embedding"] == [0.1, 0.2]

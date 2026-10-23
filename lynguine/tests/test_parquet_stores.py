@@ -1,6 +1,7 @@
 """CIP-0015 phase 2: parquet Access stores and store_stat."""
 
 from datetime import datetime
+import json
 
 import numpy as np
 import pandas as pd
@@ -91,6 +92,30 @@ def test_parquet_float32_list_round_trip(tmp_path):
 
     via_read_data, _finalized = read_data(details)
     assert list(via_read_data["phrase"]) == ["one", "two", "three"]
+
+
+def test_parquet_plotly_dict_column_json_round_trip(tmp_path):
+    pytest.importorskip("pyarrow")
+    table = pd.DataFrame(
+        {
+            "Name": ["corpus"],
+            "vq_spec": [
+                {
+                    "data": [{"x": [0.0], "y": [1.0]}],
+                    "layout": {"title": {"text": "walk"}},
+                    "frames": [{"name": "0", "data": [{"x": [0.0]}]}],
+                }
+            ],
+        }
+    )
+    details = _parquet_details(tmp_path)
+    write_data(table, details)
+    loaded = read_parquet(details)
+    raw = loaded.iloc[0]["vq_spec"]
+    assert isinstance(raw, str)
+    spec = json.loads(raw)
+    assert spec["layout"]["title"]["text"] == "walk"
+    assert spec["frames"][0]["name"] == "0"
 
 
 def test_parquet_smaller_than_gzip_yaml_for_embeddings(tmp_path):
