@@ -942,3 +942,83 @@ def test_save_flows_skips_input_types_and_null_details(tmp_path):
     assert not (tmp_path / "_extract_cache.yml.gz").exists()
     scores = yaml.safe_load((tmp_path / "scores.yml").read_text(encoding="utf-8"))
     assert scores[0]["score"] == 1
+
+
+def test_to_flow_non_dict_output_details_does_not_raise():
+    cdf = CustomDataFrame(
+        pd.DataFrame({"score": [1]}, index=["a"]),
+        colspecs={"output": ["score"]},
+    )
+    cdf.to_flow({"output": "not-a-mapping"})
+
+
+def test_write_frame_for_store_skips_non_mapping_explode():
+    cdf = CustomDataFrame(
+        pd.DataFrame({"score": [1]}, index=["a"]),
+        colspecs={"output": ["score"]},
+    )
+    details = {"type": "yaml", "index": "Name", "explode": "units"}
+    frame = cdf._write_frame_for_store("output", cdf._d["output"], details)
+    assert "score" in frame.columns
+    assert details["explode"] == "units"
+
+
+def test_merge_output_columns_guard_branches():
+    cdf = CustomDataFrame(
+        pd.DataFrame({"filename": ["a.pdf"]}, index=["c0"]),
+        colspecs={"input": ["filename"]},
+    )
+    assert cdf._merge_output_columns(None) is None
+    assert cdf._merge_output_columns("not-a-frame") == "not-a-frame"
+    assert cdf._merge_output_columns(pd.DataFrame()).empty
+
+    tall = pd.DataFrame({"phrase": ["one"]}, index=pd.Index(["p0"], name="phrase_id"))
+    assert cdf._merge_output_columns(tall) is tall
+
+    cdf._d["output"] = pd.DataFrame()
+    assert cdf._merge_output_columns(tall) is tall
+
+    cdf._d["output"] = pd.DataFrame(
+        {"phrase": ["one"]}, index=pd.Index(["p0"], name="phrase_id")
+    )
+    assert "embedding" not in cdf._merge_output_columns(tall).columns
+
+    cdf._d["output"] = pd.DataFrame(
+        {"embedding": [None]}, index=pd.Index(["p0"], name="phrase_id")
+    )
+    skipped = cdf._merge_output_columns(tall)
+    assert "embedding" not in skipped.columns
+
+    class _Wrap:
+        def to_pandas(self):
+            return pd.DataFrame(
+                {"embedding": [[0.5]]},
+                index=pd.Index(["p0"], name="phrase_id"),
+            )
+
+    cdf._d["output"] = _Wrap()
+    merged = cdf._merge_output_columns(tall)
+    assert merged.loc["p0", "embedding"] == [0.5]
+
+
+def test_pack_has_complete_rows_guard_branches():
+    cdf = CustomDataFrame(
+        pd.DataFrame({"x": [1]}, index=["r0"]),
+        colspecs={"input": ["x"]},
+    )
+    spec = {"columns": {"phrases": "phrase", "embeddings": "embedding"}}
+    assert cdf._pack_has_complete_rows(None, spec) is False
+    assert cdf._pack_has_complete_rows("not-a-frame", spec) is False
+    assert cdf._pack_has_complete_rows(pd.DataFrame(), spec) is False
+    phrases = pd.DataFrame({"phrase": ["one"]})
+    assert cdf._pack_has_complete_rows(
+        phrases, {"columns": {"phrases": "phrase"}}
+    ) is True
+    assert cdf._pack_has_complete_rows(phrases, spec) is False
+    assert cdf._pack_has_complete_rows(
+        pd.DataFrame({"embedding": [[0.1]]}), spec
+    ) is True
+    assert cdf._pack_has_complete_rows(
+        pd.DataFrame({"embedding": [None]}), spec
+    ) is False
+    assert cdf._pack_has_complete_rows(phrases, {"columns": None}) is True

@@ -7,6 +7,7 @@ import yaml
 
 from lynguine.access.io import (
     _as_pandas,
+    _drop_nested_keys,
     _packable_cell,
     _store_index_name,
     explode_list_field,
@@ -429,3 +430,51 @@ def test_write_data_omits_yaml_vectors_and_keeps_source(tmp_path):
     assert "embedding" not in written[0]
     assert written[0]["phrase"] == "one"
     assert tall.iloc[0]["embedding"] == [0.1, 0.2]
+
+
+def test_omit_nested_keys_guards_string_key_and_ndarray_cells():
+    assert omit_nested_keys_frame(pd.DataFrame({"x": [1]}), None) is not None
+    df = pd.DataFrame({"phrase": ["one"]})
+    assert omit_nested_keys_frame(df, "not-a-mapping") is df
+    assert omit_nested_keys_frame(
+        df, {"omit_nested_keys": ["embedding"]}
+    ) is df
+    skipped = omit_nested_keys_frame(
+        df, {"omit_nested_keys": {"extraction_phrases": ["embedding"]}}
+    )
+    assert list(skipped.columns) == ["phrase"]
+
+    arr = np.array(
+        [{"phrase": "one", "embedding": [0.1], "kind": "benefit"}],
+        dtype=object,
+    )
+    nested = pd.DataFrame({"extraction_phrases": [arr]})
+    out = omit_nested_keys_frame(
+        nested,
+        {"omit_nested_keys": {"extraction_phrases": "embedding"}},
+    )
+    cell = out.iloc[0]["extraction_phrases"][0]
+    assert "embedding" not in cell
+    assert cell["phrase"] == "one"
+    assert arr[0]["embedding"] == [0.1]
+    assert _drop_nested_keys("plain", {"embedding"}) == "plain"
+
+
+def test_omit_columns_noop_when_names_absent():
+    df = pd.DataFrame({"phrase": ["one"], "embedding": [[0.1]]})
+    assert omit_columns_frame(df, None) is df
+    assert omit_columns_frame(df, {}) is df
+    assert omit_columns_frame(df, {"omit_columns": []}) is df
+    kept = omit_columns_frame(df, {"omit_columns": ["missing"]})
+    assert kept is df
+    assert "embedding" in df.columns
+
+
+def test_pack_drop_incomplete_all_rows_writes_empty_arrays():
+    packed = pack_dataframe(
+        pd.DataFrame({"phrase": ["p0"], "embedding": [None]}),
+        columns={"phrases": "phrase", "embeddings": "embedding"},
+        drop_incomplete=True,
+    )
+    assert packed.iloc[0]["phrases"] == []
+    assert packed.iloc[0]["embeddings"] == []
