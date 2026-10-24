@@ -181,7 +181,7 @@ GitHub's `py/path-injection` query treats a realpath-plus-prefix check as a sani
 - [x] Access-stage configured path confinement
 - [x] Inherit extends allowed_roots with inherit.directory and unions parent roots; YAML cannot enlarge the jail; inherited filename specs bind relative directories to inherit.directory
 - [ ] CodeQL re-check and recorded dismissals — moved to [CIP-000D](cip000D.md)
-- [ ] Release-note note on absolute paths outside the interface directory
+- [x] Release-note note on absolute paths outside the interface directory — [CHANGELOG.md](../CHANGELOG.md) 0.1.2 Breaking
 
 ## References
 
@@ -220,5 +220,6 @@ enlarge the jail (`_stamp_path_roots` and `from_file` ignore it). Inherited
 data specs that name a `filename` now bind a missing or relative `directory`
 to `inherit.directory` so `from_flow` reads parent files instead of resolving
 them against the child. HTTP/`from_cwd_file` inherit outside CWD still
-PathEscapes. CIP remains In Progress (CodeQL dismissals on 000D; release-note
-on absolute paths still open).
+PathEscapes. Release notes for 0.1.2 record the absolute-path
+`PathEscapeError` behaviour in `CHANGELOG.md`. CIP remains In Progress
+(CodeQL dismissals on 000D).
