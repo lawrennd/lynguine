@@ -6,7 +6,7 @@ effort: Medium
 github_issue: null
 id: 2026-01-03_server-interface-field-access
 last_updated: '2026-01-03'
-owner: ''
+owner: "Neil D. Lawrence"
 priority: High
 related_cips: ["0008"]
 status: Completed

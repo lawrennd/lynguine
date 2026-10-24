@@ -6,7 +6,7 @@ effort: Small
 github_issue: null
 id: 2025-05-05_readthedocs-setup
 last_updated: '2025-12-21'
-owner: TBD
+owner: "Neil D. Lawrence"
 priority: Medium
 related_cips: []
 status: Completed

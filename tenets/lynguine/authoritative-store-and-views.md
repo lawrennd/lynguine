@@ -2,10 +2,10 @@
 id: "authoritative-store-and-views"
 title: "Authoritative Store and Views"
 created: "2026-10-11"
-last_updated: "2026-10-11"
+last_updated: "2026-10-24"
 version: "0.1"
-status: "Proposed"
-last_reviewed: "2026-10-11"
+status: "Active"
+last_reviewed: "2026-10-24"
 review_frequency: "Quarterly"
 tags:
 - tenet
