@@ -202,6 +202,53 @@ def test_from_file_inherit_allows_sibling_directory(tmp_path):
     assert parent_root in roots
 
 
+def test_from_file_inherit_binds_parent_data_directory(tmp_path):
+    """Inherited filename specs with directory: . resolve under inherit.directory."""
+    from lynguine.config.interface import Interface
+
+    parent_dir = tmp_path / "parent"
+    child_dir = tmp_path / "child"
+    parent_dir.mkdir()
+    child_dir.mkdir()
+    (parent_dir / "people.yml").write_text("- crsid: abc\n  name: Ada\n")
+    (parent_dir / "_lynguine.yml").write_text(
+        "input:\n  type: yaml\n  filename: people.yml\n  directory: .\n  index: crsid\n"
+    )
+    (child_dir / "_lynguine.yml").write_text(
+        "inherit:\n  directory: ../parent\n  filename: _lynguine.yml\n"
+    )
+    interface = Interface.from_file(
+        user_file="_lynguine.yml", directory=str(child_dir)
+    )
+    assert os.path.realpath(interface["input"]["directory"]) == os.path.realpath(
+        str(parent_dir)
+    )
+
+
+def test_from_flow_reads_inherited_data_under_parent_dir(tmp_path):
+    """from_flow must read inherited data files from inherit.directory."""
+    from lynguine.config.interface import Interface
+    from lynguine.assess.data import CustomDataFrame
+
+    parent_dir = tmp_path / "parent"
+    child_dir = tmp_path / "child"
+    parent_dir.mkdir()
+    child_dir.mkdir()
+    (parent_dir / "people.yml").write_text("- crsid: abc\n  name: Ada\n")
+    (parent_dir / "_lynguine.yml").write_text(
+        "input:\n  type: yaml\n  filename: people.yml\n  directory: .\n  index: crsid\n"
+    )
+    (child_dir / "_lynguine.yml").write_text(
+        "inherit:\n  directory: ../parent\n  filename: _lynguine.yml\n"
+    )
+    interface = Interface.from_file(
+        user_file="_lynguine.yml", directory=str(child_dir)
+    )
+    cdf = CustomDataFrame.from_flow(interface)
+    frame = cdf._d["input"]
+    assert frame.loc["abc", "name"] == "Ada"
+
+
 def test_create_session_refuses_unbounded_manager(tmp_path):
     from lynguine.session_manager import SessionManager
 

@@ -998,6 +998,32 @@ def test_read_hstack_drops_repeated_rsuffix_collisions(mocker):
     assert list(result.columns).count('crsid_right') == 1
 
 
+def test_read_hstack_merge_drops_repeated_rsuffix_collisions(mocker):
+    """Three-way merge on a key: later overlapping non-key columns are dropped."""
+    frames = {
+        'source1': pd.DataFrame({'crsid': ['a', 'b'], 'name': ['Ada', 'Bob']}),
+        'source2': pd.DataFrame({'crsid': ['a', 'b'], 'name': ['A', 'B']}),
+        'source3': pd.DataFrame({'crsid': ['a', 'b'], 'name': ['X', 'Y']}),
+    }
+
+    def read_data_side_effect(specs):
+        return frames[specs['type']].copy(), {}
+
+    mocker.patch('lynguine.access.io.read_data', side_effect=read_data_side_effect)
+    details = {
+        'type': 'hstack',
+        'specifications': [
+            {'type': 'source1', 'on': 'crsid'},
+            {'type': 'source2', 'on': 'crsid'},
+            {'type': 'source3', 'on': 'crsid'},
+        ],
+    }
+    result = lynguine.access.io.read_hstack(details)
+    assert list(result.columns) == ['crsid', 'name', 'name_right']
+    assert list(result['name']) == ['Ada', 'Bob']
+    assert list(result['name_right']) == ['A', 'B']
+
+
 def test_read_hstack_no_specifications():
     details = {
         'type': 'hstack',

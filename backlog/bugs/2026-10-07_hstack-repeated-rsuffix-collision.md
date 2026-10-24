@@ -1,10 +1,10 @@
 ---
 id: "2026-10-07_hstack-repeated-rsuffix-collision"
 title: "read_hstack MergeError when a third source recreates col_right"
-status: "In Progress"
+status: "Completed"
 priority: "High"
 created: "2026-10-07"
-last_updated: "2026-10-07"
+last_updated: "2026-10-24"
 category: "bugs"
 related_cips:
 - "000E"
@@ -38,8 +38,9 @@ Seen on referia Queens students configs (`aims`, `dissertations`, `meetings`) wh
 - [x] Three-or-more-way `hstack` with a shared identity column does not raise `MergeError`
 - [x] First occurrence of each overlapping column is kept; later colliding right columns are dropped (documented)
 - [x] Existing two-way hstack suffix tests still pass (`B_right` behaviour unchanged)
-- [x] Regression test for the three-way `crsid` case
-- [ ] Behaviour reviewed and committed (temporary implementation in working tree)
+- [x] Regression test for the three-way `crsid` case (index-join and merge `on:` paths)
+- [x] Behaviour reviewed against CIP-000E earlier-wins (Accepted 2026-10-24)
+- [x] Committed after review
 
 ## Implementation Notes
 
@@ -59,7 +60,7 @@ Wired into `read_hstack` before join/merge. Regression: `lynguine/tests/test_acc
 
 ## Related
 
-- CIP: [000E](../../cip/cip000E.md) (review required — do not treat provisional policy as Accepted)
+- CIP: [000E](../../cip/cip000E.md) (earlier-wins Accepted, Implemented)
 - Backlog: `2026-08-19_to-pandas-overlapping-columns`
 - Triggered by: `~/OneDrive/referia/supervision/queens_students/{aims,dissertations,meetings}`
 
@@ -68,3 +69,7 @@ Wired into `read_hstack` before join/merge. Regression: `lynguine/tests/test_acc
 ### 2026-10-07
 
 Task created to capture a provisional working-tree fix from a referia load-audit session. Linked to CIP-000E. Status In Progress until CIP review and commit.
+
+### 2026-10-24
+
+CIP-000E Accepted earlier-wins. Added `test_read_hstack_merge_drops_repeated_rsuffix_collisions`. Status → Completed.

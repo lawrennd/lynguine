@@ -405,6 +405,11 @@ class Interface(_HConfig):
                     for root in self._parent.allowed_roots:
                         if root not in (self.allowed_roots or []):
                             self.allowed_roots.append(root)
+
+            # Inherited data specs with a missing or relative directory live
+            # in inherit.directory. from_flow would otherwise join them with
+            # the child's base_directory and miss (or PathEscape) parent files.
+            self._parent._bind_data_directories(inherit_directory)
             
             # Set it not to be writable (convert output to input,
             # series to input, parameters to constants))
@@ -420,6 +425,49 @@ class Interface(_HConfig):
 
             self._process_parent()
         self._expand_vars()
+
+    _inherited_data_keys = (
+        "input",
+        "output",
+        "cache",
+        "parameters",
+        "constants",
+        "compute",
+        "series",
+    )
+
+    def _bind_data_directories(self, inherit_directory):
+        """Resolve relative inherited data directories against inherit.directory.
+
+        Absolute directories are left unchanged and remain confined at access.
+        Only specs that name a ``filename`` are rewritten.
+        """
+        inherit_directory = os.path.expandvars(inherit_directory)
+        for key in self._inherited_data_keys:
+            if key in self._data:
+                self._bind_spec_directory(self._data[key], inherit_directory)
+
+    @staticmethod
+    def _bind_spec_directory(spec, inherit_directory):
+        if isinstance(spec, list):
+            for item in spec:
+                Interface._bind_spec_directory(item, inherit_directory)
+            return
+        if not isinstance(spec, dict):
+            return
+        if "filename" in spec:
+            directory = spec.get("directory")
+            if directory is None or directory == "":
+                spec["directory"] = inherit_directory
+            else:
+                expanded = os.path.expandvars(str(directory))
+                if not os.path.isabs(expanded):
+                    spec["directory"] = os.path.normpath(
+                        os.path.join(inherit_directory, expanded)
+                    )
+        for value in spec.values():
+            if isinstance(value, (dict, list)):
+                Interface._bind_spec_directory(value, inherit_directory)
 
     def __getitem__(self, key):
         """
