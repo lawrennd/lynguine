@@ -2,9 +2,9 @@
 author: "Neil D. Lawrence"
 created: "2026-10-11"
 id: "000F"
-last_updated: "2026-10-11"
+last_updated: "2026-10-24"
 status: "Closed"
-compressed: false
+compressed: true
 related_requirements: ["0002", "0005", "0006"]
 related_cips: ["0009", "000A"]
 tags:
@@ -200,6 +200,15 @@ Specifically, this CIP makes the following true:
 - [x] Unit tests (recursive match, projection, confinement, regexp) → acceptance criteria on the feature tasks above
 - [x] Document Directory-of-Files options (incl. typed readers) → backlog `2026-10-11_document-recursive-directory-fields`
 - [x] Release note (opt-in) → same documentation task
+- [x] Sphinx compression: `docs/getting_started/directory_sources.rst` (hosted on Read the Docs)
+
+## Progress Updates
+
+### 2026-10-24
+
+Compressed the Directory-of-Files options into Sphinx
+(`docs/getting_started/directory_sources.rst`) with a README pointer to
+the hosted page. `compressed: true`.
 
 ## References
 

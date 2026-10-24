@@ -446,7 +446,7 @@ dtypes:  # Optional, specify data types for columns
 
 #### Directory of Files
 
-Directory readers allocate **one row per matched file**. Choose a typed reader for the file format (each has a default glob):
+Directory readers allocate **one row per matched file**. Choose a typed reader for the file format (each has a default glob). The hosted guide is [Directory of files](https://lynguine.readthedocs.io/en/latest/getting_started/directory_sources.html).
 
 | Type | Default glob | Reader |
 |------|--------------|--------|
@@ -578,7 +578,7 @@ This configuration specifies how to access data from various sources, including 
 
 ## Stacking Data in Linguine
 
-Linguine provides mechanisms to stack `input` data either horizontally (`hstack`) or vertically (`vstack`). These operations allow you to combine multiple data sources into a single entity.
+Linguine provides mechanisms to stack `input` data either horizontally (`hstack`) or vertically (`vstack`). These operations allow you to combine multiple data sources into a single entity. Overlapping columns follow an earlier-wins rule; see [Stacking and joining sources](https://lynguine.readthedocs.io/en/latest/getting_started/stacking.html).
 
 ### Horizontal Stacking (`hstack`)
 
