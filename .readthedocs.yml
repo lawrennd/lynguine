@@ -1,6 +1,7 @@
 # .readthedocs.yml
 # Read the Docs configuration file
-# See https://docs.readthedocs.io/en/stable/config-file/v2.html for details
+# See https://docs.readthedocs.io/en/stable/config-file/v2.html
+# Poetry install: https://docs.readthedocs.io/en/stable/build-customization.html
 
 # Required
 version: 2
@@ -10,9 +11,16 @@ build:
   os: ubuntu-22.04
   tools:
     python: "3.11"
-    poetry: "1.8"
   apt_packages:
     - graphviz
+  jobs:
+    # Poetry is no longer a valid build.tools entry or python.install method.
+    # Install it into the RTD environment, then install the optional docs group
+    # (sphinx, sphinx-rtd-theme, myst-parser, toml) into that same venv.
+    post_create_environment:
+      - pip install poetry==1.8.5
+    post_install:
+      - VIRTUAL_ENV=$READTHEDOCS_VIRTUALENV_PATH poetry install --with docs
 
 # Build documentation in the docs/ directory with Sphinx
 sphinx:
@@ -21,12 +29,3 @@ sphinx:
 # Optionally build your docs in additional formats such as PDF and ePub
 formats:
   - pdf
-
-# Use poetry to install the dependencies
-python:
-  install:
-    - method: poetry
-      path: .
-      # Install with docs group
-      extra_poetry_groups:
-        - docs 
