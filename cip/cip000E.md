@@ -4,7 +4,7 @@ created: "2026-10-07"
 id: "000E"
 last_updated: "2026-10-24"
 status: "Closed"
-compressed: false
+compressed: true
 related_requirements: ["0002"]
 related_cips: []
 tags:
@@ -21,8 +21,9 @@ title: "Explicit column-overlap policy for flow joins (to_pandas and hstack)"
 > Use `related_requirements` to link to the requirements this CIP implements.
 
 > **Accepted policy**: earlier wins; later colliding columns are dropped.
-> Closed after verification on `main` (PR #56). `compressed: false` until the
-> join rule is in user-facing Access/Assess docs.
+> Closed after verification on `main` (PR #56). Compressed into the README
+> `hstack` section, `docs/getting_started/column_management.rst`, and the
+> public `read_hstack` docstring.
 
 ## Status
 
@@ -154,7 +155,7 @@ rule and adding tests over silent flips after Accept.
 - [x] **Review**: Accept the “earlier wins” policy (2026-10-24)
 - [x] Working tree aligned to Accepted decision
 - [x] Backlog items updated after Accept
-- [ ] Formal docs compression after Closed: earlier-wins in the README `hstack` section, `docs/getting_started/column_management.rst` (`to_pandas`), and the public `read_hstack` docstring
+- [x] Formal docs compression after Closed: earlier-wins in the README `hstack` section, `docs/getting_started/column_management.rst` (`to_pandas`), and the public `read_hstack` docstring
 
 ## References
 
@@ -178,4 +179,5 @@ Accepted earlier-wins for both `to_pandas` and `read_hstack`. Added a three-way
 merge-path regression. Status → Implemented. Pause before Closed / compression.
 
 Closed after review of landed code (PR #56), unit tests, and completed backlog
-tasks. `compressed: false` until user-facing docs state the join rule.
+tasks. Compressed the join rule into README `hstack`, column-management Sphinx,
+and the public `read_hstack` docstring. `compressed: true`.

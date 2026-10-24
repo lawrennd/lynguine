@@ -153,7 +153,12 @@ Best Practices
    * Use ``cache`` for intermediate calculations
    * Use ``parameters`` for global configuration values
 
-4. **Validate before dropping**: Check if a column exists before dropping to avoid errors:
+4. **Overlapping flow columns**: ``to_pandas()`` joins non-parameter flows on
+   the index. If two flows share a column name, the earlier flow keeps it and
+   the later duplicate is dropped. Parameter columns are still broadcast onto
+   every row with ``assign``. See :meth:`lynguine.assess.data.CustomDataFrame.to_pandas`.
+
+5. **Validate before dropping**: Check if a column exists before dropping to avoid errors:
 
    .. code-block:: python
 
@@ -214,5 +219,6 @@ Related Documentation
 * :class:`lynguine.assess.data.CustomDataFrame` - Full API documentation
 * :meth:`lynguine.assess.data.CustomDataFrame.add_column` - Add column method
 * :meth:`lynguine.assess.data.CustomDataFrame.drop_column` - Drop column method
+* :meth:`lynguine.assess.data.CustomDataFrame.to_pandas` - Combined frame; earlier flow wins on overlapping columns
 * :doc:`/compute_framework` - Using columns with compute operations
 
