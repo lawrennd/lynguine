@@ -4,7 +4,7 @@ created: &id001 2025-12-25
 dependencies: []
 id: 2025-12-25_yaml-block-scalars
 last_updated: *id001
-owner: null
+owner: "Neil D. Lawrence"
 priority: Medium
 related_cips: []
 status: Completed

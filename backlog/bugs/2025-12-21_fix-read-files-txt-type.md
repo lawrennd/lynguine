@@ -5,7 +5,7 @@ dependencies: ''
 github_issue: ''
 id: 2025-12-21_fix-read-files-txt-type
 last_updated: '2025-12-21'
-owner: TBD
+owner: "Neil D. Lawrence"
 priority: Medium
 related_cips: []
 status: Completed

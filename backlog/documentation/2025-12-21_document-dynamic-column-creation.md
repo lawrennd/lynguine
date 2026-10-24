@@ -5,7 +5,7 @@ dependencies: 2025-12-21_implement-add-column-drop-column
 github_issue: ''
 id: 2025-12-21_document-dynamic-column-creation
 last_updated: '2025-12-21'
-owner: ''
+owner: "Neil D. Lawrence"
 priority: Medium
 related_cips: []
 status: Completed

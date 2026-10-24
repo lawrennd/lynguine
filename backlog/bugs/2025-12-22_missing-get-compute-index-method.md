@@ -5,7 +5,7 @@ dependencies: ''
 github_issue: ''
 id: 2025-12-22_missing-get-compute-index-method
 last_updated: '2025-12-22'
-owner: ''
+owner: "Neil D. Lawrence"
 priority: High
 related_cips: []
 status: Completed
