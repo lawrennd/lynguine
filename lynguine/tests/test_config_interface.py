@@ -340,10 +340,12 @@ def test_from_file_loads_inside_jail(tmp_path):
 
 
 def test_from_file_inherit_extends_jail(tmp_path):
-    """Explicit inherit.directory may extend allowed_roots (CIP-000E / CIP-000A).
+    """Explicit inherit.directory may extend allowed_roots (CIP-000A / CIP-000D).
 
-    Non-inherit escapes and cwd-sandbox inherit outside CWD still PathEscape;
-    see test_from_file_rejects_parent_escape and
+    YAML cannot enlarge the jail via allowed_roots. Non-inherit escapes and
+    cwd-sandbox inherit outside CWD still PathEscape; see
+    test_from_file_rejects_parent_escape,
+    test_from_file_yaml_allowed_roots_cannot_enlarge_jail, and
     test_from_cwd_file_inherit_cannot_leave_cwd.
     """
     jail = tmp_path / "jail"
@@ -360,6 +362,20 @@ def test_from_file_inherit_extends_jail(tmp_path):
     roots = [os.path.realpath(r) for r in interface.allowed_roots]
     assert os.path.realpath(str(jail)) in roots
     assert os.path.realpath(str(outside)) in roots
+
+
+def test_from_file_yaml_allowed_roots_cannot_enlarge_jail(tmp_path):
+    """A YAML allowed_roots list must not become Interface.allowed_roots."""
+    jail = tmp_path / "jail"
+    jail.mkdir()
+    (jail / "cfg.yml").write_text(
+        "allowed_roots:\n  - /\nlogging:\n  level: INFO\n"
+    )
+    interface = Interface.from_file(user_file="cfg.yml", directory=str(jail))
+    roots = {os.path.realpath(r) for r in interface.allowed_roots}
+    assert os.path.realpath("/") not in roots
+    assert os.path.realpath(str(jail)) in roots
+    assert interface["logging"]["level"] == "INFO"
 
 
 def test_from_file_unbounded_opt_out(tmp_path):

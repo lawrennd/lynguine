@@ -2,17 +2,16 @@
 author: "Neil D. Lawrence"
 created: "2026-10-07"
 id: "000E"
-last_updated: "2026-10-07"
-status: "Proposed"
+last_updated: "2026-10-24"
+status: "Implemented"
 compressed: false
-related_requirements: []
+related_requirements: ["0002"]
 related_cips: []
 tags:
 - cip
 - data-join
 - to_pandas
 - hstack
-- review-required
 title: "Explicit column-overlap policy for flow joins (to_pandas and hstack)"
 ---
 
@@ -21,17 +20,16 @@ title: "Explicit column-overlap policy for flow joins (to_pandas and hstack)"
 > **Note**: CIPs describe HOW to achieve requirements (WHAT).
 > Use `related_requirements` to link to the requirements this CIP implements.
 
-> **Review required**: A provisional implementation already exists in the
-> working tree (see backlog). This CIP records the problem and the *current*
-> decision for review. Do **not** treat the working-tree behaviour as accepted
-> until this CIP moves past Proposed.
+> **Accepted policy**: earlier wins; later colliding columns are dropped.
+> Implementation matches that policy (`to_pandas` and `read_hstack`). Not Closed:
+> formal docs compression waits until after Closed.
 
 ## Status
 
 - [x] Proposed - Initial idea documented
-- [ ] Accepted - Approved, ready to start work
-- [ ] In Progress - Actively being implemented
-- [ ] Implemented - Work complete, awaiting verification
+- [x] Accepted - Approved, ready to start work
+- [x] In Progress - Actively being implemented
+- [x] Implemented - Work complete, awaiting verification
 - [ ] Closed - Verified and complete
 - [ ] Rejected - Will not be implemented (add reason, use superseded_by if replaced)
 - [ ] Deferred - Postponed (use blocked_by field to indicate blocker)
@@ -41,12 +39,11 @@ title: "Explicit column-overlap policy for flow joins (to_pandas and hstack)"
 When lynguine joins multiple flows or hstack specifications that share column
 names, pandas either raises (`columns overlap but no suffix specified`) or,
 after a first suffix pass, raises again (`MergeError` recreating `col_right`).
-A provisional fix drops later colliding columns (“earlier wins”). This CIP
-documents that problem and the provisional policy so it can be reviewed,
-accepted or replaced, and then committed deliberately.
+Later colliding columns are dropped (“earlier wins”). This CIP records that
+policy so join behaviour is explicit rather than a silent pandas error.
 
-**Which requirements does this CIP address?** None yet (bug / explicit-behaviour
-gap). Link requirements if a formal WHAT is added.
+**Which requirements does this CIP address?** [REQ-0002](../requirements/req0002_predictable-architecture.md)
+(predictable, explicit architecture).
 
 ## Motivation
 
@@ -81,7 +78,7 @@ Callers cannot know whether:
 hstack’s default `_right` suffix only postpones the problem to the third
 source.
 
-### Current (provisional) decision — REVIEW REQUIRED
+### Accepted decision
 
 **Policy: earlier wins; drop later colliding columns.**
 
@@ -90,8 +87,8 @@ source.
 | `to_pandas()` | Before `join(how="outer")`, drop from the right any columns already present on the left. If the right has only overlapping columns, join an empty frame to keep index alignment. Parameter flows still use `assign`. |
 | `read_hstack` | Before `join` / `merge`, drop right columns whose `{col}{rsuffix}` (or `{col}{lsuffix}` collision) already exists on the left. Two-way `B` → `B_right` behaviour unchanged. |
 
-Documented in code comments/docstrings in the working tree; regression tests
-added. **Not reviewed, not Accepted, not committed as part of this CIP yet.**
+Documented in code comments/docstrings; regression tests cover two-way suffixes
+and three-way collisions on both the index-join and merge (`on:`) paths.
 
 ### Alternatives to consider in review
 
@@ -149,14 +146,14 @@ rule and adding tests over silent flips after Accept.
 
 ## Related Requirements
 
-None linked yet.
+- [REQ-0002](../requirements/req0002_predictable-architecture.md) — explicit, predictable join behaviour
 
 ## Implementation Status
 
 - [x] Problem and provisional decision written up (this CIP)
-- [ ] **Review required**: Accept, amend, or reject the “earlier wins” policy
-- [ ] Working tree aligned to Accepted decision
-- [ ] Backlog items updated and completed only after Accept
+- [x] **Review**: Accept the “earlier wins” policy (2026-10-24)
+- [x] Working tree aligned to Accepted decision
+- [x] Backlog items updated after Accept
 - [ ] Formal docs compression after Closed (if needed)
 
 ## References
@@ -167,3 +164,15 @@ None linked yet.
   `lynguine/access/io.py` (`_drop_join_suffix_collisions`,
   `_drop_merge_suffix_collisions`)
 - Tenet: explicit-infrastructure
+
+## Progress Updates
+
+### 2026-10-07
+
+Proposed. Working-tree earlier-wins helpers existed; CIP recorded them as
+provisional pending review.
+
+### 2026-10-24
+
+Accepted earlier-wins for both `to_pandas` and `read_hstack`. Added a three-way
+merge-path regression. Status → Implemented. Pause before Closed / compression.

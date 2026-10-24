@@ -4,11 +4,11 @@ title: "Update stale inherit PathEscape test to match CIP-000E root extension"
 status: "Completed"
 priority: "High"
 created: "2026-10-07"
-last_updated: "2026-10-07"
+last_updated: "2026-10-24"
 category: "bugs"
 related_cips:
-  - "000E"
   - "000A"
+  - "000D"
 owner: "Neil D. Lawrence"
 dependencies: []
 tags:
@@ -55,7 +55,7 @@ matches the policy.
 
 ## Related
 
-- CIP: 000E, 000A
+- CIP: 000A, 000D (inherit root extension; not CIP-000E)
 - CoE: `coe/2026-10-07_stale-inherit-jail-test.md`
 - CI: https://github.com/lawrennd/lynguine/actions/runs/37579504929
 - Related backlog: `2026-10-07_inherit-extends-allowed-roots.md`
@@ -68,3 +68,9 @@ Task created from CoE after CI failure diagnosis. Renamed
 `test_from_file_inherit_cannot_leave_jail` → `test_from_file_inherit_extends_jail`
 and asserted successful load with both directories in `allowed_roots`. Related escape
 tests still pass. Status Completed.
+
+### 2026-10-24
+
+Corrected CIP attribution: inherit root extension belongs to CIP-000A / CIP-000D,
+not CIP-000E (column-overlap policy). Docstring on
+`test_from_file_inherit_extends_jail` updated to match. Status remains Completed.
