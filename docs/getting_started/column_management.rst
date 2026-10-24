@@ -153,10 +153,11 @@ Best Practices
    * Use ``cache`` for intermediate calculations
    * Use ``parameters`` for global configuration values
 
-4. **Overlapping flow columns**: ``to_pandas()`` joins non-parameter flows on
-   the index. If two flows share a column name, the earlier flow keeps it and
-   the later duplicate is dropped. Parameter columns are still broadcast onto
-   every row with ``assign``. See :meth:`lynguine.assess.data.CustomDataFrame.to_pandas`.
+4. **Overlapping flow columns**: ``to_pandas()`` and ``hstack`` use the same
+   earlier-wins rule. The earlier source keeps the name; later colliding
+   columns are dropped. Parameter columns are still broadcast onto every row
+   with ``assign``. See :doc:`stacking` and
+   :meth:`lynguine.assess.data.CustomDataFrame.to_pandas`.
 
 5. **Validate before dropping**: Check if a column exists before dropping to avoid errors:
 
@@ -213,6 +214,20 @@ Error: Invalid colspec
 
 **Solution**: Use one of the valid colspec types listed at the top of this guide.
 
+When column mappings are created
+--------------------------------
+
+``CustomDataFrame`` keeps a name-to-column map for Liquid templates and
+review interfaces. Lynguine creates those mappings during flow processing
+(``from_flow()`` / ``_finalize_df()``), not during construction.
+
+Direct construction therefore starts with an empty map. Applications that
+need identity mappings for display should add them **after** the parent
+``from_flow()`` has applied any explicit interface mappings
+(``jobTitle: job_title``). Creating identity maps in ``__init__`` races
+those interface mappings and is an application concern, not an
+infrastructure default.
+
 Related Documentation
 ---------------------
 
@@ -220,5 +235,7 @@ Related Documentation
 * :meth:`lynguine.assess.data.CustomDataFrame.add_column` - Add column method
 * :meth:`lynguine.assess.data.CustomDataFrame.drop_column` - Drop column method
 * :meth:`lynguine.assess.data.CustomDataFrame.to_pandas` - Combined frame; earlier flow wins on overlapping columns
+* :doc:`stacking` - ``hstack`` / ``vstack`` and the earlier-wins join rule
+* :doc:`directory_sources` - One row per file, recursive globs, field projection
 * :doc:`/compute_framework` - Using columns with compute operations
 

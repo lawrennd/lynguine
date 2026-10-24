@@ -29,6 +29,8 @@ Getting Started
    getting_started/installation
    getting_started/quickstart
    getting_started/column_management
+   getting_started/stacking
+   getting_started/directory_sources
    getting_started/examples
    compute_framework
 

@@ -1,0 +1,44 @@
+# Lynguine documentation structure (REQ-000F / CIP compression targets).
+# Sphinx sources live in docs/ (not docs/source).
+
+documentation:
+  system: "sphinx"
+  source_dir: "docs"
+  build_dir: "docs/_build"
+  format: "rst"
+  parser: "default"
+
+  targets:
+    infrastructure: "docs/getting_started/"
+    feature: "docs/getting_started/"
+    process: "docs/contributing/"
+    security: "docs/security/"
+    guides: "docs/"
+
+  getting_started: "docs/getting_started/quickstart.rst"
+  whats_next_guide: "docs/whats_next_script.md"
+
+  build_command: "cd docs && make html"
+  view_command: "open docs/_build/html/index.html"
+  clean_command: "cd docs && make clean"
+
+compression:
+  enabled: true
+  workflow: "WHY→WHAT→HOW→DO→DOCUMENT"
+  triggers:
+    - "CIP status changes to Closed"
+    - "CIP has compressed: false"
+    - "Manual check via whats-next --compression-check"
+  quality_metrics:
+    - "Closed CIPs name their Sphinx or README destination"
+    - "User-facing behaviour from the CIP is in formal docs, not only the CIP"
+    - "Documentation builds without errors"
+
+notes: |
+  Closed CIP destinations used in the 2026-10-24 compression pass:
+
+  - CIP-0001 → Sphinx contributing/testing and the docs/ tree
+  - CIP-0003 → docs/getting_started/column_management.rst (mapping timing)
+  - CIP-0005 → docs/security/
+  - CIP-000E → docs/getting_started/stacking.rst and column_management.rst
+  - CIP-000F → docs/getting_started/directory_sources.rst
