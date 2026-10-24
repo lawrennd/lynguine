@@ -3,7 +3,7 @@ author: "Neil D. Lawrence"
 created: "2026-10-07"
 id: "000E"
 last_updated: "2026-10-24"
-status: "Implemented"
+status: "Closed"
 compressed: false
 related_requirements: ["0002"]
 related_cips: []
@@ -21,8 +21,9 @@ title: "Explicit column-overlap policy for flow joins (to_pandas and hstack)"
 > Use `related_requirements` to link to the requirements this CIP implements.
 
 > **Accepted policy**: earlier wins; later colliding columns are dropped.
-> Implementation matches that policy (`to_pandas` and `read_hstack`). Not Closed:
-> formal docs compression waits until after Closed.
+> Closed after verification on `main` (PR #56). Compressed into the README
+> `hstack` section, `docs/getting_started/column_management.rst`, and the
+> public `read_hstack` docstring.
 
 ## Status
 
@@ -30,7 +31,7 @@ title: "Explicit column-overlap policy for flow joins (to_pandas and hstack)"
 - [x] Accepted - Approved, ready to start work
 - [x] In Progress - Actively being implemented
 - [x] Implemented - Work complete, awaiting verification
-- [ ] Closed - Verified and complete
+- [x] Closed - Verified and complete
 - [ ] Rejected - Will not be implemented (add reason, use superseded_by if replaced)
 - [ ] Deferred - Postponed (use blocked_by field to indicate blocker)
 
@@ -82,8 +83,8 @@ source.
 
 **Policy: earlier wins; drop later colliding columns.**
 
-| Site | Provisional behaviour |
-|------|------------------------|
+| Site | Accepted behaviour |
+|------|---------------------|
 | `to_pandas()` | Before `join(how="outer")`, drop from the right any columns already present on the left. If the right has only overlapping columns, join an empty frame to keep index alignment. Parameter flows still use `assign`. |
 | `read_hstack` | Before `join` / `merge`, drop right columns whose `{col}{rsuffix}` (or `{col}{lsuffix}` collision) already exists on the left. Two-way `B` → `B_right` behaviour unchanged. |
 
@@ -92,7 +93,7 @@ and three-way collisions on both the index-join and merge (`on:`) paths.
 
 ### Alternatives to consider in review
 
-1. **Earlier wins (current provisional)** — simple; may silently discard later
+1. **Earlier wins (Accepted)** — simple; may silently discard later
    identity columns (e.g. a third `crsid`).
 2. **Later / output wins** — better if scores should override allocation for
    shared names; depends on `from_flow` insertion order of `self._d`.
@@ -154,14 +155,14 @@ rule and adding tests over silent flips after Accept.
 - [x] **Review**: Accept the “earlier wins” policy (2026-10-24)
 - [x] Working tree aligned to Accepted decision
 - [x] Backlog items updated after Accept
-- [ ] Formal docs compression after Closed (if needed)
+- [x] Formal docs compression after Closed: earlier-wins in the README `hstack` section, `docs/getting_started/column_management.rst` (`to_pandas`), and the public `read_hstack` docstring
 
 ## References
 
 - Backlog: [2026-08-19_to-pandas-overlapping-columns](../backlog/bugs/2026-08-19_to-pandas-overlapping-columns.md)
 - Backlog: [2026-10-07_hstack-repeated-rsuffix-collision](../backlog/bugs/2026-10-07_hstack-repeated-rsuffix-collision.md)
-- Code (provisional): `lynguine/assess/data.py` (`to_pandas`),
-  `lynguine/access/io.py` (`_drop_join_suffix_collisions`,
+- Code: `lynguine/assess/data.py` (`to_pandas`),
+  `lynguine/access/io.py` (`read_hstack`, `_drop_join_suffix_collisions`,
   `_drop_merge_suffix_collisions`)
 - Tenet: explicit-infrastructure
 
@@ -176,3 +177,7 @@ provisional pending review.
 
 Accepted earlier-wins for both `to_pandas` and `read_hstack`. Added a three-way
 merge-path regression. Status → Implemented. Pause before Closed / compression.
+
+Closed after review of landed code (PR #56), unit tests, and completed backlog
+tasks. Compressed the join rule into README `hstack`, column-management Sphinx,
+and the public `read_hstack` docstring. `compressed: true`.

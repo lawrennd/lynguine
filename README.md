@@ -590,8 +590,10 @@ Horizontal stacking (`hstack`) combines data sources by aligning them side-by-si
 - **specifications**: A list of data sources to be horizontally stacked.
   - **on**: The column or index to join on. Default is `index`.
   - **how**: The type of join to perform (`left`, `right`, `outer`, `inner`). Default is `left`.
-  - **lsuffix**: Suffix to use for overlapping columns from the left data source. Default is an empty string.
-  - **rsuffix**: Suffix to use for overlapping columns from the right data source. Default is `_right`.
+- **lsuffix**: Suffix to use for overlapping columns from the left data source. Default is an empty string.
+- **rsuffix**: Suffix to use for overlapping columns from the right data source. Default is `_right`.
+
+When two sources share a column, the first keeps the unsuffixed name and the second becomes `{column}{rsuffix}` (for example `crsid_right`). A later source that would recreate that suffixed name is dropped: earlier columns win. The same earlier-wins rule applies when `CustomDataFrame.to_pandas()` joins flows that share identity columns.
 
 #### Example
 

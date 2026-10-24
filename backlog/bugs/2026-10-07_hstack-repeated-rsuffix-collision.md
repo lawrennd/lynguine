@@ -60,7 +60,7 @@ Wired into `read_hstack` before join/merge. Regression: `lynguine/tests/test_acc
 
 ## Related
 
-- CIP: [000E](../../cip/cip000E.md) (earlier-wins Accepted, Implemented)
+- CIP: [000E](../../cip/cip000E.md) (earlier-wins Accepted, Closed)
 - Backlog: `2026-08-19_to-pandas-overlapping-columns`
 - Triggered by: `~/OneDrive/referia/supervision/queens_students/{aims,dissertations,meetings}`
 

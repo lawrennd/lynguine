@@ -2359,6 +2359,10 @@ def read_hstack(details):
     """
     Read data from a horizontal stack of data sources.
 
+    Sources join left to right. Two-way overlaps keep the left column and
+    suffix the right (default ``_right``). A later source that would recreate
+    an existing suffixed name is dropped: earlier columns win.
+
     :param details: The details of the data to be read.
     :type details: dict
     :return: The data read from the file.
