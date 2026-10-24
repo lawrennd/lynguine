@@ -66,7 +66,7 @@ Docstring documents the policy. Regression: `lynguine/tests/test_assess_data.py:
 
 ## Related
 
-- CIP: [000E](../../cip/cip000E.md) (earlier-wins Accepted, Implemented)
+- CIP: [000E](../../cip/cip000E.md) (earlier-wins Accepted, Closed)
 - Referia workaround: `referia/assess/web_review.py` `WebReviewer.get_row_data()`
 - Related backlog: `2026-10-07_hstack-repeated-rsuffix-collision` (same CIP-000E policy)
 - Configs that hit this: Queens undergrad admissions, AI@Cam programme-manager interview
