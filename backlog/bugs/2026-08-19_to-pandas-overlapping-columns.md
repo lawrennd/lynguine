@@ -1,10 +1,10 @@
 ---
 id: "2026-08-19_to-pandas-overlapping-columns"
 title: "to_pandas() raises when input and output flows share column names"
-status: "In Progress"
+status: "Completed"
 priority: "Medium"
 created: "2026-08-19"
-last_updated: "2026-10-07"
+last_updated: "2026-10-24"
 category: "bugs"
 related_cips:
 - "000E"
@@ -45,8 +45,8 @@ Triggered by Queens 2021 undergrad admissions and the AI@Cam programme-manager i
 - [x] Overlapping columns have documented, explicit behaviour (suffix, prefer output, or drop duplicates) rather than an unhandled pandas error
 - [x] Parameter columns (constants) are still broadcast onto every row
 - [x] A regression test covers allocation/scores with identical column names
-- [ ] Existing `to_pandas()` tests still pass (verify before marking Completed)
-- [ ] Behaviour reviewed and accepted (temporary implementation landed without CIP review)
+- [x] Existing `to_pandas()` tests still pass (verify before marking Completed)
+- [x] Behaviour reviewed and accepted (CIP-000E earlier-wins, 2026-10-24)
 
 ## Implementation Notes
 
@@ -66,7 +66,7 @@ Docstring documents the policy. Regression: `lynguine/tests/test_assess_data.py:
 
 ## Related
 
-- CIP: [000E](../../cip/cip000E.md) (review required — do not treat provisional policy as Accepted)
+- CIP: [000E](../../cip/cip000E.md) (earlier-wins Accepted, Implemented)
 - Referia workaround: `referia/assess/web_review.py` `WebReviewer.get_row_data()`
 - Related backlog: `2026-10-07_hstack-repeated-rsuffix-collision` (same CIP-000E policy)
 - Configs that hit this: Queens undergrad admissions, AI@Cam programme-manager interview
@@ -81,3 +81,7 @@ Task created. referia web Liquid blanks were traced to `to_pandas()` overlap plu
 ### 2026-10-07
 
 Provisional fix implemented in the working tree during a referia load-audit session (should have been backlog-first). Status → In Progress. Documented the “earlier flow wins” policy and regression test. Linked to CIP-000E for review before Accept/commit.
+
+### 2026-10-24
+
+CIP-000E Accepted earlier-wins. `test_to_pandas_overlapping_columns_keeps_earlier_flow` and the rest of `test_assess_data.py` pass. Status → Completed.

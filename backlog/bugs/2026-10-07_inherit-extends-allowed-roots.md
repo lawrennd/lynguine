@@ -1,10 +1,10 @@
 ---
 id: "2026-10-07_inherit-extends-allowed-roots"
 title: "Inherit loads fail PathEscape when parent directory is outside child jail"
-status: "In Progress"
+status: "Completed"
 priority: "High"
 created: "2026-10-07"
-last_updated: "2026-10-07"
+last_updated: "2026-10-24"
 category: "bugs"
 related_cips:
 - "000A"
@@ -38,8 +38,8 @@ CIP-000A allows the caller to pass a wider `allowed_roots` list; inherit is a fi
 - [x] Child `allowed_roots` includes the inherit directory and unions parent roots after parent load
 - [x] `unbounded_paths=True` and `cwd_sandbox` inherit paths remain as before
 - [x] Unit coverage for inherit root extension
-- [ ] Reviewed against CIP-000A/D (no YAML-driven root enlargement; HTTP default still jailed)
-- [ ] Committed after review
+- [x] Reviewed against CIP-000A/D (no YAML-driven root enlargement; HTTP default still jailed; inherited filename directories bind to inherit.directory)
+- [x] Committed after review
 
 ## Implementation Notes
 
@@ -67,3 +67,11 @@ Paths outside the review tree that appear only inside YAML (`$HOME/private/...`,
 ### 2026-10-07
 
 Task created to capture a provisional working-tree fix from a referia load-audit session. Status In Progress until CIP-aligned review and commit.
+
+### 2026-10-24
+
+CIP-000A/D review. Root union already on main; added `_bind_data_directories`
+so inherited `filename` specs with a missing or relative `directory` resolve
+under `inherit.directory`. YAML `allowed_roots: ["/"]` does not enlarge the
+jail. `from_flow` reads parent data files. HTTP/cwd-sandbox inherit outside
+CWD still PathEscapes. Status → Completed.
