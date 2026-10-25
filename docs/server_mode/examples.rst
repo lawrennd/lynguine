@@ -1,7 +1,10 @@
 Examples
 ========
 
-This page provides code examples for common server mode use cases.
+.. warning::
+   Experimental. CIP-0008 is still Proposed.
+
+Code sketches for a local ``ServerClient``. Prefer ``CustomDataFrame.from_flow`` unless you are measuring repeated subprocess startup.
 
 Basic Examples
 --------------

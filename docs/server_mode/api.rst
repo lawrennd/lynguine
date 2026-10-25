@@ -1,7 +1,10 @@
 API Reference
 =============
 
-This page provides complete API documentation for lynguine server mode.
+.. warning::
+   Experimental. CIP-0008 is still Proposed.
+
+``lynguine.client.ServerClient`` and ``lynguine.server``.
 
 Client API
 ----------

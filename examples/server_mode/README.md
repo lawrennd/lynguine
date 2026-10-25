@@ -1,6 +1,6 @@
 # Lynguine Server Mode - Examples
 
-This directory contains examples and benchmarks for lynguine server mode (CIP-0008).
+Experimental. CIP-0008 is still **Proposed**. These scripts exercise ``lynguine.client`` / ``lynguine.server``; they are not the default way to load data.
 
 ## Documentation
 
@@ -18,9 +18,7 @@ https://lynguine.readthedocs.io/en/latest/server_mode/
 
 Server mode keeps lynguine loaded in memory, avoiding startup costs for repeated operations. This is particularly beneficial for applications like `lamd` that call lynguine multiple times via subprocesses.
 
-**Phase 1-3 Performance**: 156.3x speedup for repeated operations (1.532s → 9.8ms)
-
-**Phase 5 (New!)**: Stateful Data Sessions with crash recovery - mirrors `CustomDataFrame` API for 35-40x lamd improvement
+Local timings from the server-mode work (one machine, not a guarantee): about 1.5s down to about 10ms on a subsequent call.
 
 ## Quick Start
 

@@ -55,13 +55,13 @@ Named secrets for authenticated sources. Local file flows do not need this.
 
    security/index
 
-Server Mode
------------
+Server Mode (experimental)
+--------------------------
 
-Lynguine Server Mode provides faster repeated access by keeping lynguine loaded in memory.
+Keeps lynguine loaded for repeated subprocess calls. CIP-0008 is still Proposed; this is not the default path.
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
    server_mode/index
 

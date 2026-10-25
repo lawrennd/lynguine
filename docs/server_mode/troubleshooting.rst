@@ -1,7 +1,10 @@
 Troubleshooting
 ===============
 
-This guide helps you diagnose and fix common issues with lynguine server mode.
+.. warning::
+   Experimental. CIP-0008 is still Proposed.
+
+This guide is for a local ``lynguine.server`` process.
 
 Quick Fixes
 -----------

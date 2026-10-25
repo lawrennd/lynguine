@@ -1,7 +1,10 @@
 Quick Start
 ===========
 
-This guide gets you started with lynguine server mode in under 5 minutes.
+.. warning::
+   Experimental. CIP-0008 is still Proposed. Prefer ``CustomDataFrame.from_flow`` unless you are measuring repeated subprocess startup.
+
+This guide starts a local lynguine server for repeated calls.
 
 Installation
 ------------

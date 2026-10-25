@@ -6,7 +6,7 @@
 [![ReadTheDocs](https://readthedocs.org/projects/lynguine/badge/?version=latest)](https://lynguine.readthedocs.io/en/latest/)
 
 
-[![codecov](https://codecov.io/gh/lawrennd/lynguine/branch/main/graph/badge.svg?token=YOUR_CODECOV_TOKEN)](https://codecov.io/gh/lawrennd/lynguine)
+[![codecov](https://codecov.io/gh/lawrennd/lynguine/branch/main/graph/badge.svg)](https://codecov.io/gh/lawrennd/lynguine)
 
 The `lynguine` library is a library based on DOA principles for managing data. It provides these capabilities to support other libraries like `lamd` and `referia`.
 
@@ -20,13 +20,15 @@ It is an attempt to implement the emerging linguine specification, <https://gith
 
 ## Installation
 
-To install use:
+Python 3.11 or later:
 
 ```bash
-%pip install lynguine
+pip install lynguine
 ```
 
-The softare consists of TK principle parts.
+From a clone of this repository: `pip install .` or `poetry install`.
+
+The library is organised as `config`, `access`, and `assess`.
 
 ### Config 
 
