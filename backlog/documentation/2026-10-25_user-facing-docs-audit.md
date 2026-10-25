@@ -115,7 +115,7 @@ These Sphinx pages look like real, post-CIP writing and should be kept as the mo
 - [x] README Access example either contains a working PMLR/BibTeX (or local BibTeX) walkthrough, or the promise is removed and replaced with a short example that actually runs
 - [x] README Assess and Util stubs are filled or deleted
 - [x] `docs/getting_started/quickstart.rst`, `examples.rst`, and `installation.rst` are lynguine (not ndlpy) and contain runnable snippets; no pointer to a missing `docs/examples`
-- [ ] `docs/contributing/guide.rst` no longer refers to ndlpy
+- [x] `docs/contributing/guide.rst` no longer refers to ndlpy
 - [ ] README Security section is demoted: not above Installation; claims match shipped providers (env + encrypted file). "Cloud vaults", GDPR/SOC2 badges, and "enterprise-grade" marketing dropped or marked future
 - [ ] Sphinx Security toctree is a short user page plus API; CIP implementation summaries are not presented as user guides
 - [ ] Server mode docs are labelled to match CIP-0008 (Proposed / experimental) or CIP-0008 is accepted/closed to match the docs
@@ -163,3 +163,7 @@ Accepted and started with empty examples on branch `docs-empty-examples`:
 - Snippets run against conda `py311` (lynguine 0.1.2).
 
 Still open: contributing ndlpy leftovers, credentials demotion, server-mode labelling, README install/typo/badge cleanup.
+
+### 2026-10-25 (later)
+
+ndlpy leftovers: `docs/contributing/guide.rst` rewritten as a lynguine contributing page. Dropped the inherited ndlpy Code of Conduct (no CoC file in the repo), Docker/container boilerplate, and beginner/help-wanted label claims. CIP-0009 historical `ndlpy/` path mentions left as history.
