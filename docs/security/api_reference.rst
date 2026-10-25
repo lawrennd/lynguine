@@ -213,6 +213,5 @@ See Also
 --------
 
 * :doc:`user_guide` - Complete user guide with step-by-step instructions
-* :doc:`implementation_summary` - Technical implementation details
 * :doc:`index` - Security documentation overview
 

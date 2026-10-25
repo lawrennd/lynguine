@@ -57,6 +57,8 @@ exclude_patterns = [
     'security/SECURE_CREDENTIALS.md',
     'security/USER_GUIDE.md',
     'security/IMPLEMENTATION_SUMMARY.md',
+    # CIP-era dump; not a user-facing page (see security/index.rst).
+    'security/implementation_summary.rst',
     # VibeSafe helper docs; not part of the lynguine Sphinx site.
     'whats_next_script.md',
     'yaml_frontmatter_examples.md',

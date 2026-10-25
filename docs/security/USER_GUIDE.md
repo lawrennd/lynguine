@@ -1229,7 +1229,6 @@ print(f"Available credentials: {keys}")
 
 ## Related Documentation
 
-- [Implementation Summary](implementation_summary) - Implementation details
 - [API Reference](api_reference) - API documentation
 - CIP-0005 is in ``cip/cip0005.md`` in the repository
 
