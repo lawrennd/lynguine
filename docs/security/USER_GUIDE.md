@@ -1,8 +1,10 @@
-# Lynguine Secure Credential Management - User Guide
+# Lynguine credentials
 
-**A practical guide to securing your API credentials and OAuth tokens**
+Optional lookup of named secrets for authenticated sources (usually Google Sheets). Skip this if you only read local files.
 
-> 💡 **New to Lynguine security?** Start with the [Quick Start](#quick-start-5-minutes) to get up and running in 5 minutes!
+Shipped backends: environment variables (`LYNGUINE_CRED_*`) and encrypted files (`LYNGUINE_MASTER_KEY`). Cloud vaults and OS keychain storage are not implemented.
+
+> Start with [Quick Start](#quick-start-5-minutes) if you need `${credential:KEY}` in a flow.
 
 ---
 

@@ -116,8 +116,8 @@ These Sphinx pages look like real, post-CIP writing and should be kept as the mo
 - [x] README Assess and Util stubs are filled or deleted
 - [x] `docs/getting_started/quickstart.rst`, `examples.rst`, and `installation.rst` are lynguine (not ndlpy) and contain runnable snippets; no pointer to a missing `docs/examples`
 - [x] `docs/contributing/guide.rst` no longer refers to ndlpy
-- [ ] README Security section is demoted: not above Installation; claims match shipped providers (env + encrypted file). "Cloud vaults", GDPR/SOC2 badges, and "enterprise-grade" marketing dropped or marked future
-- [ ] Sphinx Security toctree is a short user page plus API; CIP implementation summaries are not presented as user guides
+- [x] README Security section is demoted: not above Installation; claims match shipped providers (env + encrypted file). "Cloud vaults", GDPR/SOC2 badges, and "enterprise-grade" marketing dropped or marked future
+- [x] Sphinx Security toctree is a short user page plus API; CIP implementation summaries are not presented as user guides
 - [ ] Server mode docs are labelled to match CIP-0008 (Proposed / experimental) or CIP-0008 is accepted/closed to match the docs
 - [ ] README install snippet is a real `pip`/`poetry` command; "TK principle parts" and the Codecov placeholder token are gone
 - [ ] Linguine vs lynguine wording is consistent; referia-only keys (`review`) are not documented as lynguine interface fields
@@ -162,8 +162,10 @@ Accepted and started with empty examples on branch `docs-empty-examples`:
 - Sphinx `quickstart.rst` / `examples.rst` rewritten as lynguine; `installation.rst` no longer says ndlpy.
 - Snippets run against conda `py311` (lynguine 0.1.2).
 
-Still open: contributing ndlpy leftovers, credentials demotion, server-mode labelling, README install/typo/badge cleanup.
+Still open: server-mode labelling, README install/typo/badge cleanup.
 
 ### 2026-10-25 (later)
 
 ndlpy leftovers: `docs/contributing/guide.rst` rewritten as a lynguine contributing page. Dropped the inherited ndlpy Code of Conduct (no CoC file in the repo), Docker/container boilerplate, and beginner/help-wanted label claims. CIP-0009 historical `ndlpy/` path mentions left as history.
+
+Credentials demoted: README no longer leads with security; optional section after the library tour. Sphinx landing is env + encrypted file only; GDPR/SOC2/cloud-vault claims removed; CIP implementation summary dropped from the user toctree. `USER_GUIDE.md` kept as the how-to, with a short honesty note at the top. `SECURE_CREDENTIALS.md` / `IMPLEMENTATION_SUMMARY.md` remain in the tree but are not user-facing Sphinx pages.

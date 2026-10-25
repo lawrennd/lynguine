@@ -45,11 +45,13 @@ Modules Documentation
    modules/lynguine.config
    modules/lynguine.util
 
-Security
---------
+Credentials (optional)
+----------------------
+
+Named secrets for authenticated sources. Local file flows do not need this.
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
    security/index
 

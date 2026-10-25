@@ -17,21 +17,6 @@ It is an attempt to implement the emerging linguine specification, <https://gith
 - [Documentation](https://lynguine.readthedocs.io/)
 - [Code Improvement Plans](cip/)
 - [Project Backlog](backlog/)
-- [Security Documentation](https://lynguine.readthedocs.io/en/latest/security/)
-
-## Security
-
-Lynguine includes enterprise-grade secure credential management for API keys, OAuth tokens, and other sensitive data. Features include:
-
-- 🔒 **Encrypted Storage** - AES-256 encryption for credentials at rest
-- 🔑 **Multiple Backends** - Environment variables, encrypted files, or cloud vaults
-- 👥 **Access Control** - Role-based permissions and rate limiting
-- 📊 **Audit Logging** - Comprehensive security event tracking
-- 🔄 **Easy Migration** - Tools to migrate from plain-text credentials
-
-**Quick Start**: See the [Security User Guide](docs/security/USER_GUIDE.md) for setup instructions and examples.
-
-**Technical Details**: See [CIP-0005](cip/cip0005.md) for the complete security architecture.
 
 ## Installation
 
@@ -258,6 +243,12 @@ poetry run pytest
 ### Why lynguine?
 
 The name comes from the idea that data oriented architecture is like a set of streams of data, like linguine pasta. In Italian the word also means "little tongues" so there's also a connotation of translation between services.
+
+## Credentials (optional)
+
+Local YAML, CSV, and BibTeX flows do not need this. If you load Google Sheets or another authenticated source, a configuration value can be `${credential:KEY}` instead of a secret in YAML. Shipped backends are environment variables (`LYNGUINE_CRED_*`) and an encrypted file unlocked by `LYNGUINE_MASTER_KEY`. There is no cloud-vault backend; OS keychain storage is not implemented.
+
+Setup: [credentials user guide](docs/security/USER_GUIDE.md). Design: [CIP-0005](cip/cip0005.md).
 
 ## Linguine Configuration File Format
 
