@@ -1,7 +1,7 @@
 ---
 id: "2026-10-25_user-facing-docs-audit"
 title: "Audit and repair user-facing documentation: stubs, overstated features, leftover ndlpy"
-status: "In Progress"
+status: "Completed"
 priority: "High"
 created: "2026-10-25"
 last_updated: "2026-10-25"
@@ -120,7 +120,7 @@ These Sphinx pages look like real, post-CIP writing and should be kept as the mo
 - [x] Sphinx Security toctree is a short user page plus API; CIP implementation summaries are not presented as user guides
 - [x] Server mode docs are labelled to match CIP-0008 (Proposed / experimental) or CIP-0008 is accepted/closed to match the docs
 - [x] README install snippet is a real `pip`/`poetry` command; "TK principle parts" and the Codecov placeholder token are gone
-- [ ] Linguine vs lynguine wording is consistent; referia-only keys (`review`) are not documented as lynguine interface fields
+- [x] Linguine vs lynguine wording is consistent; referia-only keys (`review`) are not documented as lynguine interface fields
 
 ## Implementation Notes
 
@@ -162,8 +162,6 @@ Accepted and started with empty examples on branch `docs-empty-examples`:
 - Sphinx `quickstart.rst` / `examples.rst` rewritten as lynguine; `installation.rst` no longer says ndlpy.
 - Snippets run against conda `py311` (lynguine 0.1.2).
 
-Still open: Linguine vs lynguine wording; referia-only `review` key in the README interface catalogue.
-
 ### 2026-10-25 (later)
 
 ndlpy leftovers: `docs/contributing/guide.rst` rewritten as a lynguine contributing page. Dropped the inherited ndlpy Code of Conduct (no CoC file in the repo), Docker/container boilerplate, and beginner/help-wanted label claims. CIP-0009 historical `ndlpy/` path mentions left as history.
@@ -171,3 +169,5 @@ ndlpy leftovers: `docs/contributing/guide.rst` rewritten as a lynguine contribut
 Credentials demoted: README no longer leads with security; optional section after the library tour. Sphinx landing is env + encrypted file only; GDPR/SOC2/cloud-vault claims removed; CIP implementation summary dropped from the user toctree. `USER_GUIDE.md` kept as the how-to, with a short honesty note at the top. `SECURE_CREDENTIALS.md` / `IMPLEMENTATION_SUMMARY.md` remain in the tree but are not user-facing Sphinx pages.
 
 Server mode labelled experimental across Sphinx landing/quickstart/migration/examples/API/troubleshooting and `examples/server_mode/README.md`. CIP-0008 stays Proposed; 156.3× claims replaced with one-machine timings. README install is `pip install lynguine`; Codecov badge no longer uses `YOUR_CODECOV_TOKEN`; "TK principle parts" / "softare" removed.
+
+Wording pass: dropped the `linguine.git` spec claim. Headings now say lynguine / interface YAML, not Linguine. Pasta etymology stays under "Why lynguine?". `review` is no longer in the typical-entry catalogue; the widget walkthrough is replaced by a short note that review UI belongs in referia. Default config filename documented as `_lynguine.yml`. All acceptance criteria met.
