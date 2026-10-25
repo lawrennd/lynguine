@@ -1,22 +1,39 @@
 Quick Start Guide
 =================
 
-Get started with ndlpy quickly with this brief guide.
+Install lynguine, then load a small local table through an interface YAML flow.
 
-Creating Your First ndlpy Object
---------------------------------
-
-Here's an example of how to create and use a basic ndlpy object:
+Creating a CustomDataFrame from a flow
+--------------------------------------
 
 .. code-block:: python
 
-    import ndlpy
+    from lynguine.config.interface import Interface
+    from lynguine.assess.data import CustomDataFrame
 
-    # Example code to create an object
-    obj = ndlpy.YourClass()
-    obj.method()
+    interface = Interface.from_yaml("""
+    input:
+      type: local
+      index: name
+      data:
+        - name: Ada
+          score: 1
+        - name: Alan
+          score: 2
+      compute:
+        - field: accessDate
+          function: today
+    """)
 
-Exploring Further
+    data = CustomDataFrame.from_flow(interface)
+    print(data)
+
+``today`` is a registered compute function. It adds an ``accessDate`` column while the table is loaded.
+
+Exploring further
 -----------------
 
-For more in-depth tutorials and examples, visit our [Examples](examples.rst) section.
+* :doc:`examples` — BibTeX write/read and the same local-flow pattern
+* :doc:`column_management` — adding and typing columns
+* :doc:`stacking` — ``hstack`` / ``vstack``
+* :doc:`directory_sources` — one row per file

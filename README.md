@@ -143,28 +143,30 @@ would create a new field `name` which is then used as the index.
 
 ### Access
 
-Secondly the software uses the access, assess, address decomposition. Where `access` is used for accessing data and consists of `io` and `download`. `io` allows for reading from and writing to various different file formats such as `json`, `yaml`, `markdown`, `csv`, `xls`, `bibtex`. 
+Secondly the software uses the access, assess, address decomposition. `access` is used for accessing data and consists of `io` and `download`. `io` reads from and writes to formats such as `json`, `yaml`, `markdown`, `csv`, `xls`, and `bibtex`.
 
-`download` is for accessing resources from the web, such as downloading a specific url.
+`download` fetches a URL into a local cache after an explicit licence prompt. It does not turn a URL into a table on its own. Once a file is on disk, `io` loads it.
 
 #### A short example
 
-Perhaps you would like to create a bibtex file from the PMLR proceedings volume 1, Gaussian processes in practice. In the short example below, we use `lynguine` to first download the relevant URL, then we load it in and save as bibtex.
+PMLR papers publish a `.bib` file (volume 1 is Gaussian processes in practice). After that file is local, `io` loads and writes BibTeX. The same path works for any `.bib` on disk. This example generates three entries, writes `sample.bib` in the current directory, and reads it back.
 
 ```python
-import lynguine
-```
+import pandas as pd
+from lynguine.access.io import read_bibtex, write_bibtex
+from lynguine.util import fake
 
+fake.random.seed(1)
+details = {"filename": "sample.bib", "directory": "."}
+entries = [fake.to_bibtex(fake.bibliography_entry()) for _ in range(3)]
+write_bibtex(pd.DataFrame(entries), details)
+df, details = read_bibtex(details)
+print(df[["ID", "ENTRYTYPE", "year"]])
+```
 
 ### Assess
 
-Assess is about taking the raw data and processing it. Under `assess` `lynguine` provides `data` and `compute`. The `data` module provides a `CustomDataFrame` object that provides access to the data and manipulation capabilities. the `compute` module wraps various compute capabilities for preprocessing and processing the data. 
-
-#### A short example
-
-```python
-import lynguine
-```
+Assess is about taking the raw data and processing it. Under `assess` `lynguine` provides `data` and `compute`. The `data` module provides a `CustomDataFrame` object that provides access to the data and manipulation capabilities. The `compute` module wraps compute functions for preprocessing and processing the data. The Config example above already loads a local table through `CustomDataFrame.from_flow`.
 
 #### Working with Columns in CustomDataFrame
 
@@ -206,9 +208,11 @@ The compute capability allows the user to specify computations that should take 
 
 ```yaml
 compute:
-- field: OutputColumnName
-  function: 
+- field: accessDate
+  function: today
 ```
+
+`today` is one of the functions registered in lynguine. The Config example above uses it, together with `render_liquid`, as `input.compute` while the table is loaded.
 
 
 ### Util
@@ -228,8 +232,14 @@ The `util` module provides various utilities for working with data. They include
 
 ### A short example
 
+`fake` generates bibliography rows that `io` can write as BibTeX (the Access example above uses this).
+
 ```python
-import lynguine
+from lynguine.util import fake
+
+fake.random.seed(1)
+entry = fake.to_bibtex(fake.bibliography_entry())
+print(entry["ID"], entry["ENTRYTYPE"], entry["year"])
 ```
 
 ### Tests
