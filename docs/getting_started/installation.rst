@@ -11,7 +11,7 @@ Ensure you have Python 3.11 or later installed on your system. You can download 
 Installing lynguine
 -------------------
 
-ndlpy can be installed using pip. Run the following command:
+lynguine can be installed using pip. Run the following command:
 
 .. code-block:: bash
 
@@ -22,7 +22,7 @@ Alternatively, if you are installing from source:
 .. code-block:: bash
 
     git clone https://github.com/lawrennd/lynguine.git
-    cd ndlpy
+    cd lynguine
     pip install .
 
 Verify the installation:

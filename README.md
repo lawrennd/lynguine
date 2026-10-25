@@ -6,42 +6,27 @@
 [![ReadTheDocs](https://readthedocs.org/projects/lynguine/badge/?version=latest)](https://lynguine.readthedocs.io/en/latest/)
 
 
-[![codecov](https://codecov.io/gh/lawrennd/lynguine/branch/main/graph/badge.svg?token=YOUR_CODECOV_TOKEN)](https://codecov.io/gh/lawrennd/lynguine)
+[![codecov](https://codecov.io/gh/lawrennd/lynguine/branch/main/graph/badge.svg)](https://codecov.io/gh/lawrennd/lynguine)
 
-The `lynguine` library is a library based on DOA principles for managing data. It provides these capabilities to support other libraries like `lamd` and `referia`.
-
-It is an attempt to implement the emerging linguine specification, <https://github.com/lawrennd/linguine.git>.
+The `lynguine` library is a data-oriented architecture (DOA) library for managing data flows. Other libraries such as `lamd` and `referia` build on it.
 
 ## Quick Links
 
 - [Documentation](https://lynguine.readthedocs.io/)
 - [Code Improvement Plans](cip/)
 - [Project Backlog](backlog/)
-- [Security Documentation](https://lynguine.readthedocs.io/en/latest/security/)
-
-## Security
-
-Lynguine includes enterprise-grade secure credential management for API keys, OAuth tokens, and other sensitive data. Features include:
-
-- 🔒 **Encrypted Storage** - AES-256 encryption for credentials at rest
-- 🔑 **Multiple Backends** - Environment variables, encrypted files, or cloud vaults
-- 👥 **Access Control** - Role-based permissions and rate limiting
-- 📊 **Audit Logging** - Comprehensive security event tracking
-- 🔄 **Easy Migration** - Tools to migrate from plain-text credentials
-
-**Quick Start**: See the [Security User Guide](docs/security/USER_GUIDE.md) for setup instructions and examples.
-
-**Technical Details**: See [CIP-0005](cip/cip0005.md) for the complete security architecture.
 
 ## Installation
 
-To install use:
+Python 3.11 or later:
 
 ```bash
-%pip install lynguine
+pip install lynguine
 ```
 
-The softare consists of TK principle parts.
+From a clone of this repository: `pip install .` or `poetry install`.
+
+The library is organised as `config`, `access`, and `assess`.
 
 ### Config 
 
@@ -143,28 +128,30 @@ would create a new field `name` which is then used as the index.
 
 ### Access
 
-Secondly the software uses the access, assess, address decomposition. Where `access` is used for accessing data and consists of `io` and `download`. `io` allows for reading from and writing to various different file formats such as `json`, `yaml`, `markdown`, `csv`, `xls`, `bibtex`. 
+Secondly the software uses the access, assess, address decomposition. `access` is used for accessing data and consists of `io` and `download`. `io` reads from and writes to formats such as `json`, `yaml`, `markdown`, `csv`, `xls`, and `bibtex`.
 
-`download` is for accessing resources from the web, such as downloading a specific url.
+`download` fetches a URL into a local cache after an explicit licence prompt. It does not turn a URL into a table on its own. Once a file is on disk, `io` loads it.
 
 #### A short example
 
-Perhaps you would like to create a bibtex file from the PMLR proceedings volume 1, Gaussian processes in practice. In the short example below, we use `lynguine` to first download the relevant URL, then we load it in and save as bibtex.
+PMLR papers publish a `.bib` file (volume 1 is Gaussian processes in practice). After that file is local, `io` loads and writes BibTeX. The same path works for any `.bib` on disk. This example generates three entries, writes `sample.bib` in the current directory, and reads it back.
 
 ```python
-import lynguine
-```
+import pandas as pd
+from lynguine.access.io import read_bibtex, write_bibtex
+from lynguine.util import fake
 
+fake.random.seed(1)
+details = {"filename": "sample.bib", "directory": "."}
+entries = [fake.to_bibtex(fake.bibliography_entry()) for _ in range(3)]
+write_bibtex(pd.DataFrame(entries), details)
+df, details = read_bibtex(details)
+print(df[["ID", "ENTRYTYPE", "year"]])
+```
 
 ### Assess
 
-Assess is about taking the raw data and processing it. Under `assess` `lynguine` provides `data` and `compute`. The `data` module provides a `CustomDataFrame` object that provides access to the data and manipulation capabilities. the `compute` module wraps various compute capabilities for preprocessing and processing the data. 
-
-#### A short example
-
-```python
-import lynguine
-```
+Assess is about taking the raw data and processing it. Under `assess` `lynguine` provides `data` and `compute`. The `data` module provides a `CustomDataFrame` object that provides access to the data and manipulation capabilities. The `compute` module wraps compute functions for preprocessing and processing the data. The Config example above already loads a local table through `CustomDataFrame.from_flow`.
 
 #### Working with Columns in CustomDataFrame
 
@@ -206,9 +193,11 @@ The compute capability allows the user to specify computations that should take 
 
 ```yaml
 compute:
-- field: OutputColumnName
-  function: 
+- field: accessDate
+  function: today
 ```
+
+`today` is one of the functions registered in lynguine. The Config example above uses it, together with `render_liquid`, as `input.compute` while the table is loaded.
 
 
 ### Util
@@ -228,8 +217,14 @@ The `util` module provides various utilities for working with data. They include
 
 ### A short example
 
+`fake` generates bibliography rows that `io` can write as BibTeX (the Access example above uses this).
+
 ```python
-import lynguine
+from lynguine.util import fake
+
+fake.random.seed(1)
+entry = fake.to_bibtex(fake.bibliography_entry())
+print(entry["ID"], entry["ENTRYTYPE"], entry["year"])
 ```
 
 ### Tests
@@ -247,22 +242,28 @@ poetry run pytest
 
 ### Why lynguine?
 
-The name comes from the idea that data oriented architecture is like a set of streams of data, like linguine pasta. In Italian the word also means "little tongues" so there's also a connotation of translation between services.
+The name is from linguine pasta: data-oriented architecture as streams of data. In Italian the word also means "little tongues", so there is a connotation of translation between services. This repository is **lynguine**.
 
-## Linguine Configuration File Format
+## Credentials (optional)
 
-A Linguine configuration file is a YAML file used to define the structure and behavior of data-oriented interfaces. These files specify the inputs, outputs, and various operations to be performed on the data. The configuration is hierarchical, allowing one interface to inherit from another.
+Local YAML, CSV, and BibTeX flows do not need this. If you load Google Sheets or another authenticated source, a configuration value can be `${credential:KEY}` instead of a secret in YAML. Shipped backends are environment variables (`LYNGUINE_CRED_*`) and an encrypted file unlocked by `LYNGUINE_MASTER_KEY`. There is no cloud-vault backend; OS keychain storage is not implemented.
+
+Setup: [credentials user guide](docs/security/USER_GUIDE.md). Design: [CIP-0005](cip/cip0005.md).
+
+## Interface YAML
+
+A lynguine interface is a YAML file. It names inputs, outputs, and optional compute. Interfaces can inherit from other interfaces. The default filename is `_lynguine.yml`.
 
 ### Characteristics
 
 1. **Hierarchical Structure**: Interfaces can inherit from other interfaces, allowing for reusable and extendable configurations.
 2. **Data Specification**: Inputs, outputs, and other data-related specifications are clearly defined.
-3. **Operations**: The file can specify operations such as computing and reviewing data.
+3. **Compute**: The file can specify `compute` operations on the data.
 4. **Environment Variable Expansion**: Environment variables can be used within the configuration and will be expanded at runtime.
 
-### Required Entries
+### Typical entries
 
-A typical Linguine configuration file contains the following entries:
+A typical interface YAML contains the following entries:
 
 #### `input`
 Specifies the input data for the interface. This can include mappings and columns.
@@ -292,16 +293,7 @@ Defines the computations to be performed on the data.
 - **Type**: `list`
 - **Items**: Each item is a dictionary specifying a computation.
   - `field`: The field to be computed.
-  - `operation`: The operation to be performed.
-
-#### `review`
-
-Specifies the fields to be reviewed.
-
-- **Type**: `list`
-- **Items**: Each item is a dictionary specifying a review operation.
-  - `field`: The field to be reviewed.
-  - `operation`: The review operation.
+  - `function`: The registered compute function to run.
 
 #### `cache`
 
@@ -342,13 +334,13 @@ Specifies inheritance from another interface.
   
 ---
 
-## Accessing Data in Linguine
+## Accessing data
 
-The "access" phase in the Linguine framework is about obtaining an electronic version of the data. The `io.py` file provides the capability to access data in various formats. These formats can be specified in the Linguine interface file. Below are the details on how to specify different data formats in the interface file.
+The access phase obtains an electronic version of the data. `io` reads and writes the formats below. Specify them in the interface YAML.
 
 ### Data Formats
 
-Linguine supports various data formats, each requiring specific information to be accessed. The following sections describe the required entries for each supported data format.
+lynguine supports various data formats, each requiring specific information to be accessed. The following sections describe the required entries for each supported data format.
 
 #### CSV
 
@@ -576,9 +568,9 @@ input:
 This configuration specifies how to access data from various sources, including CSV, Excel, JSON, YAML, Markdown, BibTeX, Google Sheets, directories, local data, and fake data. Each data format has its own set of required and optional entries to ensure the data is accessed correctly.
 
 
-## Stacking Data in Linguine
+## Stacking data
 
-Linguine provides mechanisms to stack `input` data either horizontally (`hstack`) or vertically (`vstack`). These operations allow you to combine multiple data sources into a single entity. Overlapping columns follow an earlier-wins rule; see [Stacking and joining sources](https://lynguine.readthedocs.io/en/latest/getting_started/stacking.html).
+lynguine can stack `input` data horizontally (`hstack`) or vertically (`vstack`). These operations combine multiple data sources into a single entity. Overlapping columns follow an earlier-wins rule; see [Stacking and joining sources](https://lynguine.readthedocs.io/en/latest/getting_started/stacking.html).
 
 ### Horizontal Stacking (`hstack`)
 
@@ -734,9 +726,9 @@ Helpers: `compose_wide_column_name`, `parse_wide_column_name`, `wide_unflatten_d
 
 ---
 
-## Compute Operations in Linguine
+## Compute operations
 
-The `compute` field in a Linguine configuration file is used to define computations to be performed on the data. These computations can transform existing data, create new fields, or perform complex operations across multiple fields.
+The `compute` field in an interface YAML file defines computations on the data. These can transform existing data, create new fields, or run across multiple fields.
 
 ### Compute Field Structure
 
@@ -824,161 +816,10 @@ If a specified function is not found in the function list, a `ValueError` will b
 
 ---
 
-## Review Entries in Linguine
+## Application keys (`review`)
 
-The `review` section in a Linguine configuration file is used to specify how data should be displayed and interacted with for review purposes. This section is closely tied to the functionality provided by the `DisplaySystem` class in `display.py`.
+An interface YAML may include a `review` list. lynguine stores those entries and can treat named `field`s as writable output columns. It does not implement the review widgets.
 
-### Review Entry Structure
-
-The `review` section typically contains a list of review specifications. Each specification is a dictionary that defines how a particular field or set of fields should be presented for review. Here's the general structure:
-
-```yaml
-review:
-  - field: field_name
-    type: review_type
-    options:
-      option1: value1
-      option2: value2
-```
-
-#### Key Components:
-
-- **field**: The name of the field to be reviewed. This can be a single field or a list of fields.
-- **type**: The type of review widget to be used (e.g., "text", "dropdown", "checkbox", etc.).
-- **options**: A dictionary of additional options specific to the review type.
-
-### Common Review Types
-
-1. **Text Review**
-   ```yaml
-   - field: description
-     type: text
-     options:
-       multiline: true
-       max_length: 500
-   ```
-
-2. **Dropdown Review**
-   ```yaml
-   - field: category
-     type: dropdown
-     options:
-       choices: ["A", "B", "C"]
-       allow_multiple: false
-   ```
-
-3. **Checkbox Review**
-   ```yaml
-   - field: is_active
-     type: checkbox
-   ```
-
-4. **Date Review**
-   ```yaml
-   - field: event_date
-     type: date
-     options:
-       format: "%Y-%m-%d"
-   ```
-
-5. **Numeric Review**
-   ```yaml
-   - field: score
-     type: numeric
-     options:
-       min: 0
-       max: 100
-       step: 0.1
-   ```
-
-### Advanced Review Features
-
-1. **Multiple Fields**
-   ```yaml
-   - field: [first_name, last_name]
-     type: text
-     options:
-       label: "Full Name"
-   ```
-
-2. **Conditional Display**
-   ```yaml
-   - field: additional_info
-     type: text
-     options:
-       display_if:
-         field: has_additional_info
-         value: true
-   ```
-
-3. **Custom Validation**
-   ```yaml
-   - field: email
-     type: text
-     options:
-       validation: email_format
-   ```
-
-### Interaction with DisplaySystem
-
-The `review` entries are processed by the `DisplaySystem` class in `display.py`. This class creates appropriate widgets based on the review specifications and manages the interaction between the user interface and the underlying data.
-
-Key methods in `DisplaySystem` that handle review entries include:
-
-- `populate_display()`: Creates and updates widgets based on review specifications.
-- `value_updated()`: Handles updates when a reviewed value changes.
-- `set_value()` and `set_value_by_element()`: Update specific values in the data.
-
-### Example Review Section
-
-Here's an example of a complete `review` section in a Linguine configuration file:
-
-```yaml
-review:
-  - field: title
-    type: text
-    options:
-      max_length: 100
-      label: "Article Title"
-
-  - field: content
-    type: text
-    options:
-      multiline: true
-      max_length: 1000
-      label: "Article Content"
-
-  - field: category
-    type: dropdown
-    options:
-      choices: ["News", "Opinion", "Feature"]
-      allow_multiple: false
-      label: "Article Category"
-
-  - field: tags
-    type: dropdown
-    options:
-      choices: ["Politics", "Technology", "Science", "Culture"]
-      allow_multiple: true
-      label: "Article Tags"
-
-  - field: publish_date
-    type: date
-    options:
-      format: "%Y-%m-%d"
-      label: "Publication Date"
-
-  - field: is_featured
-    type: checkbox
-    options:
-      label: "Feature this article?"
-
-  - field: [author_first_name, author_last_name]
-    type: text
-    options:
-      label: "Author Name"
-```
-
-This example demonstrates various types of review entries that can be used to create a comprehensive review interface for an article management system.
+Widget layout, types, and interaction belong in the application (typically **referia**). Document `review` there, not as a lynguine interface feature.
 
 ---

@@ -1,13 +1,12 @@
-Server Mode
-===========
+Server Mode (experimental)
+==========================
 
-Lynguine Server Mode provides fast repeated access by keeping lynguine loaded in memory, avoiding the ~2 second startup cost for each call.
+.. warning::
+   CIP-0008 is still **Proposed**. ``lynguine.client`` and ``lynguine.server`` exist on main, but server mode is not the default path and the CIP has not been accepted. Direct ``CustomDataFrame.from_flow`` is the supported interface.
 
-**Performance**: 156.3x speedup for repeated operations (1.532s → 9.8ms)
+A long-running process can keep lynguine loaded so repeated subprocess callers (for example ``lamd``) avoid paying import cost each time. Jupyter kernels such as ``referia`` already stay loaded; they do not need this.
 
-.. note::
-   Server mode is designed for applications that call lynguine multiple times via subprocesses (like ``lamd``). 
-   It is **not needed** for long-running processes like Jupyter kernels (``referia``).
+Local timings from the server-mode work (one machine, not a guarantee): about 1.5s down to about 10ms on a subsequent call.
 
 Overview
 --------
@@ -22,13 +21,11 @@ Overview
 
 ✅ Single-user, local development
 
-**Benefits:**
+**If you use it:**
 
-- **156.3x speedup** for repeated calls
-- **Auto-start**: Zero setup required
-- **Auto-restart**: Crash recovery
-- **Auto-shutdown**: Idle timeout
-- **Retry logic**: Network resilience
+- Auto-start, idle timeout, and retry exist on ``ServerClient``
+- Intended for local, single-user, repeated subprocess calls
+- Not a remote multi-user service (that is CIP-0008 Phase 4, not done)
 
 Quick Start
 -----------
@@ -89,20 +86,10 @@ Performance
      - 980ms
      - 67x
 
-Implementation Phases
----------------------
+CIP status
+----------
 
-**Phase 1: Proof of Concept** ✅
-   Basic server/client, instance checking, benchmarks
-
-**Phase 2: Core Features** ✅
-   New endpoints, idle timeout, auto-start, diagnostics
-
-**Phase 3: Robustness** ✅
-   Retry logic, crash recovery, comprehensive documentation
-
-**Phase 4: Remote Access** (optional)
-   Authentication, TLS, multi-user support
+CIP-0008 remains Proposed. Code for a local server/client is in the tree; remote access (auth, TLS, multi-user) is not. Do not treat the phase checklist in older notes as a closed CIP.
 
 See Also
 --------

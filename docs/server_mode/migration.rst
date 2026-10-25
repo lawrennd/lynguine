@@ -1,7 +1,10 @@
 Migration Guide
 ===============
 
-This guide helps you migrate from direct lynguine calls to server mode for faster repeated access.
+.. warning::
+   Experimental. CIP-0008 is still Proposed. Direct ``CustomDataFrame.from_flow`` remains the supported default.
+
+This guide is for callers that currently start a new Python process for every lynguine load (for example ``lamd``).
 
 Who Should Use Server Mode?
 ----------------------------
@@ -45,7 +48,7 @@ Step 1: Understand the Performance Gain
    for i in range(10):
        df = client.read_data(...)  # 10ms each = ~100ms total for 9 calls
 
-**Speedup**: 156.3x for repeated calls (1.532s → 9.8ms)
+Local timings from the server-mode work were on the order of 1.5s down to about 10ms on a subsequent call; treat that as a single-machine observation, not a guarantee.
 
 Step 2: Install Dependencies
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
