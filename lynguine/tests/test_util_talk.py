@@ -28,6 +28,7 @@ def test_extract_all_with_fields(mocker):
         'ipynb': False,
         'docx': True,
         'notespdf': True,
+        'slidespdf': True,
         'reveal': False,
         'slidesipynb': True,
         'pptx': True
@@ -40,6 +41,7 @@ def test_extract_all_with_fields(mocker):
         'sample_talk.posts.html',
         'sample_talk.docx',
         'sample_talk.notes.pdf',
+        'sample_talk.slides.pdf',
         'sample_talk.slides.ipynb',
         'sample_talk.pptx'
     ]
