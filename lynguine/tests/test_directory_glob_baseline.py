@@ -12,7 +12,12 @@ import yaml
 
 import pandas as pd
 
-from lynguine.access.io import read_directory, read_yaml_directory, update_store_fields
+from lynguine.access.io import (
+    _matches_exclude,
+    read_directory,
+    read_yaml_directory,
+    update_store_fields,
+)
 from lynguine.access.paths import PathEscapeError
 
 
@@ -455,4 +460,78 @@ def test_fields_with_recursive_catalog(tmp_path):
     assert "input.type" not in df.columns
     assert "review" not in df.columns
     assert "review.a" not in df.columns
+
+
+# --- CIP-0018 exclude --------------------------------------------------------
+
+
+def test_matches_exclude_prefix_starstar():
+    assert _matches_exclude("today/_referia.yml", ["today/**"])
+    assert _matches_exclude("today/nested/x.yml", ["today/**"])
+    assert _matches_exclude("today", ["today/**"])
+    assert not _matches_exclude("work/today.yml", ["today/**"])
+    assert not _matches_exclude("applications/a.yml", ["today/**"])
+
+
+def test_exclude_omits_listed_trees_keeps_others(tmp_path):
+    """``exclude: [today/**]`` drops that tree and keeps unlisted nested files."""
+    _write_yml(tmp_path / "work" / "item.yml", {"title": "Work"})
+    _write_yml(tmp_path / "today" / "view.yml", {"title": "Today"})
+    _write_yml(tmp_path / "today" / "nested" / "deep.yml", {"title": "Deep"})
+    _write_yml(tmp_path / "year" / "view.yml", {"title": "Year"})
+
+    df = read_yaml_directory(
+        _yaml_details(
+            str(tmp_path),
+            "**/*.yml",
+            recursive=True,
+            include_start_directory=False,
+            exclude=["today/**"],
+        )
+    )
+
+    titles = sorted(df["title"].tolist())
+    assert titles == ["Work", "Year"]
+
+
+def test_exclude_default_keeps_full_match_set(tmp_path):
+    """Absent exclude leaves CIP-000F discovery unchanged."""
+    _write_yml(tmp_path / "top.yml", {"title": "Top"})
+    _write_yml(tmp_path / "today" / "view.yml", {"title": "Today"})
+
+    df = read_yaml_directory(
+        _yaml_details(str(tmp_path), "**/*.yml", recursive=True)
+    )
+
+    assert sorted(df["title"].tolist()) == ["Today", "Top"]
+
+
+def test_exclude_with_include_start_directory_false(tmp_path):
+    """Start-dir omit stays on ``include_start_directory``; exclude is extra."""
+    _write_yml(tmp_path / "root.yml", {"title": "Root"})
+    _write_yml(tmp_path / "work" / "item.yml", {"title": "Work"})
+    _write_yml(tmp_path / "today" / "view.yml", {"title": "Today"})
+
+    df = read_yaml_directory(
+        _yaml_details(
+            str(tmp_path),
+            "**/*.yml",
+            recursive=True,
+            include_start_directory=False,
+            exclude=["today/**"],
+        )
+    )
+
+    assert sorted(df["title"].tolist()) == ["Work"]
+
+
+def test_exclude_string_is_accepted(tmp_path):
+    _write_yml(tmp_path / "keep.yml", {"title": "Keep"})
+    _write_yml(tmp_path / "skip.tmp.yml", {"title": "Skip"})
+
+    df = read_yaml_directory(
+        _yaml_details(str(tmp_path), "*.yml", exclude="*.tmp.yml")
+    )
+
+    assert df["title"].tolist() == ["Keep"]
 

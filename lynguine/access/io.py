@@ -15,6 +15,7 @@ jail (CIP-000D cluster A).
 import os
 import glob
 import gzip
+import fnmatch
 from contextlib import contextmanager
 from datetime import datetime
 
@@ -858,6 +859,39 @@ def write_bibtex(df, details):
     write_bibtex_file(data_dict, filename)
 
 
+def _relative_posix(path, directory):
+    """Return ``path`` relative to ``directory`` with POSIX separators."""
+    rel = os.path.relpath(os.path.realpath(path), os.path.realpath(directory))
+    return rel.replace("\\", "/")
+
+
+def _matches_exclude(rel_posix, patterns):
+    """True if a POSIX-relative path matches any directory-source exclude glob.
+
+    ``prefix/**`` matches ``prefix`` itself and every descendant. Other
+    patterns use ``fnmatch`` against the relative path (and the basename).
+    """
+    rel = (rel_posix or "").lstrip("./")
+    if not rel or rel == ".":
+        return False
+    for raw in patterns or []:
+        if raw is None:
+            continue
+        pat = str(raw).replace("\\", "/")
+        if not pat:
+            continue
+        if pat.endswith("/**"):
+            prefix = pat[:-3].rstrip("/")
+            if prefix == "":
+                return True
+            if rel == prefix or rel.startswith(prefix + "/"):
+                return True
+            continue
+        if fnmatch.fnmatch(rel, pat) or fnmatch.fnmatch(os.path.basename(rel), pat):
+            return True
+    return False
+
+
 def read_directory(
     details, filereader=None, filereader_args={}, default_glob="*", source=None
 ):
@@ -877,6 +911,12 @@ def read_directory(
     ``True``) controls whether matches whose immediate parent is the source
     ``directory`` itself are kept. Set ``False`` for descendants-only
     discovery (e.g. nested ``**/_referia.yml`` without the file in ``.``).
+
+    Opt-in ``exclude`` (source entry or ``details``, list of glob strings)
+    drops matches whose path relative to the source directory matches any
+    pattern after glob / regexp / ``include_start_directory`` (CIP-0018).
+    ``today/**`` omits that directory and everything under it. Absent or
+    empty ``exclude`` keeps today's match set.
 
     :param details: The details of the directory to be read.
     :type details: dict
@@ -953,6 +993,24 @@ def read_directory(
                     for filename in addfiles
                     if os.path.realpath(os.path.dirname(filename)) != start_dir
                 ]
+            exclude = source.get("exclude", details.get("exclude", []))
+            if exclude in (None, False):
+                exclude = []
+            elif isinstance(exclude, str):
+                exclude = [exclude]
+            if exclude:
+                kept = []
+                dropped = 0
+                for filename in addfiles:
+                    rel = _relative_posix(filename, directory)
+                    if _matches_exclude(rel, exclude):
+                        dropped += 1
+                        continue
+                    kept.append(filename)
+                addfiles = kept
+                log.debug(
+                    f"exclude={list(exclude)} dropped={dropped} kept={len(addfiles)}"
+                )
             if addfiles:
                 confined = [
                     confine_configured_path(filename, details)

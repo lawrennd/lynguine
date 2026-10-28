@@ -460,6 +460,7 @@ source:
     regexp: "^cfg_.*\\.yml$"  # Optional; filter on basename after expand
     recursive: false          # Optional; default false (flat discovery)
     include_start_directory: true  # Optional; false = descendants only
+    exclude: []               # Optional; drop matches relative to directory
     fields:                   # Optional; project mapping keys before normalize
       - title
       - description
@@ -469,7 +470,7 @@ store_fields:                 # Optional; path metadata columns (defaults shown)
   root: sourceRoot
 ```
 
-**Defaults preserve existing behaviour:** omit `recursive` (or set `false`) for flat globs only; omit `fields` for full-document `json_normalize`; omit `include_start_directory` (or set `true`) to keep matches in the source directory itself. The pattern `**` is meaningful only when `recursive: true`. Field projection applies to **mapping-valued** readers (YAML/JSON/etc.); non-mapping payloads warn and yield nulls for the listed fields. Set `include_start_directory: false` to omit files whose immediate parent is the source `directory` (nested matches remain).
+**Defaults preserve existing behaviour:** omit `recursive` (or set `false`) for flat globs only; omit `fields` for full-document `json_normalize`; omit `include_start_directory` (or set `true`) to keep matches in the source directory itself; omit `exclude` to keep the full match set. The pattern `**` is meaningful only when `recursive: true`. Field projection applies to **mapping-valued** readers (YAML/JSON/etc.); non-mapping payloads warn and yield nulls for the listed fields. Set `include_start_directory: false` to omit files whose immediate parent is the source `directory` (nested matches remain). After that filter, `exclude: [today/**, year/**]` drops those relative paths (`today/**` matches the directory itself and every descendant). Inherited relative `filename` **or** `glob` specs bind to `inherit.directory`, so a child under `today/` still discovers from the parent catalog root.
 
 Nested catalog example (opt-in recursive discovery + lean rows):
 

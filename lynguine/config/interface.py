@@ -440,7 +440,9 @@ class Interface(_HConfig):
         """Resolve relative inherited data directories against inherit.directory.
 
         Absolute directories are left unchanged and remain confined at access.
-        Only specs that name a ``filename`` are rewritten.
+        Path-allocating specs (``glob``, or ``filename`` together with ``type``)
+        are rewritten (CIP-0018). ``store_fields`` uses ``filename`` as a
+        column name and is not a path spec.
         """
         inherit_directory = os.path.expandvars(inherit_directory)
         for key in self._inherited_data_keys:
@@ -455,7 +457,8 @@ class Interface(_HConfig):
             return
         if not isinstance(spec, dict):
             return
-        if "filename" in spec:
+        is_path_spec = "glob" in spec or ("filename" in spec and "type" in spec)
+        if is_path_spec:
             directory = spec.get("directory")
             if directory is None or directory == "":
                 spec["directory"] = inherit_directory
