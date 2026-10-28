@@ -22,6 +22,21 @@ sample_details = {
 def test_markdown2html():
     assert markdown2html("# Test") == "<h1>Test</h1>"
 
+
+def test_markdown2html_pipe_table():
+    html = markdown2html(
+        "| Part | Interview blocks |\n"
+        "| --- | --- |\n"
+        "| 1 | community, say-no |\n"
+    )
+    assert "<table>" in html
+    assert "</table>" in html
+    assert "<th>Part</th>" in html
+    assert "<th>Interview blocks</th>" in html
+    assert "<td>1</td>" in html
+    assert "<td>community, say-no</td>" in html
+    assert "<p>" not in html
+
 def test_html2markdown():
     assert html2markdown("<h1>Test</h1>") == "Test\n====\n\n"
 

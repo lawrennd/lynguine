@@ -5,6 +5,13 @@ All notable user-facing changes to lynguine are recorded here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- `markdown2html` (and Liquid `markdownify`) enable Python-Markdown's
+  `tables` extension so GitHub-style pipe tables render as HTML.
+
 ## [0.1.2] — 2026-10-24
 
 Snapshot of the document, access, and confinement work that has been on

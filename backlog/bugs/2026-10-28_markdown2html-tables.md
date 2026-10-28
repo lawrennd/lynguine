@@ -1,7 +1,7 @@
 ---
 id: "2026-10-28_markdown2html-tables"
 title: "markdown2html does not render GitHub-style pipe tables"
-status: "Ready"
+status: "Completed"
 priority: "High"
 created: "2026-10-28"
 last_updated: "2026-10-28"
@@ -54,13 +54,13 @@ therefore not at fault.
 
 ## Acceptance Criteria
 
-- [ ] `markdown2html` enables Python-Markdown's built-in `tables`
+- [x] `markdown2html` enables Python-Markdown's built-in `tables`
       extension.
-- [ ] A GFM pipe table converts to an HTML `<table>` with header and
+- [x] A GFM pipe table converts to an HTML `<table>` with header and
       body cells.
-- [ ] Existing heading conversion still yields `<h1>Test</h1>` for
+- [x] Existing heading conversion still yields `<h1>Test</h1>` for
       `# Test`.
-- [ ] Liquid `markdownify` continues to call `markdown2html` (no parallel
+- [x] Liquid `markdownify` continues to call `markdown2html` (no parallel
       renderer).
 
 ## Implementation Notes
@@ -91,3 +91,7 @@ Add a regression test next to `test_markdown2html` in
 
 Task created after diagnosing that the written-exercise mapping table
 failed to render because `markdown2html` omits `extensions=["tables"]`.
+
+Implementation on `bug-markdown2html-tables`: enable `tables` in
+`markdown2html`, add a pipe-table regression test, record the change
+under `[Unreleased]` in CHANGELOG.
