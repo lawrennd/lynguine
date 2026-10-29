@@ -5,6 +5,20 @@ All notable user-facing changes to lynguine are recorded here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **Inherited glob sources bind to `inherit.directory`** ([CIP-0018](cip/cip0018.md)).
+  Specs that allocate by `glob`, or by `filename` together with `type`, rewrite
+  a missing or relative `directory` against the parent. Absolute directories
+  stay unchanged. `store_fields` is not a path spec (`filename` there is a
+  column name).
+- **Directory `exclude`** ([CIP-0018](cip/cip0018.md)). After glob, `regexp`,
+  and `include_start_directory`, drop matches whose path relative to the
+  source directory matches a listed pattern. `today/**` omits that directory
+  and its descendants. Absent `exclude` keeps today's match set.
+
 ## [0.1.2] — 2026-10-24
 
 Snapshot of the document, access, and confinement work that has been on

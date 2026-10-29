@@ -225,6 +225,158 @@ def test_from_file_inherit_binds_parent_data_directory(tmp_path):
     )
 
 
+def test_from_file_inherit_binds_glob_source_directory(tmp_path):
+    """Inherited glob sources with directory: . resolve under inherit.directory."""
+    from lynguine.config.interface import Interface
+
+    parent_dir = tmp_path / "catalog"
+    child_dir = tmp_path / "today"
+    work = parent_dir / "work"
+    parent_dir.mkdir()
+    child_dir.mkdir()
+    work.mkdir()
+    (work / "item.yml").write_text("title: Nested work\n")
+    (parent_dir / "_lynguine.yml").write_text(
+        "input:\n"
+        "  type: yaml_directory\n"
+        "  index: sourceFilename\n"
+        "  source:\n"
+        "    - directory: .\n"
+        "      glob: '**/*.yml'\n"
+        "      recursive: true\n"
+        "      include_start_directory: false\n"
+        "  fields:\n"
+        "    - title\n"
+    )
+    (child_dir / "_lynguine.yml").write_text(
+        "inherit:\n  directory: ../catalog\n  filename: _lynguine.yml\n"
+    )
+    interface = Interface.from_file(
+        user_file="_lynguine.yml", directory=str(child_dir)
+    )
+    src = interface["input"]["source"][0]
+    assert os.path.realpath(src["directory"]) == os.path.realpath(str(parent_dir))
+
+
+def test_from_flow_reads_inherited_glob_from_parent_dir(tmp_path):
+    """from_flow must discover glob matches from inherit.directory, not the child."""
+    from lynguine.config.interface import Interface
+    from lynguine.assess.data import CustomDataFrame
+
+    parent_dir = tmp_path / "catalog"
+    child_dir = tmp_path / "today"
+    work = parent_dir / "work"
+    parent_dir.mkdir()
+    child_dir.mkdir()
+    work.mkdir()
+    (work / "item.yml").write_text("title: Nested work\n")
+    (parent_dir / "_lynguine.yml").write_text(
+        "input:\n"
+        "  type: yaml_directory\n"
+        "  index: sourceFilename\n"
+        "  source:\n"
+        "    - directory: .\n"
+        "      glob: '**/*.yml'\n"
+        "      recursive: true\n"
+        "      include_start_directory: false\n"
+        "  fields:\n"
+        "    - title\n"
+    )
+    (child_dir / "_lynguine.yml").write_text(
+        "inherit:\n  directory: ../catalog\n  filename: _lynguine.yml\n"
+    )
+    interface = Interface.from_file(
+        user_file="_lynguine.yml", directory=str(child_dir)
+    )
+    cdf = CustomDataFrame.from_flow(interface)
+    frame = cdf._d["input"]
+    assert "item.yml" in list(frame.index)
+    assert frame.loc["item.yml", "title"] == "Nested work"
+
+
+def test_inherited_glob_source_directory_is_relative_to_glob_root(tmp_path, monkeypatch):
+    """store_fields directory stays nested under the glob root, not cwd's last component.
+
+    WebReviewer chdirs to the child before from_flow. extract_root_directory
+    then treated absolute matches as (parent, basename) and truncated
+    ``applications/panel/...`` to ``panel``, which 404'd listing URLs.
+    """
+    from lynguine.config.interface import Interface
+    from lynguine.assess.data import CustomDataFrame
+
+    parent_dir = tmp_path / "catalog"
+    child_dir = tmp_path / "today"
+    nested = parent_dir / "applications" / "panel"
+    parent_dir.mkdir()
+    child_dir.mkdir()
+    nested.mkdir(parents=True)
+    (nested / "item.yml").write_text("title: Nested work\n")
+    (parent_dir / "_lynguine.yml").write_text(
+        "input:\n"
+        "  type: yaml_directory\n"
+        "  index: sourceDirectory\n"
+        "  source:\n"
+        "    - directory: .\n"
+        "      glob: '**/*.yml'\n"
+        "      recursive: true\n"
+        "      include_start_directory: false\n"
+        "  fields:\n"
+        "    - title\n"
+        "  store_fields:\n"
+        "    directory: sourceDirectory\n"
+        "    filename: sourceFile\n"
+        "    root: sourceRoot\n"
+    )
+    (child_dir / "_lynguine.yml").write_text(
+        "inherit:\n  directory: ../catalog\n  filename: _lynguine.yml\n"
+    )
+    monkeypatch.chdir(child_dir)
+    interface = Interface.from_file(
+        user_file="_lynguine.yml", directory=str(child_dir)
+    )
+    cdf = CustomDataFrame.from_flow(interface)
+    frame = cdf._d["input"]
+    assert list(frame.index) == ["applications/panel"]
+    assert frame.loc["applications/panel", "sourceFile"] == "item.yml"
+    assert frame.loc["applications/panel", "title"] == "Nested work"
+
+
+def test_bind_skips_directory_without_filename_or_glob():
+    """Specs that are not path-allocating keep a relative directory."""
+    from lynguine.config.interface import Interface
+
+    spec = {"directory": ".", "type": "notes"}
+    Interface._bind_spec_directory(spec, "/parent")
+    assert spec["directory"] == "."
+
+
+def test_bind_skips_store_fields_filename_mapping():
+    """store_fields.filename is a column name, not a path spec (CIP-0018)."""
+    from lynguine.config.interface import Interface
+
+    spec = {
+        "type": "yaml_directory",
+        "store_fields": {
+            "directory": "sourceDirectory",
+            "filename": "sourceFile",
+            "root": "sourceRoot",
+        },
+        "source": [{"directory": ".", "glob": "**/*.yml"}],
+    }
+    Interface._bind_spec_directory(spec, "/parent")
+    assert spec["store_fields"]["directory"] == "sourceDirectory"
+    assert spec["store_fields"]["filename"] == "sourceFile"
+    assert spec["source"][0]["directory"] == "/parent"
+
+
+def test_bind_leaves_absolute_glob_directory():
+    from lynguine.config.interface import Interface
+
+    spec = {"directory": "/abs/catalog", "glob": "**/*.yml"}
+    Interface._bind_spec_directory(spec, "/parent")
+    assert spec["directory"] == "/abs/catalog"
+
+
 def test_from_flow_reads_inherited_data_under_parent_dir(tmp_path):
     """from_flow must read inherited data files from inherit.directory."""
     from lynguine.config.interface import Interface

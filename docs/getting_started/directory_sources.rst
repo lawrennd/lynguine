@@ -35,6 +35,7 @@ details when omitted per source) accepts:
        regexp: "^cfg_.*\\.yml$"
        recursive: false
        include_start_directory: true
+       exclude: []
        fields:
          - title
          - description
@@ -50,6 +51,13 @@ Defaults preserve existing behaviour:
 * Omit ``fields`` for a full-document ``json_normalize``.
 * Omit ``include_start_directory`` (or set ``true``) to keep matches in
   the source directory itself. Set ``false`` for descendants only.
+* Omit ``exclude`` (or set ``[]``) to keep the full match set. After
+  glob, ``regexp``, and ``include_start_directory``, listed patterns
+  drop matches whose path relative to the source directory matches
+  (``today/**`` omits that directory and its descendants).
+* Inherited configs bind relative ``filename`` **or** ``glob`` specs to
+  ``inherit.directory``, so a child under ``today/`` still discovers from
+  the parent catalog root.
 * Field projection applies to **mapping-valued** readers. Non-mapping
   payloads warn and yield nulls for the listed fields.
 * Path confinement (allowed roots) still applies to every matched path.
