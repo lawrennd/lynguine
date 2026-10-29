@@ -384,13 +384,15 @@ def markdown2html(text):
     """
     Convert markdown to HTML.
 
+    GitHub-style pipe tables are enabled via Python-Markdown's ``tables``
+    extension.
+
     :param text: The markdown text to be converted.
     :type text: str
     :return: The HTML.
     :rtype: str
     """
-    
-    return markdown.markdown(text)
+    return markdown.markdown(text, extensions=["tables"])
 
 def html2markdown(text, **args):
     """

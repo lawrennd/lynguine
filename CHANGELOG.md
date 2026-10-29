@@ -19,6 +19,11 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   source directory matches a listed pattern. `today/**` omits that directory
   and its descendants. Absent `exclude` keeps today's match set.
 
+### Fixed
+
+- `markdown2html` (and Liquid `markdownify`) enable Python-Markdown's
+  `tables` extension so GitHub-style pipe tables render as HTML.
+
 ## [0.1.2] — 2026-10-24
 
 Snapshot of the document, access, and confinement work that has been on
