@@ -22,7 +22,11 @@ from lynguine.access.io import (
     read_markdown_directory,
     bibtex_column_order, bibtex_sort_by
 )
-from lynguine.util.misc import extract_full_filename, extract_root_directory
+from lynguine.util.misc import (
+    extract_full_filename,
+    extract_root_directory,
+    sub_path_environment,
+)
 from lynguine.util.dataframe import reorder_dataframe
 import lynguine.access.io as io_module
 import lynguine.config.context as context
@@ -1592,7 +1596,13 @@ def test_write_read_bibtex(tmpdir):
     write_bibtex(data, details)
     read_data, details = read_bibtex(details)
     assert_frame_equal(read_data, data)
-    
+
+
+def _glob_store_fields(directory):
+    """Match read_directory: sourceRoot is the glob directory, not cwd's last folder."""
+    return sub_path_environment(os.path.realpath(str(directory))), "."
+
+
 def test_write_read_json_directory(tmpdir):
     extension = ".json"
     details = {
@@ -1606,7 +1616,7 @@ def test_write_read_json_directory(tmpdir):
     }
     data = pd.DataFrame(lynguine.util.fake.rows(30))
     for ind in data.index:
-        data.at[ind, "sourceRoot"], data.at[ind, "sourceDirectory"] = extract_root_directory(str(tmpdir))
+        data.at[ind, "sourceRoot"], data.at[ind, "sourceDirectory"] = _glob_store_fields(tmpdir)
         data.at[ind, "sourceFilename"] = data.at[ind, "name"] + extension
     data = data.sort_values(by="sourceFilename").reset_index(drop=True)
     write_json_directory(data, details)
@@ -1627,7 +1637,7 @@ def test_write_read_yaml_directory(tmpdir):
     }
     data = pd.DataFrame(lynguine.util.fake.rows(30))
     for ind in data.index:
-        data.at[ind, "sourceRoot"], data.at[ind, "sourceDirectory"] = extract_root_directory(str(tmpdir))
+        data.at[ind, "sourceRoot"], data.at[ind, "sourceDirectory"] = _glob_store_fields(tmpdir)
         data.at[ind, "sourceFilename"] = data.at[ind, "name"] + extension
     data = data.sort_values(by="sourceFilename").reset_index(drop=True)
     write_yaml_directory(data, details)
@@ -1647,7 +1657,7 @@ def test_write_read_markdown_directory(tmpdir):
     }
     data = pd.DataFrame(lynguine.util.fake.rows(30))
     for ind in data.index:
-        data.at[ind, "sourceRoot"], data.at[ind, "sourceDirectory"] = extract_root_directory(str(tmpdir))
+        data.at[ind, "sourceRoot"], data.at[ind, "sourceDirectory"] = _glob_store_fields(tmpdir)
         data.at[ind, "sourceFilename"] = data.at[ind, "name"] + extension
     data = data.sort_values(by="sourceFilename").reset_index(drop=True)
     write_markdown_directory(data, details)

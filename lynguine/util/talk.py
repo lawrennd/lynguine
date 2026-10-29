@@ -54,6 +54,8 @@ def extract_all(filename, user_file=["_config.yml"]):
         list_files += [base + '.docx']
     if ny.header_field('notespdf', fields, user_file):
         list_files += [base + '.notes.pdf']
+    if ny.header_field('slidespdf', fields, user_file):
+        list_files += [base + '.slides.pdf']
     if ny.header_field('reveal', fields, user_file):
         list_files += [base + '.slides.html']
     if ny.header_field('slidesipynb', fields, user_file):
