@@ -294,6 +294,53 @@ def test_from_flow_reads_inherited_glob_from_parent_dir(tmp_path):
     assert frame.loc["item.yml", "title"] == "Nested work"
 
 
+def test_inherited_glob_source_directory_is_relative_to_glob_root(tmp_path, monkeypatch):
+    """store_fields directory stays nested under the glob root, not cwd's last component.
+
+    WebReviewer chdirs to the child before from_flow. extract_root_directory
+    then treated absolute matches as (parent, basename) and truncated
+    ``applications/panel/...`` to ``panel``, which 404'd listing URLs.
+    """
+    from lynguine.config.interface import Interface
+    from lynguine.assess.data import CustomDataFrame
+
+    parent_dir = tmp_path / "catalog"
+    child_dir = tmp_path / "today"
+    nested = parent_dir / "applications" / "panel"
+    parent_dir.mkdir()
+    child_dir.mkdir()
+    nested.mkdir(parents=True)
+    (nested / "item.yml").write_text("title: Nested work\n")
+    (parent_dir / "_lynguine.yml").write_text(
+        "input:\n"
+        "  type: yaml_directory\n"
+        "  index: sourceDirectory\n"
+        "  source:\n"
+        "    - directory: .\n"
+        "      glob: '**/*.yml'\n"
+        "      recursive: true\n"
+        "      include_start_directory: false\n"
+        "  fields:\n"
+        "    - title\n"
+        "  store_fields:\n"
+        "    directory: sourceDirectory\n"
+        "    filename: sourceFile\n"
+        "    root: sourceRoot\n"
+    )
+    (child_dir / "_lynguine.yml").write_text(
+        "inherit:\n  directory: ../catalog\n  filename: _lynguine.yml\n"
+    )
+    monkeypatch.chdir(child_dir)
+    interface = Interface.from_file(
+        user_file="_lynguine.yml", directory=str(child_dir)
+    )
+    cdf = CustomDataFrame.from_flow(interface)
+    frame = cdf._d["input"]
+    assert list(frame.index) == ["applications/panel"]
+    assert frame.loc["applications/panel", "sourceFile"] == "item.yml"
+    assert frame.loc["applications/panel", "title"] == "Nested work"
+
+
 def test_bind_skips_directory_without_filename_or_glob():
     """Specs that are not path-allocating keep a relative directory."""
     from lynguine.config.interface import Interface

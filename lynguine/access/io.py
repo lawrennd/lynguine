@@ -43,6 +43,7 @@ from ..util.misc import (
     remove_nan,
     reorder_dictionary,
     prompt_stdin,
+    sub_path_environment,
 )
 from .paths import confine_configured_path
 from ..util.fake import Generate
@@ -865,6 +866,26 @@ def _relative_posix(path, directory):
     return rel.replace("\\", "/")
 
 
+def _store_path_fields(filename, source_directory=None):
+    """Return ``(root, directory, basename)`` for directory-source store_fields.
+
+    When ``source_directory`` is the glob root, the directory field is
+    relative to that root even if cwd is a child view (CIP-0018 inherit
+    bind). ``extract_root_directory`` uses cwd as a prefix and otherwise
+    keeps only the last path component, which truncated catalog
+    ``configPath`` values and 404'd listing links.
+    """
+    split_path = os.path.split(filename)
+    if source_directory:
+        rel = _relative_posix(split_path[0], source_directory)
+        if rel in (".", ""):
+            rel = "."
+        root = sub_path_environment(os.path.realpath(source_directory))
+        return root, rel, split_path[1]
+    root, direc = extract_root_directory(split_path[0])
+    return root, direc, split_path[1]
+
+
 def _matches_exclude(rel_posix, patterns):
     """True if a POSIX-relative path matches any directory-source exclude glob.
 
@@ -1016,20 +1037,20 @@ def read_directory(
                     confine_configured_path(filename, details)
                     for filename in addfiles
                 ]
-                batches.append((confined, fields))
+                batches.append((confined, fields, directory))
         if len(batches) == 0:
             log.warning(f'No files in "{sources}".')
     else:
         log.warning(f'No source in "{details}".')
 
-    all_files = [filename for files, _fields in batches for filename in files]
+    all_files = [filename for files, _fields, _directory in batches for filename in files]
     if len(all_files) != len(set(all_files)):
         errmsg = "There are repeated files listed in the file list."
         log.error(errmsg)
         raise ValueError(errmsg)
 
     frames = []
-    for filelist, fields in batches:
+    for filelist, fields, directory in batches:
         frames.append(
             read_files(
                 filelist,
@@ -1037,6 +1058,7 @@ def read_directory(
                 filereader,
                 filereader_args,
                 fields=fields,
+                source_directory=directory,
             )
         )
     if not frames:
@@ -1077,7 +1099,12 @@ def _project_mapping_fields(payload, fields, filename):
 
 
 def read_files(
-    filelist, store_fields=None, filereader=None, filereader_args=None, fields=None
+    filelist,
+    store_fields=None,
+    filereader=None,
+    filereader_args=None,
+    fields=None,
+    source_directory=None,
 ):
     """
     Read files from a given list.
@@ -1099,6 +1126,9 @@ def read_files(
     :type filereader_args: dict
     :param fields: Optional list of top-level keys to keep from each mapping.
     :type fields: list or None
+    :param source_directory: Glob root used to compute ``sourceDirectory``
+        relative to the catalog, not cwd (CIP-0018).
+    :type source_directory: str or None
     :return: The data read from the files.
     :rtype: pandas.DataFrame
     """
@@ -1135,8 +1165,7 @@ def read_files(
         data.append(payload)
 
         # Add the root location, directory and filename to the data.
-        split_path = os.path.split(filename)
-        root, direc = extract_root_directory(split_path[0])
+        root, direc, basename = _store_path_fields(filename, source_directory)
         if root_field in data[-1]:
             raise ValueError(
                 f'The field "{root_field}" is already in the data and is registered for setting as the root field.'
@@ -1151,7 +1180,7 @@ def read_files(
             raise ValueError(
                 f'The field "{filename_field}" is already in the data and is registered for setting as the filename field.'
             )
-        data[-1][filename_field] = split_path[1]
+        data[-1][filename_field] = basename
     return pd.json_normalize(data)
 
 
