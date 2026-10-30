@@ -1,7 +1,7 @@
 ---
 id: "2026-10-30_document-form-fields-leverhulme-vp-v1"
 title: "form_fields labelled-section path + labeled_kv_form.v1"
-status: "In Progress"
+status: "Completed"
 priority: "High"
 created: "2026-10-30"
 last_updated: "2026-10-30"
@@ -49,7 +49,7 @@ YAML params so later field maps can live in the application config.
 - [x] Packaged YAML `labeled_kv_form.v1` auto-registers
 - [x] Synthetic fixture + tests; auto recogniser distinguishes Panel vs labelled-kv
 - [x] Strategy id and referia extract args contain no funder name
-- [ ] Referia preliminary review extracts host/visitor identity only
+- [x] Referia preliminary review extracts host/visitor identity only
 
 ## Implementation Notes
 
@@ -71,3 +71,9 @@ YAML params so later field maps can live in the application config.
 Engine path, YAML form type, synthetic builder, and tests added. Referia
 review uses `labeled_kv_form.v1`. Identity extract on the real PDF still
 to confirm.
+
+### 2026-10-30 (later)
+
+Confirmed `labeled_kv_form.v1` against the OneDrive preliminary PDF: host
+and visitor identity fields populate; programme body is not in the
+extracted record. Task complete.
