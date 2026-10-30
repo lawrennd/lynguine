@@ -77,6 +77,10 @@ class PluginImportError(ValueError):
     """Raised when a ``plugins:`` module or entry point fails to load."""
 
 
+class MissingIOCredentialError(ValueError):
+    """Raised when a plugin type needs ``credential:`` and the item omitted it."""
+
+
 @dataclass(frozen=True)
 class IOType:
     """Registered tabular reader, and optional writer, for one ``type:``."""
@@ -84,6 +88,7 @@ class IOType:
     name: str
     read: Callable[[dict], pd.DataFrame]
     write: Callable[[pd.DataFrame, dict], None] | None = None
+    credential_type: str | None = None
 
 
 _REGISTRY: dict[str, IOType] = {}
@@ -94,11 +99,19 @@ def is_reserved_io_type(name: str) -> bool:
     return name in RESERVED_IO_TYPES
 
 
-def register_io_type(name: str, *, read, write=None) -> IOType:
+def register_io_type(
+    name: str, *, read, write=None, credential_type: str | None = None
+) -> IOType:
     """Register a tabular IO type.
 
     Replaces any prior plugin entry with the same *name*. Builtin names
     in ``RESERVED_IO_TYPES`` cannot be registered.
+
+    *credential_type* is a CIP-0005 validator kind (for example
+    ``google_oauth`` or ``trello_api``). When set, lynguine fetches the
+    secret named by the item's ``credential:`` key and passes the payload
+    to the plugin as ``details["credential_value"]``. The plugin does not
+    call ``CredentialManager`` itself.
     """
     if not isinstance(name, str) or not name.strip():
         raise ValueError("IO type name must be a non-empty string")
@@ -111,7 +124,15 @@ def register_io_type(name: str, *, read, write=None) -> IOType:
         raise TypeError(f"read for type {name!r} must be callable")
     if write is not None and not callable(write):
         raise TypeError(f"write for type {name!r} must be callable or None")
-    spec = IOType(name=name, read=read, write=write)
+    if credential_type is not None:
+        if not isinstance(credential_type, str) or not credential_type.strip():
+            raise ValueError(
+                f"credential_type for type {name!r} must be a non-empty string or None"
+            )
+        credential_type = credential_type.strip()
+    spec = IOType(
+        name=name, read=read, write=write, credential_type=credential_type
+    )
     _REGISTRY[name] = spec
     return spec
 
@@ -240,13 +261,53 @@ def _as_dataframe(df, ftype: str) -> pd.DataFrame:
     )
 
 
+def bind_plugin_credentials(details, spec: IOType, *, operation: str) -> dict:
+    """Resolve CIP-0005 secrets for a plugin that declared ``credential_type``.
+
+    YAML ``credential:`` names the stored key. The registered
+    ``credential_type`` is the validator kind. Returns a shallow copy of
+    *details* with ``credential_value`` set to the stored payload (the
+    ``value`` field when present). Types with no ``credential_type`` are
+    returned unchanged.
+    """
+    if not spec.credential_type:
+        return details
+    key = details.get("credential") if isinstance(details, dict) else None
+    if not isinstance(key, str) or not key.strip():
+        raise MissingIOCredentialError(
+            f'Type "{spec.name}" requires credential: <key> '
+            f"(credential type {spec.credential_type!r})"
+        )
+    key = key.strip()
+    from ..security.access_control import AccessLevel, get_access_controller
+    from ..security.credentials import get_credential_manager
+
+    level = AccessLevel.WRITE if operation == "write" else AccessLevel.READ
+    get_access_controller().authorize_access(
+        credential_key=key,
+        operation=level,
+        context=f"io_plugin_{spec.name}_{operation}",
+    )
+    credential = get_credential_manager().get_credential(
+        key, credential_type=spec.credential_type
+    )
+    if isinstance(credential, dict) and "value" in credential:
+        payload = credential["value"]
+    else:
+        payload = credential
+    bound = dict(details)
+    bound["credential_value"] = payload
+    return bound
+
+
 def try_read_registered_type(details, ftype: str) -> pd.DataFrame | None:
     """Read via a plugin if *ftype* is registered. None means use builtins."""
     load_plugins(plugins_from_mapping(details), needed_type=ftype)
     spec = resolve_registered_io_type(ftype)
     if spec is None:
         return None
-    return _as_dataframe(spec.read(details), ftype)
+    bound = bind_plugin_credentials(details, spec, operation="read")
+    return _as_dataframe(spec.read(bound), ftype)
 
 
 def try_write_registered_type(df: pd.DataFrame, details, ftype: str) -> bool:
@@ -262,5 +323,6 @@ def try_write_registered_type(df: pd.DataFrame, details, ftype: str) -> bool:
         return False
     if spec.write is None or not details.get("write"):
         raise ReadOnlyIOTypeError(f'Type "{ftype}" is read-only')
-    spec.write(df, details)
+    bound = bind_plugin_credentials(details, spec, operation="write")
+    spec.write(df, bound)
     return True

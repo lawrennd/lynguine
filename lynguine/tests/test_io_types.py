@@ -9,6 +9,7 @@ from pandas.testing import assert_frame_equal
 
 from lynguine.access.io import read_data, write_data
 from lynguine.access.io_types import (
+    MissingIOCredentialError,
     PluginImportError,
     ReadOnlyIOTypeError,
     ReservedIOTypeError,
@@ -253,3 +254,56 @@ def test_unknown_message_with_empty_registry(empty_io_registry):
     msg = unknown_io_type_message("read_data", "trello")
     assert "trello" in msg
     assert "No plugin types are registered" in msg
+
+
+def test_declared_credential_type_is_fetched_by_lynguine(
+    empty_io_registry, mocker
+):
+    seen = {}
+
+    def _read(details):
+        seen["value"] = details.get("credential_value")
+        seen["key"] = details.get("credential")
+        return pd.DataFrame([{"id": 1}])
+
+    register_io_type("trello", read=_read, credential_type="trello_api")
+    mock_mgr = mocker.Mock()
+    mock_mgr.get_credential.return_value = {
+        "value": {"api_key": "k", "token": "t"}
+    }
+    mocker.patch(
+        "lynguine.security.credentials.get_credential_manager",
+        return_value=mock_mgr,
+    )
+    mock_ac = mocker.Mock()
+    mocker.patch(
+        "lynguine.security.access_control.get_access_controller",
+        return_value=mock_ac,
+    )
+
+    df, details = read_data(
+        {"type": "trello", "credential": "my_trello"}
+    )
+    assert list(df["id"]) == [1]
+    mock_mgr.get_credential.assert_called_once_with(
+        "my_trello", credential_type="trello_api"
+    )
+    assert seen["value"] == {"api_key": "k", "token": "t"}
+    assert seen["key"] == "my_trello"
+    assert "credential_value" not in details
+
+
+def test_credential_type_without_key_raises(empty_io_registry):
+    register_io_type("trello", read=_read_mem, credential_type="trello_api")
+    with pytest.raises(MissingIOCredentialError, match="credential:"):
+        read_data({"type": "trello"})
+
+
+def test_no_credential_type_does_not_fetch(empty_io_registry, mocker):
+    fetch = mocker.patch(
+        "lynguine.security.credentials.get_credential_manager"
+    )
+    register_io_type("memtable", read=_read_mem)
+    df, _ = read_data({"type": "memtable"})
+    assert list(df["id"]) == [1]
+    fetch.assert_not_called()

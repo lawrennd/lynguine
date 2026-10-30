@@ -47,6 +47,7 @@ from ..util.misc import (
 )
 from .paths import confine_configured_path
 from .io_types import (  # noqa: F401 — re-exported CIP-0019 plugin API
+    MissingIOCredentialError,
     PluginImportError,
     ReadOnlyIOTypeError,
     ReservedIOTypeError,
