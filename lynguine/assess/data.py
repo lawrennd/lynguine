@@ -1135,6 +1135,10 @@ class DataObject:
             raise ValueError("Interface must be a dictionary or of type Interface.")
         default_joins = "outer"
         selector = None
+
+        from ..access.io_types import load_plugins, plugins_from_mapping
+
+        load_plugins(plugins_from_mapping(interface))
                 
         # Initialize compute from the interface so it can be used below.
         compute = cls.compute_from_flow(interface)

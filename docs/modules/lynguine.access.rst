@@ -14,6 +14,14 @@ IO Module
    :undoc-members:
    :show-inheritance:
 
+IO Types (CIP-0019)
+-------------------
+
+.. automodule:: lynguine.access.io_types
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 Download Module
 ---------------
 
