@@ -46,6 +46,20 @@ from ..util.misc import (
     sub_path_environment,
 )
 from .paths import confine_configured_path
+from .io_types import (  # noqa: F401 — re-exported CIP-0019 plugin API
+    PluginImportError,
+    ReadOnlyIOTypeError,
+    ReservedIOTypeError,
+    UnknownIOTypeError,
+    get_io_type,
+    list_io_types,
+    load_plugins,
+    plugins_from_mapping,
+    register_io_type,
+    try_read_registered_type,
+    try_write_registered_type,
+    unknown_io_type_message,
+)
 from ..util.fake import Generate
 from ..assess.compute import Compute
 from ..config.context import Context
@@ -3145,6 +3159,10 @@ def read_data(details):
     else:
         raise ValueError(f'Field "type" missing in data source details for read_data, details are given as "{", ".join(details)}".')
 
+    plugin_df = try_read_registered_type(details, ftype)
+    if plugin_df is not None:
+        return finalize_data(plugin_df, details)
+
     if ftype == "auto":
         df = read_auto(details)
     elif ftype == "stack":
@@ -3215,7 +3233,7 @@ def read_data(details):
     elif ftype == "fake":
         df = read_fake(details)
     else:
-        errmsg = f'Unknown type "{ftype}" in read_data.'
+        errmsg = unknown_io_type_message("read_data", ftype)
         log.error(errmsg)        
         raise ValueError(errmsg)
     return finalize_data(df, details)
@@ -3699,6 +3717,9 @@ def write_data(df, details):
     df = omit_nested_keys_frame(df, details)
     df = omit_columns_frame(df, details)
 
+    if try_write_registered_type(df, details, ftype):
+        return
+
     if ftype == "excel":
         write_excel(df, details)
     elif ftype == "gsheet":
@@ -3722,7 +3743,7 @@ def write_data(df, details):
     elif ftype == "meta_directory":
         write_meta_directory(df, details)
     else:
-        errmsg = f'Unknown type "{ftype}" in write_data.'
+        errmsg = unknown_io_type_message("write_data", ftype)
         log.error(errmsg)
         raise ValueError(errmsg)
 

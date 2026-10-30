@@ -1,7 +1,7 @@
 ---
 id: "0010"
 title: "Third-party tabular IO types without growing lynguine"
-status: "Proposed"
+status: "Implemented"
 priority: "High"
 created: "2026-10-30"
 last_updated: "2026-10-30"
@@ -63,3 +63,8 @@ Zero-plugin proof path remains valid: export Trello/mail to YAML or CSV and use 
 ### 2026-10-30
 
 Requirement created (Proposed). Paired with CIP-0019.
+
+CIP-0019 implementation started on `cip0019-pluggable-io-types`. Status
+moved to In Progress.
+
+Hook, tests, and docs complete. Status Implemented pending review.

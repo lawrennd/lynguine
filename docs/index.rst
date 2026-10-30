@@ -31,6 +31,7 @@ Getting Started
    getting_started/column_management
    getting_started/stacking
    getting_started/directory_sources
+   getting_started/io_plugins
    getting_started/examples
    compute_framework
 

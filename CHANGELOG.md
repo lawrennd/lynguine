@@ -9,6 +9,11 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- **Pluggable tabular IO types** ([CIP-0019](cip/cip0019.md)).
+  `register_io_type` lets packages outside lynguine implement `type:` for
+  live stores. Interface `plugins:` imports those modules before
+  `from_flow` reads. Writes stay read-only unless the type registers a
+  writer and the item sets `write: true`. Builtin types are unchanged.
 - **Inherited glob sources bind to `inherit.directory`** ([CIP-0018](cip/cip0018.md)).
   Specs that allocate by `glob`, or by `filename` together with `type`, rewrite
   a missing or relative `directory` against the parent. Absolute directories
