@@ -26,11 +26,14 @@ from lynguine.access.documents.engines.form_fields import (
     _norm_person_case,
     _parse_start_date,
     _to_iso_date,
+    extract_fields,
+    parse_colon_header,
     parse_contact,
     parse_header,
+    parse_labeled_section,
     parse_name_from_page0,
 )
-from lynguine.access.documents.model import Document, TextLayer
+from lynguine.access.documents.model import Document, Page, TextLayer
 from lynguine.access.documents.recogniser import _yaml_recogniser_boost
 from lynguine.access.documents.strategies.loader import (
     StrategySpec,
@@ -41,6 +44,7 @@ from lynguine.access.documents.strategies.loader import (
 from lynguine.assess.compute import Compute
 from lynguine.tests.fixtures.documents.builders import (
     make_cam_panel_application,
+    make_labeled_kv_form,
     make_scan_like,
 )
 
@@ -530,3 +534,212 @@ def test_form_fields_engine_empty_document():
     assert len(units) == 1
     assert units[0].extras["family"] is None
     assert units[0].extras["email"] is None
+
+
+def test_labeled_kv_yaml_strategy_registered():
+    assert "labeled_kv_form.v1" in list_strategies(aspect="form_fields")
+    strat = get_strategy("labeled_kv_form.v1")
+    assert strat.engine == "form_fields"
+    assert "form_fields" in strat.aspects
+    assert strat.params.get("layout") == "labeled_kv"
+
+
+def test_segment_labeled_kv_identity(tmp_path):
+    pdf = tmp_path / "kv.pdf"
+    make_labeled_kv_form(pdf)
+    fields = extract_form_fields(
+        str(pdf),
+        strategy="labeled_kv_form.v1",
+        root=str(tmp_path),
+    )
+    assert fields["given"] == "Ada"
+    assert fields["family"] == "Host"
+    assert fields["title"] == "Professor"
+    assert fields["email"] == "ada.host@example.ac.uk"
+    assert fields["application_id"] == "VP2-2099-001"
+    assert fields["project_title"] == "Visiting Professorship - Dr Visitor One"
+    assert fields["submission_date"] == "2026-09-01"
+    assert "£13,999" in (fields["total_requested"] or "")
+    assert fields["visitor_title"] == "Dr"
+    assert fields["visitor_given"] == "Visitor"
+    assert fields["visitor_family"] == "One"
+    assert fields["visitor_email"] == "visitor.one@example.edu"
+    assert fields["visitor_honours"] is None
+    assert fields["visitor_gender"] is None
+    assert fields["visitor_date_of_birth"] == "01/01/2099"
+    assert fields["visitor_address"] is None
+    assert fields["email"] == "ada.host@example.ac.uk"
+    assert fields["host_telephone"] == "+44 20 0000 0000"
+    assert "Electrical" in (fields["visitor_department"] or "")
+    assert "Computer and Energy" in (fields["visitor_department"] or "")
+    assert fields["duration_months"] == "3"
+    assert fields["visit_count"] == "1"
+    assert fields.get("usn") is None
+    assert "application_number" not in fields
+    for value in fields.values():
+        if isinstance(value, str):
+            assert "CONFIDENTIAL_PHRASE_SHOULD_NOT_LEAK" not in value
+    units = segment_pdf(
+        str(pdf),
+        strategy="labeled_kv_form.v1",
+        aspect="form_fields",
+        allowed_roots=[str(tmp_path)],
+    )
+    assert units[0].text.startswith("Host Ada")
+    assert "VP2-2099-001" in units[0].text
+
+
+def test_recogniser_auto_picks_labeled_kv_form(tmp_path):
+    pdf = tmp_path / "kv.pdf"
+    make_labeled_kv_form(pdf)
+    doc = read_pdf(str(pdf), allowed_roots=[str(tmp_path)])
+    choice = choose_strategy(doc, aspect="form_fields", strategy="auto")
+    assert choice.strategy_id == "labeled_kv_form.v1"
+    assert choice.score > 0
+    units = segment_document(doc, strategy="auto", aspect="form_fields")
+    assert units[0].segment_strategy == "labeled_kv_form.v1"
+
+
+def test_extract_fields_labeled_path_skips_cambridge():
+    text = "\n".join(
+        [
+            "Visiting Professorship",
+            "ID/Ref: VP2-2099-001",
+            "USN: 12345678",
+            "Host Applicant Details",
+            "First Name",
+            "Ada",
+            "Last Name",
+            "Host",
+            "Email Address",
+            "ada.host@example.ac.uk",
+            "Visiting Professor Details",
+        ]
+    )
+    page = Page(
+        index=0,
+        width=595.0,
+        height=842.0,
+        text=text,
+        word_count=len(text.split()),
+    )
+    doc = Document(
+        path="x.pdf",
+        reader="pdf",
+        page_count=1,
+        total_words=page.word_count,
+        words_per_page=float(page.word_count),
+        text_layer=TextLayer.PRESENT,
+        pages=(page,),
+    )
+    fields = extract_fields(
+        doc,
+        {
+            "colon_header": {"application_id": "ID/Ref:"},
+            "sections": [
+                {
+                    "start": r"^Host Applicant Details\s*$",
+                    "end": [r"^Visiting Professor Details\s*$"],
+                    "fields": {
+                        "given": "First Name",
+                        "family": "Last Name",
+                        "email": "Email Address",
+                    },
+                }
+            ],
+        },
+    )
+    assert fields["application_id"] == "VP2-2099-001"
+    assert fields["given"] == "Ada"
+    assert fields["family"] == "Host"
+    assert fields["email"] == "ada.host@example.ac.uk"
+    assert "usn" not in fields
+    assert "application_number" not in fields
+
+
+def test_parse_colon_header_and_empty_labeled_fields():
+    header = parse_colon_header(
+        "Applicant: Professor Ada Host\nID/Ref: VP2-2099-001\n",
+        {"colon_header": {"applicant": "Applicant:", "application_id": "ID/Ref:"}},
+    )
+    assert header["applicant"] == "Professor Ada Host"
+    assert header["application_id"] == "VP2-2099-001"
+    empty = parse_labeled_section(
+        "Host Applicant Details\nHonours\nGender\nInstitution\nExample U\n",
+        {},
+        start=r"^Host Applicant Details\s*$",
+        end=None,
+        field_map={
+            "visitor_honours": "Honours",
+            "visitor_gender": "Gender",
+            "visitor_institution": "Institution",
+        },
+    )
+    assert empty["visitor_honours"] is None
+    assert empty["visitor_gender"] is None
+    assert empty["visitor_institution"] == "Example U"
+    scalar = parse_labeled_section(
+        "Programme Summary\nNumber of visits\n1\nPlease add an entry for each planned visit.\n",
+        {},
+        start=r"^Programme Summary\s*$",
+        end=None,
+        field_map={"visit_count": "Number of visits"},
+        join_values=False,
+    )
+    assert scalar["visit_count"] == "1"
+
+
+def test_layout_flag_skips_cambridge_without_maps():
+    text = "USN: 12345678\nFamily, Title Given\n"
+    page = Page(
+        index=0,
+        width=595.0,
+        height=842.0,
+        text=text,
+        word_count=len(text.split()),
+    )
+    doc = Document(
+        path="x.pdf",
+        reader="pdf",
+        page_count=1,
+        total_words=page.word_count,
+        words_per_page=float(page.word_count),
+        text_layer=TextLayer.PRESENT,
+        pages=(page,),
+    )
+    fields = extract_fields(doc, {"layout": "labeled_kv"})
+    assert "usn" not in fields
+    assert "application_number" not in fields
+
+
+def test_yaml_strategy_overlays_flow_params():
+    spec = StrategySpec(
+        id="tmp.overlay.v1",
+        aspects=("form_fields",),
+        engine="form_fields",
+        grain="one_record_per_document",
+        recogniser={},
+        params={"layout": "labeled_kv"},
+        source_path="tmp.yml",
+    )
+    text = "ID/Ref: VP2-2099-001\n"
+    page = Page(
+        index=0,
+        width=595.0,
+        height=842.0,
+        text=text,
+        word_count=len(text.split()),
+    )
+    doc = Document(
+        path="x.pdf",
+        reader="pdf",
+        page_count=1,
+        total_words=page.word_count,
+        words_per_page=float(page.word_count),
+        text_layer=TextLayer.PRESENT,
+        pages=(page,),
+    )
+    units = YamlStrategy(spec).segment(
+        doc, colon_header={"application_id": "ID/Ref:"}
+    )
+    assert units[0].extras["application_id"] == "VP2-2099-001"

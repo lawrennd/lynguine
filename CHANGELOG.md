@@ -18,6 +18,13 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   and `include_start_directory`, drop matches whose path relative to the
   source directory matches a listed pattern. `today/**` omits that directory
   and its descendants. Absent `exclude` keeps today's match set.
+- **Labelled two-column form extraction** ([CIP-0013](cip/cip0013.md)).
+  `form_fields` takes `layout: labeled_kv` (colon headers and consecutive
+  label/value lines) and ships form type `labeled_kv_form.v1`. Strategy ids
+  name the layout, not a funder. Flow kwargs overlay packaged YAML params.
+- **Packed Recollective chatbot turns** ([CIP-0013](cip/cip0013.md)).
+  `docx_chatbot.v1` splits a single paragraph that contains newline-separated
+  bot/participant turns, and skips private-comment blocks.
 
 ### Fixed
 

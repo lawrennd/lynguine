@@ -17,10 +17,25 @@ TRANSCRIPT_RE = re.compile(r"^\s*Conversation Transcript\s*:?\s*$", re.I)
 PARTICIPANT_HEADING_RE = re.compile(r"^\s*Participant\s+(\d{3,})\s*$", re.I)
 PARTICIPANT_TURN_RE = re.compile(r"^\s*Participant\s+(\d{3,})\s*:\s*(.*)$", re.I | re.S)
 TASK_RE = re.compile(r"^\s*(Task\s+\d+\s*:.*|Activity\s*:.*)$", re.I)
+PRIVATE_RE = re.compile(r"^\s*Private Comments\b", re.I)
 
 
 def _norm(text: str) -> str:
     return re.sub(r"\s+", " ", text.replace("\xa0", " ")).strip()
+
+
+def _transcript_parts(raw: str) -> list[str]:
+    """Split a Recollective conversation blob into bot / participant turns.
+
+    Exports often pack one conversation into a single paragraph with a
+    newline per turn (no blank lines). Flattening first would hide
+    ``Participant N:`` answers after the opening bot greeting.
+    """
+    lines = [ln.strip() for ln in raw.replace("\xa0", " ").splitlines() if ln.strip()]
+    if len(lines) > 1:
+        return lines
+    blocks = [b.strip() for b in re.split(r"\n\s*\n+", raw) if b.strip()]
+    return blocks or [_norm(raw)]
 
 
 def _paragraphs(document: Document) -> list[str]:
@@ -34,6 +49,7 @@ class DocxChatbotV1:
     def segment(self, document: Document, **_params) -> list[Unit]:
         paras = _paragraphs(document)
         stem = Path(document.path).name
+        min_unit_words = int(_params["min_unit_words"]) if _params.get("min_unit_words") not in (None, "") else 0
         units: list[Unit] = []
         pid: str | None = None
         state = "outside"
@@ -59,33 +75,39 @@ class DocxChatbotV1:
                 continue
             if state != "transcript":
                 continue
-            # Split multi-turn paragraphs on blank-line style (already separate paras)
-            pm = PARTICIPANT_TURN_RE.match(text)
-            if pm:
-                answer = _norm(pm.group(2))
-                if not answer:
+            if PRIVATE_RE.match(text):
+                continue
+            for part in _transcript_parts(raw):
+                if PRIVATE_RE.match(part):
                     continue
-                n += 1
-                units.append(
-                    Unit(
-                        unit_id=f"{stem}::{pid}::t{n:03d}",
-                        text=answer,
-                        segment_strategy=self.id,
-                        aspect="dialogue_units",
-                        chunk_index=n - 1,
-                        word_count=len(answer.split()),
-                        chunking_method="chatbot_answer",
-                        was_truncated=False,
-                        source_path=document.path,
-                        extras={
-                            "format": "chatbot",
-                            "participant_id": pid,
-                            "context": last_q,
-                            "extract_text": answer,
-                        },
+                part_n = _norm(part)
+                pm = PARTICIPANT_TURN_RE.match(part_n)
+                if pm:
+                    answer = _norm(pm.group(2))
+                    if not answer:
+                        continue
+                    if min_unit_words and len(answer.split()) < min_unit_words:
+                        continue
+                    n += 1
+                    units.append(
+                        Unit(
+                            unit_id=f"{stem}::{pid}::t{n:03d}",
+                            text=answer,
+                            segment_strategy=self.id,
+                            aspect="dialogue_units",
+                            chunk_index=n - 1,
+                            word_count=len(answer.split()),
+                            chunking_method="chatbot_answer",
+                            was_truncated=False,
+                            source_path=document.path,
+                            extras={
+                                "format": "chatbot",
+                                "participant_id": pid,
+                                "context": last_q,
+                                "extract_text": answer,
+                            },
+                        )
                     )
-                )
-            else:
-                # Bot turn
-                last_q = text
+                else:
+                    last_q = part_n
         return units

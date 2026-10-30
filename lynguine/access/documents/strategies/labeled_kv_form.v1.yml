@@ -1,0 +1,75 @@
+# Form type: consecutive-line labelled grant PDFs (label, then value).
+# Colon headers on one line; two-column sections as successive lines.
+# Field maps here are the first catalogued instance of this layout;
+# applications may overlay params later. Synthetic fixtures only —
+# do not commit real applicant PDFs/PII.
+id: labeled_kv_form.v1
+aspects:
+  - form_fields
+engine: form_fields
+grain: one_record_per_document
+recogniser:
+  boost_when_page0_matches:
+    - "ID/Ref:"
+    - "Host Applicant Details"
+  boost_when_page0_matches_any:
+    - "Applicant:"
+    - "Project Title:"
+    - "Total Requested:"
+params:
+  layout: labeled_kv
+  month_aliases:
+    september: Sep
+  date_fields:
+    - submission_date
+  title_case_fields:
+    - given
+    - family
+    - visitor_given
+    - visitor_family
+  colon_header:
+    applicant: "Applicant:"
+    application_id: "ID/Ref:"
+    project_title: "Project Title:"
+    submission_date: "Submission Date:"
+    total_requested: "Total Requested:"
+  sections:
+    - start: "^Host Applicant Details\\s*$"
+      end:
+        - "^Visiting Professor Details\\s*$"
+        - "^Visiting Professor CV\\s*$"
+      fields:
+        title: Title
+        given: First Name
+        family: Last Name
+        host_institution: Institution
+        host_department: Department
+        host_position: Position
+        host_address: Address
+        email: Email Address
+        host_telephone: "Telephone No."
+    - start: "^Visiting Professor Details\\s*$"
+      end:
+        - "^Visiting Professor CV\\s*$"
+        - "^Referees\\s*$"
+        - "^Programme Summary\\s*$"
+      fields:
+        visitor_title: Title
+        visitor_given: First Name
+        visitor_family: Last Name
+        visitor_honours: Honours
+        visitor_gender: Gender
+        visitor_date_of_birth: Date of Birth
+        visitor_institution: Institution
+        visitor_address: Address
+        visitor_department: Department
+        visitor_telephone: "Telephone No."
+        visitor_email: Email Address
+    - start: "^Programme Summary\\s*$"
+      end:
+        - "^Programme Outline\\s*$"
+        - "^Programme Detailed Description\\s*$"
+      join_values: false
+      fields:
+        duration_months: "Total number of months"
+        visit_count: "Number of visits"

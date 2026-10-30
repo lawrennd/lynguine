@@ -57,6 +57,34 @@ def test_docx_workshop_units(tmp_path):
     assert units[0].word_count >= 4
 
 
+def test_docx_chatbot_packed_newline_turns(tmp_path):
+    from docx import Document as DocxDocument
+
+    path = tmp_path / "packed.docx"
+    doc = DocxDocument()
+    doc.add_paragraph("Participant 001")
+    doc.add_paragraph("Conversation Transcript")
+    doc.add_paragraph(
+        "Hi Participant 001, thanks for joining.\n"
+        "Participant 001: I worry about accountability in automated decisions.\n"
+        "That's an interesting point.\n"
+        "Participant 001: Faster replies could help if a person still checks them."
+    )
+    doc.save(path)
+    units = segment_pdf(
+        str(path),
+        reader="docx",
+        strategy="docx_chatbot.v1",
+        aspect="dialogue_units",
+        allowed_roots=[str(tmp_path)],
+        min_unit_words=4,
+    )
+    assert len(units) == 2
+    assert all(u.extras.get("participant_id") == "001" for u in units)
+    assert "accountability" in units[0].text
+    assert units[0].extras.get("context", "").startswith("Hi Participant 001")
+
+
 def test_dialogue_auto_picks_chatbot(tmp_path):
     path = tmp_path / "chat.docx"
     make_chatbot_transcript(path)

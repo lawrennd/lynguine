@@ -1,12 +1,14 @@
 """``form_fields`` engine — structured key/value extraction from form-like PDFs.
 
-Algorithms live here; corpus-specific labels, section bounds, and aliases come
-from YAML strategy ``params`` (CIP-0013).
+Algorithms live here; form-type labels, section bounds, and aliases come
+from YAML strategy ``params`` (CIP-0013). Strategy ids name the form layout
+(``cam_panel_application.v1``, ``labeled_kv_form.v1``), not a funder.
 """
 
 from __future__ import annotations
 
 import re
+from collections.abc import Mapping
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -345,8 +347,144 @@ def parse_contact(full_text: str, params: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def parse_colon_header(text: str, params: Mapping[str, Any]) -> dict[str, Any]:
+    """Parse ``Label: value`` header lines listed in ``params['colon_header']``.
+
+    Each mapping value is the label as it appears on the page, including a
+    trailing colon when the source uses one (for example ``ID/Ref:``). If the
+    value is not on the same line, the next non-empty line is used.
+    """
+    labels = params.get("colon_header") or {}
+    if not isinstance(labels, dict):
+        return {}
+    text = text or ""
+    lines = [ln.strip() for ln in text.splitlines()]
+    out: dict[str, Any] = {}
+    for field, prefix in labels.items():
+        key = str(field)
+        if not prefix:
+            out[key] = None
+            continue
+        prefix_s = str(prefix)
+        val = _label_value(text, prefix_s)
+        if val is None:
+            bare = prefix_s.rstrip(":").strip()
+            label_re = re.compile(rf"^{re.escape(bare)}\s*:?\s*$", re.I)
+            for i, ln in enumerate(lines):
+                if not label_re.match(ln):
+                    continue
+                nxt = lines[i + 1].strip() if i + 1 < len(lines) else ""
+                val = nxt or None
+                break
+        out[key] = val
+    return out
+
+
+def parse_labeled_section(
+    text: str,
+    params: Mapping[str, Any],
+    *,
+    start: str,
+    end: str | list[str] | None,
+    field_map: Mapping[str, str],
+    join_values: bool = True,
+) -> dict[str, Any]:
+    """Pair consecutive label/value lines inside a named section.
+
+    *field_map* maps output field names to the label text on the page
+    (``given: First Name``). Empty labels whose next line is another known
+    label are stored as ``None``. When *join_values* is true (default),
+    non-label lines are joined with a space until the next known label
+    (wrapped departments, addresses). When false, only the first non-empty
+    line is kept so help-text after a scalar (duration, visit count) is
+    not swallowed.
+    """
+    del params  # YAML-driven; reserved for future section options
+    out: dict[str, Any] = {str(k): None for k in field_map}
+    if not start or not field_map:
+        return out
+    end_pats = [end] if isinstance(end, str) else list(end or [])
+    section = _section_after(text or "", start, end_pats) or ""
+    labels_to_field = {
+        str(lab).casefold(): str(fld) for fld, lab in field_map.items() if lab
+    }
+
+    def _field_for(line: str) -> str | None:
+        return labels_to_field.get(line.casefold())
+
+    lines = [ln.strip() for ln in section.splitlines()]
+    i = 0
+    while i < len(lines):
+        field = _field_for(lines[i])
+        if field is None:
+            i += 1
+            continue
+        i += 1
+        chunks: list[str] = []
+        while i < len(lines):
+            nxt = lines[i]
+            if _field_for(nxt) is not None:
+                break
+            if nxt:
+                if not join_values and chunks:
+                    i += 1
+                    continue
+                chunks.append(nxt)
+            i += 1
+        out[field] = " ".join(chunks) if chunks else None
+    return out
+
+
+def _extract_labeled_form(document: Document, params: dict[str, Any]) -> dict[str, Any]:
+    """Colon-header + labelled-section extraction (grant PDFs, CIP-0013)."""
+    page0 = document.pages[0].text if document.pages else ""
+    full = _joined_pages(document)
+    out: dict[str, Any] = {}
+    out.update(parse_colon_header(page0 or full, params))
+    for section in params.get("sections") or []:
+        if not isinstance(section, dict):
+            continue
+        fmap = section.get("fields") or {}
+        if not isinstance(fmap, dict) or not fmap:
+            continue
+        out.update(
+            parse_labeled_section(
+                full,
+                params,
+                start=str(section.get("start") or ""),
+                end=section.get("end"),
+                field_map=fmap,
+                join_values=bool(section.get("join_values", True)),
+            )
+        )
+    month_aliases = {
+        str(k).lower(): str(v)
+        for k, v in (params.get("month_aliases") or {}).items()
+    }
+    for field in params.get("date_fields") or []:
+        key = str(field)
+        if key in out and out[key]:
+            out[key] = _to_iso_date(str(out[key]), month_aliases)
+    for field in params.get("title_case_fields") or []:
+        key = str(field)
+        if key in out and isinstance(out[key], str):
+            out[key] = _norm_person_case(out[key])
+    return out
+
+
+def _is_labeled_kv_layout(params: Mapping[str, Any]) -> bool:
+    """True when params select consecutive-line labelled extraction."""
+    layout = str(params.get("layout") or "").casefold().replace("-", "_")
+    if layout in {"labeled_kv", "labelled_kv"}:
+        return True
+    return bool(params.get("colon_header") or params.get("sections"))
+
+
 def extract_fields(document: Document, params: dict[str, Any]) -> dict[str, Any]:
     """Return structured form fields for *document* using *params*."""
+    params = params or {}
+    if _is_labeled_kv_layout(params):
+        return _extract_labeled_form(document, params)
     page0 = document.pages[0].text if document.pages else ""
     full = _joined_pages(document)
     header = parse_header(page0, params)
@@ -373,7 +511,7 @@ class FormFieldsEngine:
         summary_parts = [
             fields.get("family") or "",
             fields.get("given") or "",
-            fields.get("application_number") or "",
+            fields.get("application_number") or fields.get("application_id") or "",
         ]
         text = " ".join(p for p in summary_parts if p).strip()
         extras = {

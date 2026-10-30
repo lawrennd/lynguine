@@ -91,11 +91,15 @@ class YamlStrategy:
         self.recogniser = spec.recogniser
         self.params = spec.params
 
-    def segment(self, document: Document, **_params) -> list[Unit]:
+    def segment(self, document: Document, **overlay) -> list[Unit]:
         engine = get_engine(self.engine)
+        params = dict(self.params)
+        for key, value in overlay.items():
+            if value is not None:
+                params[key] = value
         return engine.run(
             document,
-            self.params,
+            params,
             strategy_id=self.id,
             aspects=self.aspects,
         )
