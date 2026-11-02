@@ -1020,9 +1020,14 @@ class DataObject:
         return self.to_pandas().to_string(*args, **kwargs)
 
     @classmethod
-    @property
     def valid_data_types(cls):
-        return set([item for key in cls.types for item in cls.types[key]])
+        """Interface keys that name data slots (input/output/cache/parameters).
+
+        Implemented as a classmethod (not ``@classmethod`` + ``@property``):
+        the stacked decorators return a bound method under Python 3.13+, so
+        ``key in cls.valid_data_types`` raises TypeError.
+        """
+        return frozenset(item for key in cls.types for item in cls.types[key])
 
     @classmethod
     def from_pandas(cls, df : pd.DataFrame, colspecs : dict) -> "CustomDataFrame":
@@ -1186,7 +1191,7 @@ class DataObject:
 
         for key, item in sorted_items:       
             # Check if the interface key is a valid data key
-            if key in cls.valid_data_types: # input, output, cache, parameters
+            if key in cls.valid_data_types(): # input, output, cache, parameters
                 # Augment the item with base_directory if it's not already present
                 if isinstance(item, dict):
                     if "base_directory" not in item:
@@ -1231,7 +1236,7 @@ class DataObject:
                                     columns = interface.get_output_columns()
                                 else:
                                     raise ValueError(
-                                        f"Unrecognised key type \"{key}\". Valid data types are \"{', '.join(cls.valid_data_types)}\"."
+                                        f"Unrecognised key type \"{key}\". Valid data types are \"{', '.join(cls.valid_data_types())}\"."
                                     )
                             newdf = pd.DataFrame(index=cdf.index, columns=columns)
                             # Creating from cdf.index can leave index.name None
@@ -1313,7 +1318,7 @@ class DataObject:
                 cdf._augment_column_names(cdf._d[key])
                 
         if not found_data:
-            errmsg = f'No valid data found in interface. Data fields must be one of "{", ".join(cls.valid_data_types)}"'
+            errmsg = f'No valid data found in interface. Data fields must be one of "{", ".join(cls.valid_data_types())}"'
             log.error(errmsg)
             raise ValueError(errmsg)
         else:
@@ -1344,7 +1349,7 @@ class DataObject:
                 columns = item.get_output_columns()
             else:
                 raise ValueError(
-                    f"Unrecognised key type \"{key}\". Valid data types are \"{', '.join(cls.valid_data_types)}\"."
+                    f"Unrecognised key type \"{key}\". Valid data types are \"{', '.join(type(self).valid_data_types())}\"."
                                     )
         return pd.DataFrame(index=self.index, columns=columns)
     
