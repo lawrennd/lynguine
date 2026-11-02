@@ -266,6 +266,16 @@ def test_from_flow_empty_input_then_null_constant(tmp_path):
     assert pd.isna(cdf._d["constants"]["pca_dim"])
     assert cdf._d["constants"]["model"] == "x"
     
+def test_valid_data_types_is_iterable_set():
+    """Python 3.13 broke ``@classmethod`` + ``@property``; callers must get a set."""
+    types = lynguine.assess.data.CustomDataFrame.valid_data_types()
+    assert isinstance(types, (set, frozenset))
+    assert "input" in types
+    assert "output" in types
+    # Attribute access without calling must not be used for membership.
+    assert not isinstance(lynguine.assess.data.CustomDataFrame.valid_data_types, (set, frozenset))
+
+
 def test_from_flow_with_invalid_type():
     with pytest.raises(ValueError):
         lynguine.assess.data.CustomDataFrame.from_flow("not-a-dictionary")
