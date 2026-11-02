@@ -1361,6 +1361,31 @@ def read_file(filename):
     return default_file_reader(typ)(filename)
 
 
+_MARKDOWN_YAML_EXTS = {".md", ".markdown", ".mmd"}
+
+
+def is_markdown_yaml_path(filename):
+    """True when ``filename`` is a markdown file used as a YAML store."""
+    root, ext = os.path.splitext(str(filename or ""))
+    if ext.lower() == ".gz":
+        _, ext = os.path.splitext(root)
+    return ext.lower() in _MARKDOWN_YAML_EXTS
+
+
+def _pop_markdown_body(data):
+    """Take the document body from ``content`` (or legacy ``contents``)."""
+    body = ""
+    write_data = dict(data)
+    if "content" in write_data:
+        body = write_data.pop("content")
+        write_data.pop("contents", None)
+    elif "contents" in write_data:
+        body = write_data.pop("contents")
+    if pd.isna(body):
+        body = ""
+    return write_data, body
+
+
 def read_yaml_file(filename, compress=None):
     """Read a yaml file and return a python dictionary.
 
@@ -1368,8 +1393,14 @@ def read_yaml_file(filename, compress=None):
     untrusted names must go through ``extract_full_filename`` first (CIP-000A).
     ``.yml.gz`` is gzip YAML (CIP-0015); a ``.yml`` file whose bytes are
     gzip is an error (no magic-byte decode).
+
+    A ``.md`` / ``.markdown`` path is YAML frontmatter plus a body. The
+    body is stored as ``content`` so the file is a YAML mapping with one
+    extra field, not a second document that ``safe_load`` would drop.
     """
     _raise_if_undeclared_gzip(filename, compress)
+    if is_markdown_yaml_path(filename) and not compress:
+        return _read_yaml_markdown(filename)
     with open_text_store(filename, "r", compress=compress) as stream:
         try:
             log.debug(f'Reading yaml file "{filename}"')
@@ -1377,6 +1408,25 @@ def read_yaml_file(filename, compress=None):
         except yaml.YAMLError as exc:
             log.warning(exc)
             data = {}
+    return data
+
+
+def _read_yaml_markdown(filename):
+    """Load markdown frontmatter as a YAML mapping; body → ``content``."""
+    with open(filename, "r") as stream:
+        try:
+            log.debug(f'Reading yaml markdown file "{filename}"')
+            post = frontmatter.load(stream)
+        except yaml.YAMLError as exc:
+            log.warning(exc)
+            return {}
+    meta = post.metadata
+    if not isinstance(meta, dict):
+        return meta
+    data = dict(meta)
+    if "content" not in data:
+        data["content"] = post.content or ""
+    data.pop("contents", None)
     return data
 
 
@@ -1475,6 +1525,18 @@ def write_yaml_file(data, filename, compress=None, compress_level=6):
     :type filename: str
     """
     writedata = yaml_prep(data)
+    if is_markdown_yaml_path(filename) and not compress:
+        payload = writedata
+        if (
+            isinstance(payload, list)
+            and len(payload) == 1
+            and isinstance(payload[0], dict)
+        ):
+            payload = payload[0]
+        if isinstance(payload, dict):
+            write_data, body = _pop_markdown_body(payload)
+            write_markdown_file(write_data, filename, content=body)
+            return
     with open_text_store(
         filename, "w", compress=compress, compress_level=compress_level
     ) as stream:
@@ -1629,17 +1691,14 @@ def write_markdown_file(data, filename, content=None, include_content=True):
     :type include_content: bool
     """
     if content is None:
-        if include_content and "content" in data:
-            write_data = {key: item for (key, item) in data.items() if key != "content"}
-            content = data["content"]
+        if include_content and ("contents" in data or "content" in data):
+            write_data, content = _pop_markdown_body(data)
         else:
             if not include_content:
                 content = ""
-            write_data = data
+            write_data, _ = _pop_markdown_body(data)
     else:
-        write_data = data.copy()
-        if "content" in data:
-            del write_data["content"]
+        write_data, _ = _pop_markdown_body(data)
     log.debug(f'Writing markdown file "{filename}"')
     if pd.isna(content):
         content = ""

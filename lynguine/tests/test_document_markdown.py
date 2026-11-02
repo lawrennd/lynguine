@@ -117,6 +117,58 @@ def test_socratic_auto_body_chunks_does_not_pick_pub_dialogue(tmp_path):
     assert choice.strategy_id == "socratic_markdown.v1"
 
 
+def test_resolve_document_reader_md_overrides_docx():
+    from lynguine.access.documents.segment import resolve_document_reader
+
+    assert resolve_document_reader("files/a.md", "docx") == "markdown"
+    assert resolve_document_reader("files/a.md", "pdf") == "markdown"
+    assert resolve_document_reader("files/a.docx", "pdf") == "docx"
+    assert resolve_document_reader("files/a.docx", "docx") == "docx"
+    assert resolve_document_reader("files/a.pdf", "pdf") == "pdf"
+    assert resolve_document_reader("files/a.txt", None) == "pdf"
+    assert resolve_document_reader("files/a.txt", "auto") == "pdf"
+    assert resolve_document_reader("files/a.md", "") == "markdown"
+    assert resolve_document_reader("files/a.pdf", "custom") == "custom"
+
+
+def test_document_segment_infers_markdown_reader(tmp_path):
+    path = _write(tmp_path)
+    rows = document_segment(
+        path,
+        reader="docx",
+        strategy="socratic_markdown.v1",
+        aspect="dialogue_units",
+        root=str(tmp_path),
+        min_chunk_words=10,
+    )
+    assert len(rows) == 2
+    assert rows[0]["chunking_method"] == "socratic_exchange"
+
+
+def test_workshop_strategy_on_markdown_frontmatter(tmp_path):
+    path = tmp_path / "workshop_spring-2026_breakout-1_f01.md"
+    path.write_text(
+        "---\nformat: workshop\nfacilitator: f01\n---\n\n"
+        "Speaker 1: The collection missed our street again this week and "
+        "the bins have been overflowing onto the pavement every Tuesday.\n\n"
+        "Facilitator: Thank you. Does anyone else see that locally?\n\n"
+        "Speaker 2: Yes, the same on the other side of the park after the "
+        "route change last autumn.\n",
+        encoding="utf-8",
+    )
+    rows = document_segment(
+        str(path),
+        reader="docx",
+        strategy="docx_workshop.v1",
+        aspect="dialogue_units",
+        root=str(tmp_path),
+        min_unit_words=4,
+    )
+    assert rows
+    assert any("overflowing" in (r.get("text") or "") for r in rows)
+    assert all(r["segment_strategy"] == "docx_workshop.v1" for r in rows)
+
+
 def test_document_segment_markdown_compute(tmp_path):
     path = _write(tmp_path)
     rows = document_segment(

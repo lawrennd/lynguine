@@ -23,6 +23,30 @@ log = logging.getLogger(__name__)
 
 OnSparse = Literal["error", "empty", "warn"]
 
+_READER_BY_SUFFIX = {
+    ".pdf": "pdf",
+    ".docx": "docx",
+    ".md": "markdown",
+    ".markdown": "markdown",
+    ".mmd": "markdown",
+}
+
+
+def resolve_document_reader(path: str, reader: str | None = "pdf") -> str:
+    """Choose a reader from an explicit value and the file suffix.
+
+    ``.md`` / ``.markdown`` is always markdown, even when a catalog still
+    says ``reader: docx``. The default ``pdf`` does not override ``.docx``.
+    """
+    inferred = _READER_BY_SUFFIX.get(Path(str(path)).suffix.lower())
+    if inferred == "markdown":
+        return "markdown"
+    if reader in (None, "", "auto"):
+        return inferred or "pdf"
+    if reader == "pdf" and inferred in ("docx", "markdown"):
+        return inferred
+    return str(reader)
+
 
 def _attach_recogniser(units: list[Unit], choice: StrategyCandidate) -> list[Unit]:
     out: list[Unit] = []
@@ -87,6 +111,7 @@ def _read_document(
     allowed_roots: list[str] | None = None,
     details: dict[str, Any] | None = None,
 ):
+    reader = resolve_document_reader(path, reader)
     if reader == "pdf":
         return read_pdf(path, allowed_roots=allowed_roots, details=details)
     if reader == "docx":

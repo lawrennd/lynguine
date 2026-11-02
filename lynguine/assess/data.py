@@ -39,6 +39,29 @@ def _stamp_path_roots(details, interface):
         _stamp_path_roots(details["specifications"], interface)
 
 
+def _parameter_assign_kwargs(df, data):
+    """Keyword args for ``DataFrame.assign`` from a parameter Series.
+
+    ``df.assign(**series)`` unpacks list/tuple/dict values as columns.
+    An empty list then raises ``ValueError: Length of values (0) does
+    not match length of index (N)`` (01_chunk ``facilitator_names: []``).
+    Sequence values are broadcast as object cells instead.
+    """
+    if not isinstance(data, pd.Series):
+        return dict(data)
+    n = len(df)
+    index = df.index
+    payload = {}
+    for key, value in data.items():
+        if isinstance(value, (list, tuple, dict, set)):
+            payload[key] = pd.Series([value] * n, index=index, dtype=object)
+        elif isinstance(value, np.ndarray) and value.ndim != 0:
+            payload[key] = pd.Series([value] * n, index=index, dtype=object)
+        else:
+            payload[key] = value
+    return payload
+
+
 def _set_value_with_coercion(data, row_label, col_label, value):
     """Set a value in a DataFrame, coercing column dtype when necessary.
 
@@ -3426,7 +3449,7 @@ class CustomDataFrame(DataObject):
                 if df1 is None:
                     ind = data.index.name if data.index.name is not None else 0
                     df1 = pd.DataFrame(index=self.index)
-                df1 = df1.assign(**data)
+                df1 = df1.assign(**_parameter_assign_kwargs(df1, data))
             else:
                 if df1 is None:
                     df1 = data

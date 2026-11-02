@@ -165,9 +165,9 @@ def _score_strategy(strategy_id: str, aspect: str, feats: dict) -> StrategyCandi
             reasons.append("pdf reader")
 
     elif strategy_id == "docx_chatbot.v1" and aspect == "dialogue_units":
-        if feats["reader"] == "docx":
+        if feats["reader"] in ("docx", "markdown"):
             score += 0.2
-            reasons.append("docx reader")
+            reasons.append(f"{feats['reader']} reader")
         if feats["has_participant_heading"]:
             score += 0.5
             reasons.append("participant heading")
@@ -176,9 +176,9 @@ def _score_strategy(strategy_id: str, aspect: str, feats: dict) -> StrategyCandi
             reasons.append("conversation transcript")
 
     elif strategy_id == "docx_workshop.v1" and aspect == "dialogue_units":
-        if feats["reader"] == "docx":
+        if feats["reader"] in ("docx", "markdown"):
             score += 0.2
-            reasons.append("docx reader")
+            reasons.append(f"{feats['reader']} reader")
         if feats["has_speaker_labels"] and not feats["has_participant_heading"]:
             score += 0.55
             reasons.append("speaker/facilitator labels")

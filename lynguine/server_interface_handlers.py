@@ -149,6 +149,27 @@ def handle_talk_field(request_data: Dict[str, Any]) -> Dict[str, Any]:
         field = request_data['field']
         markdown_file = request_data['markdown_file']
         config_files = request_data.get('config_files', [])
+
+        if isinstance(config_files, str):
+            config_files = [config_files]
+        elif not isinstance(config_files, list):
+            raise ValueError("config_files must be a list of file names or a single file name string")
+
+        sanitized_config_files = []
+        for cfg in config_files:
+            if not isinstance(cfg, str):
+                raise ValueError("Each config file must be a string")
+            cfg = cfg.strip()
+            if not cfg:
+                raise ValueError("Config file names cannot be empty")
+            normalized_cfg = os.path.normpath(cfg)
+            if (
+                os.path.isabs(normalized_cfg)
+                or normalized_cfg in (".", "..")
+                or os.path.basename(normalized_cfg) != normalized_cfg
+            ):
+                raise ValueError(f"Invalid config file path: {cfg}")
+            sanitized_config_files.append(normalized_cfg)
         
         log.info(f"Extracting field '{field}' from '{markdown_file}'")
         
@@ -156,16 +177,16 @@ def handle_talk_field(request_data: Dict[str, Any]) -> Dict[str, Any]:
         
         try:
             # Try markdown file first
-            value = talk_field(field, markdown_file, user_file=config_files)
+            value = talk_field(field, markdown_file, user_file=sanitized_config_files)
             log.info(f"Field '{field}' found in markdown: {value}")
             
         except FileFormatError as e:
             # Fall back to config files
             log.info(f"Markdown parse error, falling back to config files: {e}")
             try:
-                if config_files:
+                if sanitized_config_files:
                     iface = Interface.from_cwd_file(
-                        user_file=config_files,
+                        user_file=sanitized_config_files,
                         directory='.',
                     )
                     value = iface[field] if field in iface else ""
@@ -181,9 +202,9 @@ def handle_talk_field(request_data: Dict[str, Any]) -> Dict[str, Any]:
             # Markdown file not found, try config only
             log.warning(f"Markdown file not found, trying config: {e}")
             try:
-                if config_files:
+                if sanitized_config_files:
                     iface = Interface.from_cwd_file(
-                        user_file=config_files,
+                        user_file=sanitized_config_files,
                         directory='.',
                     )
                     value = iface[field] if field in iface else ""

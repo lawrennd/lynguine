@@ -260,6 +260,118 @@ def test_read_yaml_rejects_non_tabular_document(tmp_path):
     with pytest.raises(ValueError, match="mapping or a sequence"):
         read_yaml(details)
 
+
+def test_read_yaml_markdown_frontmatter_as_content(tmp_path):
+    """A .md YAML store is frontmatter plus body in ``content``."""
+    path = tmp_path / "session.md"
+    path.write_text(
+        "---\nName: workshop_spring-2026_breakout-1_f01\nformat: workshop\n---\n"
+        "Speaker 1: The bins overflow every Tuesday.\n",
+        encoding="utf-8",
+    )
+    result = read_yaml({"filename": path.name, "directory": str(tmp_path)})
+    row = result.iloc[0]
+    assert row["Name"] == "workshop_spring-2026_breakout-1_f01"
+    assert row["format"] == "workshop"
+    assert "overflow every Tuesday" in row["content"]
+    assert "---" not in row["content"]
+    assert "contents" not in result.columns
+
+
+def test_write_yaml_markdown_round_trip_content(tmp_path):
+    """Writing type: yaml to .md keeps the body out of the frontmatter."""
+    path = tmp_path / "note.md"
+    details = {"filename": path.name, "directory": str(tmp_path)}
+    frame = pd.DataFrame(
+        [
+            {
+                "Name": "note-1",
+                "format": "workshop",
+                "content": "Speaker 1: Hello from the body.\n",
+            }
+        ]
+    )
+    from lynguine.access.io import write_yaml
+
+    write_yaml(frame, details)
+    text = path.read_text(encoding="utf-8")
+    assert text.startswith("---")
+    assert "format: workshop" in text
+    assert "Speaker 1: Hello from the body." in text
+    loaded = read_yaml(details)
+    assert loaded.iloc[0]["content"].strip() == "Speaker 1: Hello from the body."
+    assert "content:" not in text.split("---", 2)[1]
+    assert "contents:" not in text.split("---", 2)[1]
+
+
+def test_pop_markdown_body_legacy_contents_and_na():
+    from lynguine.access.io import _pop_markdown_body
+
+    meta, body = _pop_markdown_body({"title": "t", "contents": "legacy body"})
+    assert meta == {"title": "t"}
+    assert body == "legacy body"
+
+    meta, body = _pop_markdown_body({"content": pd.NA, "contents": "ignored"})
+    assert "content" not in meta and "contents" not in meta
+    assert body == ""
+
+
+def test_read_yaml_markdown_yaml_error_returns_empty(tmp_path, mocker):
+    from lynguine.access.io import _read_yaml_markdown
+    import yaml as _yaml
+
+    path = tmp_path / "bad.md"
+    path.write_text("---\nbroken: [\n---\n", encoding="utf-8")
+    mocker.patch(
+        "lynguine.access.io.frontmatter.load",
+        side_effect=_yaml.YAMLError("boom"),
+    )
+    assert _read_yaml_markdown(str(path)) == {}
+
+
+def test_read_yaml_markdown_preserves_existing_content_key(tmp_path, mocker):
+    """If metadata already has ``content``, do not overwrite from the body."""
+    from lynguine.access.io import _read_yaml_markdown
+
+    path = tmp_path / "note.md"
+    path.write_text("---\ntitle: t\n---\nbody\n", encoding="utf-8")
+
+    class _Post:
+        metadata = {"title": "t", "content": "already-in-meta", "contents": "drop"}
+        content = "body ignored"
+
+    mocker.patch("lynguine.access.io.frontmatter.load", return_value=_Post())
+    data = _read_yaml_markdown(str(path))
+    assert data["content"] == "already-in-meta"
+    assert "contents" not in data
+    assert data["title"] == "t"
+
+
+def test_read_yaml_markdown_non_dict_metadata(tmp_path, mocker):
+    from lynguine.access.io import _read_yaml_markdown
+
+    path = tmp_path / "note.md"
+    path.write_text("---\n[]\n---\n", encoding="utf-8")
+
+    class _Post:
+        metadata = ["not", "mapping"]
+        content = "body"
+
+    mocker.patch("lynguine.access.io.frontmatter.load", return_value=_Post())
+    assert _read_yaml_markdown(str(path)) == ["not", "mapping"]
+
+
+def test_write_yaml_markdown_accepts_legacy_contents(tmp_path):
+    from lynguine.access.io import write_yaml_file, read_yaml_file
+
+    path = tmp_path / "legacy.md"
+    write_yaml_file({"Name": "n1", "contents": "old field body"}, str(path))
+    text = path.read_text(encoding="utf-8")
+    assert "contents:" not in text.split("---", 2)[1]
+    assert "old field body" in text
+    loaded = read_yaml_file(str(path))
+    assert loaded["content"].strip() == "old field body"
+
 # Test for write_yaml
 def test_write_yaml(mocker):
     mock_write_yaml_file = mocker.patch('lynguine.access.io.write_yaml_file')
@@ -683,7 +795,9 @@ def test_read_markdown_file(mocker):
     filename = "test.md"
     result = io_module.read_markdown_file(filename)
 
-    assert result == {'key': 'value', 'content': 'content'}
+    assert result["key"] == "value"
+    assert result["content"] == "content"
+    assert "contents" not in result
     mock_open.assert_called_once_with(filename, "r")
     mock_frontmatter_load.assert_called_once()
 

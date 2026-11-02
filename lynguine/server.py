@@ -454,7 +454,14 @@ class LynguineHandler(BaseHTTPRequestHandler):
                 
             # Option 2: Direct data source specification
             elif 'data_source' in request_data:
-                data_source = request_data['data_source']
+                data_source = dict(request_data['data_source'])
+                # Enforce confinement defaults for untrusted HTTP payloads.
+                # Callers can still provide explicit allowed_roots/unbounded_paths.
+                if 'unbounded_paths' not in data_source:
+                    data_source['unbounded_paths'] = False
+                if 'allowed_roots' not in data_source:
+                    root = data_source.get('directory') or '.'
+                    data_source['allowed_roots'] = [root]
                 log.debug(f"Reading data from source: {data_source.get('type', 'unknown')}")
                 result = io.read_data(data_source)
                 # read_data returns (DataFrame, Interface) tuple
