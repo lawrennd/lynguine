@@ -339,6 +339,18 @@ def test_from_file_loads_inside_jail(tmp_path):
     }
 
 
+def test_from_file_markdown_frontmatter(tmp_path):
+    """Markdown configs are YAML frontmatter; the body is not parsed as YAML."""
+    cfg = tmp_path / "_lynguine.md"
+    cfg.write_text(
+        "---\nlogging:\n  level: INFO\n---\n\n"
+        "**Access.** Data: sibling `_referia.md` files.\n"
+    )
+    interface = Interface.from_file(user_file="_lynguine.md", directory=str(tmp_path))
+    assert interface["logging"]["level"] == "INFO"
+    assert "contents" not in interface
+
+
 def test_from_file_inherit_extends_jail(tmp_path):
     """Explicit inherit.directory may extend allowed_roots (CIP-000A / CIP-000D).
 

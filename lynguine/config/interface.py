@@ -15,6 +15,34 @@ log = Logger(
     filename=ctxt._data["logging"]["filename"],
 )
 
+_MARKDOWN_CONFIG_EXTS = {".md", ".markdown", ".mmd"}
+
+
+def _frontmatter_yaml_block(text: str) -> str:
+    """Return the YAML block from a markdown-frontmatter file."""
+    if text.startswith("---\r\n"):
+        rest = text[5:]
+    elif text.startswith("---\n"):
+        rest = text[4:]
+    else:
+        return text
+    idx = rest.find("\n---")
+    if idx < 0:
+        return rest
+    return rest[:idx]
+
+
+def load_yaml_mapping(fname) -> dict:
+    """Load a YAML mapping, taking frontmatter from markdown files."""
+    with open(fname, "r", encoding="utf-8") as stream:
+        text = stream.read()
+    if os.path.splitext(str(fname))[1].lower() in _MARKDOWN_CONFIG_EXTS:
+        text = _frontmatter_yaml_block(text)
+    if not text.strip():
+        return {}
+    data = yaml.safe_load(text)
+    return data if isinstance(data, dict) else {}
+
 
 class _HConfig(context._Config):
     """
@@ -994,16 +1022,13 @@ c        Expand the environment variables in the configuration.
         data = {}
         log.debug(f"Attempting to open file \"{fname}\".")
         if os.path.exists(fname):
-            with open(fname, "r") as stream:
-                try:
-                    log.debug(f'Reading yaml file "{fname}"')
-                    data = yaml.safe_load(stream)
-                except yaml.YAMLError as exc:
-                    errmsg = f'Error reading yaml file "{fname}", error: {exc}'
-                    log.error(errmsg)
-                    raise ValueError(errmsg)
-                    
-                    data = {}
+            try:
+                log.debug(f'Reading yaml file "{fname}"')
+                data = load_yaml_mapping(fname)
+            except yaml.YAMLError as exc:
+                errmsg = f'Error reading yaml file "{fname}", error: {exc}'
+                log.error(errmsg)
+                raise ValueError(errmsg)
             if field is not None:
                 if field in data:
                     data = data[field]
@@ -1091,14 +1116,13 @@ c        Expand the environment variables in the configuration.
         data = {}
         log.debug(f"Attempting to open file \"{fname}\".")
         if os.path.exists(fname):
-            with open(fname, "r") as stream:
-                try:
-                    log.debug(f'Reading yaml file "{fname}"')
-                    data = yaml.safe_load(stream)
-                except yaml.YAMLError as exc:
-                    errmsg = f'Error reading yaml file "{fname}", error: {exc}'
-                    log.error(errmsg)
-                    raise ValueError(errmsg)
+            try:
+                log.debug(f'Reading yaml file "{fname}"')
+                data = load_yaml_mapping(fname)
+            except yaml.YAMLError as exc:
+                errmsg = f'Error reading yaml file "{fname}", error: {exc}'
+                log.error(errmsg)
+                raise ValueError(errmsg)
             if field is not None:
                 if field in data:
                     data = data[field]
@@ -1134,16 +1158,13 @@ c        Expand the environment variables in the configuration.
         data = {}
         log.debug(f"Attempting to open file \"{fname}\".")
         if os.path.exists(fname):
-            with open(fname, "r") as stream:
-                try:
-                    log.debug(f'Reading yaml file "{fname}"')
-                    data = yaml.safe_load(stream)
-                except yaml.YAMLError as exc:
-                    errmsg = f'Error reading yaml file "{fname}", error: {exc}'
-                    log.error(errmsg)
-                    raise ValueError(errmsg)
-                    
-                    data = {}
+            try:
+                log.debug(f'Reading yaml file "{fname}"')
+                data = load_yaml_mapping(fname)
+            except yaml.YAMLError as exc:
+                errmsg = f'Error reading yaml file "{fname}", error: {exc}'
+                log.error(errmsg)
+                raise ValueError(errmsg)
             if field is not None:
                 if field in data:
                     data = data[field]

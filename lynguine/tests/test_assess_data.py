@@ -859,6 +859,26 @@ def test_mathematical_operations_preserve_colspecs(sample_df):
     assert result._colspecs == sample_df._colspecs
 
 
+def test_to_pandas_parameter_empty_list_broadcasts():
+    """Empty list parameters must not 503 as a zero-length column."""
+    rows = pd.DataFrame(
+        {"filename": ["a.docx", "b.docx"]},
+        index=pd.Index(["a", "b"], name="Name"),
+    )
+    params = pd.Series({"min_chunk_words": 4, "facilitator_names": []})
+    cdf = lynguine.assess.data.CustomDataFrame(
+        rows, colspecs={"input": ["filename"]}
+    )
+    cdf._d["parameters"] = params
+    cdf._colspecs["parameters"] = list(params.index)
+
+    out = cdf.to_pandas()
+    assert len(out) == 2
+    assert out.loc["a", "facilitator_names"] == []
+    assert out.loc["b", "facilitator_names"] == []
+    assert out.loc["a", "min_chunk_words"] == 4
+
+
 def test_to_pandas_overlapping_columns_keeps_earlier_flow():
     """input/output often share identity columns; to_pandas must not raise."""
     left = pd.DataFrame(
