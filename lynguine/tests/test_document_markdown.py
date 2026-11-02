@@ -125,6 +125,10 @@ def test_resolve_document_reader_md_overrides_docx():
     assert resolve_document_reader("files/a.docx", "pdf") == "docx"
     assert resolve_document_reader("files/a.docx", "docx") == "docx"
     assert resolve_document_reader("files/a.pdf", "pdf") == "pdf"
+    assert resolve_document_reader("files/a.txt", None) == "pdf"
+    assert resolve_document_reader("files/a.txt", "auto") == "pdf"
+    assert resolve_document_reader("files/a.md", "") == "markdown"
+    assert resolve_document_reader("files/a.pdf", "custom") == "custom"
 
 
 def test_document_segment_infers_markdown_reader(tmp_path):

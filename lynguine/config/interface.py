@@ -29,7 +29,8 @@ def _frontmatter_yaml_block(text: str) -> str:
     idx = rest.find("\n---")
     if idx < 0:
         return rest
-    return rest[:idx]
+    # Strip a dangling CR when the closing fence was ``\r\n---``.
+    return rest[:idx].rstrip("\r")
 
 
 def load_yaml_mapping(fname) -> dict:

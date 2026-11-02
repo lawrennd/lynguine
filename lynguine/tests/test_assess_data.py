@@ -879,6 +879,32 @@ def test_to_pandas_parameter_empty_list_broadcasts():
     assert out.loc["a", "min_chunk_words"] == 4
 
 
+def test_parameter_assign_kwargs_broadcasts_sequences_and_arrays():
+    from lynguine.assess.data import _parameter_assign_kwargs
+
+    df = pd.DataFrame({"x": [1, 2]}, index=["a", "b"])
+    payload = _parameter_assign_kwargs(
+        df,
+        pd.Series(
+            {
+                "names": [],
+                "tags": ("a",),
+                "meta": {"k": 1},
+                "flags": {1, 2},
+                "vec": np.array([1, 2]),
+                "scalar": 3,
+            }
+        ),
+    )
+    assert list(payload["names"]) == [[], []]
+    assert list(payload["tags"]) == [("a",), ("a",)]
+    assert list(payload["meta"]) == [{"k": 1}, {"k": 1}]
+    assert list(payload["flags"]) == [{1, 2}, {1, 2}]
+    assert all(isinstance(v, np.ndarray) for v in payload["vec"])
+    assert payload["scalar"] == 3
+    assert _parameter_assign_kwargs(df, {"plain": 1}) == {"plain": 1}
+
+
 def test_to_pandas_overlapping_columns_keeps_earlier_flow():
     """input/output often share identity columns; to_pandas must not raise."""
     left = pd.DataFrame(

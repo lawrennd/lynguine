@@ -202,9 +202,9 @@ def handle_talk_field(request_data: Dict[str, Any]) -> Dict[str, Any]:
             # Markdown file not found, try config only
             log.warning(f"Markdown file not found, trying config: {e}")
             try:
-                if config_files:
+                if sanitized_config_files:
                     iface = Interface.from_cwd_file(
-                        user_file=config_files,
+                        user_file=sanitized_config_files,
                         directory='.',
                     )
                     value = iface[field] if field in iface else ""

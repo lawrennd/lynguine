@@ -351,6 +351,29 @@ def test_from_file_markdown_frontmatter(tmp_path):
     assert "contents" not in interface
 
 
+def test_load_yaml_mapping_frontmatter_edges(tmp_path):
+    from lynguine.config.interface import _frontmatter_yaml_block, load_yaml_mapping
+
+    assert _frontmatter_yaml_block("no fence\n") == "no fence\n"
+    assert _frontmatter_yaml_block("---\nonly-open\n") == "only-open\n"
+    assert (
+        _frontmatter_yaml_block("---\r\nlogging:\r\n  level: DEBUG\r\n---\r\nbody\n")
+        == "logging:\r\n  level: DEBUG"
+    )
+
+    empty = tmp_path / "empty.md"
+    empty.write_text("", encoding="utf-8")
+    assert load_yaml_mapping(empty) == {}
+
+    scalar = tmp_path / "scalar.yml"
+    scalar.write_text("just-a-string\n", encoding="utf-8")
+    assert load_yaml_mapping(scalar) == {}
+
+    crlf = tmp_path / "crlf.md"
+    crlf.write_text("---\r\nkey: value\r\n---\r\nbody\n", encoding="utf-8")
+    assert load_yaml_mapping(crlf) == {"key": "value"}
+
+
 def test_from_file_inherit_extends_jail(tmp_path):
     """Explicit inherit.directory may extend allowed_roots (CIP-000A / CIP-000D).
 
