@@ -39,6 +39,103 @@ def _stamp_path_roots(details, interface):
         _stamp_path_roots(details["specifications"], interface)
 
 
+# Access-spec keys that should become ints after Liquid render (e.g. mu limit).
+_LIQUID_INT_KEYS = frozenset({"limit", "nrows", "maxnum"})
+
+
+def _parameter_liquid_context(interface):
+    """Build a Liquid render context from constants/parameters before Access.
+
+    Input specs may template fields such as ``query:`` or ``filename:``
+    against stage knobs. Parameters normally load *after* input in
+    ``from_flow``; this helper reads them first into a plain dict so
+    Access can expand templates without changing join order.
+    """
+    import copy
+
+    ctx = {}
+    for key in ("constants", "global_consts", "parameters", "globals"):
+        if key not in interface:
+            continue
+        item = interface[key]
+        if not isinstance(item, dict):
+            continue
+        details = copy.deepcopy(item)
+        if "base_directory" not in details and "base_directory" in interface:
+            details["base_directory"] = interface["base_directory"]
+        _stamp_path_roots(details, interface)
+        try:
+            if key not in ("constants", "global_consts") and not access.io.data_exists(
+                details
+            ):
+                continue
+            df, _ = access.io.read_data(details)
+        except Exception as exc:
+            log.debug(f"Skipping Liquid context for \"{key}\": {exc}")
+            continue
+        if isinstance(df, pd.DataFrame):
+            idx_field = details.get("index")
+            if isinstance(idx_field, str) and idx_field in df.columns:
+                df = df.set_index(idx_field)
+            if "select" in details:
+                row = df.loc[details["select"]]
+                series = row.iloc[0] if isinstance(row, pd.DataFrame) else row
+            elif len(df) == 1:
+                series = df.iloc[0]
+            else:
+                continue
+        elif isinstance(df, pd.Series):
+            series = df
+        else:
+            continue
+        for name, value in series.items():
+            if isinstance(value, float) and pd.isna(value):
+                continue
+            ctx[str(name)] = value
+    return ctx
+
+
+def _liquid_expand_structure(obj, ctx, key=None):
+    """Recursively Liquid-render strings that contain ``{{`` against ``ctx``.
+
+    Integer-like results for known keys (``limit``, ``nrows``, …) are
+    coerced to ``int`` so readers that expect numbers keep working.
+    """
+    if not ctx:
+        return obj
+    if isinstance(obj, dict):
+        return {
+            name: _liquid_expand_structure(value, ctx, key=name)
+            for name, value in obj.items()
+        }
+    if isinstance(obj, list):
+        return [_liquid_expand_structure(value, ctx) for value in obj]
+    if isinstance(obj, str) and "{{" in obj:
+        import liquid as lq
+
+        rendered = (
+            lq.Environment(tolerance=lq.Mode.LAX).from_string(obj).render(**ctx)
+        )
+        if key in _LIQUID_INT_KEYS:
+            text = str(rendered).strip()
+            try:
+                return int(text)
+            except (TypeError, ValueError):
+                return rendered
+        return rendered
+    return obj
+
+
+def _liquid_expand_access_details(details, ctx):
+    """Deep-copy Access details and expand Liquid against parameter context."""
+    import copy
+
+    if not ctx or not isinstance(details, dict):
+        return details
+    expanded = copy.deepcopy(details)
+    return _liquid_expand_structure(expanded, ctx)
+
+
 def _parameter_assign_kwargs(df, data):
     """Keyword args for ``DataFrame.assign`` from a parameter Series.
 
@@ -1173,6 +1270,9 @@ class DataObject:
         cdf = cls({}, compute=compute, interface=interface)
 
         found_data = False
+        # Parameters load after input in key_order; pre-read them so Access
+        # specs can Liquid-template query:/filename:/limit: against knobs.
+        liquid_ctx = _parameter_liquid_context(interface)
 
         # Create a function to determine the processing order
         def key_order(item):
@@ -1221,6 +1321,15 @@ class DataObject:
                     log.error(errmsg)
                     raise ValueError(errmsg)
                 found_data = True
+                # Pure Access input: expand {{param}} before read_data.
+                read_item = item
+                if (
+                    liquid_ctx
+                    and key in cls.types["input"]
+                    and key not in cls.types["parameters"]
+                    and isinstance(item, dict)
+                ):
+                    read_item = _liquid_expand_access_details(item, liquid_ctx)
                 if key not in cls.types["input"]: # allow creation of non-inputs if they don't exist
                     if isinstance(item, dict):
                         if access.io.data_exists(item):
@@ -1253,7 +1362,9 @@ class DataObject:
                             f"Item data descriptions must be in the form of a dictionary unless they are of type \"input\", when a list is valid and implies an \"hstack\" type is needed. The type of item you have provided for the key \"{key}\" is \"{type(item)}\"."
                         )
                 else:
-                    newdf = cdf._finalize_df(*access.io.read_data(item), strict_columns=False)
+                    newdf = cdf._finalize_df(
+                        *access.io.read_data(read_item), strict_columns=False
+                    )
 
                 if key in cls.types["parameters"]:
                     log.debug(f"Adding parameter type with key \"{key}\".")
