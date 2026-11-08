@@ -75,6 +75,14 @@ def test_liquid_expand_vstack_mu_query():
                     "type": "mu",
                     "query": "({{ query_phd }}) AND {{ date_window }}",
                     "limit": "{{ limit_per_slice }}",
+                    "compute": [
+                        {
+                            "field": "mail_key",
+                            "function": "render_liquid",
+                            "args": {"template": "{{ slice }}::{{ uid }}"},
+                            "row_args": {"slice": "slice", "uid": "uid"},
+                        },
+                    ],
                 },
                 {
                     "type": "mu",
@@ -96,3 +104,27 @@ def test_liquid_expand_vstack_mu_query():
     assert out["specifications"][1]["query"] == "(from:jobs.ac.uk) AND date:2y"
     assert out["specifications"][0]["limit"] == 25
     assert isinstance(out["specifications"][0]["limit"], int)
+    # Row-time template: keys must not be emptied against the parameters ctx.
+    assert out["specifications"][0]["compute"][0]["args"]["template"] == (
+        "{{ slice }}::{{ uid }}"
+    )
+
+
+def test_liquid_expand_compute_args_but_not_template():
+    out = _liquid_expand_structure(
+        {
+            "compute": [
+                {
+                    "field": "unit_paragraphs",
+                    "function": "split_paragraph_units",
+                    "args": {
+                        "min_chars": "{{ min_unit_chars }}",
+                        "template": "{{ body }}",
+                    },
+                }
+            ]
+        },
+        {"min_unit_chars": 40},
+    )
+    assert out["compute"][0]["args"]["min_chars"] == 40
+    assert out["compute"][0]["args"]["template"] == "{{ body }}"

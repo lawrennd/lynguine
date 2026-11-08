@@ -2511,7 +2511,22 @@ def finalize_data(df : pd.DataFrame, interface : Interface) -> tuple[pd.DataFram
                     errmsg = f"Compute object in interface file is missing field key."
                     log.error(errmsg)
                     raise ValueError(errmsg)
-   
+
+    # CIP-0014: optional explode on read (after row compute fills the list field).
+    if isinstance(interface, dict) and "explode" in interface:
+        spec = interface["explode"]
+        if not isinstance(spec, dict) or "field" not in spec:
+            raise ValueError('input explode must be a mapping with "field".')
+        # Prefer explode.index (child grain); parent store index is the pre-explode key.
+        idx = spec.get("index") or _store_index_name(interface)
+        df = explode_list_field(
+            df,
+            field=spec["field"],
+            inherit=spec.get("inherit"),
+            index=idx,
+        )
+        if idx:
+            interface["index"] = idx
 
     return df, interface
 

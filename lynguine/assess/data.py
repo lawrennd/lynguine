@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pandas as pd
 import numpy as np
 
@@ -40,7 +42,17 @@ def _stamp_path_roots(details, interface):
 
 
 # Access-spec keys that should become ints after Liquid render (e.g. mu limit).
-_LIQUID_INT_KEYS = frozenset({"limit", "nrows", "maxnum"})
+_LIQUID_INT_KEYS = frozenset(
+    {
+        "limit",
+        "nrows",
+        "maxnum",
+        "min_chars",
+        "max_units",
+        "min_unit_chars",
+        "max_units_per_message",
+    }
+)
 
 
 def _parameter_liquid_context(interface):
@@ -95,19 +107,33 @@ def _parameter_liquid_context(interface):
     return ctx
 
 
+# Nested under Access specs: leave these alone so row-time Liquid
+# (render_liquid ``template:`` / row_args) is not emptied against parameters.
+_LIQUID_SKIP_KEYS = frozenset({"mapping", "row_args", "template"})
+
+
 def _liquid_expand_structure(obj, ctx, key=None):
     """Recursively Liquid-render strings that contain ``{{`` against ``ctx``.
 
     Integer-like results for known keys (``limit``, ``nrows``, …) are
     coerced to ``int`` so readers that expect numbers keep working.
+
+    ``template`` / ``row_args`` / ``mapping`` are not expanded: those
+    ``{{ field }}`` strings bind per row at compute time, not against
+    the parameters context (missing names render empty in LAX mode and
+    collapse indexes such as ``mail_key`` to ``::``). Compute *args*
+    such as ``min_chars: "{{ min_unit_chars }}"`` still expand.
     """
     if not ctx:
         return obj
     if isinstance(obj, dict):
-        return {
-            name: _liquid_expand_structure(value, ctx, key=name)
-            for name, value in obj.items()
-        }
+        out = {}
+        for name, value in obj.items():
+            if name in _LIQUID_SKIP_KEYS:
+                out[name] = value
+            else:
+                out[name] = _liquid_expand_structure(value, ctx, key=name)
+        return out
     if isinstance(obj, list):
         return [_liquid_expand_structure(value, ctx) for value in obj]
     if isinstance(obj, str) and "{{" in obj:
@@ -1763,6 +1789,79 @@ class DataObject:
         access.io.write_data(frame, details)
         return True
 
+    def _write_also_materialize(self, parent_details: dict) -> None:
+        """Write a side-car snapshot joined from input + output (etc.).
+
+        Used when Save should persist a review corpus (e.g. mu rows +
+        keep/drop scores → ``messages.yml``) without loading that file as
+        a partition (overlapping column names with input would clash).
+
+        Config under the parent store (usually ``output``)::
+
+            also_materialize:
+              type: yaml
+              directory: _data/corpus
+              filename: messages.yml
+              index: mail_key
+              columns: [message_id, subject, body, candidate, ...]
+
+        Join order prefers output/cache columns over input when names
+        overlap (so ``candidate`` from scores wins).
+        """
+        spec = parent_details.get("also_materialize")
+        if not isinstance(spec, dict):
+            return
+        columns = spec.get("columns")
+        if not isinstance(columns, list) or not columns:
+            raise ValueError(
+                'also_materialize requires a non-empty "columns" list.'
+            )
+        combined = self._join_partitions(
+            ("output", "writedata", "cache", "input", "data")
+        )
+        if combined.empty:
+            log.warning("also_materialize: nothing to write (empty join).")
+            return
+        missing = [c for c in columns if c not in combined.columns]
+        if missing:
+            log.warning(
+                "also_materialize: skipping missing columns "
+                f"{missing}; have {list(combined.columns)}"
+            )
+        keep = [c for c in columns if c in combined.columns]
+        if not keep:
+            raise ValueError(
+                "also_materialize columns none present on joined frame."
+            )
+        write_df = combined.loc[:, keep].copy()
+        details = dict(spec)
+        # Inherit path jail / base from the parent store or interface.
+        base = (
+            details.get("base_directory")
+            or parent_details.get("base_directory")
+            or (
+                self.interface.get("base_directory")
+                if hasattr(self.interface, "get")
+                else None
+            )
+        )
+        if base:
+            details["base_directory"] = base
+        if isinstance(self.interface, Interface):
+            _stamp_path_roots(details, self.interface)
+        details.pop("also_materialize", None)
+        write_df = self._dataframe_for_output_write(write_df, details)
+        # Ensure the destination directory exists (corpus/ may be new).
+        sub = details.get("directory") or "."
+        Path(details.get("base_directory") or ".", sub).mkdir(
+            parents=True, exist_ok=True
+        )
+        log.info(
+            "Saving also_materialize snapshot "
+            f"({details.get('directory', '.')}/{details.get('filename', '')})"
+        )
+        access.io.write_data(write_df, details)
+
     def save_flows(self):
         """
         Save output, cache, and parameter stores, then the pack store.
@@ -1795,7 +1894,16 @@ class DataObject:
             else:
                 write_df = self._write_frame_for_store(typ, df, details)
             log.info(f"Saving data for flow type '{typ}'")
+            # Side-car snapshots use the full parent mapping (including
+            # also_materialize); strip it from the primary write.
+            also_spec = None
+            if isinstance(details, dict) and "also_materialize" in details:
+                also_spec = details.pop("also_materialize")
             access.io.write_data(write_df, details)
+            if also_spec is not None:
+                parent = dict(details)
+                parent["also_materialize"] = also_spec
+                self._write_also_materialize(parent)
         self._write_pack_store()
     
     def sort_values(self, *args, inplace=False, **kwargs):
