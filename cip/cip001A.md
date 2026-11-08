@@ -156,13 +156,13 @@ CIP-0013 remains the home for **document structure extract** (`paper_frontmatter
 
 - [x] Draft CIP + REQ-0011 (Proposed)
 - [ ] Accept CIP; create backlog slices
-- [ ] RedactTerms + shared matcher
-- [ ] Contact collect / text apply split (mail)
-- [ ] `redact_pdf` + fixtures
-- [ ] Validation; mark Implemented / Closed
+- [x] RedactTerms + shared matcher (`lynguine.util.redact`) — on branch `cip001A-redact-terms`
+- [x] Contact collect / text apply split (mail) — `collect_contact_pii_terms` + `redact_text`; `redact_contact_pii` wrapper retained
+- [x] `redact_pdf` + fixtures — `lynguine.access.documents.redact_pdf`
+- [ ] Accept → backlog → merge; mark Implemented / Closed
 
 ## References
 
-- Working mail scrub: `lynguine.util.text.redact_contact_pii` / `split_paragraph_units` (uncommitted / in-progress on main)
+- Branch work: `cip001A-redact-terms` (`lynguine.util.redact`, `collect_contact_pii_terms`, `redact_pdf`)
 - referia [CIP-0025](https://github.com/lawrennd/referia/blob/main/cip/cip0025.md) — review composition only after this infrastructure exists
 - Tenets: explicit-infrastructure, flow-based-processing

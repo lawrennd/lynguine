@@ -21,6 +21,7 @@ from .pdf import (
     classify_text_layer,
     read_pdf,
 )
+from .redact_pdf import redact_pdf
 from .recogniser import (
     StrategyCandidate,
     choose_strategy,
@@ -76,6 +77,7 @@ __all__ = [
     "read_docx",
     "read_markdown",
     "read_pdf",
+    "redact_pdf",
     "register_strategy",
     "resolve_chrome_filter_flags",
     "resolve_strategy_id",
