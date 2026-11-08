@@ -21,6 +21,7 @@ from .pdf import (
     classify_text_layer,
     read_pdf,
 )
+from .redact_pdf import redact_pdf
 from .recogniser import (
     StrategyCandidate,
     choose_strategy,
@@ -30,6 +31,7 @@ from .recogniser import (
 from .segment import (
     document_segment,
     extract_form_fields,
+    extract_paper_frontmatter,
     extract_references,
     segment_document,
     segment_pdf,
@@ -66,6 +68,7 @@ __all__ = [
     "document_segment",
     "ensure_builtin_strategies",
     "extract_form_fields",
+    "extract_paper_frontmatter",
     "extract_references",
     "get_strategy",
     "is_toc_like",
@@ -74,6 +77,7 @@ __all__ = [
     "read_docx",
     "read_markdown",
     "read_pdf",
+    "redact_pdf",
     "register_strategy",
     "resolve_chrome_filter_flags",
     "resolve_strategy_id",

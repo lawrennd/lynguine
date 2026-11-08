@@ -246,6 +246,44 @@ def extract_references(
     )
 
 
+def _unwrap_one_record(
+    units: list[dict[str, Any]],
+    *,
+    payload_key: str,
+) -> dict[str, Any]:
+    """Unwrap the first unit's structured payload for one-record aspects."""
+    if not units:
+        return {}
+    first = units[0]
+    fields = first.get(payload_key)
+    if isinstance(fields, dict):
+        out = dict(fields)
+    else:
+        skip = {
+            "unit_id",
+            "text",
+            "segment_strategy",
+            "aspect",
+            "chunk_index",
+            "word_count",
+            "chunking_method",
+            "was_truncated",
+            "source_path",
+            "recogniser_score",
+            "recogniser_rationale",
+            payload_key,
+        }
+        out = {k: v for k, v in first.items() if k not in skip}
+    out["segment_strategy"] = first.get("segment_strategy")
+    if "segment_engine" in first:
+        out["segment_engine"] = first["segment_engine"]
+    if "recogniser_score" in first:
+        out["recogniser_score"] = first["recogniser_score"]
+    if "recogniser_rationale" in first:
+        out["recogniser_rationale"] = first["recogniser_rationale"]
+    return out
+
+
 def extract_form_fields(
     path: str,
     *,
@@ -270,34 +308,30 @@ def extract_form_fields(
         on_sparse_text=on_sparse_text,
         **kwargs,
     )
-    if not units:
-        return {}
-    first = units[0]
-    fields = first.get("form_fields")
-    if isinstance(fields, dict):
-        out = dict(fields)
-    else:
-        # Flat extras already merged via Unit.to_dict()
-        skip = {
-            "unit_id",
-            "text",
-            "segment_strategy",
-            "aspect",
-            "chunk_index",
-            "word_count",
-            "chunking_method",
-            "was_truncated",
-            "source_path",
-            "recogniser_score",
-            "recogniser_rationale",
-            "form_fields",
-        }
-        out = {k: v for k, v in first.items() if k not in skip}
-    out["segment_strategy"] = first.get("segment_strategy")
-    if "segment_engine" in first:
-        out["segment_engine"] = first["segment_engine"]
-    if "recogniser_score" in first:
-        out["recogniser_score"] = first["recogniser_score"]
-    if "recogniser_rationale" in first:
-        out["recogniser_rationale"] = first["recogniser_rationale"]
-    return out
+    return _unwrap_one_record(units, payload_key="form_fields")
+
+
+def extract_paper_frontmatter(
+    path: str,
+    *,
+    strategy: str = "auto",
+    reader: str = "pdf",
+    root: str | None = None,
+    on_sparse_text: OnSparse = "error",
+    **kwargs: Any,
+) -> dict[str, Any]:
+    """Compute helper: return the single ``paper_frontmatter`` record as a dict.
+
+    Segments with ``aspect='paper_frontmatter'`` and unwraps title/authors
+    (one record per document). Returns ``{}`` when segmentation yields no units.
+    """
+    units = document_segment(
+        path,
+        strategy=strategy,
+        aspect="paper_frontmatter",
+        reader=reader,
+        root=root,
+        on_sparse_text=on_sparse_text,
+        **kwargs,
+    )
+    return _unwrap_one_record(units, payload_key="paper_frontmatter")

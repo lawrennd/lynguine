@@ -8,13 +8,14 @@ from ..log import Logger
 
 from ..config.interface import Interface
 
-from ..util.text import render_liquid
+from ..util.text import render_liquid, split_paragraph_units
 from ..util.misc import isna
 
 from ..util.liquid import url_escape, markdownify, relative_url, absolute_url, to_i
 from ..access.documents.segment import (
     document_segment,
     extract_form_fields,
+    extract_paper_frontmatter,
     extract_references,
 )
 
@@ -581,6 +582,23 @@ class Compute():
                 ),
             },
             {
+                "name": "split_paragraph_units",
+                "function": split_paragraph_units,
+                "context": False,
+                "default_args": {
+                    "only_candidates": True,
+                    "min_chars": 40,
+                    "max_units": 12,
+                },
+                "docstr": (
+                    "Split a text body into paragraph unit dicts for "
+                    "input.explode (CIP-0014). When only_candidates is true, "
+                    "only candidate=true rows produce units. Sets listing "
+                    "title/description and PII-redacts extract_text via "
+                    "RedactTerms (CIP-001A)."
+                ),
+            },
+            {
                 "name": "extract_references",
                 "function": extract_references,
                 "context": False,
@@ -606,6 +624,20 @@ class Compute():
                 "docstr": (
                     "Extract a single structured form_fields record from a PDF "
                     "(CIP-0013 YAML strategies / form_fields engine)."
+                ),
+            },
+            {
+                "name": "extract_paper_frontmatter",
+                "function": extract_paper_frontmatter,
+                "context": False,
+                "default_args": {
+                    "strategy": "auto",
+                    "reader": "pdf",
+                    "on_sparse_text": "error",
+                },
+                "docstr": (
+                    "Extract title and authors from an academic PDF first page "
+                    "(CIP-0013 paper_frontmatter aspect / academic_paper_front.v1)."
                 ),
             },
         ]

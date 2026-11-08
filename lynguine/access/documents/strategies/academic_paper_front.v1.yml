@@ -1,0 +1,22 @@
+# Typical digital academic paper first page (title + authors above Abstract).
+# Synthetic fixtures only in lynguine — do not commit real author PDFs/PII.
+id: academic_paper_front.v1
+aspects:
+  - paper_frontmatter
+engine: paper_frontmatter
+grain: one_record_per_document
+recogniser:
+  boost_when_page0_matches_any:
+    - "Abstract"
+    - "ABSTRACT"
+    - "Introduction"
+    - "Keywords"
+params:
+  max_pages: 1
+  stop_headings:
+    - Abstract
+    - ABSTRACT
+    - Introduction
+    - INTRODUCTION
+    - Keywords
+    - KEYWORDS

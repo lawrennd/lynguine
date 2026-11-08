@@ -15,6 +15,18 @@ The compute framework consists of the following key components:
 3. **Argument Resolution System**: Handles different types of arguments (direct, row, column, subseries, view, function)
 4. **Three-Phase Processing**: Supports precompute, compute, and postcompute operations
 
+### Live vs target stack
+
+| | |
+|---|---|
+| **Live** | `lynguine.Compute` → `referia.Compute` (assessment functions registered in referia) |
+| **Target** | `lynguine` → **vongole** → apps (referia); CIP-0007 |
+
+Lynguine keeps the compute **engine** and thin **access** compute. Aggregations and
+numeric arithmetic (`sum`, `add`, `multiply`, thresholds, …) are assessment
+compute: **referia today**, **vongole** when that package exists. Do not treat
+doc examples that name `add` as proof that lynguine registers arithmetic.
+
 ### Inheritance in referia
 
 The `referia.assess.compute.Compute` class extends the lynguine base class with additional functions specific to review and assessment workflows:
@@ -22,7 +34,7 @@ The `referia.assess.compute.Compute` class extends the lynguine base class with 
 ```
 lynguine.assess.compute.Compute
     ↑
-    └── referia.assess.compute.Compute
+    └── referia.assess.compute.Compute   # live (vongole missing)
 ```
 
 ## Compute Specification Format
@@ -58,16 +70,20 @@ compute:
 
 ## Argument Types
 
+Snippets below show **argument shapes**. Callable `function` names must appear in
+the live registry of the `Compute` subclass you use (lynguine access names, or
+referia / future vongole assessment names).
+
 ### 1. Direct Arguments (`args`)
 
 Simple values passed directly to the function:
 
 ```yaml
 compute:
-  - function: add
-    field: total
+  - function: today
+    field: review_date
     args:
-      increment: 10
+      format: "%Y-%m-%d"
 ```
 
 ### 2. Row Arguments (`row_args`)
@@ -148,16 +164,23 @@ Each function in the registry is defined with:
 }
 ```
 
-### Built-in Functions (lynguine)
+### Built-in Functions (lynguine) — live access compute
 
-The base lynguine Compute class provides:
+The base lynguine `Compute._compute_functions_list` currently registers **five**
+functions (access / document path helpers, not assessment arithmetic):
 
 - **render_liquid**: Render liquid templates with data context
-- **today**: Return today's date as formatted string
+- **today**: Return today's date as a formatted string
+- **document_segment**: Segment a PDF/DOCX into unit dicts (CIP-0013)
+- **extract_references**: Extract bibliographic reference strings from a PDF
+- **extract_form_fields**: Extract a structured form-fields record from a PDF
 
-### Extended Functions (referia)
+There is no lynguine-registered `add`, `multiply`, or similar arithmetic.
 
-The referia Compute class adds:
+### Extended Functions (referia) — live assessment compute / vongole target
+
+The referia Compute class adds (interim home until vongole; see CIP-0007 and
+`backlog/infrastructure/2026-10-18_inventory-referia-compute-for-vongole.md`):
 
 #### Text Processing
 - **word_count**: Count words in text
@@ -177,6 +200,9 @@ The referia Compute class adds:
 - **len**: Length of list
 - **sum**: Sum of values
 - **map**: Apply function to list elements
+- **add**, **subtract**, **multiply**: Scalar / element-wise arithmetic (referia interim; vongole target)
+- **gte**, **lte**: Threshold compare for pass/fail fields (referia interim; vongole target)
+- **matmul**, **dot**: Criteria×weights style products (referia interim; vongole target)
 - **return_longest**: Return longest item in list
 - **return_shortest**: Return shortest item in list
 
@@ -346,8 +372,12 @@ Append/prepend `mode` always runs and concatenates; that is separate from soft f
 
 ## Complete Example
 
+Assessment-oriented sketch using **referia** registry names (`word_count`,
+`sum`, …). These are not in lynguine’s live access registry; long-term home is
+**vongole** (CIP-0007). Honest three-phase dispatch is tracked in CIP-0011.
+
 ```yaml
-# Configuration file example
+# Configuration file example (referia today / vongole target)
 compute:
   # Precomputation: prepare data
   precompute:
