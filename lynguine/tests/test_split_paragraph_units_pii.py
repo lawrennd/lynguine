@@ -74,6 +74,32 @@ def test_split_redacts_body_name_when_from_is_bare_email():
     assert "[name]" in units[0]["extract_text"]
 
 
+def test_split_redacts_unicode_im_and_markdown_signature():
+    """Mail often uses I’m (U+2019); signature may be *Name* with bare From."""
+    body = (
+        "I’m Aayaann Kausar, a third-year undergraduate at IIT Kharagpur.\n\n"
+        "Best regards,\n"
+        "*Aayaann Kausar*\n"
+        "IIT Kharagpur"
+    )
+    units = split_paragraph_units(
+        text=body,
+        mail_key="internship::ak",
+        candidate=True,
+        subject="IIT Kharagpur — AI Research Internship Inquiry",
+        sender="aayaannkausar@gmail.com",
+        date="2026-09-13",
+        min_chars=10,
+    )
+    assert len(units) >= 2
+    joined = "\n".join(u["extract_text"] for u in units)
+    assert "Aayaann" not in joined
+    assert "Kausar" not in joined
+    assert "[name]" in joined
+    # Listing text keeps the raw body; only extract_text is scrubbed.
+    assert any("Aayaann Kausar" in u["text"] for u in units)
+
+
 def test_redact_does_not_eat_at_inside_words():
     """Regression: short crumbs like 'at' must not destroy Mathematics."""
     para = (

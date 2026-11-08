@@ -58,8 +58,11 @@ _MY_NAME_IS_RE = re.compile(
     r"\b((?i:my name is))\s+[A-Z][A-Za-z.'\-]+(?:\s+[A-Z][A-Za-z.'\-]+){0,3}"
 )
 # "I'm Ali Ghasemzadeh, a final-year…" / "I am Samarth Kumar and…"
+# Apostrophe class covers ASCII and typographic forms (U+2019 / U+2018);
+# mail clients often emit I’m rather than I'm.
+_IM_APOSTROPHE = r"['\u2019\u2018]"
 _IM_NAME_RE = re.compile(
-    r"\b((?i:i'm|i am))\s+"
+    rf"\b((?i:i{_IM_APOSTROPHE}m|i am))\s+"
     r"([A-Z][A-Za-z.'\-]+(?:\s+[A-Z][A-Za-z.'\-]+){0,3})"
     r"(?=,|\s+a\b|\s+an\b|\s+and\b|\.|$)"
 )
