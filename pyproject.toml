@@ -59,16 +59,6 @@ parquet = ["pyarrow"]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
-[tool.poetry.dev-dependencies]
-pytest = "^9.0.3"
-pytest-cov = "^6.0.0"
-pytest-mock = "^3.14.0"
-deepdiff = "^8.6.2"
-sphinx = "^7.2.6"
-sphinx-rtd-theme = "^2.0.0"
-toml = "^0.10.2"
-myst-parser = "^2.0.0"
-
 # The docs group provides dependencies for building documentation
 [tool.poetry.group.docs]
 optional = true
@@ -80,6 +70,10 @@ myst-parser = "^2.0.0"
 toml = "^0.10.2"
 
 [tool.poetry.group.dev.dependencies]
+pytest = "^9.0.3"
+pytest-cov = "^6.0.0"
+pytest-mock = "^3.14.0"
+deepdiff = "^8.6.2"
 ruff = "^0.17.0"
 
 [tool.poetry.scripts]

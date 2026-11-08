@@ -125,7 +125,7 @@ Apply the same `recursive` / `fields` handling in the shared `read_directory` pa
 ### Interaction with CIP-000A / CIP-0009
 
 - Every matched path is confined before read (existing directory flow).
-- Remote `source` blocks (CIP-0009) remain orthogonal: fetch/cache first, then local directory read with recursive/fields.
+- Remote `remote:` blocks (CIP-0009) remain orthogonal: materialise/cache first, then local directory read with recursive/fields.
 
 ### Downstream contract for referia
 
@@ -214,6 +214,6 @@ the hosted page. `compressed: true`.
 
 - `lynguine/access/io.py` — `read_directory` (~L471), `read_files` (~L561), `directory_readers` / `yaml_directory`
 - CIP-000A — constrained filesystem access
-- CIP-0009 — config-driven remote access (orthogonal `source` fetch)
+- CIP-0009 — config-driven remote materialise (orthogonal `remote:` fetch; naming chosen to avoid clashing with directory `source:`)
 - referia CIP-0010 — config-driven catalog / events root (consumer)
 - Tenets: explicit-infrastructure, flow-based-processing
