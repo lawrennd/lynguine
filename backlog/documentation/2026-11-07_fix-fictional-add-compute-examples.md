@@ -1,10 +1,10 @@
 ---
 id: "2026-11-07_fix-fictional-add-compute-examples"
 title: "Fix fictional function: add compute examples in docs"
-status: "Proposed"
+status: "Completed"
 priority: "Medium"
 created: "2026-11-07"
-last_updated: "2026-11-07"
+last_updated: "2026-11-08"
 category: "documentation"
 related_cips: ["0007"]
 owner: "lawrennd"
@@ -45,20 +45,20 @@ Cross-link:
 
 ## Acceptance Criteria
 
-- [ ] No undocumented claim that lynguine registers `add` / `multiply` / similar
-- [ ] `README.md` and `docs/compute_framework.md` examples are honest about
+- [x] No undocumented claim that lynguine registers `add` / `multiply` / similar
+- [x] `README.md` and `docs/compute_framework.md` examples are honest about
       live vs intended stacks
-- [ ] Assessment arithmetic examples point at referia (interim) / vongole (target)
-- [ ] Related Work or notes link the referia numeric primitives backlog and the
+- [x] Assessment arithmetic examples point at referia (interim) / vongole (target)
+- [x] Related Work or notes link the referia numeric primitives backlog and the
       2026-10-18 vongole inventory task
-- [ ] Does not supersede or close `2026-10-18_align-compute-framework-docs-vongole-intent`;
+- [x] Does not supersede or close `2026-10-18_align-compute-framework-docs-vongole-intent`;
       may be done as a focused slice of that cleanup
 
 ## Implementation Notes
 
 - Prefer short “Live / Target” callouts over rewriting history.
-- Count of lynguine registered functions is currently **six** (not five); keep
-  the list accurate when touching that section.
+- Live lynguine registry count is **five** (not five-vs-six drift): `render_liquid`,
+  `today`, `document_segment`, `extract_references`, `extract_form_fields`.
 - Do not add arithmetic to lynguine’s registry as part of this task.
 
 ## Related
@@ -75,3 +75,13 @@ Cross-link:
 
 Task created after compute inventory found fictional `function: add` examples
 in lynguine docs.
+
+### 2026-11-08
+
+Completed in worktree `lynguine-fix-add-docs` on branch
+`backlog-2026-11-07-fix-fictional-add-docs`:
+
+- README examples use live lynguine names; `add` labeled referia/vongole
+- `docs/compute_framework.md`: Live vs target callout; accurate five-function
+  lynguine list; numeric primitives under referia; Argument Types note;
+  Complete Example labeled assessment/referia
