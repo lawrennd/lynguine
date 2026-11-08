@@ -1304,6 +1304,11 @@ class DataObject:
                 _stamp_path_roots(item, interface)
             return item
 
+        # Explicit import: access/ has no __init__.py and package init only
+        # binds access.io, so access.download is unbound in a fresh process
+        # (e.g. the Phase5 server subprocess) unless imported here.
+        from ..access.download import materialise as _materialise_remote
+
         # ods CIP-0003: materialise remotes on non-input slots first so a
         # catalogue under cache: lands before input data_resources expand.
         # Reads still follow key_order (input before empty cache creation).
@@ -1314,7 +1319,7 @@ class DataObject:
                 continue
             item = _prepare_flow_item(item)
             if isinstance(item, (dict, list)):
-                access.download.materialise(item, interface)
+                _materialise_remote(item, interface)
 
         for key, item in sorted_items:       
             # Check if the interface key is a valid data key
@@ -1342,7 +1347,7 @@ class DataObject:
                     read_item = _liquid_expand_access_details(item, liquid_ctx)
                 # CIP-0009: materialise remote: before data_exists / read_data.
                 if isinstance(read_item, (dict, list)):
-                    access.download.materialise(read_item, interface)
+                    _materialise_remote(read_item, interface)
                 if key not in cls.types["input"]: # allow creation of non-inputs if they don't exist
                     if isinstance(item, dict):
                         if access.io.data_exists(item):
