@@ -8,7 +8,11 @@ from ..log import Logger
 
 from ..config.interface import Interface
 
-from ..util.text import render_liquid, split_paragraph_units
+from ..util.text import (
+    audit_extract_anonymisation,
+    render_liquid,
+    split_paragraph_units,
+)
 from ..util.misc import isna
 
 from ..util.liquid import url_escape, markdownify, relative_url, absolute_url, to_i
@@ -596,6 +600,17 @@ class Compute():
                     "only candidate=true rows produce units. Sets listing "
                     "title/description and PII-redacts extract_text via "
                     "RedactTerms (CIP-001A)."
+                ),
+            },
+            {
+                "name": "audit_extract_anonymisation",
+                "function": audit_extract_anonymisation,
+                "context": False,
+                "default_args": {},
+                "docstr": (
+                    "Audit unit extract_text for residual contact PII "
+                    "(name / email / phone / profile URL). Returns flag "
+                    "dict only — never residual substrings."
                 ),
             },
             {

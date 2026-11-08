@@ -4,7 +4,12 @@ import re
 from typing import Any
 
 from lynguine.util.misc import remove_nan
-from lynguine.util.redact import RedactTerm, coerce_terms, redact_text
+from lynguine.util.redact import (
+    RedactTerm,
+    coerce_terms,
+    redact_text,
+    term_search_pattern,
+)
 
 _TABLE_CHROME_LINE = re.compile(r"^[\s|:\-]+$")
 _EMAIL_RE = re.compile(
@@ -58,8 +63,11 @@ _MY_NAME_IS_RE = re.compile(
     r"\b((?i:my name is))\s+[A-Z][A-Za-z.'\-]+(?:\s+[A-Z][A-Za-z.'\-]+){0,3}"
 )
 # "I'm Ali Ghasemzadeh, a final-year…" / "I am Samarth Kumar and…"
+# Apostrophe class covers ASCII and typographic forms (U+2019 / U+2018);
+# mail clients often emit I’m rather than I'm.
+_IM_APOSTROPHE = r"['\u2019\u2018]"
 _IM_NAME_RE = re.compile(
-    r"\b((?i:i'm|i am))\s+"
+    rf"\b((?i:i{_IM_APOSTROPHE}m|i am))\s+"
     r"([A-Z][A-Za-z.'\-]+(?:\s+[A-Z][A-Za-z.'\-]+){0,3})"
     r"(?=,|\s+a\b|\s+an\b|\s+and\b|\.|$)"
 )
@@ -314,6 +322,94 @@ def redact_contact_pii(text: Any, *, names: list[str] | None = None) -> str:
     out = _MY_NAME_IS_RE.sub(r"\1 [name]", out)
     out = _IM_NAME_RE.sub(r"\1 [name]", out)
     return out
+
+
+# Profile / personal homepage kinds emitted by ``collect_contact_pii_terms``.
+_URL_PII_KINDS = frozenset(
+    {
+        "linkedin",
+        "scholar",
+        "orcid",
+        "researchgate",
+        "github",
+        "twitter",
+        "website",
+    }
+)
+
+
+def audit_extract_anonymisation(
+    text: Any = None,
+    extract_text: Any = None,
+    *,
+    sender: Any = None,
+    **kwargs: Any,
+) -> dict[str, Any]:
+    """Audit whether ``extract_text`` still holds expected contact PII.
+
+    Expected person-name tokens come from ``names_from_sender(sender)`` (or
+    kwargs alias ``from``) when a display name exists, plus
+    ``names_from_body(text)``. Residual emails / phones / profile URLs in
+    ``extract_text`` use the same collectors as redaction — not a second
+    regex dialect.
+
+    Returns booleans and ``expected_name_source`` only; never residual
+    substrings (siding check stores must not persist leftover PII).
+
+    ``expected_name_source`` is ``from_display`` | ``body_intro`` | ``both``
+    | ``none``. Bare From with no intro match yields ``none`` and cannot
+    claim a name leak from sender harvest.
+    """
+    if sender is None and not _blank_audit(kwargs.get("from")):
+        sender = kwargs.get("from")
+
+    raw = "" if text is None else str(text)
+    extract = "" if extract_text is None else str(extract_text)
+
+    from_names = names_from_sender(sender)
+    body_names = names_from_body(raw)
+    if from_names and body_names:
+        expected_name_source = "both"
+    elif from_names:
+        expected_name_source = "from_display"
+    elif body_names:
+        expected_name_source = "body_intro"
+    else:
+        expected_name_source = "none"
+
+    name_leak = False
+    for name in dict.fromkeys([*from_names, *body_names]):
+        term: RedactTerm = {
+            "value": name,
+            "kind": "name",
+            "match": "whole_word",
+            "source": "contact_pii",
+        }
+        if term_search_pattern(term).search(extract):
+            name_leak = True
+            break
+
+    residual = collect_contact_pii_terms(extract)
+    email_leak = any(t.get("kind") == "email" for t in residual)
+    phone_leak = any(t.get("kind") == "phone" for t in residual)
+    url_leak = any(t.get("kind") in _URL_PII_KINDS for t in residual)
+
+    any_leak = bool(name_leak or email_leak or phone_leak or url_leak)
+    return {
+        "name_leak": bool(name_leak),
+        "email_leak": bool(email_leak),
+        "phone_leak": bool(phone_leak),
+        "url_leak": bool(url_leak),
+        "expected_name_source": expected_name_source,
+        "anonymise_ok": not any_leak,
+    }
+
+
+def _blank_audit(val: Any) -> bool:
+    if val is None:
+        return True
+    text_v = str(val).strip()
+    return not text_v or text_v.lower() in {"nan", "nat", "none", "<na>"}
 
 
 def render_liquid(compute, template, **kwargs):
