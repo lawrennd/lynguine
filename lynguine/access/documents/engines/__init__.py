@@ -48,6 +48,10 @@ def ensure_builtin_engines() -> None:
         from .form_fields import FormFieldsEngine
 
         register_engine(FormFieldsEngine())
+    if "paper_frontmatter" not in _ENGINES:
+        from .paper_frontmatter import PaperFrontmatterEngine
+
+        register_engine(PaperFrontmatterEngine())
 
 
 __all__ = [

@@ -15,6 +15,7 @@ from ..util.liquid import url_escape, markdownify, relative_url, absolute_url, t
 from ..access.documents.segment import (
     document_segment,
     extract_form_fields,
+    extract_paper_frontmatter,
     extract_references,
 )
 
@@ -606,6 +607,20 @@ class Compute():
                 "docstr": (
                     "Extract a single structured form_fields record from a PDF "
                     "(CIP-0013 YAML strategies / form_fields engine)."
+                ),
+            },
+            {
+                "name": "extract_paper_frontmatter",
+                "function": extract_paper_frontmatter,
+                "context": False,
+                "default_args": {
+                    "strategy": "auto",
+                    "reader": "pdf",
+                    "on_sparse_text": "error",
+                },
+                "docstr": (
+                    "Extract title and authors from an academic PDF first page "
+                    "(CIP-0013 paper_frontmatter aspect / academic_paper_front.v1)."
                 ),
             },
         ]
