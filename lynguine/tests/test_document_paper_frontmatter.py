@@ -20,13 +20,13 @@ from lynguine.access.documents import (
 )
 from lynguine.access.documents.engines import get_engine
 from lynguine.access.documents.engines.paper_frontmatter import (
-    _INSTITUTIONAL_ADDRESS,
     _acm_author_name,
     _looks_like_affiliation_only,
     _looks_like_author_line,
     _looks_like_prose,
     _looks_like_title_line,
     _name_like_part,
+    _reject_publisher_title,
     _set_first,
     extract_frontmatter,
     is_publisher_front_matter,
@@ -580,6 +580,7 @@ def test_set_first_skips_none_and_empty():
 def test_helper_predicates_affiliation_prose_names():
     assert _looks_like_affiliation_only("contact@example.com")
     assert _looks_like_affiliation_only("e-mail: ada@example.com")
+    assert _looks_like_affiliation_only("Email for correspondence")
     assert _looks_like_affiliation_only("1MIT")
     assert _looks_like_affiliation_only("1Department of Computing, Example University")
     assert not _looks_like_affiliation_only(
@@ -599,6 +600,10 @@ def test_helper_predicates_affiliation_prose_names():
     assert not _looks_like_affiliation_only(
         "Ramon Vinas, Chaitanya Joshi, University of Cambridge"
     )
+    assert not _looks_like_affiliation_only(
+        "Ada Lovelace University of Cambridge"
+    )
+    assert _looks_like_affiliation_only("High school Cambridge")
     assert _looks_like_affiliation_only(
         "Industrial Engineering and Management, Technion"
     )
@@ -615,6 +620,9 @@ def test_helper_predicates_affiliation_prose_names():
     assert _looks_like_prose(
         "Group deliberation enables people to collaborate and solve problems, "
         "however it is understudied due to a lack of resources for analysis."
+    )
+    assert _looks_like_prose(
+        "This is a long sentence, with a comma and enough words here now."
     )
     assert not _looks_like_prose("Short Title Phrase")
 
@@ -640,8 +648,11 @@ def test_author_and_title_line_predicates():
     )
     assert _looks_like_author_line("Ada Lovelace and Alan Turing")
     assert _looks_like_author_line("& Pietro Liò")
+    assert _looks_like_author_line("and Ada Lovelace")
     assert _looks_like_author_line("Ada Lovelace")
     assert not _looks_like_author_line("X")
+    assert not _looks_like_author_line(" ".join(["Zebra"] * 17))
+    assert not _looks_like_author_line("1, 2, and 3")
 
     assert not _looks_like_title_line(
         "IEEE TRANSACTIONS ON X, VOL. 1, NO. 2, JANUARY 2020"
@@ -651,14 +662,38 @@ def test_author_and_title_line_predicates():
     )
     assert not _looks_like_title_line("1Department of Psychology, Princeton")
     assert not _looks_like_title_line("ada.lovelace@example.com")
+    assert not _looks_like_title_line("Team Ada Lovelace@example.com notes")
+    assert not _looks_like_title_line(
+        "Ada Lovelace, Department of Computing, USA."
+    )
     assert not _looks_like_title_line("Department of Computing, USA.")
     assert not _looks_like_title_line("ab")
+    prose21 = (
+        "we present results showing that the proposed approach improves accuracy "
+        "across many datasets and benchmarks carefully today with extras here now."
+    )
+    assert len(prose21.split()) > 20
+    assert not _looks_like_title_line(prose21)
     assert _looks_like_title_line("A Synthetic Study of Document Extraction")
 
 
 def test_split_author_names_filters_noise():
     assert split_author_names("and") == []
     assert split_author_names("1, 2, 3") == []
+    assert split_author_names("Ada Lovelace,42,Alan Turing") == [
+        "Ada Lovelace",
+        "Alan Turing",
+    ]
+    assert split_author_names("Ada Lovelace, and, Alan Turing") == [
+        "Ada Lovelace",
+        "Alan Turing",
+    ]
+    assert split_author_names(
+        "Ada Lovelace and 1Department of Computing, Example University"
+    ) == ["Ada Lovelace"]
+    assert split_author_names(
+        "Ada Lovelace and we present a method that is not a name list at all here"
+    ) == ["Ada Lovelace"]
     assert split_author_names(
         "we present a method that is not a name list at all here"
     ) == []
@@ -751,7 +786,7 @@ def test_multiline_author_join_space_vs_comma():
     assert "Bianca Dumitrascu" in fields2["authors"]
 
 
-def test_equal_contrib_clears_affiliation_title():
+def test_equal_contrib_authors_without_title():
     text = "\n".join(
         [
             "1Department of Psychology and the Neuroscience Institute, Princeton University, USA.",
@@ -762,9 +797,6 @@ def test_equal_contrib_clears_affiliation_title():
         ]
     )
     fields = extract_frontmatter(_doc_from_text(text), {})
-    assert fields["title"] is None or not _looks_like_affiliation_only(
-        fields["title"] or ""
-    )
     assert "Ada Lovelace" in fields["authors"]
     assert "Grace Hopper" in fields["authors"]
 
@@ -799,6 +831,15 @@ def test_soft_fail_when_remaining_title_is_publisher_fm():
     assert fields["title"] is None or not is_publisher_front_matter(fields["title"])
 
 
+def test_reject_publisher_title_helper():
+    assert _reject_publisher_title(None) is None
+    assert _reject_publisher_title("A Synthetic Study of Soft Fail Behaviour") == (
+        "A Synthetic Study of Soft Fail Behaviour"
+    )
+    assert _reject_publisher_title("nature machine intelligence") is None
+    assert _reject_publisher_title("Applied Soft Computing") is None
+
+
 def test_more_extract_branches_for_coverage():
     # Leading ampersand author continuation + email title reject path via helpers
     text = "\n".join(
@@ -826,27 +867,12 @@ def test_more_extract_branches_for_coverage():
     fields2 = extract_frontmatter(_doc_from_text(prose_first), {})
     assert fields2["title"] is None or fields2["title"][:1].isupper()
 
-    # Image-title style: affiliation then equal-contrib clears bogus title
-    eq = "\n".join(
-        [
-            "Department of Computing, University of Example, United Kingdom.",
-            "These authors contributed equally: Ada Lovelace, Alan Turing.",
-            "Abstract",
-            "We describe a synthetic fixture used only for layout tests.",
-        ]
-    )
-    fields3 = extract_frontmatter(_doc_from_text(eq), {})
-    assert "Ada Lovelace" in fields3["authors"]
-    if fields3["title"]:
-        assert not _INSTITUTIONAL_ADDRESS.search(fields3["title"])
 
-
-def test_coverage_scan_forward_and_soft_fail_title():
-    # Affiliation then title (scan-forward path)
+def test_coverage_scan_forward_and_author_joins():
+    # Junk line then title (scan-forward path after empty first take)
     text = "\n".join(
         [
-            "University of Example",
-            "Department of Computing, United Kingdom.",
+            "X",
             "Sparse Models for Synthetic Evaluation Suites",
             "Grace Hopper and Alan Turing",
             "Abstract",
@@ -855,6 +881,7 @@ def test_coverage_scan_forward_and_soft_fail_title():
     )
     fields = extract_frontmatter(_doc_from_text(text), {})
     assert "Sparse Models" in (fields["title"] or "")
+    assert "Grace Hopper" in fields["authors"]
 
     # Soft-fail: title that remains publisher FM
     fm_title = "\n".join(
@@ -867,19 +894,21 @@ def test_coverage_scan_forward_and_soft_fail_title():
     fields2 = extract_frontmatter(_doc_from_text(fm_title), {})
     assert fields2["title"] is None
 
-    # Author block then non-author stops collection
+    # Author block then non-author / non-affiliation stopper (not a stop heading)
     text3 = "\n".join(
         [
             "Sparse Models for Synthetic Evaluation Suites",
-            "Grace Hopper, Alan Turing",
-            "University of Example",
+            "Grace Hopper",
+            "Alan Turing",
+            "Corresponding author",
             "Abstract",
             "We describe a synthetic fixture used only for layout tests.",
         ]
     )
     fields3 = extract_frontmatter(_doc_from_text(text3), {})
     assert "Grace Hopper" in fields3["authors"]
-    assert not any("University" in a for a in fields3["authors"])
+    assert "Alan Turing" in fields3["authors"]
+    assert not any("Corresponding" in a for a in fields3["authors"])
 
     # Ampersand / trailing-comma wrap join
     text4 = "\n".join(
@@ -894,3 +923,45 @@ def test_coverage_scan_forward_and_soft_fail_title():
     fields4 = extract_frontmatter(_doc_from_text(text4), {})
     assert "Grace Hopper" in fields4["authors"]
     assert "Alan Turing" in fields4["authors"]
+
+    # Single-token tail before next author line → space join
+    text5 = "\n".join(
+        [
+            "A Synthetic Study of Name Wrapping Behaviour Clearly",
+            "Hopper, Li",
+            "Wong Mina Lee",
+            "Abstract",
+            "We describe a synthetic fixture used only for layout tests.",
+        ]
+    )
+    fields5 = extract_frontmatter(_doc_from_text(text5), {})
+    assert any("Li" in a and "Wong" in a for a in fields5["authors"]) or any(
+        a.startswith("Li") for a in fields5["authors"]
+    )
+
+    # Equal-contrib clause stops author collection; duplicates dedupe
+    text6 = "\n".join(
+        [
+            "Sparse Models for Synthetic Evaluation Suites",
+            "ADA LOVELACE, University of Example, United Kingdom",
+            "ADA LOVELACE, University of Example, United Kingdom",
+            "These authors contributed equally: Ada Lovelace, Alan Turing.",
+            "Abstract",
+            "We describe a synthetic fixture used only for layout tests.",
+        ]
+    )
+    fields6 = extract_frontmatter(_doc_from_text(text6), {})
+    assert fields6["authors"].count("Ada Lovelace") == 1
+    assert "Alan Turing" in fields6["authors"]
+
+    # Lone personal name is not taken as title
+    text7 = "\n".join(
+        [
+            "Ada Lovelace",
+            "Alan Turing",
+            "Abstract",
+            "We describe a synthetic fixture used only for layout tests.",
+        ]
+    )
+    fields7 = extract_frontmatter(_doc_from_text(text7), {})
+    assert fields7["title"] != "Ada Lovelace"

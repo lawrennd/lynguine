@@ -511,10 +511,9 @@ def _looks_like_author_line(line: str) -> bool:
     words = line.split()
     if len(words) > 16:
         return False
-    # Titles often contain "and" / "with" — require name-like parts
+    # Titles often contain "and" / "with" — require name-like parts.
+    # Leading "& …" / "and …" continuations are handled here via the same split.
     if re.search(r"(?i)\band\b|&|,", line):
-        if _looks_like_prose(line):
-            return False
         parts = [
             p.strip()
             for p in re.split(r",|\band\b|&", line)
@@ -524,11 +523,6 @@ def _looks_like_author_line(line: str) -> bool:
             return False
         nameish = sum(1 for p in parts if _name_like_part(p))
         return nameish / len(parts) >= 0.5
-    # "& Pietro Liò" / leading ampersand continuations
-    if line.startswith("&") or line.startswith("and "):
-        rest = re.sub(r"^&\s*|^and\s+", "", line, flags=re.I).strip()
-        if rest and _name_like_part(rest):
-            return True
     # Single short personal name (not a title-cased phrase)
     if 2 <= len(words) <= 4 and _name_like_part(line):
         return True
@@ -551,9 +545,14 @@ def _looks_like_title_line(line: str) -> bool:
     letters = sum(c.isalpha() for c in line)
     if letters < 4:
         return False
-    if len(line.split()) > 30:
-        return False
     return True
+
+
+def _reject_publisher_title(title: str | None) -> str | None:
+    """Drop a candidate title that is still publisher front matter."""
+    if title and is_publisher_front_matter(title):
+        return None
+    return title
 
 
 def split_author_names(raw: str) -> list[str]:
@@ -656,25 +655,6 @@ def _take_title_wrap(lines: list[str], start: int) -> tuple[list[str], int]:
         ):
             title_parts.append(nxt)
             i += 1
-        # IEEE-style wrap: second title line then a clear multi-author list.
-        elif (
-            _looks_like_title_line(nxt)
-            and not _looks_like_prose(nxt)
-            and not _acm_author_name(nxt)
-            and not (
-                2 <= len(nxt.split()) <= 3
-                and _PERSON_NAME.match(nxt)
-                and not _TITLE_FUNCTION_WORDS.search(nxt)
-            )
-            and "," not in nxt
-            and not re.search(r"(?i)\band\b|&", nxt)
-            and 3 <= len(nxt.split()) <= 10
-            and i + 1 < len(lines)
-            and _looks_like_author_line(lines[i + 1])
-            and ("," in lines[i + 1] or re.search(r"(?i)\band\b|&", lines[i + 1]))
-        ):
-            title_parts.append(nxt)
-            i += 1
     return title_parts, i
 
 
@@ -733,14 +713,9 @@ def extract_frontmatter(document: Document, params: dict[str, Any]) -> dict[str,
             j += 1
 
     # Soft-fail: never keep a title that is still publisher front matter
-    if title and is_publisher_front_matter(title):
-        title = None
+    # (e.g. wrapped remnants that only classify as FM once joined).
+    title = _reject_publisher_title(title)
 
-    # Image-only title PDFs: keep title unset rather than affiliation/prose
-    if title and equal_authors and (
-        _looks_like_affiliation_only(title) or _INSTITUTIONAL_ADDRESS.search(title)
-    ):
-        title = None
     # Author lines follow title (or start after skipped affiliations)
     saw_acm = False
     while i < len(lines):
