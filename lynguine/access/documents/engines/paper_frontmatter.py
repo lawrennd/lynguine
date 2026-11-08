@@ -267,15 +267,8 @@ def strip_leading_publisher_front_matter(line: str) -> str | None:
             ):
                 return rest
         return None
-    m = _LEADING_PUBLISHER_FM.match(text)
-    if m:
-        rest = text[m.end() :].strip(" -–—|,")
-        if (
-            rest
-            and not is_publisher_front_matter(rest)
-            and not _looks_like_journal_name_only(rest)
-        ):
-            return rest
+    # Leading-header prefixes always classify as publisher FM above, so a
+    # non-FM line is returned unchanged.
     return text
 
 

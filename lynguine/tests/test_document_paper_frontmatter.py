@@ -20,6 +20,14 @@ from lynguine.access.documents import (
 )
 from lynguine.access.documents.engines import get_engine
 from lynguine.access.documents.engines.paper_frontmatter import (
+    _INSTITUTIONAL_ADDRESS,
+    _acm_author_name,
+    _looks_like_affiliation_only,
+    _looks_like_author_line,
+    _looks_like_prose,
+    _looks_like_title_line,
+    _name_like_part,
+    _set_first,
     extract_frontmatter,
     is_publisher_front_matter,
     parse_publisher_front_matter,
@@ -554,3 +562,335 @@ def test_engine_run_extras_include_publisher_fields():
     assert extras.get("publisher_front_matter_lines")
     nested = extras.get("paper_frontmatter") or {}
     assert nested.get("volume") == "14"
+
+
+def test_set_first_skips_none_and_empty():
+    out: dict = {}
+    _set_first(out, "journal", None)
+    assert "journal" not in out
+    _set_first(out, "journal", "   ")
+    assert "journal" not in out
+    _set_first(out, "journal", "...")
+    assert "journal" not in out
+    _set_first(out, "journal", "Nature")
+    _set_first(out, "journal", "Science")
+    assert out["journal"] == "Nature"
+
+
+def test_helper_predicates_affiliation_prose_names():
+    assert _looks_like_affiliation_only("contact@example.com")
+    assert _looks_like_affiliation_only("e-mail: ada@example.com")
+    assert _looks_like_affiliation_only("1MIT")
+    assert _looks_like_affiliation_only("1Department of Computing, Example University")
+    assert not _looks_like_affiliation_only(
+        "1These authors contributed equally: Ada Lovelace, Alan Turing"
+    )
+    assert _looks_like_affiliation_only(
+        "School of Engineering, Example Institute of Technology"
+    )
+    assert _looks_like_affiliation_only(
+        "Industrial Engineering and Management, Technion — Israel Institute of Technology"
+    )
+    # Numbered equal-contrib clause is not affiliation-only
+    assert not _looks_like_affiliation_only(
+        "8These authors contributed equally: Ada Lovelace, Alan Turing"
+    )
+    # Personal name list before an affiliation hint stays non-affiliation
+    assert not _looks_like_affiliation_only(
+        "Ramon Vinas, Chaitanya Joshi, University of Cambridge"
+    )
+    assert _looks_like_affiliation_only(
+        "Industrial Engineering and Management, Technion"
+    )
+
+    assert _acm_author_name("ADA LOVELACE, Example Corp") is None
+    assert _acm_author_name("ADA LOVELACE, University of Example, UK") == "Ada Lovelace"
+
+    assert _looks_like_prose(
+        "we describe a long lowercase abstract sentence without capitals at start"
+    )
+    assert _looks_like_prose(
+        "This paper proposes a detailed method for evaluation across datasets."
+    )
+    assert _looks_like_prose(
+        "Group deliberation enables people to collaborate and solve problems, "
+        "however it is understudied due to a lack of resources for analysis."
+    )
+    assert not _looks_like_prose("Short Title Phrase")
+
+    # Avoid tokens that collide with title function words (e.g. "Ada"/"A." vs "a")
+    assert _name_like_part("Grace Hopper")
+    assert _name_like_part("Alan Turing")
+    assert not _name_like_part("synthetic framework study")
+    assert not _name_like_part("grace hopper")
+    assert not _name_like_part("One Two Three Four Names")
+    assert not _name_like_part("Name@Host")
+
+
+def test_author_and_title_line_predicates():
+    assert not _looks_like_author_line(
+        "IEEE TRANSACTIONS ON X, VOL. 1, NO. 2, JANUARY 2020"
+    )
+    assert _looks_like_author_line(
+        "GEORGI KARADZHOV, University of Cambridge, United Kingdom"
+    )
+    assert not _looks_like_author_line("1Department of Psychology, Princeton")
+    assert not _looks_like_author_line(
+        "We present a new approach that improves accuracy across many tasks."
+    )
+    assert _looks_like_author_line("Ada Lovelace and Alan Turing")
+    assert _looks_like_author_line("& Pietro Liò")
+    assert _looks_like_author_line("Ada Lovelace")
+    assert not _looks_like_author_line("X")
+
+    assert not _looks_like_title_line(
+        "IEEE TRANSACTIONS ON X, VOL. 1, NO. 2, JANUARY 2020"
+    )
+    assert not _looks_like_title_line(
+        "GEORGI KARADZHOV, University of Cambridge, United Kingdom"
+    )
+    assert not _looks_like_title_line("1Department of Psychology, Princeton")
+    assert not _looks_like_title_line("ada.lovelace@example.com")
+    assert not _looks_like_title_line("Department of Computing, USA.")
+    assert not _looks_like_title_line("ab")
+    assert _looks_like_title_line("A Synthetic Study of Document Extraction")
+
+
+def test_split_author_names_filters_noise():
+    assert split_author_names("and") == []
+    assert split_author_names("1, 2, 3") == []
+    assert split_author_names(
+        "we present a method that is not a name list at all here"
+    ) == []
+    assert split_author_names("lowercase name") == []
+    assert split_author_names(
+        "Too Many Tokens In This Fragment To Be A Person Name"
+    ) == []
+    # split_author_names does not dedupe; engine applies _dedupe later
+    assert split_author_names(
+        "Ada Lovelace and Ada Lovelace and Alan Turing"
+    ) == ["Ada Lovelace", "Ada Lovelace", "Alan Turing"]
+    assert split_author_names(
+        "GEORGI KARADZHOV, University of Cambridge, United Kingdom"
+    ) == ["Georgi Karadzhov"]
+
+
+def test_empty_stop_headings_use_defaults():
+    text = "\n".join(
+        [
+            "A Short Synthetic Title About Learning",
+            "Ada Lovelace",
+            "Abstract",
+            "Body text that should be cut by the default Abstract stop heading.",
+        ]
+    )
+    fields = extract_frontmatter(_doc_from_text(text), {"stop_headings": ["", None]})
+    assert fields["title"] == "A Short Synthetic Title About Learning"
+    assert fields["authors"] == ["Ada Lovelace"]
+
+
+def test_scan_forward_skips_affiliation_then_takes_title():
+    text = "\n".join(
+        [
+            "1Department of Computing, University of Example, UK.",
+            "2School of Engineering, Example Institute.",
+            "Learning Useful Representations from Synthetic Data",
+            "Ada Lovelace and Alan Turing",
+            "Abstract",
+            "We describe a synthetic fixture used only for layout tests.",
+        ]
+    )
+    fields = extract_frontmatter(_doc_from_text(text), {})
+    assert "Learning Useful Representations" in (fields["title"] or "")
+    assert "Ada Lovelace" in fields["authors"]
+
+
+def test_author_list_not_taken_as_title_and_wrap_join():
+    text = "\n".join(
+        [
+            "Ada Lovelace, Alan Turing, and Grace Hopper",
+            "University of Example",
+            "Abstract",
+            "We describe a synthetic fixture used only for layout tests.",
+        ]
+    )
+    fields = extract_frontmatter(_doc_from_text(text), {})
+    # No separate title line — soft empty or not the author list as title
+    assert fields["title"] != "Ada Lovelace, Alan Turing, and Grace Hopper"
+    assert "Ada Lovelace" in fields["authors"]
+
+
+def test_multiline_author_join_space_vs_comma():
+    # Single-token tail → space join (Lionel + Wong)
+    text_space = "\n".join(
+        [
+            "A Synthetic Study of Name Wrapping Behaviour",
+            "Lionel",
+            "Wong, Mina Lee",
+            "Abstract",
+            "We describe a synthetic fixture used only for layout tests.",
+        ]
+    )
+    fields = extract_frontmatter(_doc_from_text(text_space), {})
+    assert "Lionel Wong" in fields["authors"] or any(
+        "Wong" in a for a in fields["authors"]
+    )
+
+    # Multi-token tail → comma join
+    text_comma = "\n".join(
+        [
+            "Another Synthetic Study of Name Wrapping",
+            "Phillip Lin",
+            "Bianca Dumitrascu",
+            "Abstract",
+            "We describe a synthetic fixture used only for layout tests.",
+        ]
+    )
+    fields2 = extract_frontmatter(_doc_from_text(text_comma), {})
+    assert "Phillip Lin" in fields2["authors"]
+    assert "Bianca Dumitrascu" in fields2["authors"]
+
+
+def test_equal_contrib_clears_affiliation_title():
+    text = "\n".join(
+        [
+            "1Department of Psychology and the Neuroscience Institute, Princeton University, USA.",
+            "These authors contributed equally: Ada Lovelace, Alan Turing, Grace Hopper.",
+            "✉e-mail: ada@example.com",
+            "Abstract",
+            "We describe a synthetic fixture used only for layout tests.",
+        ]
+    )
+    fields = extract_frontmatter(_doc_from_text(text), {})
+    assert fields["title"] is None or not _looks_like_affiliation_only(
+        fields["title"] or ""
+    )
+    assert "Ada Lovelace" in fields["authors"]
+    assert "Grace Hopper" in fields["authors"]
+
+
+def test_ieee_title_wrap_before_author_list():
+    text = "\n".join(
+        [
+            "Learning Person-specific Cognition from Facial",
+            "Reactions for Automatic Personality Recognition",
+            "Ada Lovelace, Alan Turing, and Grace Hopper",
+            "Abstract",
+            "We describe a synthetic fixture used only for layout tests.",
+        ]
+    )
+    fields = extract_frontmatter(_doc_from_text(text), {})
+    assert "Learning Person-specific Cognition" in (fields["title"] or "")
+    assert "Personality Recognition" in (fields["title"] or "")
+    assert "Ada Lovelace" in fields["authors"]
+
+
+def test_soft_fail_when_remaining_title_is_publisher_fm():
+    # After strip, a journal-name-only remnant must not become title
+    text = "\n".join(
+        [
+            "Applied Soft Computing Journal",
+            "Contents lists available at ScienceDirect",
+            "Abstract",
+            "We describe a synthetic fixture used only for layout tests.",
+        ]
+    )
+    fields = extract_frontmatter(_doc_from_text(text), {})
+    assert fields["title"] is None or not is_publisher_front_matter(fields["title"])
+
+
+def test_more_extract_branches_for_coverage():
+    # Leading ampersand author continuation + email title reject path via helpers
+    text = "\n".join(
+        [
+            "Hypergraph Methods for Synthetic Imputation Tasks",
+            "Ramon Viñas,",
+            "& Pietro Liò",
+            "Abstract",
+            "We describe a synthetic fixture used only for layout tests.",
+        ]
+    )
+    fields = extract_frontmatter(_doc_from_text(text), {})
+    assert "Hypergraph Methods" in (fields["title"] or "")
+    assert any("Liò" in a or "Lio" in a for a in fields["authors"])
+
+    # Prose before any title → empty title, stop scan
+    prose_first = "\n".join(
+        [
+            "we start with lowercase prose that should not become a title line here",
+            "Ada Lovelace",
+            "Abstract",
+            "More synthetic abstract text for the fixture.",
+        ]
+    )
+    fields2 = extract_frontmatter(_doc_from_text(prose_first), {})
+    assert fields2["title"] is None or fields2["title"][:1].isupper()
+
+    # Image-title style: affiliation then equal-contrib clears bogus title
+    eq = "\n".join(
+        [
+            "Department of Computing, University of Example, United Kingdom.",
+            "These authors contributed equally: Ada Lovelace, Alan Turing.",
+            "Abstract",
+            "We describe a synthetic fixture used only for layout tests.",
+        ]
+    )
+    fields3 = extract_frontmatter(_doc_from_text(eq), {})
+    assert "Ada Lovelace" in fields3["authors"]
+    if fields3["title"]:
+        assert not _INSTITUTIONAL_ADDRESS.search(fields3["title"])
+
+
+def test_coverage_scan_forward_and_soft_fail_title():
+    # Affiliation then title (scan-forward path)
+    text = "\n".join(
+        [
+            "University of Example",
+            "Department of Computing, United Kingdom.",
+            "Sparse Models for Synthetic Evaluation Suites",
+            "Grace Hopper and Alan Turing",
+            "Abstract",
+            "We describe a synthetic fixture used only for layout tests.",
+        ]
+    )
+    fields = extract_frontmatter(_doc_from_text(text), {})
+    assert "Sparse Models" in (fields["title"] or "")
+
+    # Soft-fail: title that remains publisher FM
+    fm_title = "\n".join(
+        [
+            "nature machine intelligence",
+            "Abstract",
+            "We describe a synthetic fixture used only for layout tests.",
+        ]
+    )
+    fields2 = extract_frontmatter(_doc_from_text(fm_title), {})
+    assert fields2["title"] is None
+
+    # Author block then non-author stops collection
+    text3 = "\n".join(
+        [
+            "Sparse Models for Synthetic Evaluation Suites",
+            "Grace Hopper, Alan Turing",
+            "University of Example",
+            "Abstract",
+            "We describe a synthetic fixture used only for layout tests.",
+        ]
+    )
+    fields3 = extract_frontmatter(_doc_from_text(text3), {})
+    assert "Grace Hopper" in fields3["authors"]
+    assert not any("University" in a for a in fields3["authors"])
+
+    # Ampersand / trailing-comma wrap join
+    text4 = "\n".join(
+        [
+            "Sparse Models for Synthetic Evaluation Suites",
+            "Grace Hopper,",
+            "and Alan Turing",
+            "Abstract",
+            "We describe a synthetic fixture used only for layout tests.",
+        ]
+    )
+    fields4 = extract_frontmatter(_doc_from_text(text4), {})
+    assert "Grace Hopper" in fields4["authors"]
+    assert "Alan Turing" in fields4["authors"]
