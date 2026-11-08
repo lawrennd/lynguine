@@ -24,7 +24,7 @@ Python 3.11 or later:
 pip install lynguine
 ```
 
-From a clone of this repository: `pip install .` or `poetry install`.
+From a clone of this repository: `pip install .` or `uv sync --extra documents --extra parquet --group dev`.
 
 The library is organised as `config`, `access`, and `assess`.
 
@@ -254,10 +254,10 @@ The tests are stored in the `tests` subdirectory. They use `pytest`.
 
 #### A short example
 
-If you have poetry installed you can run the tests using
+With [uv](https://docs.astral.sh/uv/) installed you can run the tests using
 
 ```bash
-poetry run pytest 
+uv run pytest
 ```
 
 ### Why lynguine?

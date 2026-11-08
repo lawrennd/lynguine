@@ -23,20 +23,20 @@ Check locally:
 
 .. code-block:: bash
 
-   poetry run ruff check lynguine
+   uv run ruff check lynguine
 
 Auto-fix what the active rule set allows (none in stage 1):
 
 .. code-block:: bash
 
-   poetry run ruff check --fix lynguine
+   uv run ruff check --fix lynguine
 
 Format check / apply (optional locally until gated in CI):
 
 .. code-block:: bash
 
-   poetry run ruff format --check lynguine
-   poetry run ruff format lynguine
+   uv run ruff format --check lynguine
+   uv run ruff format lynguine
 
 Follow-up work will enable a narrow rule set (for example ``E4``/``E7``/``E9``/``F``)
 and then a format gate once the tree is clean enough.

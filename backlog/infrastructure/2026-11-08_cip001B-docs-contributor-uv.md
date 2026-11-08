@@ -1,7 +1,7 @@
 ---
 id: "2026-11-08_cip001B-docs-contributor-uv"
 title: "Update Sphinx metadata and contributor docs for uv"
-status: "Ready"
+status: "Completed"
 priority: "Medium"
 created: "2026-11-08"
 last_updated: "2026-11-08"
@@ -35,17 +35,15 @@ Also smoke-check that `uv build` wheels still ship YAML data files and that extr
 
 ## Acceptance Criteria
 
-- [ ] Sphinx `docs/conf.py` resolves project/name/version/author from PEP 621 `[project]`
-- [ ] Docs HTML build succeeds with the updated conf (CI docs workflow or local `uv run sphinx-build`)
-- [ ] README and contributing docs describe uv (or plain pip) instead of Poetry as the supported contributor path
-- [ ] User-facing install hints no longer require Poetry wording for extras
-- [ ] `uv build` sdist/wheel install in a clean env; `import lynguine` works; extras bring in optional deps when requested
+- [x] Sphinx `docs/conf.py` resolves project/name/version/author from PEP 621 `[project]`
+- [x] Docs HTML build succeeds with the updated conf (CI docs workflow or local `uv run sphinx-build`)
+- [x] README and contributing docs describe uv (or plain pip) instead of Poetry as the supported contributor path
+- [x] User-facing install hints no longer require Poetry wording for extras
+- [x] `uv build` sdist/wheel install in a clean env; `import lynguine` works; extras bring in optional deps when requested
 
 ## Implementation Notes
 
-Depends on the PEP 621 conversion. Can land in the same PR as CI if the diff stays small; otherwise follow the packaging PR.
-
-Keep end-user guidance: `pip install lynguine` and `pip install 'lynguine[documents]'` remain valid.
+`docs/conf.py` now uses stdlib `tomllib` (dropped the docs-group `toml` dependency). Wheel smoke-checked: defaults.yml and strategy YAMLs are present. Install-hint strings updated in `io.py`, `pdf.py`, `docx_reader.py`; parquet missing-extra test updated.
 
 ## Related
 
@@ -58,3 +56,7 @@ Keep end-user guidance: `pip install lynguine` and `pip install 'lynguine[docume
 ### 2026-11-08
 
 Task created (Ready) after CIP-001B acceptance; blocked on packaging/lock conversion.
+
+### 2026-11-08
+
+Completed: conf/README/contributing + install hints; wheel contains YAML package data.

@@ -18,7 +18,7 @@ DEFAULT_MIN_WORDS_PER_PAGE: int = 30
 _PYMUPDF_INSTALL = (
     "PyMuPDF is required for PDF reading. "
     "Install with: pip install 'lynguine[documents]' "
-    "or: poetry install --extras documents"
+    "or: uv sync --extra documents"
 )
 
 

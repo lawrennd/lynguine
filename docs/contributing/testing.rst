@@ -10,7 +10,7 @@ To run the test suite, use the following command from the project's root directo
 
 .. code-block:: bash
 
-    poetry run pytest
+    uv run pytest
 
 This will execute all the tests and display the results.
 

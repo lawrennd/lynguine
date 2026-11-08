@@ -12,7 +12,7 @@ from .pdf import classify_text_layer
 _DOCX_INSTALL = (
     "python-docx is required for DOCX reading. "
     "Install with: pip install 'lynguine[documents]' "
-    "or: poetry install --extras documents"
+    "or: uv sync --extra documents"
 )
 
 
