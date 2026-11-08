@@ -3,7 +3,7 @@ author: "Neil D. Lawrence"
 created: "2026-11-08"
 id: "001B"
 last_updated: "2026-11-08"
-status: "Proposed"
+status: "Implemented"
 compressed: false
 effort: small
 priority: medium
@@ -28,9 +28,9 @@ title: "Migrate developer packaging from Poetry to uv"
 ## Status
 
 - [x] Proposed - Initial idea documented
-- [ ] Accepted - Approved, ready to start work
-- [ ] In Progress - Actively being implemented
-- [ ] Implemented - Work complete, awaiting verification
+- [x] Accepted - Approved, ready to start work
+- [x] In Progress - Actively being implemented
+- [x] Implemented - Work complete, awaiting verification
 - [ ] Closed - Verified and complete
 - [ ] Rejected - Will not be implemented
 - [ ] Deferred - Postponed
@@ -164,15 +164,23 @@ This is a **tooling** change, not a library API change. It supports REQ-0001’s
 
 ## Implementation Status
 
-- [ ] Convert `pyproject.toml` to PEP 621 + hatchling + dependency-groups
-- [ ] Generate `uv.lock`; remove `poetry.lock`
-- [ ] Update `python-tests.yml`, `docs.yml`, `publish.yml` for uv
-- [ ] Update `docs/conf.py` and contributor-facing Poetry references
-- [ ] Verify build artifacts and extras in a clean install
+Backlog (created 2026-11-08):
+
+- [x] [2026-11-08_cip001B-pep621-uv-lock](../backlog/infrastructure/2026-11-08_cip001B-pep621-uv-lock.md) — PEP 621 + `uv.lock`
+- [x] [2026-11-08_cip001B-ci-workflows-uv](../backlog/infrastructure/2026-11-08_cip001B-ci-workflows-uv.md) — CI/publish workflows
+- [x] [2026-11-08_cip001B-docs-contributor-uv](../backlog/infrastructure/2026-11-08_cip001B-docs-contributor-uv.md) — Sphinx conf + contributor docs + build smoke
+
+Checklist:
+
+- [x] Convert `pyproject.toml` to PEP 621 + hatchling + dependency-groups
+- [x] Generate `uv.lock`; remove `poetry.lock`
+- [x] Update `python-tests.yml`, `docs.yml`, `publish.yml` for uv
+- [x] Update `docs/conf.py` and contributor-facing Poetry references
+- [x] Verify build artifacts and extras in a clean install
 
 ## References
 
-- Current packaging: `pyproject.toml`, `poetry.lock`
+- Current packaging: `pyproject.toml`, `uv.lock`
 - CI: `.github/workflows/python-tests.yml`, `docs.yml`, `publish.yml`
 - Sphinx metadata: `docs/conf.py`
 - [uv documentation — projects](https://docs.astral.sh/uv/concepts/projects/)

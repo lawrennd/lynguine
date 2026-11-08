@@ -181,7 +181,7 @@ def open_text_store(filename, mode, compress=None, compress_level=6):
 _PYARROW_INSTALL = (
     "pyarrow is required for parquet stores. "
     "Install with: pip install 'lynguine[parquet]' "
-    "or: poetry install --extras parquet"
+    "or: uv sync --extra parquet"
 )
 _PARQUET_COMPRESS = {
     "snappy",

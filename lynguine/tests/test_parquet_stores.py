@@ -278,7 +278,7 @@ def test_read_parquet_missing_extra_message(tmp_path, monkeypatch):
         raise PyArrowMissingError(_PYARROW_INSTALL)
 
     monkeypatch.setattr(io_mod, "_import_pyarrow", _boom)
-    with pytest.raises(PyArrowMissingError, match="poetry install --extras parquet"):
+    with pytest.raises(PyArrowMissingError, match=r"uv sync --extra parquet"):
         read_parquet(_parquet_details(tmp_path))
 
 

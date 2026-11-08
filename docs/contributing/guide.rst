@@ -13,7 +13,7 @@ How to contribute
 - Typo and small doc fixes: open a pull request.
 - Bugs: open a GitHub issue with a title, what you expected, what happened, and a short snippet if you can.
 - Features or architecture: write or update a CIP, or open an issue first so the design can be reviewed.
-- Include tests for code changes. Run them with ``poetry run pytest``.
+- Include tests for code changes. Run them with ``uv run pytest``.
 - Follow :doc:`style_guide`.
 
 Pull requests
