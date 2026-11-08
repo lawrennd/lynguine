@@ -8,7 +8,7 @@ from ..log import Logger
 
 from ..config.interface import Interface
 
-from ..util.text import render_liquid
+from ..util.text import render_liquid, split_paragraph_units
 from ..util.misc import isna
 
 from ..util.liquid import url_escape, markdownify, relative_url, absolute_url, to_i
@@ -579,6 +579,23 @@ class Compute():
                     "Store in one field (list); flows explode with output.explode "
                     "(CIP-0014). Programmatic callers may use units_to_frame / "
                     "segment_pdf_frame."
+                ),
+            },
+            {
+                "name": "split_paragraph_units",
+                "function": split_paragraph_units,
+                "context": False,
+                "default_args": {
+                    "only_candidates": True,
+                    "min_chars": 40,
+                    "max_units": 12,
+                },
+                "docstr": (
+                    "Split a text body into paragraph unit dicts for "
+                    "input.explode (CIP-0014). When only_candidates is true, "
+                    "only candidate=true rows produce units. Sets listing "
+                    "title/description and PII-redacts extract_text via "
+                    "RedactTerms (CIP-001A)."
                 ),
             },
             {
