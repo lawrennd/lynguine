@@ -765,42 +765,30 @@ The `args` field can contain different types of arguments:
 
 ### Example Compute Specifications
 
-Here are some examples of compute specifications:
+Lynguine’s live registry is small (access compute: `render_liquid`, `today`,
+`document_segment`, `extract_references`, `extract_form_fields`). Arithmetic such
+as `add` / `multiply` is **not** registered here — it lives in application
+assessment compute today (**referia**; target **vongole**, CIP-0007).
 
 ```yaml
 compute:
+  # Live lynguine access compute
+  - function: today
+    field: review_date
+    args:
+      format: "%Y-%m-%d"
+
+  - function: render_liquid
+    field: greeting
+    view_args:
+      template: "Hello {{ givenName }}"
+
+  # Assessment arithmetic: referia today / vongole target (not lynguine)
   - function: add
-    field: sum
-    args:
-      a: 
-        column: column1
-      b: 
-        column: column2
-
-  - function: format_name
-    field: full_name
-    args:
-      first_name: 
-        row: first_name
-      last_name: 
-        row: last_name
-
-  - function: calculate_average
-    field: average
-    args:
-      values: 
-        subseries: data_column
-
-  - function: complex_calculation
-    field: result
-    args:
-      input1: 
-        column: input_column1
-      input2: 
-        column: input_column2
-      operation:
-        function: another_function
-    refresh: true
+    field: total
+    row_args:
+      a: score_a
+      b: score_b
 ```
 
 ### Execution Order
