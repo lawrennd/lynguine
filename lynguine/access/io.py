@@ -2504,8 +2504,18 @@ def finalize_data(df : pd.DataFrame, interface : Interface) -> tuple[pd.DataFram
                 compute_prep = compute.prep(comp, df)
                 fargs = compute_prep["args"]
                 if "field" in comp: # if field is in compute, then we are computing or updating a new field
+                    field = comp["field"]
+                    # Object dtype + .at: pandas .loc can unwrap a length-1
+                    # list-of-mappings into a bare dict, which then breaks
+                    # CIP-0014 explode ("must be a list of mappings, got dict").
+                    if field not in df.columns:
+                        df[field] = pd.Series([None] * len(df), index=df.index, dtype=object)
+                    else:
+                        df[field] = df[field].astype(object)
                     for ind in df.index:
-                        df.loc[ind, comp["field"]] = compute_prep["function"](df.loc[ind], **fargs)
+                        df.at[ind, field] = compute_prep["function"](
+                            df.loc[ind], **fargs
+                        )
 
                 else:
                     errmsg = f"Compute object in interface file is missing field key."
