@@ -1,4 +1,4 @@
-import pytest
+import json
 import os
 import pytest
 from unittest.mock import MagicMock
@@ -9,10 +9,15 @@ class MockResponse:
     def __init__(self, data):
         self.data = data
 
-    def read(self):
-        return self.data
+    def read(self, n=-1):
+        if n is None or n < 0:
+            out, self.data = self.data, b""
+            return out
+        out, self.data = self.data[:n], self.data[n:]
+        return out
 
-    # Add any other necessary methods/attributes here
+    def info(self):
+        return {}
 
     
 def mock_urlopen(url):
@@ -221,4 +226,436 @@ def test_clone_repo_exception(sample_settings, sample_data_resources, mocker):
     with pytest.raises(ValueError) as excinfo:
         downloader._clone_or_pull_repo()
 
-    assert "Error cloning repository" in str(excinfo.value)
+    assert "Error cloning" in str(excinfo.value)
+    assert "repository" in str(excinfo.value)
+
+
+# --- CIP-0009 materialise(remote:) -------------------------------------------
+
+from lynguine.access.download import materialise, SUPPORTED_REMOTE_TYPES
+
+
+def test_materialise_noop_without_remote(tmp_path):
+    item = {
+        "type": "yaml",
+        "filename": "local.yml",
+        "directory": str(tmp_path),
+        "base_directory": str(tmp_path),
+        "allowed_roots": [str(tmp_path)],
+    }
+    assert materialise(item) is None
+
+
+def test_materialise_rejects_legacy_source_remote_shape(tmp_path):
+    item = {
+        "type": "yaml",
+        "filename": "x.yml",
+        "directory": str(tmp_path),
+        "base_directory": str(tmp_path),
+        "allowed_roots": [str(tmp_path)],
+        "source": {"type": "url", "url": "https://example.org/x.yml"},
+    }
+    with pytest.raises(ValueError, match='uses key "remote:"'):
+        materialise(item)
+
+
+def test_materialise_unknown_type(tmp_path):
+    item = {
+        "type": "yaml",
+        "filename": "x.yml",
+        "directory": str(tmp_path),
+        "base_directory": str(tmp_path),
+        "allowed_roots": [str(tmp_path)],
+        "remote": {"type": "s3", "url": "s3://bucket/x"},
+    }
+    with pytest.raises(ValueError, match="Unknown remote.type"):
+        materialise(item)
+    assert "url" in SUPPORTED_REMOTE_TYPES
+    assert "github" in SUPPORTED_REMOTE_TYPES
+
+
+def test_materialise_url_downloads_when_missing(tmp_path, monkeypatch):
+    dest_dir = tmp_path / "cache"
+    dest_dir.mkdir()
+    calls = []
+
+    def fake_urlopen(url):
+        calls.append(url)
+        return MockResponse(b"name: Ada\n")
+
+    monkeypatch.setattr("lynguine.access.download.urlopen", fake_urlopen)
+    item = {
+        "type": "yaml",
+        "filename": "candidates.yml",
+        "directory": str(dest_dir),
+        "base_directory": str(tmp_path),
+        "allowed_roots": [str(tmp_path)],
+        "remote": {
+            "type": "url",
+            "url": "https://example.org/candidates.yml",
+        },
+    }
+    path = materialise(item)
+    assert path.endswith("candidates.yml")
+    assert os.path.exists(path)
+    assert open(path, "rb").read() == b"name: Ada\n"
+    assert calls == ["https://example.org/candidates.yml"]
+
+
+def test_materialise_url_skips_when_cached(tmp_path, monkeypatch):
+    dest_dir = tmp_path / "cache"
+    dest_dir.mkdir()
+    cached = dest_dir / "candidates.yml"
+    cached.write_text("cached: true\n")
+    calls = []
+
+    def fake_urlopen(url):
+        calls.append(url)
+        return MockResponse(b"fresh\n")
+
+    monkeypatch.setattr("lynguine.access.download.urlopen", fake_urlopen)
+    item = {
+        "type": "yaml",
+        "filename": "candidates.yml",
+        "directory": str(dest_dir),
+        "base_directory": str(tmp_path),
+        "allowed_roots": [str(tmp_path)],
+        "remote": {
+            "type": "url",
+            "url": "https://example.org/candidates.yml",
+            "refresh": False,
+        },
+    }
+    path = materialise(item)
+    assert path == str(cached.resolve()) or os.path.samefile(path, cached)
+    assert calls == []
+    assert cached.read_text() == "cached: true\n"
+
+
+def test_materialise_url_refresh_redownloads(tmp_path, monkeypatch):
+    dest_dir = tmp_path / "cache"
+    dest_dir.mkdir()
+    cached = dest_dir / "candidates.yml"
+    cached.write_text("old\n")
+    calls = []
+
+    def fake_urlopen(url):
+        calls.append(url)
+        return MockResponse(b"new\n")
+
+    monkeypatch.setattr("lynguine.access.download.urlopen", fake_urlopen)
+    item = {
+        "type": "yaml",
+        "filename": "candidates.yml",
+        "directory": str(dest_dir),
+        "base_directory": str(tmp_path),
+        "allowed_roots": [str(tmp_path)],
+        "remote": {
+            "type": "url",
+            "url": "https://example.org/candidates.yml",
+            "refresh": True,
+        },
+    }
+    path = materialise(item)
+    assert open(path, "rb").read() == b"new\n"
+    assert calls == ["https://example.org/candidates.yml"]
+
+
+def test_materialise_url_http_error(tmp_path, monkeypatch):
+    dest_dir = tmp_path / "cache"
+    dest_dir.mkdir()
+
+    def fake_urlopen(url):
+        raise HTTPError(url, 404, "Not Found", None, None)
+
+    monkeypatch.setattr("lynguine.access.download.urlopen", fake_urlopen)
+    item = {
+        "type": "yaml",
+        "filename": "missing.yml",
+        "directory": str(dest_dir),
+        "base_directory": str(tmp_path),
+        "allowed_roots": [str(tmp_path)],
+        "remote": {
+            "type": "url",
+            "url": "https://example.org/missing.yml",
+        },
+    }
+    with pytest.raises(ValueError, match='remote.type "url"'):
+        materialise(item)
+
+
+def test_materialise_github_clones(tmp_path, monkeypatch):
+    dest_dir = tmp_path / "repo"
+    cloned = []
+
+    def fake_clone(url, path):
+        cloned.append((url, path))
+        os.makedirs(os.path.join(path, ".git"), exist_ok=True)
+
+    monkeypatch.setattr("lynguine.access.download.git.Repo.clone_from", fake_clone)
+    item = {
+        "type": "csv",
+        "filename": "data/candidates.csv",
+        "directory": str(dest_dir),
+        "base_directory": str(tmp_path),
+        "allowed_roots": [str(tmp_path)],
+        "remote": {
+            "type": "github",
+            "url": "https://github.com/example/allocations.git",
+        },
+    }
+    path = materialise(item)
+    assert os.path.isdir(os.path.join(path, ".git"))
+    assert cloned[0][0] == "https://github.com/example/allocations.git"
+
+
+def test_materialise_github_skips_when_cloned(tmp_path, monkeypatch):
+    dest_dir = tmp_path / "repo"
+    dest_dir.mkdir()
+    (dest_dir / ".git").mkdir()
+    calls = []
+
+    def boom(*a, **k):
+        calls.append(True)
+        raise AssertionError("should not clone or pull")
+
+    monkeypatch.setattr("lynguine.access.download.git.Repo.clone_from", boom)
+    monkeypatch.setattr("lynguine.access.download.git.Repo", boom)
+    item = {
+        "type": "csv",
+        "filename": "data/candidates.csv",
+        "directory": str(dest_dir),
+        "base_directory": str(tmp_path),
+        "allowed_roots": [str(tmp_path)],
+        "remote": {
+            "type": "github",
+            "url": "https://github.com/example/allocations.git",
+            "refresh": False,
+        },
+    }
+    path = materialise(item)
+    assert os.path.samefile(path, dest_dir)
+    assert calls == []
+
+
+def test_materialise_does_not_infer_url_from_filename(tmp_path, monkeypatch):
+    """Filename that looks like a URL must not trigger a fetch (no remote:)."""
+    calls = []
+
+    def fake_urlopen(url):
+        calls.append(url)
+        return MockResponse(b"x")
+
+    monkeypatch.setattr("lynguine.access.download.urlopen", fake_urlopen)
+    item = {
+        "type": "yaml",
+        "filename": "https://example.org/looks-like-url.yml",
+        "directory": str(tmp_path),
+        "base_directory": str(tmp_path),
+        "allowed_roots": [str(tmp_path)],
+    }
+    assert materialise(item) is None
+    assert calls == []
+
+
+def test_from_flow_materialises_remote_url(tmp_path, monkeypatch):
+    import lynguine.config.interface
+    import lynguine.assess.data
+
+    cache = tmp_path / "cache"
+    cache.mkdir()
+    yaml_body = "- Name: Ada\n  score: 1\n"
+
+    def fake_urlopen(url):
+        return MockResponse(yaml_body.encode("utf-8"))
+
+    monkeypatch.setattr("lynguine.access.download.urlopen", fake_urlopen)
+    interface = lynguine.config.interface.Interface(
+        {
+            "input": {
+                "type": "yaml",
+                "filename": "candidates.yml",
+                "directory": str(cache),
+                "index": "Name",
+                "remote": {
+                    "type": "url",
+                    "url": "https://example.org/candidates.yml",
+                },
+            },
+        },
+        user_file="test.yml",
+        directory=str(tmp_path),
+    )
+    cdf = lynguine.assess.data.CustomDataFrame.from_flow(interface)
+    assert "Ada" in list(cdf.index) or cdf.index[0] == "Ada"
+    assert (cache / "candidates.yml").exists()
+
+
+def test_from_flow_remote_coexists_with_directory_source(tmp_path, monkeypatch):
+    """CIP-000F source: lists remain usable; remote: is orthogonal."""
+    import lynguine.config.interface
+    import lynguine.assess.data
+
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    (repo / "nested").mkdir()
+    # Pretend github materialise already filled the tree; skip network.
+    (repo / ".git").mkdir()
+    (repo / "nested" / "row.yml").write_text("Name: Ada\nscore: 2\n")
+
+    def boom(*a, **k):
+        raise AssertionError("should not hit network")
+
+    monkeypatch.setattr("lynguine.access.download.urlopen", boom)
+    monkeypatch.setattr("lynguine.access.download.git.Repo.clone_from", boom)
+
+    interface = lynguine.config.interface.Interface(
+        {
+            "input": {
+                "type": "yaml_directory",
+                "directory": str(repo),
+                "index": "Name",
+                "remote": {
+                    "type": "github",
+                    "url": "https://github.com/example/allocations.git",
+                    "refresh": False,
+                },
+                "source": [
+                    {
+                        "directory": ".",
+                        "glob": "**/*.yml",
+                        "recursive": True,
+                    }
+                ],
+            },
+        },
+        user_file="test.yml",
+        directory=str(tmp_path),
+    )
+    cdf = lynguine.assess.data.CustomDataFrame.from_flow(interface)
+    assert len(cdf) >= 1
+
+
+# --- ods CIP-0003 data_resources catalogue expand ----------------------------
+
+
+def test_materialise_data_resources_downloads_named_entry(tmp_path, monkeypatch):
+    cat_dir = tmp_path / "catalogue"
+    cat_dir.mkdir()
+    catalogue = {
+        "bmi_steps": {
+            "details": "BMI vs steps",
+            "citation": "Yanai & Lercher",
+            "license": None,
+            "files": [["steps-bmi-data.csv"]],
+            "urls": ["https://example.org/bmi_steps/"],
+        }
+    }
+    cat_path = cat_dir / "data_resources.json"
+    cat_path.write_text(json.dumps(catalogue), encoding="utf-8")
+
+    cache = tmp_path / "bmi_steps"
+    cache.mkdir()
+    calls = []
+
+    def fake_urlopen(url):
+        calls.append(url)
+        return MockResponse(b"gender,steps,bmi\nF,1000,22\n")
+
+    monkeypatch.setattr("lynguine.access.download.urlopen", fake_urlopen)
+    item = {
+        "type": "csv",
+        "filename": "steps-bmi-data.csv",
+        "directory": str(cache),
+        "base_directory": str(tmp_path),
+        "allowed_roots": [str(tmp_path)],
+        "remote": {
+            "type": "data_resources",
+            "catalogue": str(cat_path),
+            "name": "bmi_steps",
+        },
+    }
+    path = materialise(item, prompt=lambda _m: True)
+    assert path.endswith("steps-bmi-data.csv")
+    assert os.path.exists(path)
+    assert calls == ["https://example.org/bmi_steps/steps-bmi-data.csv"]
+    assert "data_resources" in SUPPORTED_REMOTE_TYPES
+
+
+def test_materialise_data_resources_skips_when_cached(tmp_path, monkeypatch):
+    cat_dir = tmp_path / "catalogue"
+    cat_dir.mkdir()
+    cat_path = cat_dir / "data_resources.json"
+    cat_path.write_text(
+        json.dumps(
+            {
+                "bmi_steps": {
+                    "files": [["steps-bmi-data.csv"]],
+                    "urls": ["https://example.org/bmi_steps/"],
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
+    cache = tmp_path / "bmi_steps"
+    cache.mkdir()
+    cached = cache / "steps-bmi-data.csv"
+    cached.write_text("gender,steps,bmi\nF,1,20\n", encoding="utf-8")
+    calls = []
+
+    def fake_urlopen(url):
+        calls.append(url)
+        return MockResponse(b"fresh\n")
+
+    monkeypatch.setattr("lynguine.access.download.urlopen", fake_urlopen)
+    item = {
+        "type": "csv",
+        "filename": "steps-bmi-data.csv",
+        "directory": str(cache),
+        "base_directory": str(tmp_path),
+        "allowed_roots": [str(tmp_path)],
+        "remote": {
+            "type": "data_resources",
+            "catalogue": str(cat_path),
+            "name": "bmi_steps",
+        },
+    }
+    path = materialise(item, prompt=lambda _m: True)
+    assert os.path.samefile(path, cached)
+    assert calls == []
+
+
+def test_materialise_data_resources_requires_local_catalogue(tmp_path):
+    item = {
+        "type": "csv",
+        "filename": "x.csv",
+        "directory": str(tmp_path),
+        "base_directory": str(tmp_path),
+        "allowed_roots": [str(tmp_path)],
+        "remote": {
+            "type": "data_resources",
+            "catalogue": str(tmp_path / "missing.json"),
+            "name": "bmi_steps",
+        },
+    }
+    with pytest.raises(ValueError, match="catalogue not found"):
+        materialise(item)
+
+
+def test_materialise_data_resources_unknown_name(tmp_path):
+    cat_path = tmp_path / "data_resources.json"
+    cat_path.write_text(json.dumps({"other": {"files": [["a"]], "urls": ["https://x/"]}}))
+    item = {
+        "type": "csv",
+        "filename": "x.csv",
+        "directory": str(tmp_path),
+        "base_directory": str(tmp_path),
+        "allowed_roots": [str(tmp_path)],
+        "remote": {
+            "type": "data_resources",
+            "catalogue": str(cat_path),
+            "name": "bmi_steps",
+        },
+    }
+    with pytest.raises(ValueError, match='Dataset "bmi_steps" not found'):
+        materialise(item)

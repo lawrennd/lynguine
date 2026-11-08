@@ -1289,28 +1289,38 @@ class DataObject:
         # Sort the items based on the key_order function
         sorted_items = sorted(interface.items(), key=key_order)
 
+        def _prepare_flow_item(item):
+            """Stamp base_directory / path roots on a flow access item."""
+            if isinstance(item, dict):
+                if "base_directory" not in item:
+                    if "base_directory" in interface:
+                        item["base_directory"] = interface["base_directory"]
+                    else:
+                        errmsg = "Base directory not found in interface or item."
+                        log.error(errmsg)
+                        raise ValueError(errmsg)
+                _stamp_path_roots(item, interface)
+            elif isinstance(item, list):
+                _stamp_path_roots(item, interface)
+            return item
+
+        # ods CIP-0003: materialise remotes on non-input slots first so a
+        # catalogue under cache: lands before input data_resources expand.
+        # Reads still follow key_order (input before empty cache creation).
+        for key, item in sorted_items:
+            if key not in cls.valid_data_types():
+                continue
+            if key in cls.types["input"]:
+                continue
+            item = _prepare_flow_item(item)
+            if isinstance(item, (dict, list)):
+                access.download.materialise(item, interface)
+
         for key, item in sorted_items:       
             # Check if the interface key is a valid data key
             if key in cls.valid_data_types(): # input, output, cache, parameters
                 # Augment the item with base_directory if it's not already present
-                if isinstance(item, dict):
-                    if "base_directory" not in item:
-                        if "base_directory" in interface:
-                            item["base_directory"] = interface["base_directory"]
-                        else:   
-                            errmsg = "Base directory not found in interface or item."
-                            log.error(errmsg)
-                            raise ValueError(errmsg)
-                    _stamp_path_roots(item, interface)
-                elif isinstance(item, list):
-                    _stamp_path_roots(item, interface)
-                elif "base_directory" not in item:
-                    if "base_directory" in interface:
-                        item["base_directory"] = interface["base_directory"]
-                    else:   
-                        errmsg = "Base directory not found in interface or item."
-                        log.error(errmsg)
-                        raise ValueError(errmsg)
+                item = _prepare_flow_item(item)
                 log.debug(f"Adding data key \"{key}\" to the CustomDataFrame.")
                 if "mapping" in item:
                     mapping = item["mapping"]
@@ -1330,6 +1340,9 @@ class DataObject:
                     and isinstance(item, dict)
                 ):
                     read_item = _liquid_expand_access_details(item, liquid_ctx)
+                # CIP-0009: materialise remote: before data_exists / read_data.
+                if isinstance(read_item, (dict, list)):
+                    access.download.materialise(read_item, interface)
                 if key not in cls.types["input"]: # allow creation of non-inputs if they don't exist
                     if isinstance(item, dict):
                         if access.io.data_exists(item):

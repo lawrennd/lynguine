@@ -130,7 +130,27 @@ would create a new field `name` which is then used as the index.
 
 Secondly the software uses the access, assess, address decomposition. `access` is used for accessing data and consists of `io` and `download`. `io` reads from and writes to formats such as `json`, `yaml`, `markdown`, `csv`, `xls`, and `bibtex`.
 
-`download` fetches a URL into a local cache after an explicit licence prompt. It does not turn a URL into a table on its own. Once a file is on disk, `io` loads it.
+`download` fetches a URL or Git repository into a local cache after an explicit licence prompt. It does not turn a URL into a table on its own. Once a file is on disk, `io` loads it.
+
+Interface items can declare an optional `remote:` block so `CustomDataFrame.from_flow` materialises that cache as an access-stage step before the usual `type:` read (CIP-0009). Directory discovery still uses CIP-000F `source:` lists; the two keys are orthogonal. Live stores such as `type: gsheet` or CIP-0019 plugins (`trello`, `imap`, …) remain readers — they do not use `remote:`.
+
+```yaml
+input:
+  type: yaml
+  filename: candidates.yml
+  directory: .lynguine-cache/candidates
+  index: Name
+  remote:
+    type: url
+    url: https://example.org/lists/candidates.yml
+    refresh: false
+```
+
+Pods-style catalogues (ods CIP-0003) use two stages: materialise
+`data_resources.json` under `cache:` with `remote.type: url`, then expand a
+named entry with `remote.type: data_resources` on `input:`. Non-input remotes
+are materialised before input reads so the catalogue is on disk first. See
+`ods/examples/bmi_steps_lynguine_flow.yml`.
 
 #### A short example
 
