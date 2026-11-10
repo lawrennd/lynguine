@@ -166,7 +166,7 @@ class Compute():
             compute_prep["field"] = settings["field"]
         return compute_prep
 
-    def gca_(self, function, field=None, refresh=False, args={}, row_args={}, view_args={}, function_args={}, subseries_args={}, column_args={}, mode=None, separator=None):
+    def gca_(self, function, field=None, refresh=False, args={}, row_args={}, view_args={}, function_args={}, subseries_args={}, column_args={}, mode=None, separator=None, on_error=None):
         """
         Args generator for compute functions.
 
@@ -188,6 +188,9 @@ class Compute():
         :type subseries_args: dict
         :param column_args: The column arguments to be used.
         :type column_args: dict
+        :param mode: Write mode for the compute entry (accepted and ignored here).
+        :param separator: Append/prepend separator (accepted and ignored here).
+        :param on_error: Per-entry error mode (accepted and ignored here; handled in ``run``).
         :return: The arguments to be used.
         :rtype: dict
         """
@@ -437,11 +440,13 @@ class Compute():
             except Exception as exc:
                 if on_error != "empty":
                     raise
+                # Lynguine's Logger.error accepts only message % args (no exc_info).
+                # Log the exception class only — message text can contain paths.
                 self.logger.error(
-                    "Compute function %s failed at index %s; storing an empty value and continuing.",
+                    "Compute function %s failed at index %s (%s); storing an empty value and continuing.",
                     fname,
                     index,
-                    exc_info=exc,
+                    type(exc).__name__,
                 )
                 self.on_error_notices.append({"function": fname, "index": index})
                 if columns is None:

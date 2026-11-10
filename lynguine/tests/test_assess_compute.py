@@ -558,8 +558,48 @@ class _Store:
         self.values[column] = value
 
 
+def test_gca_accepts_on_error_control_key(compute_instance, mocker):
+    # ``prep`` expands ``gca_(**settings)``. Control keys such as ``on_error``
+    # must be accepted (and ignored) the same way as ``mode`` / ``separator``.
+    mocker.patch.object(
+        compute_instance,
+        "_compute_functions_list",
+        return_value=[{"name": "extract_paper_frontmatter", "default_args": {}}],
+    )
+    args = compute_instance.gca_(
+        function="extract_paper_frontmatter",
+        field="paper",
+        refresh=False,
+        on_error="empty",
+        args={},
+        row_args={},
+    )
+    assert args["args"] == {}
+    assert "on_error" not in args
+
+
 def test_on_error_empty_stores_mapping_and_continues(compute_instance):
     store = _Store()
+
+    class StrictLogger:
+        """Matches lynguine.log.Logger.error: message and *args only."""
+
+        def __init__(self):
+            self.messages = []
+
+        def error(self, message, *args):
+            if args:
+                message = message % args
+            self.messages.append(message)
+
+        def debug(self, message, *args):
+            pass
+
+        def info(self, message, *args):
+            pass
+
+    strict = StrictLogger()
+    compute_instance.logger = strict
 
     def boom(data, **kwargs):
         raise RuntimeError("do not show /secret/paper.pdf")
@@ -593,6 +633,9 @@ def test_on_error_empty_stores_mapping_and_continues(compute_instance):
         {"function": "extract_paper_frontmatter", "index": "row-1"}
     ]
     assert "secret" not in str(compute_instance.on_error_notices)
+    assert strict.messages
+    assert "secret" not in strict.messages[0]
+    assert "RuntimeError" in strict.messages[0]
 
     # An empty mapping is not missing, so refresh: false does not run again.
     calls = {"n": 0}
