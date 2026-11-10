@@ -537,3 +537,106 @@ def test_row_args_validation_with_series_data(compute_instance, mocker):
     with pytest.raises(ValueError, match="Invalid key '1' in row_args for key 'start_page' when data is Series"):
         compute_func(mock_series, row_args={"start_page": 1})
 
+
+class _Store:
+    """Minimal data stand-in for ``Compute.run`` write behaviour."""
+
+    def __init__(self):
+        self.columns = ["out", "later"]
+        self.values = {}
+
+    def get_index(self):
+        return "row-1"
+
+    def get_value_column(self, column):
+        return self.values.get(column)
+
+    def ismutable(self, column):
+        return True
+
+    def set_value_column(self, value, column):
+        self.values[column] = value
+
+
+def test_on_error_empty_stores_mapping_and_continues(compute_instance):
+    store = _Store()
+
+    def boom(data, **kwargs):
+        raise RuntimeError("do not show /secret/paper.pdf")
+
+    def later(data, **kwargs):
+        return "filled"
+
+    def prep(spec, data):
+        fn = boom if spec["function"] == "extract_paper_frontmatter" else later
+        fn.__name__ = spec["function"]
+        return {"function": fn, "args": {}}
+
+    compute_instance.prep = prep
+    compute_instance.run(
+        store,
+        {
+            "compute": [
+                {
+                    "field": "out",
+                    "function": "extract_paper_frontmatter",
+                    "on_error": "empty",
+                    "refresh": True,
+                },
+                {"field": "later", "function": "render_liquid", "refresh": True},
+            ]
+        },
+    )
+    assert store.values["out"] == {}
+    assert store.values["later"] == "filled"
+    assert compute_instance.on_error_notices == [
+        {"function": "extract_paper_frontmatter", "index": "row-1"}
+    ]
+    assert "secret" not in str(compute_instance.on_error_notices)
+
+    # An empty mapping is not missing, so refresh: false does not run again.
+    calls = {"n": 0}
+
+    def boom_again(data, **kwargs):
+        calls["n"] += 1
+        raise RuntimeError("again")
+
+    def prep_again(spec, data):
+        boom_again.__name__ = spec["function"]
+        return {"function": boom_again, "args": {}}
+
+    compute_instance.prep = prep_again
+    compute_instance.run(
+        store,
+        {
+            "compute": [
+                {
+                    "field": "out",
+                    "function": "extract_paper_frontmatter",
+                    "on_error": "empty",
+                    "refresh": False,
+                }
+            ]
+        },
+    )
+    assert calls["n"] == 0
+
+
+def test_on_error_defaults_to_raise(compute_instance):
+    store = _Store()
+
+    def boom(data, **kwargs):
+        raise RuntimeError("stop")
+
+    def prep(spec, data):
+        boom.__name__ = spec["function"]
+        return {"function": boom, "args": {}}
+
+    compute_instance.prep = prep
+    with pytest.raises(RuntimeError, match="stop"):
+        compute_instance.run(
+            store,
+            {"compute": [{"field": "out", "function": "boom", "refresh": True}]},
+        )
+    assert "out" not in store.values
+

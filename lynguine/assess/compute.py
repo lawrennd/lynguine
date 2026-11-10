@@ -24,7 +24,24 @@ from ..access.documents.segment import (
 )
 
 cntxt = Context(name="lynguine")
-           
+
+
+def _on_error_mode(compute: dict) -> str:
+    """How ``run`` treats a failure of this compute entry.
+
+    ``raise`` (the default) aborts the rest of the list. ``empty`` logs the
+    exception, records a notice with the function name only, stores an empty
+    mapping, and continues. The notice is for the caller; it does not include
+    the exception text.
+    """
+    mode = compute.get("on_error", "raise")
+    if mode is None or mode == "":
+        return "raise"
+    mode = str(mode).strip().lower()
+    if mode not in {"raise", "empty"}:
+        raise ValueError(f"on_error must be 'raise' or 'empty', got {mode!r}.")
+    return mode
+
 
 class Compute():
     """
@@ -67,6 +84,9 @@ class Compute():
                 self._computes[comptype] = []
         self.load_liquid(interface)
         self.add_liquid_filters()
+        # Filled by the most recent ``run`` when an entry uses ``on_error: empty``.
+        # Each item is ``{"function": name, "index": index}`` — no exception text.
+        self.on_error_notices = []
 
         self.setup_logger()
 
@@ -346,8 +366,14 @@ class Compute():
             computes = [computes]
 
         index = data.get_index()
-        
+        self.on_error_notices = []
+
         for compute in computes:
+            if "function" not in compute:
+                errmsg = "Compute entry has no function associated with it."
+                self.logger.error(errmsg)
+                raise ValueError(errmsg)
+            on_error = _on_error_mode(compute)
             # Some computes return multiple outputs, in which case field is a list of columns
             multi_output = False 
             column_output = False
@@ -366,46 +392,65 @@ class Compute():
             else:
                 refresh = False
                 
-            compute_prep = self.prep(compute, data)
-            fname = compute_prep["function"].__name__
-            fargs = compute_prep["args"]
-            if columns is None: # No fields to update, just run the compute
-                self.logger.debug(f"Running compute function \"{fname}\" with no field(s) stored for index=\"{index}\" with refresh=\"{refresh}\" and arguments \"{fargs}\".")
-                compute_prep["function"](data, **fargs)
-                continue
-            
-            # Get mode parameter early to determine if we need to run compute
-            mode = compute.get("mode", "replace")
-            
-            # If we're not refreshing, need to determine which columns aren't set so they can be refreshed.
-            missing_vals = []
-            if not refresh:
-                for column in columns:
-                    if column not in data.columns:
-                        missing_vals.append(True)
-                        continue
-                    if column == "_": # If the column is called "_" then ignore that argument
-                        missing_vals.append(False)
-                        continue
-                    val = data.get_value_column(column)
-                    if not isinstance(val, list) and isna(val): 
-                        missing_vals.append(True) # The value is missing.
-                    else:
-                        missing_vals.append(False)
-            else:
-                # When refreshing, treat all columns as if they need updating
-                missing_vals = [True] * len(columns)
+            fname = str(compute.get("function") or "")
+            try:
+                compute_prep = self.prep(compute, data)
+                fname = compute_prep["function"].__name__
+                fargs = compute_prep["args"]
+                if columns is None: # No fields to update, just run the compute
+                    self.logger.debug(f"Running compute function \"{fname}\" with no field(s) stored for index=\"{index}\" with refresh=\"{refresh}\" and arguments \"{fargs}\".")
+                    compute_prep["function"](data, **fargs)
+                    continue
 
-            # Append/prepend modes must always run to read existing content
-            should_run = refresh or any(missing_vals) or mode in ["append", "prepend"]
-            
-            if should_run:
-                # Compute the function and get the new values  
-                self.logger.debug(f"Running compute function \"{fname}\" storing in field(s) \"{columns}\" with index=\"{index}\" with refresh=\"{refresh}\" and arguments \"{fargs}\".")
-                    
-                new_vals = compute_prep["function"](data, **fargs)
-            else:
-                continue
+                # Get mode parameter early to determine if we need to run compute
+                mode = compute.get("mode", "replace")
+
+                # If we're not refreshing, need to determine which columns aren't set so they can be refreshed.
+                missing_vals = []
+                if not refresh:
+                    for column in columns:
+                        if column not in data.columns:
+                            missing_vals.append(True)
+                            continue
+                        if column == "_": # If the column is called "_" then ignore that argument
+                            missing_vals.append(False)
+                            continue
+                        val = data.get_value_column(column)
+                        if not isinstance(val, list) and isna(val):
+                            missing_vals.append(True) # The value is missing.
+                        else:
+                            missing_vals.append(False)
+                else:
+                    # When refreshing, treat all columns as if they need updating
+                    missing_vals = [True] * len(columns)
+
+                # Append/prepend modes must always run to read existing content
+                should_run = refresh or any(missing_vals) or mode in ["append", "prepend"]
+
+                if should_run:
+                    # Compute the function and get the new values
+                    self.logger.debug(f"Running compute function \"{fname}\" storing in field(s) \"{columns}\" with index=\"{index}\" with refresh=\"{refresh}\" and arguments \"{fargs}\".")
+
+                    new_vals = compute_prep["function"](data, **fargs)
+                else:
+                    continue
+            except Exception as exc:
+                if on_error != "empty":
+                    raise
+                self.logger.error(
+                    "Compute function %s failed at index %s; storing an empty value and continuing.",
+                    fname,
+                    index,
+                    exc_info=exc,
+                )
+                self.on_error_notices.append({"function": fname, "index": index})
+                if columns is None:
+                    continue
+                # ``{}`` is not a missing value, so ``refresh: false`` will not
+                # run this entry again. A tuple keeps multi-output unpacking.
+                new_vals = tuple({} for _ in columns) if multi_output else {}
+                mode = compute.get("mode", "replace")
+                missing_vals = [True] * len(columns)
                    
             if multi_output:
                 if not isinstance(new_vals, tuple):
