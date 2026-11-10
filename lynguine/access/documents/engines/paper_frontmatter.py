@@ -119,8 +119,9 @@ _PAGE_NUM = re.compile(r"^\d{1,4}$")
 _EQUAL_CONTRIB = re.compile(
     r"(?i)(?:\d+)?\s*these authors contributed equally:\s*(.+?)(?:\.?\s*(?:✉|e-?mail:)|$)"
 )
+# Middle dot is the Springer "Name · Name" separator (not a comma or &).
 _AUTHOR_SPLIT = re.compile(
-    r"\s+and\s+|\s*&\s*|,",
+    r"\s+and\s+|\s*&\s*|,|\s*[·•]\s*",
     re.IGNORECASE,
 )
 # ACM PACM / TOCHI style: "GEORGI KARADZHOV, University of Cambridge, United Kingdom"
@@ -513,10 +514,10 @@ def _looks_like_author_line(line: str) -> bool:
         return False
     # Titles often contain "and" / "with" — require name-like parts.
     # Leading "& …" / "and …" continuations are handled here via the same split.
-    if re.search(r"(?i)\band\b|&|,", line):
+    if re.search(r"(?i)\band\b|&|,|·|•", line):
         parts = [
             p.strip()
-            for p in re.split(r",|\band\b|&", line)
+            for p in re.split(r",|\band\b|&|·|•", line)
             if p.strip() and not re.fullmatch(r"\d+", p.strip())
         ]
         if not parts:
@@ -563,8 +564,9 @@ def split_author_names(raw: str) -> list[str]:
     acm = _acm_author_name(text)
     if acm:
         return [acm]
-    # Drop footnote / affiliation markers: "Ada Lovelace1", "Collins∗1"
-    text = re.sub(r"[∗†‡§¶]+", "", text)
+    # Drop footnote / affiliation markers: "Ada Lovelace1", "Collins∗1", "Cheong*"
+    # Include ASCII '*' — PDF text often uses it instead of '∗' (U+2217).
+    text = re.sub(r"[∗\*†‡§¶]+", "", text)
     text = re.sub(r"(?<=[A-Za-z])\d+(?=,|\s+and\s+|&|$)", "", text)
     # Collapse "Name 1, Name 2" superscripts left as separate tokens
     text = re.sub(r"\s+\d{1,2}(?=,|\s|&|$)", "", text)
@@ -574,6 +576,8 @@ def split_author_names(raw: str) -> list[str]:
     names: list[str] = []
     for part in parts:
         name = part.strip(" ,;.")
+        name = re.sub(r"[∗\*†‡§¶]+", "", name)
+        name = re.sub(r"(?<=[A-Za-z])\d+$", "", name)
         name = re.sub(r"\s+", " ", name).strip()
         if not name:
             continue
@@ -732,6 +736,11 @@ def extract_frontmatter(document: Document, params: dict[str, Any]) -> dict[str,
             # ACM blocks are contiguous; prose/abstract follows immediately
             break
         if _looks_like_affiliation_only(line):
+            # IEEE / ACL column layouts interleave each author with affiliation
+            # and email lines. Skip those and keep scanning for the next name.
+            if author_lines:
+                i += 1
+                continue
             break
         if _looks_like_prose(line):
             break

@@ -37,9 +37,12 @@ from lynguine.access.documents.engines.paper_frontmatter import (
 from lynguine.access.documents.model import Document, Page, TextLayer
 from lynguine.access.documents.strategies.loader import load_strategy_yaml
 from lynguine.assess.compute import Compute
+from lynguine.access.documents.segment import _drop_authors_without_title
 from lynguine.tests.fixtures.documents.builders import (
     make_academic_paper_front,
     make_academic_paper_three_authors,
+    make_doi_article_without_abstract_heading,
+    make_middot_two_authors,
     make_pmlr_twocolumn,
 )
 
@@ -113,6 +116,40 @@ def test_three_authors_comma_and(tmp_path):
     ]
 
 
+def test_recogniser_auto_picks_doi_page_without_abstract_word(tmp_path):
+    pdf = tmp_path / "doi.pdf"
+    make_doi_article_without_abstract_heading(pdf)
+    doc = read_pdf(str(pdf), allowed_roots=[str(tmp_path)])
+    choice = choose_strategy(doc, aspect="paper_frontmatter", strategy="auto")
+    assert choice.strategy_id == "academic_paper_front.v1"
+    assert choice.score > 0
+    fields = extract_paper_frontmatter(str(pdf), strategy="auto", root=str(tmp_path))
+    assert "Unheaded Abstracts" in (fields.get("title") or "")
+    assert fields.get("authors") == ["Ada Lovelace", "Alan Turing", "Grace Hopper"]
+
+
+def test_middot_author_line_splits(tmp_path):
+    pdf = tmp_path / "corner.pdf"
+    make_middot_two_authors(pdf)
+    fields = extract_paper_frontmatter(
+        str(pdf),
+        strategy="academic_paper_front.v1",
+        root=str(tmp_path),
+    )
+    assert fields.get("authors") == ["Ada Lovelace", "Alan Turing"]
+
+
+def test_drop_authors_when_title_missing():
+    cleared = _drop_authors_without_title(
+        {"title": "", "authors": ["Department of Example"]}
+    )
+    assert cleared["authors"] == []
+    kept = _drop_authors_without_title(
+        {"title": "A Synthetic Title", "authors": ["Ada Lovelace"]}
+    )
+    assert kept["authors"] == ["Ada Lovelace"]
+
+
 def test_recogniser_auto_picks_academic_paper(tmp_path):
     pdf = tmp_path / "paper.pdf"
     make_academic_paper_front(pdf)
@@ -163,6 +200,8 @@ def test_split_author_names_variants():
     ]
     assert split_author_names("A, B, and C") == ["A", "B", "C"]
     assert split_author_names("") == []
+    assert split_author_names("Jiaee Cheong*") == ["Jiaee Cheong"]
+    assert split_author_names("Micol Spitale∗") == ["Micol Spitale"]
 
 
 def test_extract_frontmatter_empty_document():
@@ -815,6 +854,42 @@ def test_ieee_title_wrap_before_author_list():
     assert "Learning Person-specific Cognition" in (fields["title"] or "")
     assert "Personality Recognition" in (fields["title"] or "")
     assert "Ada Lovelace" in fields["authors"]
+
+
+def test_ieee_column_authors_with_ascii_footnote_stars():
+    """IEEE first-page columns: name / affiliation / email per author.
+
+    PDF extractors often emit ASCII '*' for equal-contribution footnotes.
+    """
+    text = "\n".join(
+        [
+            "It's not Fair! – Fairness for a Small Dataset of",
+            "Multi-Modal Dyadic Mental Well-being Coaching",
+            "Jiaee Cheong*",
+            "University of Cambridge",
+            "Cambridge, UK",
+            "jc2208@cam.ac.uk",
+            "Micol Spitale*",
+            "University of Cambridge",
+            "Cambridge, UK",
+            "ms2871@cam.ac.uk",
+            "Hatice Gunes",
+            "University of Cambridge",
+            "Cambridge, UK",
+            "hg410@cam.ac.uk",
+            "Abstract",
+            "We describe a synthetic fixture used only for layout tests.",
+        ]
+    )
+    fields = extract_frontmatter(_doc_from_text(text), {})
+    assert "Fairness for a Small Dataset" in (fields["title"] or "")
+    assert fields["authors"] == [
+        "Jiaee Cheong",
+        "Micol Spitale",
+        "Hatice Gunes",
+    ]
+    assert all("*" not in a for a in fields["authors"])
+    assert "jc2208@cam.ac.uk" in fields["emails"]
 
 
 def test_soft_fail_when_remaining_title_is_publisher_fm():

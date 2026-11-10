@@ -334,4 +334,22 @@ def extract_paper_frontmatter(
         on_sparse_text=on_sparse_text,
         **kwargs,
     )
-    return _unwrap_one_record(units, payload_key="paper_frontmatter")
+    out = _unwrap_one_record(units, payload_key="paper_frontmatter")
+    return _drop_authors_without_title(out)
+
+
+def _drop_authors_without_title(out: dict[str, Any]) -> dict[str, Any]:
+    """Drop author names when no title was found.
+
+    An affiliation block above the title can be read as a list of people.
+    Those strings must not be handed to redaction. An empty author list is
+    still a stored result, so a ``refresh: false`` compute does not retry.
+    """
+    if not isinstance(out, dict) or not out.get("authors"):
+        return out
+    if str(out.get("title") or "").strip():
+        return out
+    log.warning("paper frontmatter: dropping authors because no title was found")
+    out = dict(out)
+    out["authors"] = []
+    return out

@@ -5,6 +5,8 @@ from .panel_layouts import make_cam_panel_application, make_labeled_kv_form
 from .paper_layouts import (
     make_academic_paper_front,
     make_academic_paper_three_authors,
+    make_doi_article_without_abstract_heading,
+    make_middot_two_authors,
 )
 from .pdf_layouts import (
     make_pmlr_twocolumn,
@@ -22,12 +24,16 @@ BUILDERS = {
     "make_labeled_kv_form": make_labeled_kv_form,
     "make_academic_paper_front": make_academic_paper_front,
     "make_academic_paper_three_authors": make_academic_paper_three_authors,
+    "make_doi_article_without_abstract_heading": make_doi_article_without_abstract_heading,
+    "make_middot_two_authors": make_middot_two_authors,
 }
 
 __all__ = [
     "BUILDERS",
     "make_academic_paper_front",
     "make_academic_paper_three_authors",
+    "make_doi_article_without_abstract_heading",
+    "make_middot_two_authors",
     "make_cam_panel_application",
     "make_labeled_kv_form",
     "make_chatbot_transcript",

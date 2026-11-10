@@ -39,6 +39,61 @@ def make_academic_paper_front(path: str | Path) -> Path:
     return path
 
 
+def make_doi_article_without_abstract_heading(path: str | Path) -> Path:
+    """Nature-style first page: DOI and authors, no Abstract heading.
+
+    Synthetic names only. ``strategy: auto`` should still select
+    ``academic_paper_front.v1`` because page 0 contains a DOI.
+    """
+    path = Path(path)
+    doc = fitz.open()
+    page = doc.new_page()
+    page.insert_textbox(
+        fitz.Rect(72, 48, 520, 780),
+        "\n".join(
+            [
+                "Article",
+                "https://doi.org/10.0000/example.1",
+                "A Synthetic Study of Unheaded Abstracts",
+                "Ada Lovelace 1, Alan Turing 2 & Grace Hopper 3",
+                "1Example Laboratory  2Example Institute",
+                "",
+                "We describe a synthetic fixture. The word that usually "
+                "heads this paragraph is deliberately absent.",
+            ]
+        ),
+        fontsize=11,
+    )
+    doc.save(path)
+    doc.close()
+    return path
+
+
+def make_middot_two_authors(path: str | Path) -> Path:
+    """Springer-style author line joined with a middle dot."""
+    path = Path(path)
+    doc = fitz.open()
+    page = doc.new_page()
+    filler = " ".join(f"body{i}" for i in range(80))
+    page.insert_textbox(
+        fitz.Rect(72, 48, 520, 780),
+        "\n".join(
+            [
+                "https://doi.org/10.0000/example.corner",
+                "A Synthetic Short Comment",
+                "Ada Lovelace1 · Alan Turing1",
+                "",
+                "Abstract",
+                "Synthetic comment body for the middle-dot author splitter. " + filler,
+            ]
+        ),
+        fontsize=11,
+    )
+    doc.save(path)
+    doc.close()
+    return path
+
+
 def make_academic_paper_three_authors(path: str | Path) -> Path:
     """Title plus comma-and list of three synthetic authors."""
     path = Path(path)

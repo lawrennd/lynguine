@@ -11,6 +11,9 @@ recogniser:
     - "ABSTRACT"
     - "Introduction"
     - "Keywords"
+    # Nature / Springer first pages often have no Abstract heading.
+    # A DOI on page 0 is enough to try this strategy under strategy: auto.
+    - "https://doi.org/"
 params:
   max_pages: 1
   stop_headings:
