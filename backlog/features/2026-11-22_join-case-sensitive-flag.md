@@ -26,9 +26,9 @@ tags:
 
 ## Description
 
-Joins in lynguine follow pandas: key matching is case-sensitive. That is the correct default (distinct strings must not merge silently). Identifier joins used by referia marking flows — especially `crsid` on `markdown_directory` / `additional` left joins — routinely fail when student YAML or Moodle filenames use `LJT63` / `BB755` while the class list has `ljt63` / `bb755`.
+Joins in lynguine follow pandas: key matching is case-sensitive. That is the correct default (distinct strings must not merge silently). Identifier joins used by referia marking flows — especially `crsid` on `markdown_directory` / `additional` left joins — routinely fail when student YAML or Moodle filenames use mixed case (e.g. `ABC123`) while the class list has lowercase (e.g. `abc123`).
 
-IEI Worksheet 3 (2026-11-22) hit this twice: dialogues were on disk under the right paths, but frontmatter `crsid` case broke the join, so submissions looked missing in referia.
+A marking flow hit this in practice: dialogues were on disk under the right paths, but frontmatter `crsid` case broke the join, so submissions looked missing in referia.
 
 Add an **opt-in** `normalize` key on join / additional source blocks (general `hstack` surface per CIP-001C). Default remains case-sensitive (omit the key). Canonical form:
 
@@ -46,7 +46,7 @@ additional:
 
 - [x] Join / `hstack` / `additional` source config accepts `normalize: casefold` (per CIP-001C)
 - [x] Default behaviour unchanged: case-sensitive joins (pandas-compatible)
-- [x] With `normalize: casefold`, `ljt63` matches `LJT63` / `BB755` matches `bb755` on the declared index field
+- [x] With `normalize: casefold`, `abc123` matches `ABC123` / `xyz99` matches `XYZ99` on the declared index field
 - [x] Displayed / stored index values on the left frame are not silently rewritten (match via normalised copies)
 - [x] Works for `markdown_directory` additional joins used by referia (crsid) — same `read_hstack` path
 - [x] Unit tests cover sensitive default, casefold opt-in, collision raise, unknown normalize
@@ -63,17 +63,19 @@ additional:
 ## Related
 
 - CIP: [001C](../../cip/cip001C.md)
-- Trigger: IEI `_marking/worksheet3` dialogues with `crsid: "LJT63"` / `"BB755"` vs students list `ljt63` / `bb755`
+- Trigger: referia marking join with mixed-case `crsid` vs lowercase roster (use fictional examples only in docs)
 - Docs: [Stacking and joining sources](https://inverseprobability.com/lynguine/getting_started/stacking.html)
 
 ## Progress Updates
 
 ### 2026-11-22
 
-Task created (Proposed) after IEI Worksheet 3 marking join failures; design preference recorded: default case-sensitive, opt-in insensitive for identifier joins.
+Task created (Proposed) after marking join failures from mixed-case identifier keys; design preference recorded: default case-sensitive, opt-in insensitive for identifier joins.
 
 Linked to CIP-001C; canonical API locked as `normalize: casefold` (extensible normaliser key).
 
 ### 2026-11-22 (later)
 
 CIP-001C Accepted → In Progress on branch `cip001C-join-normalize-casefold`. Task → In Progress.
+
+Scrubbed real identifier examples from this task and CIP-001C (fictional `abc123` / `ABC123` only).

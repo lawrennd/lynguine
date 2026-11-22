@@ -49,10 +49,10 @@ Joins in lynguine follow pandas: key equality is case-sensitive. That default is
 
 Identifier and path-stem joins routinely fail when orthography differs:
 
-- Class lists store `ljt63` / `bb755` while student YAML or Moodle filenames use `LJT63` / `BB755`.
+- Class lists store lowercase identifiers (e.g. `abc123`) while student YAML or Moodle filenames use mixed case (e.g. `ABC123`).
 - Directory and markdown indexes often come from filenames. macOS and Windows commonly casefold; Linux often does not. The same logical file identity can disagree with a canonical lowercase roster.
 
-IEI Worksheet 3 (2026-11-22) hit this twice: dialogues existed on disk under the right paths, but frontmatter `crsid` case broke the left join, so submissions looked missing in referia.
+A referia marking flow hit this in practice: dialogues existed on disk under the right paths, but frontmatter `crsid` case broke the left join, so submissions looked missing.
 
 A `markdown_directory`-only escape hatch would teach the wrong layer and force the next similar join (Excel `additional`, CSV `hstack`, another directory type) to invent a second workaround. The flag belongs on the **join / source block**, inherited by every stackable source type.
 
@@ -163,8 +163,8 @@ referia marking configs
    - Ensure flow `additional` joins that share this path pick up the same key (no referia duplicate).
 
 4. **Tests**
-   - Sensitive default: `ljt63` does not match `LJT63`.
-   - Opt-in: they match; left displayed key remains `ljt63` (or whichever side is left).
+   - Sensitive default: `abc123` does not match `ABC123`.
+   - Opt-in: they match; left displayed key remains `abc123` (or whichever side is left).
    - Distinct keys still distinct when sensitive.
    - Casefold collision policy as decided.
    - At least one `markdown_directory` / directory-index style fixture.
@@ -204,4 +204,4 @@ Informs tenets: **explicit-infrastructure**, **authoritative-store-and-views** (
 - Backlog: [2026-11-22_join-case-sensitive-flag](../backlog/features/2026-11-22_join-case-sensitive-flag.md)
 - Docs: [Stacking and joining sources](https://inverseprobability.com/lynguine/getting_started/stacking.html)
 - Code: `lynguine.access.io.read_hstack`
-- Trigger: IEI `_marking/worksheet3` dialogues (`crsid: "LJT63"` / `"BB755"` vs roster `ljt63` / `bb755`)
+- Trigger: referia marking join where frontmatter `crsid` case disagreed with the roster (fictional examples in tests: `abc123` / `ABC123`)

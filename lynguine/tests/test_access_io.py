@@ -1145,8 +1145,8 @@ def test_read_hstack_merge_drops_repeated_rsuffix_collisions(mocker):
 def test_read_hstack_case_sensitive_default_no_match(mocker):
     """Without normalize, mixed-case join keys do not match (pandas default)."""
     frames = {
-        'roster': pd.DataFrame({'crsid': ['ljt63', 'bb755'], 'name': ['L', 'B']}),
-        'subs': pd.DataFrame({'crsid': ['LJT63', 'BB755'], 'score': [1, 2]}),
+        'roster': pd.DataFrame({'crsid': ['abc123', 'xyz99'], 'name': ['L', 'B']}),
+        'subs': pd.DataFrame({'crsid': ['ABC123', 'XYZ99'], 'score': [1, 2]}),
     }
 
     def read_data_side_effect(specs):
@@ -1161,15 +1161,15 @@ def test_read_hstack_case_sensitive_default_no_match(mocker):
         ],
     }
     result = lynguine.access.io.read_hstack(details)
-    assert list(result['crsid']) == ['ljt63', 'bb755']
+    assert list(result['crsid']) == ['abc123', 'xyz99']
     assert result['score'].isna().all()
 
 
 def test_read_hstack_normalize_casefold_merge_matches(mocker):
     """normalize: casefold matches mixed-case keys and keeps left orthography."""
     frames = {
-        'roster': pd.DataFrame({'crsid': ['ljt63', 'bb755'], 'name': ['L', 'B']}),
-        'subs': pd.DataFrame({'crsid': ['LJT63', 'BB755'], 'score': [1, 2]}),
+        'roster': pd.DataFrame({'crsid': ['abc123', 'xyz99'], 'name': ['L', 'B']}),
+        'subs': pd.DataFrame({'crsid': ['ABC123', 'XYZ99'], 'score': [1, 2]}),
     }
 
     def read_data_side_effect(specs):
@@ -1189,7 +1189,7 @@ def test_read_hstack_normalize_casefold_merge_matches(mocker):
         ],
     }
     result = lynguine.access.io.read_hstack(details)
-    assert list(result['crsid']) == ['ljt63', 'bb755']
+    assert list(result['crsid']) == ['abc123', 'xyz99']
     assert list(result['score']) == [1, 2]
 
 
@@ -1197,10 +1197,10 @@ def test_read_hstack_normalize_casefold_index_join(mocker):
     """Index-join path: casefold match with left index orthography preserved."""
     frames = {
         'roster': pd.DataFrame(
-            {'crsid': ['ljt63', 'bb755'], 'name': ['L', 'B']}
+            {'crsid': ['abc123', 'xyz99'], 'name': ['L', 'B']}
         ),
         'subs': pd.DataFrame(
-            {'crsid': ['LJT63', 'BB755'], 'score': [1, 2]}
+            {'crsid': ['ABC123', 'XYZ99'], 'score': [1, 2]}
         ),
     }
 
@@ -1222,7 +1222,7 @@ def test_read_hstack_normalize_casefold_index_join(mocker):
         ],
     }
     result = lynguine.access.io.read_hstack(details)
-    assert list(result['crsid']) == ['ljt63', 'bb755']
+    assert list(result['crsid']) == ['abc123', 'xyz99']
     assert list(result['score']) == [1, 2]
 
 
