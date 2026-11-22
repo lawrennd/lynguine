@@ -1142,6 +1142,138 @@ def test_read_hstack_merge_drops_repeated_rsuffix_collisions(mocker):
     assert list(result['name_right']) == ['A', 'B']
 
 
+def test_read_hstack_case_sensitive_default_no_match(mocker):
+    """Without normalize, mixed-case join keys do not match (pandas default)."""
+    frames = {
+        'roster': pd.DataFrame({'crsid': ['ljt63', 'bb755'], 'name': ['L', 'B']}),
+        'subs': pd.DataFrame({'crsid': ['LJT63', 'BB755'], 'score': [1, 2]}),
+    }
+
+    def read_data_side_effect(specs):
+        return frames[specs['type']].copy(), {}
+
+    mocker.patch('lynguine.access.io.read_data', side_effect=read_data_side_effect)
+    details = {
+        'type': 'hstack',
+        'specifications': [
+            {'type': 'roster', 'on': 'crsid'},
+            {'type': 'subs', 'on': 'crsid', 'how': 'left'},
+        ],
+    }
+    result = lynguine.access.io.read_hstack(details)
+    assert list(result['crsid']) == ['ljt63', 'bb755']
+    assert result['score'].isna().all()
+
+
+def test_read_hstack_normalize_casefold_merge_matches(mocker):
+    """normalize: casefold matches mixed-case keys and keeps left orthography."""
+    frames = {
+        'roster': pd.DataFrame({'crsid': ['ljt63', 'bb755'], 'name': ['L', 'B']}),
+        'subs': pd.DataFrame({'crsid': ['LJT63', 'BB755'], 'score': [1, 2]}),
+    }
+
+    def read_data_side_effect(specs):
+        return frames[specs['type']].copy(), {}
+
+    mocker.patch('lynguine.access.io.read_data', side_effect=read_data_side_effect)
+    details = {
+        'type': 'hstack',
+        'specifications': [
+            {'type': 'roster', 'on': 'crsid'},
+            {
+                'type': 'subs',
+                'on': 'crsid',
+                'how': 'left',
+                'normalize': 'casefold',
+            },
+        ],
+    }
+    result = lynguine.access.io.read_hstack(details)
+    assert list(result['crsid']) == ['ljt63', 'bb755']
+    assert list(result['score']) == [1, 2]
+
+
+def test_read_hstack_normalize_casefold_index_join(mocker):
+    """Index-join path: casefold match with left index orthography preserved."""
+    frames = {
+        'roster': pd.DataFrame(
+            {'crsid': ['ljt63', 'bb755'], 'name': ['L', 'B']}
+        ),
+        'subs': pd.DataFrame(
+            {'crsid': ['LJT63', 'BB755'], 'score': [1, 2]}
+        ),
+    }
+
+    def read_data_side_effect(specs):
+        return frames[specs['type']].copy(), {}
+
+    mocker.patch('lynguine.access.io.read_data', side_effect=read_data_side_effect)
+    details = {
+        'type': 'hstack',
+        'index': 'crsid',
+        'specifications': [
+            {'type': 'roster'},
+            {
+                'type': 'subs',
+                'index': 'crsid',
+                'how': 'left',
+                'normalize': 'casefold',
+            },
+        ],
+    }
+    result = lynguine.access.io.read_hstack(details)
+    assert list(result['crsid']) == ['ljt63', 'bb755']
+    assert list(result['score']) == [1, 2]
+
+
+def test_read_hstack_normalize_casefold_collision_raises(mocker):
+    """Distinct left keys that casefold together raise (no silent first-wins)."""
+    frames = {
+        'roster': pd.DataFrame({'crsid': ['Ab', 'aB'], 'name': ['1', '2']}),
+        'subs': pd.DataFrame({'crsid': ['ab'], 'score': [9]}),
+    }
+
+    def read_data_side_effect(specs):
+        return frames[specs['type']].copy(), {}
+
+    mocker.patch('lynguine.access.io.read_data', side_effect=read_data_side_effect)
+    details = {
+        'type': 'hstack',
+        'specifications': [
+            {'type': 'roster', 'on': 'crsid'},
+            {
+                'type': 'subs',
+                'on': 'crsid',
+                'how': 'left',
+                'normalize': 'casefold',
+            },
+        ],
+    }
+    with pytest.raises(ValueError, match="casefold collision"):
+        lynguine.access.io.read_hstack(details)
+
+
+def test_read_hstack_normalize_unknown_raises(mocker):
+    frames = {
+        'roster': pd.DataFrame({'crsid': ['a'], 'name': ['L']}),
+        'subs': pd.DataFrame({'crsid': ['a'], 'score': [1]}),
+    }
+
+    def read_data_side_effect(specs):
+        return frames[specs['type']].copy(), {}
+
+    mocker.patch('lynguine.access.io.read_data', side_effect=read_data_side_effect)
+    details = {
+        'type': 'hstack',
+        'specifications': [
+            {'type': 'roster', 'on': 'crsid'},
+            {'type': 'subs', 'on': 'crsid', 'normalize': 'lower'},
+        ],
+    }
+    with pytest.raises(ValueError, match="Unknown normalize"):
+        lynguine.access.io.read_hstack(details)
+
+
 def test_read_hstack_no_specifications():
     details = {
         'type': 'hstack',

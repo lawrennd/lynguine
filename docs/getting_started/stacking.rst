@@ -23,6 +23,12 @@ Optional keys (defaults shown):
 * ``how``: ``left``, ``right``, ``outer``, or ``inner`` (default ``left``)
 * ``lsuffix``: suffix for overlapping left columns (default empty)
 * ``rsuffix``: suffix for overlapping right columns (default ``_right``)
+* ``normalize``: omit for case-sensitive keys (default). Set
+  ``casefold`` on a **right** specification to match join keys with
+  Unicode case folding while keeping the left side's spelling
+  (CIP-001C). Use only for identifier-like keys (for example CRSId or
+  filesystem path stems). If two distinct keys on one side casefold to
+  the same string, the join raises rather than dropping a row silently.
 
 Two-way overlap keeps the left name and suffixes the right. A later
 source that would recreate an existing suffixed name is dropped.
@@ -38,6 +44,23 @@ source that would recreate an existing suffixed name is dropped.
        sheet: Sheet1
        on: id
        how: left
+
+Identifier joins that must ignore case (roster lowercase, filenames
+mixed case):
+
+.. code-block:: yaml
+
+   type: hstack
+   specifications:
+     - type: csv
+       filename: data/students.csv
+     - type: markdown_directory
+       source:
+         - directory: dialogues/
+           glob: "*.md"
+       index: crsid
+       how: left
+       normalize: casefold
 
 Vertical stacking (``vstack``)
 ------------------------------
