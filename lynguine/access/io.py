@@ -2539,6 +2539,10 @@ def read_hstack(details):
     suffix the right (default ``_right``). A later source that would recreate
     an existing suffixed name is dropped: earlier columns win.
 
+    Optional per-right-specification ``normalize: casefold`` joins on
+    Unicode-casefolded keys while preserving left-side orthography
+    (CIP-001C). Omit the key for case-sensitive (pandas-compatible) joins.
+
     :param details: The details of the data to be read.
     :type details: dict
     :return: The data read from the file.
@@ -2586,7 +2590,22 @@ def read_hstack(details):
                 df = _drop_join_suffix_collisions(
                     final_df, df, specs['lsuffix'], specs['rsuffix']
                 )
-                final_df = final_df.join(df, how=specs['how'], lsuffix=specs['lsuffix'], rsuffix=specs['rsuffix'])
+                normalize = _hstack_normalize_mode(specs)
+                if normalize == "casefold":
+                    final_df = _join_on_casefolded_index(
+                        final_df,
+                        df,
+                        how=specs['how'],
+                        lsuffix=specs['lsuffix'],
+                        rsuffix=specs['rsuffix'],
+                    )
+                else:
+                    final_df = final_df.join(
+                        df,
+                        how=specs['how'],
+                        lsuffix=specs['lsuffix'],
+                        rsuffix=specs['rsuffix'],
+                    )
                 # Remove the index column again
                 if "index" in details:
                     final_df[details['index']] = final_df.index
@@ -2596,15 +2615,143 @@ def read_hstack(details):
                 right = _drop_merge_suffix_collisions(
                     final_df, df, specs['on'], specs['lsuffix'], specs['rsuffix']
                 )
-                final_df = pd.merge(
-                    final_df,
-                    right,
-                    on=specs['on'],
-                    how=specs['how'],
-                    suffixes=(specs['lsuffix'], specs['rsuffix']),
-                )
+                normalize = _hstack_normalize_mode(specs)
+                if normalize == "casefold":
+                    final_df = _merge_on_casefolded_column(
+                        final_df,
+                        right,
+                        on=specs['on'],
+                        how=specs['how'],
+                        lsuffix=specs['lsuffix'],
+                        rsuffix=specs['rsuffix'],
+                    )
+                else:
+                    final_df = pd.merge(
+                        final_df,
+                        right,
+                        on=specs['on'],
+                        how=specs['how'],
+                        suffixes=(specs['lsuffix'], specs['rsuffix']),
+                    )
 
     return final_df
+
+
+def _hstack_normalize_mode(specs):
+    """Return join-key normaliser for an hstack right specification, or None.
+
+    CIP-001C: only ``casefold`` is supported in v1. Unknown values raise.
+    """
+    mode = specs.get("normalize")
+    if mode is None:
+        return None
+    if mode == "casefold":
+        return "casefold"
+    raise ValueError(
+        f'Unknown normalize value {mode!r}; v1 supports only "casefold" '
+        f"(omit the key for case-sensitive joins)."
+    )
+
+
+def _casefold_join_value(value):
+    """Casefold a join key if it is a string; otherwise return unchanged."""
+    if isinstance(value, str):
+        return value.casefold()
+    return value
+
+
+def _raise_if_casefold_collision(raw_values, *, side, field):
+    """Raise if distinct string keys share a casefold (CIP-001C)."""
+    buckets = {}
+    for raw in raw_values:
+        try:
+            if pd.isna(raw):
+                continue
+        except (TypeError, ValueError):
+            pass
+        if not isinstance(raw, str):
+            continue
+        folded = raw.casefold()
+        buckets.setdefault(folded, set()).add(raw)
+    for folded, raws in buckets.items():
+        if len(raws) > 1:
+            shown = ", ".join(repr(r) for r in sorted(raws))
+            raise ValueError(
+                f"normalize: casefold collision on {side} join key "
+                f"{field!r}: {shown} all casefold to {folded!r}"
+            )
+
+
+def _casefold_display_map(raw_values):
+    """Map casefolded key → first-seen raw orthography (unique by caller)."""
+    mapping = {}
+    for raw in raw_values:
+        try:
+            if pd.isna(raw):
+                continue
+        except (TypeError, ValueError):
+            pass
+        folded = _casefold_join_value(raw)
+        if folded not in mapping:
+            mapping[folded] = raw
+    return mapping
+
+
+def _join_on_casefolded_index(left, right, *, how, lsuffix, rsuffix):
+    """Index-join with temporary casefolded indexes; restore left orthography."""
+    left_raw = left.index.copy()
+    right_raw = right.index.copy()
+    _raise_if_casefold_collision(left_raw, side="left", field="index")
+    _raise_if_casefold_collision(right_raw, side="right", field="index")
+    left_map = _casefold_display_map(left_raw)
+    right_map = _casefold_display_map(right_raw)
+    display = {**right_map, **left_map}
+
+    left_work = left.copy()
+    right_work = right.copy()
+    left_work.index = pd.Index(
+        [_casefold_join_value(v) for v in left_raw], name=left.index.name
+    )
+    right_work.index = pd.Index(
+        [_casefold_join_value(v) for v in right_raw], name=right.index.name
+    )
+    joined = left_work.join(
+        right_work, how=how, lsuffix=lsuffix, rsuffix=rsuffix
+    )
+    joined.index = pd.Index(
+        [display.get(v, v) for v in joined.index], name=joined.index.name
+    )
+    return joined
+
+
+def _merge_on_casefolded_column(left, right, *, on, how, lsuffix, rsuffix):
+    """Column merge with temporary casefolded keys; restore left orthography."""
+    if not isinstance(on, str):
+        raise ValueError(
+            "normalize: casefold currently supports a single string "
+            f"'on' column, got {on!r}"
+        )
+    left_raw = left[on]
+    right_raw = right[on]
+    _raise_if_casefold_collision(left_raw, side="left", field=on)
+    _raise_if_casefold_collision(right_raw, side="right", field=on)
+    left_map = _casefold_display_map(left_raw)
+    right_map = _casefold_display_map(right_raw)
+    display = {**right_map, **left_map}
+
+    left_work = left.copy()
+    right_work = right.copy()
+    left_work[on] = left_raw.map(_casefold_join_value)
+    right_work[on] = right_raw.map(_casefold_join_value)
+    merged = pd.merge(
+        left_work,
+        right_work,
+        on=on,
+        how=how,
+        suffixes=(lsuffix, rsuffix),
+    )
+    merged[on] = merged[on].map(lambda v: display.get(v, v))
+    return merged
 
 
 def _drop_join_suffix_collisions(left, right, lsuffix, rsuffix):

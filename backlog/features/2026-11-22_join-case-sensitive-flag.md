@@ -1,7 +1,7 @@
 ---
 id: "2026-11-22_join-case-sensitive-flag"
 title: "Opt-in case-insensitive join keys (default case-sensitive)"
-status: "Proposed"
+status: "In Progress"
 priority: "Medium"
 created: "2026-11-22"
 last_updated: "2026-11-22"
@@ -44,13 +44,13 @@ additional:
 
 ## Acceptance Criteria
 
-- [ ] Join / `hstack` / `additional` source config accepts `normalize: casefold` (per CIP-001C)
-- [ ] Default behaviour unchanged: case-sensitive joins (pandas-compatible)
-- [ ] With `normalize: casefold`, `abc123` matches `ABC123` / `xyz99` matches `XYZ99` on the declared index field
-- [ ] Displayed / stored index values on the left frame are not silently rewritten (match via normalised copies)
-- [ ] Works for `markdown_directory` additional joins used by referia (crsid) — same `read_hstack` path
-- [ ] Unit tests cover sensitive default, casefold opt-in, collision raise, unknown normalize
-- [ ] Docs: stacking / join page notes `normalize` and recommends it only for identifier-like keys
+- [x] Join / `hstack` / `additional` source config accepts `normalize: casefold` (per CIP-001C)
+- [x] Default behaviour unchanged: case-sensitive joins (pandas-compatible)
+- [x] With `normalize: casefold`, `abc123` matches `ABC123` / `xyz99` matches `XYZ99` on the declared index field
+- [x] Displayed / stored index values on the left frame are not silently rewritten (match via normalised copies)
+- [x] Works for `markdown_directory` additional joins used by referia (crsid) — same `read_hstack` path
+- [x] Unit tests cover sensitive default, casefold opt-in, collision raise, unknown normalize
+- [x] Docs: stacking / join page notes `normalize` and recommends it only for identifier-like keys
 
 ## Implementation Notes
 

@@ -3,7 +3,7 @@ author: "Neil D. Lawrence"
 created: "2026-11-22"
 id: "001C"
 last_updated: "2026-11-22"
-status: "Proposed"
+status: "Implemented"
 compressed: false
 effort: small
 priority: medium
@@ -28,9 +28,9 @@ title: "Opt-in case-insensitive join keys on hstack / additional"
 ## Status
 
 - [x] Proposed - Initial idea documented
-- [ ] Accepted - Approved, ready to start work
-- [ ] In Progress - Actively being implemented
-- [ ] Implemented - Work complete, awaiting verification
+- [x] Accepted - Approved, ready to start work
+- [x] In Progress - Actively being implemented
+- [x] Implemented - Work complete, awaiting verification
 - [ ] Closed - Verified and complete
 - [ ] Rejected - Will not be implemented
 - [ ] Deferred - Postponed
@@ -192,12 +192,12 @@ Informs tenets: **explicit-infrastructure**, **authoritative-store-and-views** (
 
 ## Implementation Status
 
-- [ ] Accept CIP; create/refresh backlog tasks from this plan
-- [ ] Join helper + `read_hstack` wiring for `normalize: casefold`
-- [ ] `additional` path verified / wired if separate
-- [ ] Unit tests (default, opt-in, collision policy)
-- [ ] Stacking docs updated
-- [ ] Link/close backlog `2026-11-22_join-case-sensitive-flag`
+- [x] Accept CIP; backlog `2026-11-22_join-case-sensitive-flag` is the delivery task
+- [x] Join helper + `read_hstack` wiring for `normalize: casefold`
+- [x] `additional` path verified / wired if separate (flow `additional` / list inputs become `hstack` via `read_data` → `read_hstack`)
+- [x] Unit tests (default, opt-in, collision policy)
+- [x] Stacking docs updated
+- [ ] Close backlog `2026-11-22_join-case-sensitive-flag` after review
 
 ## References
 
